@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "Minimal Notatnik Sidebar",
+  "version": "1.0.0",
+  "description": "Lekki notatnik w panelu bocznym przeglądarki",
+
+  "icons": {
+    "32": "icons/mdi--event-note.png"
+  },
+
+  "sidebar_action": {
+    "default_title": "Notatnik by Tyler",
+    "default_panel": "sidebar.html",
+    "default_icon": {
+      "32": "icons/mdi--event-note.png"
+    }
+  },
+
+  "permissions": [
+    "storage"
+  ]
+}
