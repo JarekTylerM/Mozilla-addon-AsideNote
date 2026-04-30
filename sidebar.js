@@ -32,19 +32,26 @@ function renderList() {
   });
 
   // 📭 brak notatek
-  if (filtered.length === 0) {
+  if (filtered.length === 0 && searchQuery === "") {
     const empty = document.createElement("div");
-    empty.textContent = "lista jest pusta, dodaj notatke";
+    empty.textContent = "Lista jest pusta, dodaj notatkę";
     empty.style.padding = "10px";
     empty.style.color = "#777";
-
     notesList.appendChild(empty);
     return;
   }
+  
+  // Sortuj notatki od najnowszej do najstarszej
+  filtered.sort((a, b) => b.created - a.created);
 
   filtered.forEach(note => {
     const div = document.createElement("div");
     div.className = "note-item";
+
+    // --- NOWOŚĆ: Dodaj klasę, jeśli notatka jest aktywna ---
+    if (note.id === activeId) {
+      div.classList.add("active-note");
+    }
 
     const title = document.createElement("span");
     title.textContent = note.title || "Bez tytułu";
@@ -59,22 +66,18 @@ function renderList() {
 
     delBtn.onclick = (e) => {
       e.stopPropagation();
-
       notes = notes.filter(n => n.id !== note.id);
-
       if (activeId === note.id) {
         activeId = null;
         titleInput.value = "";
         editor.innerHTML = "";
       }
-
       saveAll();
       renderList();
     };
 
     div.appendChild(title);
     div.appendChild(delBtn);
-
     notesList.appendChild(div);
   });
 }
@@ -87,6 +90,9 @@ function selectNote(id) {
   activeId = id;
   titleInput.value = note.title;
   editor.innerHTML = note.content || "";
+
+  // Przerenderuj listę, aby podświetlić nowy aktywny element
+  renderList();
 }
 
 // nowa
@@ -98,23 +104,41 @@ document.getElementById("new-note").onclick = () => {
     created: Date.now()
   };
 
-  notes.unshift(newNote);
+  notes.unshift(newNote); // Dodaj na początek tablicy
   activeId = newNote.id;
 
   saveAll();
-  renderList();
-  selectNote(activeId);
+  selectNote(activeId); // Użyj selectNote, aby ustawić pola i przerenderować listę
 };
 
-// zapis
+// --- ZMODYFIKOWANA LOGIKA ZAPISU ---
 document.getElementById("save").onclick = () => {
-  if (!activeId) return;
+  // Jeśli nie ma aktywnej notatki, utwórz nową z aktualną zawartością
+  if (!activeId) {
+    // Stwórz nową notatkę tylko jeśli jest jakiś tytuł lub treść
+    if (titleInput.value.trim() === "" && editor.innerHTML.trim() === "") {
+        alert("Wprowadź tytuł lub treść, aby zapisać nową notatkę.");
+        return;
+    }
+    const newNote = {
+      id: Date.now().toString(),
+      title: titleInput.value,
+      content: editor.innerHTML,
+      created: Date.now()
+    };
+    notes.unshift(newNote);
+    activeId = newNote.id;
+  } 
+  // Jeśli jest aktywna notatka, zaktualizuj ją
+  else {
+    const note = notes.find(n => n.id === activeId);
+    if (!note) return;
 
-  const note = notes.find(n => n.id === activeId);
-  if (!note) return;
-
-  note.title = titleInput.value;
-  note.content = editor.innerHTML;
+    note.title = titleInput.value;
+    note.content = editor.innerHTML;
+    // Zaktualizuj datę modyfikacji, aby mogła pojawić się na górze listy (opcjonalnie)
+    // note.created = Date.now(); 
+  }
 
   saveAll();
   renderList();

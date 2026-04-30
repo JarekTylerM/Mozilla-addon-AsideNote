@@ -1,96 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" type="text/css" href="./styles/resets.css" />
+    <link rel="stylesheet" type="text/css" href="./styles/styles.css" />
+  </head>
+  <body>
+   <div class="input-container search-notes">
+     <input
+      id="search"
+      placeholder="Szukaj..."
+      style="width: 100%; margin: 10px 0"
+    />
+   </div>
+    <div id="notesList"></div>
+    <button id="new-note">+ Nowa notatkaa</button>
+    <label for="title">Tytuł</label>
+    <input
+      id="title"
+      name="title"
+      placeholder="Tytuł"
+      style="width: 100%; margin-top: 10px"
+    />
 
-<style>
-  body { font-family: sans-serif; padding: 10px; }
+    <section id="editor-container">
+      <div id="toolbar">
+        <select id="formatBlock">
+          <option value="p">P</option>
+          <option value="h1">H1</option>
+          <option value="h2">H2</option>
+        </select>
 
-  #notesList {
-    max-height: 30vh;
-    overflow-y: auto;
-    border: 1px solid #ccc;
-    border-bottom: none;
-  }
+        <button data-cmd="insertUnorderedList">• Lista</button>
+        <button data-cmd="insertOrderedList">1. Lista</button>
+        <button data-cmd="bold"><b>B</b></button>
+        <button data-cmd="italic"><i>I</i></button>
+        <button data-cmd="underline"><u>U</u></button>
+      </div>
 
-  .note-item {
-    padding: 4px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-    position: relative;
-  }
+      <div id="editor" contenteditable="true"></div>
+    </section>
 
-  .note-item:hover { background: #f0f0f0; }
+    <br />
+    <button id="save">Zapisz</button>
+    <button id="delete">Usuń</button>
 
-  #toolbar { margin-top: 10px; }
-
-  #toolbar button, #toolbar select {
-    margin-right: 5px;
-  }
-
-  #editor {
-    border: 1px solid #ccc;
-    min-height: 30vh;
-    padding: 5px;
-    margin-top: 5px;
-    word-wrap:break-word;
-  }
-
-  button { margin-top: 5px; }
-  #new-note {
-    background: #ccc;
-    border: 1px solid #ccc;
-    margin-top: 0;
-    padding: 8px;
-    
-  }
-  .note-item button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: #888;
-  position: absolute;
-  top: -4px;
-  right: 0;
-}
-
-.note-item button:hover {
-  color: red;
-}
-</style>
-</head>
-
-<body>
-
-
-
-<input id="search" placeholder="Szukaj..." style="width:100%; margin:10px 0;" />
-<div id="notesList"></div>
-<button id="new-note">+ Nowa notatka</button>
-<label for="title">Tytuł</label>
-<input id="title" name="title" placeholder="Tytuł" style="width:100%; margin-top:10px;" />
-
-<div id="toolbar">
-  <button data-cmd="bold"><b>B</b></button>
-  <button data-cmd="italic"><i>I</i></button>
-  <button data-cmd="underline"><u>U</u></button>
-
-  <button data-cmd="insertUnorderedList">• Lista</button>
-  <button data-cmd="insertOrderedList">1. Lista</button>
-
-  <select id="formatBlock">
-    <option value="p">P</option>
-    <option value="h1">H1</option>
-    <option value="h2">H2</option>
-  </select>
-</div>
-
-<div id="editor" contenteditable="true"></div>
-
-<br>
-<button id="save">Zapisz</button>
-<button id="delete">Usuń</button>
-
-<script src="sidebar.js"></script>
-</body>
+    <script src="sidebar.js"></script>
+  </body>
 </html>
