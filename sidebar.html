@@ -6,21 +6,31 @@
     <link rel="stylesheet" type="text/css" href="./styles/styles.css" />
   </head>
   <body>
-   <div class="input-container search-notes">
-     <input
-      id="search"
-      placeholder="Szukaj..."
-      style="width: 100%; margin: 10px 0"
-    />
-   </div>
+    <div class="input-container search-notes">
+      <input
+        id="search"
+        placeholder="Szukaj..."
+        style="width: 100%; margin: 10px 0"
+      />
+    </div>
     <div id="notesList"></div>
-    <button id="new-note">+ Nowa notatkaa</button>
-    <label for="title">Tytuł</label>
+    <button id="new-note">+ Nowa notatka</button>
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+      "
+    >
+      <label for="title">Tytuł</label>
+      <button id="delete">🗑</button>
+    </div>
+
     <input
       id="title"
-      name="title"
       placeholder="Tytuł"
-      style="width: 100%; margin-top: 10px"
+      style="width: 100%; margin-top: 5px"
     />
 
     <section id="editor-container">
@@ -33,18 +43,52 @@
 
         <button data-cmd="insertUnorderedList">• Lista</button>
         <button data-cmd="insertOrderedList">1. Lista</button>
+
         <button data-cmd="bold"><b>B</b></button>
         <button data-cmd="italic"><i>I</i></button>
         <button data-cmd="underline"><u>U</u></button>
+        <button data-cmd="formatBlock" data-value="blockquote">❝ Cytat</button>
+        <button id="code-btn"><code>&lt;/&gt;</code></button>
       </div>
 
       <div id="editor" contenteditable="true"></div>
     </section>
+    <div id="shortcut-tooltip-wrapper">
+      <button role="button" id="toggle-shortcuts"></button>
 
-    <br />
-    <button id="save">Zapisz</button>
-    <button id="delete">Usuń</button>
+      <div id="shortcut-tooltip">
+        <div class="tooltip-content">
+          <h4>Skróty</h4>
+          <div class="tooltip-section">
+            <b>Ogólne</b>
+           <ul>
+             <li><code>ctrl</code> + <code>shift</code> + <code>q</code> → otwórz/zamknij notes</li>
+           </ul>
+          </div>
+          <div class="tooltip-section">
+            <b>Markdown text</b>
+            <ul>
+              <li><code>#</code> → H1</li>
+              <li><code>##</code> → H2</li>
+              <li><code>-</code> → Lista</li>
+              <li><code>1.</code> → Lista numerowana</li>
+              <li><code>&gt;</code> → Cytat</li>
+              <li><code>---</code> → Separator</li>
+            </ul>
+          </div>
 
+          <div class="tooltip-section">
+            <b>Skróty formatowania</b>
+            <ul>
+              <li><code>Ctrl + B</code> → Bold</li>
+              <li><code>Ctrl + I</code> → Italic</li>
+              <li><code>Ctrl + `</code> → Code</li>
+              <li><code>Ctrl + Shift + X</code> → Strike</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="sidebar.js"></script>
   </body>
 </html>

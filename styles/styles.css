@@ -7,6 +7,23 @@ body {
   padding: 8px;
 }
 
+code {
+  background: #1e1e1e;
+  color: #dcdcdc;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+blockquote {
+  border-left: 3px solid #555;
+  padding-left: 10px;
+  margin: 6px 0;
+  color: #bbb;
+  font-style: italic;
+}
+
 button {
   position: relative;
   display: inline-flex;
@@ -123,4 +140,72 @@ margin-block: 4px 16px;
 }
 .search-notes input::placeholder {
 
+}
+
+/* tooltip legenda */
+#shortcut-tooltip-wrapper {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 999;
+}
+
+#toggle-shortcuts {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border-color);
+  padding: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-image: url(/assets/icons/mdi--keyboard.png);
+  background-position: center;
+  background-size: contain;
+  opacity: .25;
+}
+
+#toggle-shortcuts:hover {
+  opacity: 1;
+}
+
+#shortcut-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 40px;
+  right: 0;
+  width: 220px;
+  background: #1e1e1e;
+  color: #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+#shortcut-tooltip.show {
+  display: block;
+}
+
+.tooltip-content h4 {
+  margin: 0 0 5px;
+  font-size: 13px;
+}
+
+.tooltip-section {
+  margin-bottom: 8px;
+}
+
+.tooltip-section ul {
+  padding-left: 8px;
+  margin: 4px 0;
+  list-style: none;
+}
+
+.tooltip-section li {
+  margin-bottom: 3px;
+}
+
+.tooltip-section code {
+  background: #333;
+  padding: 2px 4px;
+  border-radius: 3px;
 }
