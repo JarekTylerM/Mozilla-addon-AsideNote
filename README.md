@@ -1,0 +1,1 @@
+# mozilla-addon-better-notes

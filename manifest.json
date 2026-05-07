@@ -1,12 +1,12 @@
 {
-  "manifest_version": 2,
-  "name": "Notatnik by Tyler",
-  "version": "1.0.1",
+  "manifest_version": 3,
+  "name": "AsideNotes by Tyler M.",
+  "version": "0.5.4",
   "description": "Lekki notatnik w panelu bocznym przeglądarki",
-
+  "author": "Jarek Tyler M.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "notatnik-by-tyler@example.com",
+      "id": "aside-notes-by-tyler041@example.com",
       "data_collection_permissions": {
         "description": "Ten dodatek nie zbiera żadnych danych użytkownika ani danych telemetrycznych. Wszystkie dane (notatki) są przechowywane lokalnie w przeglądarce użytkownika.",
         "required": ["none"]
@@ -19,7 +19,7 @@
   },
 
   "sidebar_action": {
-    "default_title": "Notatnik by Tyler",
+    "default_title": "Notes by Tyler",
     "default_panel": "sidebar.html",
     "default_icon": {
       "64": "assets/icons/mdi--event-note.png"
@@ -33,5 +33,5 @@
   "commands": {
     "toggle-sidebar": { "suggested_key": { "default": "Alt+Shift+Q" } }
   },
-  "permissions": ["storage"]
+  "permissions": ["storage", "alarms", "notifications"]
 }

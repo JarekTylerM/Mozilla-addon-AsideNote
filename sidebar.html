@@ -1,94 +1,188 @@
 <!doctype html>
-<html>
+<html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" type="text/css" href="./styles/resets.css" />
-    <link rel="stylesheet" type="text/css" href="./styles/styles.css" />
+    <link rel="stylesheet" href="./styles/resets.css" />
+    <link rel="stylesheet" href="./styles/styles.css" />
   </head>
   <body>
-    <div class="input-container search-notes">
-      <input
-        id="search"
-        placeholder="Szukaj..."
-        style="width: 100%; margin: 10px 0"
-      />
-    </div>
-    <div id="notesList"></div>
-    <button id="new-note">+ Nowa notatka</button>
-    <div
-      style="
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 10px;
-      "
-    >
-      <label for="title">Tytuł</label>
-      <button id="delete">🗑</button>
-    </div>
 
-    <input
-      id="title"
-      placeholder="Tytuł"
-      style="width: 100%; margin-top: 5px"
-    />
-
-    <section id="editor-container">
-      <div id="toolbar">
-        <select id="formatBlock">
-          <option value="p">P</option>
-          <option value="h1">H1</option>
-          <option value="h2">H2</option>
-        </select>
-
-        <button data-cmd="insertUnorderedList">• Lista</button>
-        <button data-cmd="insertOrderedList">1. Lista</button>
-
-        <button data-cmd="bold"><b>B</b></button>
-        <button data-cmd="italic"><i>I</i></button>
-        <button data-cmd="underline"><u>U</u></button>
-        <button data-cmd="formatBlock" data-value="blockquote">❝ Cytat</button>
-        <button id="code-btn"><code>&lt;/&gt;</code></button>
+    <!-- ══ Główny widok ══════════════════════════ -->
+    <div id="main-view">
+<div class="quick-capture">
+  <input
+    id="quick-capture"
+    placeholder="Podaj treść i naciśnij enter"
+    aria-label="Szybkie dodanie"
+    autocomplete="off"
+  />
+  <span class="quick-capture__hint">↵</span>
+</div>
+      <div class="search-row">
+        <div class="search-wrapper">
+          <input id="search" placeholder="Szukaj..." aria-label="Szukaj notatek" />
+        </div>
+        <button
+          id="filter-btn"
+          class="icon-btn icon-btn--md icon-btn--ghost icon--filter"
+          aria-label="Filtruj"
+          aria-expanded="false"
+        ></button>
       </div>
 
-      <div id="editor" contenteditable="true"></div>
-    </section>
-    <div id="shortcut-tooltip-wrapper">
-      <button role="button" id="toggle-shortcuts"></button>
+      <div id="filter-bar" hidden>
+        <div id="filter-options"></div>
+      </div>
 
-      <div id="shortcut-tooltip">
-        <div class="tooltip-content">
-          <h4>Skróty</h4>
-          <div class="tooltip-section">
-            <b>Ogólne</b>
-           <ul>
-             <li><code>ctrl</code> + <code>shift</code> + <code>q</code> → otwórz/zamknij notes</li>
-           </ul>
-          </div>
-          <div class="tooltip-section">
-            <b>Markdown text</b>
-            <ul>
-              <li><code>#</code> → H1</li>
-              <li><code>##</code> → H2</li>
-              <li><code>-</code> → Lista</li>
-              <li><code>1.</code> → Lista numerowana</li>
-              <li><code>&gt;</code> → Cytat</li>
-              <li><code>---</code> → Separator</li>
-            </ul>
-          </div>
+<div id="type-toggle" role="tablist" aria-label="Filtruj typ">
+  <button data-type="all"  class="type-toggle__btn type-toggle__btn--active">Wszystko</button>
+  <button data-type="note" class="type-toggle__btn">Notatki</button>
+  <button data-type="task" class="type-toggle__btn">Zadania</button>
+  <button data-type="zen"  class="type-toggle__btn type-toggle__btn--icon icon-zen"  aria-label="Tryb zen — zaległe i dzisiaj" title="Tryb zen"></button>
+</div>
 
-          <div class="tooltip-section">
-            <b>Skróty formatowania</b>
-            <ul>
-              <li><code>Ctrl + B</code> → Bold</li>
-              <li><code>Ctrl + I</code> → Italic</li>
-              <li><code>Ctrl + `</code> → Code</li>
-              <li><code>Ctrl + Shift + X</code> → Strike</li>
-            </ul>
-          </div>
+      <div class="notes-list-wrapper">
+        <div id="notesList"></div>
+        <div class="new-item-buttons">
+          <button id="new-note" class="new-item-btn">+ Notatka</button>
+          <button id="new-task" class="new-item-btn">+ Zadanie</button>
+        </div>
+      </div>
+
+      <div id="note-status"></div>
+
+<div class="note-header">
+  <button id="convert-type" class="icon-btn icon-btn--sm icon-btn--ghost"
+    data-type="note" aria-label="Zmień typ" title="Zmień w zadanie" disabled></button>
+  <label for="title" class="sr-only">Tytuł</label>
+  <input id="title" placeholder="Tytuł" />
+  <button id="important-btn" class="icon-btn icon-btn--sm"
+    aria-label="Ważne" title="Oznacz jako ważne" hidden></button>
+  <button id="delete" class="icon-btn icon-btn--sm icon-btn--ghost icon--bin"
+    aria-label="Usuń" title="Usuń" disabled></button>
+</div>
+
+<div class="due-wrapper" id="due-wrapper" hidden>
+  <input id="due-date" type="date" title="Termin" aria-label="Termin" />
+  <input id="due-time" type="time" title="Godzina" aria-label="Godzina" />
+  <select id="due-reminder" title="Przypomnij wcześniej" aria-label="Przypomnienie">
+    <option value="0">w terminie</option>
+    <option value="5">5 min przed</option>
+    <option value="15">15 min przed</option>
+    <option value="30">30 min przed</option>
+    <option value="60">1h przed</option>
+  </select>
+</div>
+
+      <section id="editor-container">
+        <div id="toolbar" role="toolbar" aria-label="Formatowanie tekstu">
+          <select id="formatBlock" aria-label="Format bloku">
+            <option value="p">P</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+          </select>
+          <button data-cmd="insertUnorderedList"  class="panel-icon icon--list-bullet"  aria-label="Lista punktowana"></button>
+          <button data-cmd="insertOrderedList"    class="panel-icon icon--list-number"  aria-label="Lista numerowana"></button>
+          <button data-cmd="bold"                 class="panel-icon icon--bold"         aria-label="Pogrubienie"></button>
+          <button data-cmd="italic"               class="panel-icon icon--italic"       aria-label="Kursywa"></button>
+          <button data-cmd="underline"            class="panel-icon icon--underline"    aria-label="Podkreślenie"></button>
+          <button data-cmd="formatBlock" data-value="blockquote" class="panel-icon icon--quote" aria-label="Cytat blokowy"></button>
+          <button id="code-btn"                   class="panel-icon icon--code"         aria-label="Kod"></button>
+        </div>
+        <div
+          id="editor"
+          contenteditable="true"
+          role="textbox"
+          aria-multiline="true"
+          aria-label="Treść notatki"
+        ></div>
+      </section>
+
+      <div id="tag-selector">
+        <div id="tag-selector-pills"></div>
+        <div id="tag-dropdown" hidden>
+          <div id="tag-options"></div>
+          <button id="goto-panel">→ Zarządzaj tagami</button>
         </div>
       </div>
     </div>
-    <script src="sidebar.js"></script>
+
+    <!-- ══ Panel personalizacji ══════════════════ -->
+    <div id="panel" hidden>
+      <div class="panel-header">
+        <h2>Personalizacja</h2>
+        <button id="close-panel" aria-label="Zamknij panel">✕</button>
+      </div>
+      <div class="panel-body">
+        <section class="panel-section">
+          <h3>Tagi</h3>
+          <div id="tags-list"></div>
+          <div class="add-tag-form">
+            <input id="new-tag-input" placeholder="Nazwa tagu..." aria-label="Nazwa nowego tagu" />
+            <button id="add-tag-btn" class="btn btn--primary">Dodaj</button>
+          </div>
+        </section>
+        <section class="panel-section" style="margin-top: 16px;">
+  <h3>Dane</h3>
+  <div class="data-actions">
+    <button id="export-btn" class="btn btn--block">↓ Eksportuj dane (JSON)</button>
+    <label class="btn btn--block" id="import-label">
+      ↑ Importuj dane (JSON)
+      <input type="file" id="import-input" accept=".json" hidden />
+    </label>
+  </div>
+</section>
+      </div>
+    </div>
+
+    <!-- ══ Bottom bar ════════════════════════════ -->
+    <div id="bottom-bar">
+      <div id="shortcut-tooltip-wrapper">
+        <button
+          id="toggle-shortcuts"
+          class="icon-btn icon-btn--md icon--keyboard"
+          aria-label="Pokaż skróty klawiszowe"
+          aria-expanded="false"
+        ></button>
+        <div id="shortcut-tooltip" role="tooltip">
+          <div class="tooltip-content">
+            <h4>Skróty</h4>
+            <div class="tooltip-section">
+              <b>Ogólne</b>
+              <ul>
+                <li><code>Alt</code> + <code>Shift</code> + <code>Q</code> → otwórz/zamknij notes</li>
+              </ul>
+            </div>
+            <div class="tooltip-section">
+              <b>Markdown</b>
+              <ul>
+                <li><code>#</code> → H1</li>
+                <li><code>##</code> → H2</li>
+                <li><code>-</code> → Lista</li>
+                <li><code>1.</code> → Lista numerowana</li>
+                <li><code>&gt;</code> → Cytat</li>
+                <li><code>---</code> → Separator</li>
+              </ul>
+            </div>
+            <div class="tooltip-section">
+              <b>Formatowanie</b>
+              <ul>
+                <li><code>Ctrl + B</code> → Bold</li>
+                <li><code>Ctrl + I</code> → Italic</li>
+                <li><code>Ctrl + `</code> → Code</li>
+                <li><code>Ctrl + Shift + X</code> → Strike</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button
+        id="panel-btn"
+        class="icon-btn icon-btn--md icon--settings"
+        aria-label="Otwórz panel personalizacji"
+      ></button>
+    </div>
+
+    <script type="module" src="scripts/app.js"></script>
   </body>
 </html>

@@ -1,0 +1,37 @@
+/* ══════════════════════════════════════════════════════════════
+   Icons — przypisanie mask-image do klas .icon--*
+   Używaj razem z .icon-btn (np. class="icon-btn icon-btn--sm icon--bold")
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Toolbar edytora (PNG z assets) ──────────── */
+.icon--list-bullet  { -webkit-mask-image: url("../assets/icons/mdi--format-list-bulleted.png");  mask-image: url("../assets/icons/mdi--format-list-bulleted.png"); }
+.icon--list-number  { -webkit-mask-image: url("../assets/icons/mdi--format-list-numbered.png");  mask-image: url("../assets/icons/mdi--format-list-numbered.png"); }
+.icon--bold         { -webkit-mask-image: url("../assets/icons/mdi--format-bold.png");           mask-image: url("../assets/icons/mdi--format-bold.png"); }
+.icon--italic       { -webkit-mask-image: url("../assets/icons/mdi--format-italic.png");         mask-image: url("../assets/icons/mdi--format-italic.png"); }
+.icon--underline    { -webkit-mask-image: url("../assets/icons/mdi--format-underline.png");      mask-image: url("../assets/icons/mdi--format-underline.png"); }
+.icon--quote        { -webkit-mask-image: url("../assets/icons/mdi--format-quote-close.png");    mask-image: url("../assets/icons/mdi--format-quote-close.png"); }
+.icon--code         { -webkit-mask-image: url("../assets/icons/mdi--code.png");                  mask-image: url("../assets/icons/mdi--code.png"); }
+
+/* ── UI ──────────────────────────────────────── */
+.icon--search       { -webkit-mask-image: url("../assets/icons/mdi--search.png");                mask-image: url("../assets/icons/mdi--search.png"); }
+.icon--filter       { -webkit-mask-image: url("../assets/icons/mdi--filter-settings-outline.png");        mask-image: url("../assets/icons/mdi--filter-settings-outline.png"); }
+.icon--keyboard     { -webkit-mask-image: url("../assets/icons/mdi--keyboard.png");              mask-image: url("../assets/icons/mdi--keyboard.png"); }
+.icon--settings     { -webkit-mask-image: url("../assets/icons/mdi--settings-outline.png");      mask-image: url("../assets/icons/mdi--settings-outline.png"); }
+.icon--bin          { -webkit-mask-image: url("../assets/icons/mdi--bin.png");                   mask-image: url("../assets/icons/mdi--bin.png"); }
+.icon--bin-empty    { -webkit-mask-image: url("../assets/icons/mdi--bin-empty.png");             mask-image: url("../assets/icons/mdi--bin-empty.png"); }
+
+/* ── Inline SVG (typ note/task, calendar) ────── */
+.icon--note {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
+}
+
+.icon--task {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+}
+
+.icon--calendar {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E");
+}

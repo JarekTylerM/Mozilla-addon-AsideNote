@@ -1,0 +1,223 @@
+/* ══════════════════════════════════════════════════════════════
+   Components — reużywalne klasy bazowe (BEM)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────
+   .icon-btn — przycisk z ikoną przez mask-image
+   ────────────────────────────────────────────── */
+
+.icon-btn {
+  background-color: var(--text-2);
+  -webkit-mask-size: contain;
+          mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+          mask-position: center;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity .15s, background-color .15s, border-color .15s;
+}
+
+.icon-btn--sm   { width: 28px; height: 28px; -webkit-mask-size: 60%; mask-size: 60%; }
+.icon-btn--md   { width: 32px; height: 32px; -webkit-mask-size: 55%; mask-size: 55%; }
+
+.icon-btn--ghost {
+  background-color: var(--text-3);
+  opacity: .4;
+}
+.icon-btn--ghost:not(:disabled):hover {
+  opacity: 1;
+}
+
+.icon-btn--solid:not(:disabled):hover {
+  background-color: var(--accent);
+  border-color: var(--border-strong);
+}
+
+.icon-btn.is-active {
+  background-color: var(--accent);
+  opacity: 1;
+}
+
+.icon-btn:disabled {
+  cursor: default;
+  opacity: .25;
+}
+
+/* ──────────────────────────────────────────────
+   .input — generic input
+   ────────────────────────────────────────────── */
+
+.input {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 13px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  transition: border-color .15s;
+}
+
+.input:focus { border-color: var(--border-strong); }
+.input::placeholder { color: var(--text-3); }
+
+.input--sm    { padding: 4px 6px; font-size: 11px; }
+.input--bare  { background: transparent; border: none; }
+
+/* ──────────────────────────────────────────────
+   .btn — text button
+   ────────────────────────────────────────────── */
+
+.btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .1s, color .1s, border-color .1s;
+  font-family: inherit;
+}
+
+.btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn--primary:hover {
+  background: var(--accent);
+  color: #fff;
+  opacity: .85;
+}
+
+.btn--danger:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.btn--ghost {
+  background: transparent;
+  border: none;
+}
+.btn--ghost:hover {
+  background: var(--surface-hover);
+}
+
+.btn--block {
+  width: 100%;
+  text-align: left;
+}
+
+/* ──────────────────────────────────────────────
+   .pill — okrągły kontenerek (tag, badge)
+   ────────────────────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.6;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill--ghost {
+  background: transparent;
+  color: var(--text-3);
+  border: 1px dashed var(--border);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.pill--ghost:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text-2);
+}
+.pill--ghost:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
+.pill--clickable {
+  cursor: pointer;
+  transition: opacity .1s;
+}
+.pill--clickable:hover {
+  opacity: .7;
+}
+
+/* ──────────────────────────────────────────────
+   .section-header — nagłówek bucketu w liście
+   ────────────────────────────────────────────── */
+
+.section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition: background .1s, color .1s;
+}
+
+.section-header:hover { background: var(--surface-hover); }
+
+.section-header__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.section-header__count,
+.section-header__chevron {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.section-header__chevron {
+  font-family: inherit;
+  font-size: 9px;
+}
+
+/* Stan zwinięty — wyciszone */
+.section-header--collapsed {
+  background: transparent;
+  color: var(--text-3);
+}
+
+.section-header--collapsed:hover {
+  background: var(--surface);
+}
+
+.section-header--collapsed .section-header__count,
+.section-header--collapsed .section-header__chevron {
+  opacity: .6;
+}
