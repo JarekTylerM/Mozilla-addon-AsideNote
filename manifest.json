@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "__MSG_extension_name__",
-  "version": "1.0.6",
-  "version_name": "1.0.6 Preview",
+  "version": "1.0.7",
+  "version_name": "1.0.7 Preview",
   "description": "__MSG_extension_description__",
   "default_locale": "en",
   "author": "Jarek Tyler M.",
