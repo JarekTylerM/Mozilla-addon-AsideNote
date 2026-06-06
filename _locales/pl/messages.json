@@ -1,0 +1,1479 @@
+{
+  "alarmBtn_title": {
+    "message": "Przypomnienie"
+  },
+  "back_ariaLabel": {
+    "message": "Wróć do listy"
+  },
+  "back_title": {
+    "message": "Wróć do listy"
+  },
+  "callout_caution": {
+    "message": "Caution"
+  },
+  "callout_important": {
+    "message": "Important"
+  },
+  "callout_note": {
+    "message": "Note"
+  },
+  "callout_plain": {
+    "message": "Cytat"
+  },
+  "callout_tip": {
+    "message": "Tip"
+  },
+  "callout_warning": {
+    "message": "Warning"
+  },
+  "collapseEditor_title": {
+    "message": "Zamknij edytor  Esc"
+  },
+  "common_today": {
+    "message": "dziś"
+  },
+  "common_tomorrow": {
+    "message": "jutro"
+  },
+  "common_yesterday": {
+    "message": "wczoraj"
+  },
+  "convertType_ariaLabel": {
+    "message": "Zmień typ"
+  },
+  "convertType_toNote_title": {
+    "message": "Zamień na notatkę"
+  },
+  "convertType_toTask_title": {
+    "message": "Zamień na zadanie"
+  },
+  "datePicker_nextWeek": {
+    "message": "W przyszłym tygodniu"
+  },
+  "datePicker_rec_custom": {
+    "message": "Dni"
+  },
+  "datePicker_rec_daily": {
+    "message": "Codz."
+  },
+  "datePicker_rec_monthly": {
+    "message": "Mies."
+  },
+  "datePicker_rec_none": {
+    "message": "—"
+  },
+  "datePicker_rec_weekly": {
+    "message": "Tydz."
+  },
+  "datePicker_rec_yearly": {
+    "message": "Rok"
+  },
+  "datePicker_reminderNoTime": {
+    "message": "Ustaw godzinę żeby przypomnienie zadziałało."
+  },
+  "datePicker_thisWeek": {
+    "message": "W tym tygodniu"
+  },
+  "datePicker_today": {
+    "message": "Dziś"
+  },
+  "datePicker_tomorrow": {
+    "message": "Jutro"
+  },
+  "day_short_0": {
+    "message": "Nd"
+  },
+  "day_short_1": {
+    "message": "Pn"
+  },
+  "day_short_2": {
+    "message": "Wt"
+  },
+  "day_short_3": {
+    "message": "Śr"
+  },
+  "day_short_4": {
+    "message": "Cz"
+  },
+  "day_short_5": {
+    "message": "Pt"
+  },
+  "day_short_6": {
+    "message": "Sb"
+  },
+  "delete_ariaLabel": {
+    "message": "Usuń notatkę"
+  },
+  "delete_title": {
+    "message": "Usuń · Del"
+  },
+  "deletedNote_deletePermanently": {
+    "message": "Usuń trwale"
+  },
+  "deletedNote_noContent": {
+    "message": "(brak treści)"
+  },
+  "deletedNote_restore": {
+    "message": "Przywróć"
+  },
+  "deletedNote_untitled": {
+    "message": "(bez tytułu)"
+  },
+  "deletedNotes_confirmEmpty": {
+    "message": "Trwale usunąć wszystkie elementy z kosza?"
+  },
+  "dueClear_ariaLabel": {
+    "message": "Wyczyść termin"
+  },
+  "dueClear_title": {
+    "message": "Wyczyść termin i godzinę"
+  },
+  "dueDate_ariaLabel": {
+    "message": "Data terminu"
+  },
+  "dueDate_placeholder": {
+    "message": "Termin"
+  },
+  "dueDate_title": {
+    "message": "Termin"
+  },
+  "dueReminder_15min": {
+    "message": "15 min przed"
+  },
+  "dueReminder_1h": {
+    "message": "1h przed"
+  },
+  "dueReminder_30min": {
+    "message": "30 min przed"
+  },
+  "dueReminder_5min": {
+    "message": "5 min przed"
+  },
+  "dueReminder_Nmin": {
+    "message": "$1 min przed",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "dueReminder_ariaLabel": {
+    "message": "Wyprzedzenie przypomnienia"
+  },
+  "dueReminder_needTime": {
+    "message": "Ustaw godzinę żeby włączyć przypomnienie"
+  },
+  "dueReminder_onTime": {
+    "message": "W terminie"
+  },
+  "dueReminder_title": {
+    "message": "Przypomnienie"
+  },
+  "dueTime_ariaLabel": {
+    "message": "Godzina terminu"
+  },
+  "dueTime_placeholder": {
+    "message": "Godzina"
+  },
+  "dueTime_title": {
+    "message": "Godzina"
+  },
+  "due_daysAgo": {
+    "message": "$DAYS$ dni temu",
+    "placeholders": {
+      "days": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "due_today": {
+    "message": "dziś"
+  },
+  "due_tomorrow": {
+    "message": "jutro"
+  },
+  "due_yesterday": {
+    "message": "wczoraj"
+  },
+  "editor_ariaLabel": {
+    "message": "Treść notatki"
+  },
+  "editor_details_placeholder": {
+    "message": "Treść listy…"
+  },
+  "editor_empty_placeholder": {
+    "message": "Pisz lub wpisz '/' aby wybrać typ bloku"
+  },
+  "editor_link_ctrlClickHint": {
+    "message": "Ctrl+klik aby otworzyć link"
+  },
+  "editor_summary_placeholder": {
+    "message": "Nagłówek listy…"
+  },
+  "extension_dataCollectionDescription": {
+    "message": "Ten dodatek nie zbiera żadnych danych użytkownika ani danych telemetrycznych. Wszystkie dane (notatki) są przechowywane lokalnie w przeglądarce użytkownika."
+  },
+  "extension_description": {
+    "message": "Lekki notatnik w panelu bocznym przeglądarki"
+  },
+  "extension_name": {
+    "message": "AsideNotes by Tyler M.",
+    "description": "Nazwa własna — nie tłumaczyć."
+  },
+  "filter_active_label": {
+    "message": "Aktywne filtry"
+  },
+  "filter_ariaLabel": {
+    "message": "Filtry"
+  },
+  "filter_clearAll": {
+    "message": "Wyczyść filtry"
+  },
+  "filter_date_ariaLabel": {
+    "message": "Filtruj po terminie"
+  },
+  "filter_date_clear_ariaLabel": {
+    "message": "Wyczyść filtr daty"
+  },
+  "filter_date_clear_title": {
+    "message": "Wyczyść"
+  },
+  "filter_date_label": {
+    "message": "Termin zadania"
+  },
+  "filter_hideCompleted": {
+    "message": "Ukryj zakończone"
+  },
+  "filter_hideCompleted_short": {
+    "message": "Ukryj zakończone"
+  },
+  "filter_inProgress": {
+    "message": "Tylko w trakcie"
+  },
+  "filter_inProgress_short": {
+    "message": "W trakcie"
+  },
+  "filter_remove_ariaLabel": {
+    "message": "Usuń filtr"
+  },
+  "filter_tags_empty": {
+    "message": "Brak tagów"
+  },
+  "filter_tags_separator": {
+    "message": "Tagi"
+  },
+  "filter_title": {
+    "message": "Filtry · Alt+F"
+  },
+  "focusMode_enter_ariaLabel": {
+    "message": "Włącz tryb skupienia"
+  },
+  "focusMode_enter_title": {
+    "message": "Tryb skupienia (Alt+M)"
+  },
+  "focusMode_exit_ariaLabel": {
+    "message": "Wyłącz tryb skupienia"
+  },
+  "focusMode_exit_title": {
+    "message": "Wyjdź z trybu skupienia (Alt+M)"
+  },
+  "focus_ariaLabel": {
+    "message": "Oznacz jako w trakcie"
+  },
+  "focus_remove_title": {
+    "message": "W trakcie — usuń oznaczenie"
+  },
+  "focus_title": {
+    "message": "W trakcie — oznacz jako aktywne"
+  },
+  "import_confirm": {
+    "message": "Import zastąpi wszystkie istniejące notatki i tagi. Czy chcesz kontynuować?"
+  },
+  "import_error_fileTooLarge": {
+    "message": "Plik jest za duży (max 20 MB)"
+  },
+  "import_error_missingNotes": {
+    "message": "Niepoprawny plik — oczekiwano JSON z polem notes"
+  },
+  "import_error_prefix": {
+    "message": "Błąd importu:"
+  },
+  "import_error_schemaVersion": {
+    "message": "Plik pochodzi z nowszej wersji aplikacji i nie może być zaimportowany."
+  },
+  "import_error_tooManyNotes": {
+    "message": "Plik zawiera więcej niż $COUNT$ notatek",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "10000"
+      }
+    }
+  },
+  "import_error_tooManyTags": {
+    "message": "Plik zawiera więcej niż $COUNT$ tagów",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
+  },
+  "import_success": {
+    "message": "Zaimportowano $NOTES$ notatek i $TAGS$ tagów.",
+    "placeholders": {
+      "notes": {
+        "content": "$1",
+        "example": "42"
+      },
+      "tags": {
+        "content": "$2",
+        "example": "7"
+      }
+    }
+  },
+  "import_warning_rejected": {
+    "message": "Pominięto $NOTES$ niepoprawnych notatek i $TAGS$ niepoprawnych tagów.",
+    "placeholders": {
+      "notes": {
+        "content": "$1",
+        "example": "3"
+      },
+      "tags": {
+        "content": "$2",
+        "example": "1"
+      }
+    }
+  },
+  "important_ariaLabel": {
+    "message": "Oznacz jako ważne"
+  },
+  "important_remove_title": {
+    "message": "Usuń oznaczenie ważności"
+  },
+  "important_title": {
+    "message": "Ważne"
+  },
+  "linkModal_cancel": {
+    "message": "Anuluj"
+  },
+  "linkModal_close": {
+    "message": "Zamknij"
+  },
+  "linkModal_error_emptyUrl": {
+    "message": "Podaj adres URL"
+  },
+  "linkModal_error_invalidUrl": {
+    "message": "Niepoprawny adres URL"
+  },
+  "linkModal_remove": {
+    "message": "Usuń link"
+  },
+  "linkModal_save": {
+    "message": "Zapisz"
+  },
+  "linkModal_textLabel": {
+    "message": "Tekst linku"
+  },
+  "linkModal_title": {
+    "message": "Wstaw link"
+  },
+  "linkModal_title_edit": {
+    "message": "Edytuj link"
+  },
+  "linkModal_title_new": {
+    "message": "Wstaw link"
+  },
+  "linkModal_urlLabel": {
+    "message": "Adres URL"
+  },
+  "listCollapse_title": {
+    "message": "Zwiń listę  Alt+L"
+  },
+  "listExpand_title": {
+    "message": "Rozwiń listę  Alt+L"
+  },
+  "list_empty": {
+    "message": "Brak notatek i zadań"
+  },
+  "list_empty_filtered": {
+    "message": "Brak wyników"
+  },
+  "list_empty_filtered_clearBtn": {
+    "message": "Wyczyść filtry"
+  },
+  "list_empty_noNotes": {
+    "message": "Brak notatek"
+  },
+  "list_empty_noTasks": {
+    "message": "Brak zadań"
+  },
+  "newItemInline_note": {
+    "message": "notatkę"
+  },
+  "newItemInline_or": {
+    "message": "lub"
+  },
+  "newItemInline_prefix": {
+    "message": "Dodaj"
+  },
+  "newItemInline_task": {
+    "message": "zadanie"
+  },
+  "noteStatus_editing": {
+    "message": "Edytujesz $KIND$",
+    "placeholders": {
+      "kind": {
+        "content": "$1",
+        "example": "zadanie"
+      }
+    }
+  },
+  "noteStatus_editingWithTitle": {
+    "message": "Edytujesz $KIND$: $TITLE$",
+    "placeholders": {
+      "kind": {
+        "content": "$1",
+        "example": "zadanie"
+      },
+      "title": {
+        "content": "$2",
+        "example": "Wyślij raport"
+      }
+    }
+  },
+  "noteStatus_kind_note": {
+    "message": "notatkę"
+  },
+  "noteStatus_kind_task": {
+    "message": "zadanie"
+  },
+  "noteStatus_noTitle": {
+    "message": "Brak tytułu"
+  },
+  "note_deleteItem_ariaLabel": {
+    "message": "Usuń notatkę z listy"
+  },
+  "note_preview_ariaLabel": {
+    "message": "Podgląd treści"
+  },
+  "note_preview_empty": {
+    "message": "Brak treści"
+  },
+  "note_untitled": {
+    "message": "Bez tytułu"
+  },
+  "notif_message_1hBefore": {
+    "message": "Zaplanowane na $TIME$ — przypomnienie 1h przed",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      }
+    }
+  },
+  "notif_message_minBefore": {
+    "message": "Zaplanowane na $TIME$ — przypomnienie $MIN$ min przed",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      },
+      "min": {
+        "content": "$2",
+        "example": "15"
+      }
+    }
+  },
+  "notif_message_noTime": {
+    "message": "Zaplanowane — brak godziny"
+  },
+  "notif_message_onTime": {
+    "message": "Zaplanowane na $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      }
+    }
+  },
+  "notif_title_fallback": {
+    "message": "Przypomnienie o zadaniu"
+  },
+  "ob_btn_close": {
+    "message": "Zamknij"
+  },
+  "ob_btn_done": {
+    "message": "Zakończ"
+  },
+  "ob_btn_next": {
+    "message": "Dalej"
+  },
+  "ob_btn_prev": {
+    "message": "←"
+  },
+  "ob_btn_settings": {
+    "message": "⚙ Ustawienia"
+  },
+  "ob_btn_skip": {
+    "message": "Pomiń wszystko"
+  },
+  "ob_done_s1": {
+    "message": "Gotowe! Znasz już podstawy AsideNotes. Przewodnik możesz uruchomić ponownie w dowolnym momencie z panelu ustawień."
+  },
+  "ob_done_s2": {
+    "message": "Świetnie! Wiesz już jak zarządzać zadaniami z terminami i powtarzaniem. Kolejne etapy przewodnika znajdziesz w ustawieniach."
+  },
+  "ob_done_s3": {
+    "message": "Tryby skupienia opanowane. Alt+Z i Alt+M to skróty które warto mieć w pamięci mięśniowej."
+  },
+  "ob_done_s4": {
+    "message": "Przewodnik ukończony. Znasz teraz wszystkie kluczowe funkcje AsideNotes. Do dzieła!"
+  },
+  "ob_panel_title": {
+    "message": "Przewodnik"
+  },
+  "ob_s1_1": {
+    "message": "Wpisz coś i wciśnij Enter. Dodaj ! na początku żeby utworzyć zadanie zamiast notatki."
+  },
+  "ob_s1_2": {
+    "message": "Tu są twoje notatki i zadania. Kliknij element żeby go otworzyć."
+  },
+  "ob_s1_2_empty": {
+    "message": "Jeszcze nie masz notatek. Wróć do kroku 1 i dodaj pierwszą — wpisz coś w polu wyżej i wciśnij Enter."
+  },
+  "ob_s1_3": {
+    "message": "Tu piszesz. Markdown działa: # nagłówek, - lista, **bold**, *italic*, ~~strike~~, `kod`, --- separator."
+  },
+  "ob_s1_4": {
+    "message": "Wpisz / żeby zobaczyć wszystkie typy bloków: nagłówki, listy, callout, kod i więcej."
+  },
+  "ob_s1_5": {
+    "message": "Jest też tryb szybkiego dodawania — osobne okienko bez konieczności otwierania edytora. Wpisujesz notatkę lub zadanie i wracasz do pracy."
+  },
+  "ob_s1_6": {
+    "message": "Alt+Shift+S otwiera szybkie dodawanie z dowolnej karty przeglądarki. Możesz zamknąć i otworzyć AsideNotes kiedy chcesz — Alt+Shift+Q."
+  },
+  "ob_s2_1": {
+    "message": "Wpisz !zadzwonić do mamy jutro 18:00 i Enter — tworzy zadanie z terminem i alarmem."
+  },
+  "ob_s2_2": {
+    "message": "Kliknij zadanie na liście żeby je otworzyć w edytorze."
+  },
+  "ob_s2_2_empty": {
+    "message": "Nie masz jeszcze żadnych zadań. Wróć do kroku 1 — wpisz !coś w polu powyżej i wciśnij Enter."
+  },
+  "ob_s2_3": {
+    "message": "Kliknij pole terminu żeby ustawić datę, godzinę i przypomnienie w jednym miejscu."
+  },
+  "ob_s2_4_rec": {
+    "message": "Na dole pickera możesz ustawić powtarzanie — codziennie, co tydzień, co miesiąc, co rok lub wybrane dni tygodnia."
+  },
+  "ob_s2_5": {
+    "message": "Zadania układają się automatycznie: Zaległe, Dziś, Jutro, Ten tydzień i dalej."
+  },
+  "ob_s3_1": {
+    "message": "Wciśnij Alt+Z — zen mode pokazuje tylko to co ważne dziś i redukuje bodźce wizualne."
+  },
+  "ob_s3_2": {
+    "message": "Alt+Z jeszcze raz wyłącza zen mode i wraca do normalnego widoku."
+  },
+  "ob_s3_3": {
+    "message": "Wciśnij Alt+M — edytor zajmuje cały ekran. Idealne do dłuższego pisania."
+  },
+  "ob_s4_1": {
+    "message": "Dodaj tag do notatki — kliknij + dodaj tag pod edytorem. Filtruj listę po tagach."
+  },
+  "ob_s4_2": {
+    "message": "Filtruj notatki i zadania po tagach, typie i terminie."
+  },
+  "ob_s4_3": {
+    "message": "Pełna lista skrótów w dwóch zakładkach: Ogólne i Edytor — przydaje się gdy zaczniesz używać klawiatury więcej niż myszy."
+  },
+  "ob_s4_4": {
+    "message": "Twoje dane są lokalne — zero chmury, zero trackerów. Eksportuj kiedy chcesz."
+  },
+  "ob_stage1_label": {
+    "message": "Start"
+  },
+  "ob_stage2_label": {
+    "message": "Zadania i terminy"
+  },
+  "ob_stage3_label": {
+    "message": "Tryby skupienia"
+  },
+  "ob_stage4_label": {
+    "message": "Zaawansowany"
+  },
+  "panelBtn_ariaLabel": {
+    "message": "Otwórz panel personalizacji"
+  },
+  "panelBtn_title": {
+    "message": "Ustawienia · Alt+P"
+  },
+  "panel_appearance_auto": {
+    "message": "Auto"
+  },
+  "panel_appearance_dark": {
+    "message": "Ciemny"
+  },
+  "panel_appearance_light": {
+    "message": "Jasny"
+  },
+  "panel_appearance_title": {
+    "message": "Wygląd"
+  },
+  "panel_close_ariaLabel": {
+    "message": "Zamknij panel"
+  },
+  "panel_data_export": {
+    "message": "Eksportuj do JSON"
+  },
+  "panel_data_import": {
+    "message": "Importuj z JSON"
+  },
+  "panel_data_title": {
+    "message": "Dane"
+  },
+  "panel_data_undoImport": {
+    "message": "Cofnij ostatni import"
+  },
+  "panel_data_undoImport_confirm": {
+    "message": "Przywrócić stan sprzed importu? Aktualne notatki zostaną zastąpione."
+  },
+  "panel_data_undoImport_done": {
+    "message": "Przywrócono stan sprzed importu."
+  },
+  "panel_data_undoImport_info": {
+    "message": "Kopia z $1 · $2 notatek"
+  },
+  "panel_deletedNotes_empty": {
+    "message": "Opróżnij"
+  },
+  "panel_deletedNotes_emptyState": {
+    "message": "Brak usuniętych elementów"
+  },
+  "panel_deletedNotes_title": {
+    "message": "Niedawno usunięte"
+  },
+  "panel_editor_placeholder": {
+    "message": "Pokaż podpowiedź w pustej linii"
+  },
+  "panel_editor_title": {
+    "message": "Edytor"
+  },
+  "panel_editor_toolbarToggle": {
+    "message": "Pokaż toolbar edytora · Alt+E"
+  },
+  "panel_editor_toolbarTooltips": {
+    "message": "Pokaż podpowiedzi w toolbarze"
+  },
+  "panel_security_acknowledge": {
+    "message": "Rozumiem — ukryj ostrzeżenie"
+  },
+  "panel_security_context": {
+    "message": "Dane są przechowywane lokalnie w pamięci przeglądarki."
+  },
+  "panel_security_intro": {
+    "message": "AsideNotes nie szyfruje notatek."
+  },
+  "panel_security_title": {
+    "message": "Prywatność i bezpieczeństwo"
+  },
+  "panel_security_warning": {
+    "message": "Nie wpisuj haseł, numerów kart ani innych wrażliwych danych."
+  },
+  "panel_tab_general": {
+    "message": "Ogólne"
+  },
+  "panel_tab_general_title": {
+    "message": "Ustawienia ogólne"
+  },
+  "panel_tab_settings": {
+    "message": "Ustawienia"
+  },
+  "panel_tab_shortcuts": {
+    "message": "Skróty"
+  },
+  "panel_tab_shortcuts_title": {
+    "message": "Skróty klawiszowe"
+  },
+  "panel_tab_tags": {
+    "message": "Tagi"
+  },
+  "panel_tab_tags_title": {
+    "message": "Zarządzanie tagami"
+  },
+  "panel_tags_addBtn": {
+    "message": "Dodaj tag"
+  },
+  "panel_tags_changeColor": {
+    "message": "Zmień kolor"
+  },
+  "panel_tags_customColor": {
+    "message": "Własny kolor"
+  },
+  "panel_tags_delete": {
+    "message": "Usuń tag"
+  },
+  "panel_tags_deleteConfirm": {
+    "message": "Usunąć tag \"$1\"? $2 notatek straci to powiązanie."
+  },
+  "panel_tags_edit": {
+    "message": "Edytuj nazwę tagu"
+  },
+  "panel_tags_empty": {
+    "message": "Brak tagów. Dodaj pierwszy tag poniżej."
+  },
+  "panel_tags_moveDown": {
+    "message": "Przesuń niżej"
+  },
+  "panel_tags_moveUp": {
+    "message": "Przesuń wyżej"
+  },
+  "panel_tags_newAriaLabel": {
+    "message": "Nazwa nowego tagu"
+  },
+  "panel_tags_newPlaceholder": {
+    "message": "Nazwa tagu..."
+  },
+  "panel_tags_save": {
+    "message": "Zapisz"
+  },
+  "panel_tags_title": {
+    "message": "Tagi"
+  },
+  "panel_title": {
+    "message": "Personalizacja"
+  },
+  "popup_added_note": {
+    "message": "✓ Notatka dodana"
+  },
+  "popup_added_task": {
+    "message": "✓ Zadanie dodane"
+  },
+  "popup_browserAction_title": {
+    "message": "Szybkie dodawanie"
+  },
+  "popup_error": {
+    "message": "Błąd — spróbuj ponownie"
+  },
+  "popup_esc_hint": {
+    "message": "<kbd>Esc</kbd> zamknij"
+  },
+  "popup_help_syntax_body": {
+    "message": "<div class='popup-help-panel__heading'>Notatki i zadania</div><div class='popup-help-row'><kbd>pomysł na projekt</kbd> <span class='popup-help-row__desc'>notatka</span></div><div class='popup-help-row'><kbd>!sprawdzić maila</kbd> <span class='popup-help-row__desc'>zadanie bez daty</span></div><div class='popup-help-row'><kbd>!zadzwonić jutro</kbd> <span class='popup-help-row__desc'>zadanie na jutro</span></div><div class='popup-help-row'><kbd>!paczka 15.06 14:30</kbd> <span class='popup-help-row__desc'>zadanie z datą i godziną</span></div><div class='popup-help-panel__heading'>Priorytety</div><div class='popup-help-row'><kbd>!!egzamin</kbd> <span class='popup-help-row__desc'>ważne zadanie (★)</span></div><div class='popup-help-row'><kbd>!>projekt</kbd> <span class='popup-help-row__desc'>zadanie w trakcie (▶)</span></div><div class='popup-help-row'><kbd>!!>termin</kbd> <span class='popup-help-row__desc'>ważne i w trakcie</span></div>"
+  },
+  "popup_help_title": {
+    "message": "Pokaż przykłady składni"
+  },
+  "popup_hint_main": {
+    "message": "<kbd>Enter</kbd> dodaj · <kbd>Shift+Enter</kbd> otwórz w edytorze"
+  },
+  "popup_placeholder": {
+    "message": "Notatka lub !zadanie"
+  },
+  "popup_title": {
+    "message": "Szybkie dodawanie"
+  },
+  "quickCapture_hint_title": {
+    "message": "Enter dodaj · Shift+Enter otwórz · ! zadanie · !! ważne · !> w trakcie"
+  },
+  "quickCapture_placeholder": {
+    "message": "Notatka lub !zadanie"
+  },
+  "quickCapture_preview_date_time": {
+    "message": "$DATE$ o $TIME$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      },
+      "time": {
+        "content": "$2"
+      }
+    }
+  },
+  "quickCapture_preview_note_empty": {
+    "message": "Dodasz notatkę"
+  },
+  "quickCapture_preview_note_titled": {
+    "message": "Dodasz notatkę: $TITLE$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickCapture_preview_task_dated": {
+    "message": "Dodasz zadanie na $DATE$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickCapture_preview_task_dated_titled": {
+    "message": "Dodasz zadanie na $DATE$: $TITLE$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      },
+      "title": {
+        "content": "$2"
+      }
+    }
+  },
+  "quickCapture_preview_task_empty": {
+    "message": "Dodasz zadanie"
+  },
+  "quickCapture_preview_task_titled": {
+    "message": "Dodasz zadanie: $TITLE$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "recurrenceBtn_title": {
+    "message": "Powtarzanie"
+  },
+  "recurrence_ariaLabel": {
+    "message": "Zadanie cykliczne"
+  },
+  "recurrence_custom": {
+    "message": "Wybrane dni"
+  },
+  "recurrence_daily": {
+    "message": "Codziennie"
+  },
+  "recurrence_monthly": {
+    "message": "Co miesiąc"
+  },
+  "recurrence_none": {
+    "message": "Nie powtarzaj"
+  },
+  "recurrence_weekly": {
+    "message": "Co tydzień"
+  },
+  "recurrence_yearly": {
+    "message": "Co rok"
+  },
+  "search_ariaLabel": {
+    "message": "Wyszukaj notatki i zadania"
+  },
+  "search_clear_ariaLabel": {
+    "message": "Wyczyść wyszukiwanie"
+  },
+  "search_clear_title": {
+    "message": "Wyczyść wyszukiwanie"
+  },
+  "search_placeholder": {
+    "message": "Szukaj..."
+  },
+  "search_title": {
+    "message": "Wyszukaj · Alt+S"
+  },
+  "section_done": {
+    "message": "Zakończone"
+  },
+  "section_later": {
+    "message": "Później"
+  },
+  "section_month": {
+    "message": "Ten miesiąc"
+  },
+  "section_notes": {
+    "message": "Notatki"
+  },
+  "section_overdue": {
+    "message": "Zaległe"
+  },
+  "section_today": {
+    "message": "Dzisiaj"
+  },
+  "section_tomorrow": {
+    "message": "Jutro"
+  },
+  "section_unscheduled": {
+    "message": "Do zaplanowania"
+  },
+  "section_week": {
+    "message": "Ten tydzień"
+  },
+  "security_btn_ariaLabel": {
+    "message": "Ostrzeżenie bezpieczeństwa"
+  },
+  "security_btn_title": {
+    "message": "Ostrzeżenie bezpieczeństwa"
+  },
+  "security_tooltip_goto": {
+    "message": "Przejdź do ustawień →"
+  },
+  "security_tooltip_text": {
+    "message": "Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do profilu Firefox."
+  },
+  "shortcuts_focusMode": {
+    "message": "→ tryb skupienia"
+  },
+  "shortcuts_formatting": {
+    "message": "Formatowanie"
+  },
+  "shortcuts_formatting_bold": {
+    "message": "Pogrubienie"
+  },
+  "shortcuts_formatting_bold_italic": {
+    "message": "→ Bold + Italic"
+  },
+  "shortcuts_formatting_captureOpen": {
+    "message": "Shift+Enter w capture → dodaj i otwórz edytor"
+  },
+  "shortcuts_formatting_code": {
+    "message": "Kod inline"
+  },
+  "shortcuts_formatting_hardBreak": {
+    "message": "→ Łamanie linii"
+  },
+  "shortcuts_formatting_indent": {
+    "message": "Wcięcie w prawo"
+  },
+  "shortcuts_formatting_italic": {
+    "message": "Kursywa"
+  },
+  "shortcuts_formatting_link": {
+    "message": "→ wstaw / edytuj link"
+  },
+  "shortcuts_formatting_linkOpen": {
+    "message": "Otwórz link (Ctrl+klik)"
+  },
+  "shortcuts_formatting_moveBlock": {
+    "message": "→ przesuń blok / element listy"
+  },
+  "shortcuts_formatting_outdent": {
+    "message": "Cofnij wcięcie"
+  },
+  "shortcuts_formatting_redo": {
+    "message": "Ponów"
+  },
+  "shortcuts_formatting_softBreak": {
+    "message": "→ miękki enter (br) w edytorze"
+  },
+  "shortcuts_formatting_strike": {
+    "message": "Przekreślenie"
+  },
+  "shortcuts_formatting_underline": {
+    "message": "Podkreślenie"
+  },
+  "shortcuts_formatting_undo": {
+    "message": "Cofnij"
+  },
+  "shortcuts_general_capture": {
+    "message": "Skocz do pola szybkiego dodawania"
+  },
+  "shortcuts_general_captureTask": {
+    "message": "Quick capture — zadanie (!)"
+  },
+  "shortcuts_general_esc": {
+    "message": "Wróć na listę / zamknij"
+  },
+  "shortcuts_general_filter": {
+    "message": "Otwórz / zamknij filtry"
+  },
+  "shortcuts_general_panel": {
+    "message": "Otwórz / zamknij panel"
+  },
+  "shortcuts_general_popup": {
+    "message": "Szybkie dodawanie (popup)"
+  },
+  "shortcuts_general_save": {
+    "message": "Zapisz natychmiast"
+  },
+  "shortcuts_general_search": {
+    "message": "Skocz do wyszukiwarki"
+  },
+  "shortcuts_general_shiftTab": {
+    "message": "Poprzedni element"
+  },
+  "shortcuts_general_tab": {
+    "message": "Następny element"
+  },
+  "shortcuts_general_toggle": {
+    "message": "Otwórz / zamknij sidebar"
+  },
+  "shortcuts_general_toolbar": {
+    "message": "→ pokaż / ukryj toolbar (też w trybie zen)"
+  },
+  "shortcuts_general_zen": {
+    "message": "→ tryb zen"
+  },
+  "shortcuts_list": {
+    "message": "Lista notatek"
+  },
+  "shortcuts_list_arrows": {
+    "message": "Nawigacja po liście"
+  },
+  "shortcuts_list_ctrlArrows": {
+    "message": "Przejdź do poprzedniej / następnej notatki z edytora"
+  },
+  "shortcuts_list_delete": {
+    "message": "Usuń notatkę"
+  },
+  "shortcuts_list_enter": {
+    "message": "Otwórz notatkę"
+  },
+  "shortcuts_list_space": {
+    "message": "Zaznacz / odznacz zadanie"
+  },
+  "shortcuts_markdown": {
+    "message": "Skróty Markdown"
+  },
+  "shortcuts_markdown_blocks": {
+    "message": "Markdown — bloki"
+  },
+  "shortcuts_markdown_callout_caution": {
+    "message": ">[!CAUTION] + spacja → blok Caution"
+  },
+  "shortcuts_markdown_callout_important": {
+    "message": ">[!IMPORTANT] + spacja → blok Important"
+  },
+  "shortcuts_markdown_callout_note": {
+    "message": ">[!NOTE] + spacja → blok Note"
+  },
+  "shortcuts_markdown_callout_tip": {
+    "message": ">[!TIP] + spacja → blok Tip"
+  },
+  "shortcuts_markdown_callout_warning": {
+    "message": ">[!WARNING] + spacja → blok Warning"
+  },
+  "shortcuts_markdown_checklist": {
+    "message": "Lista zadań (odznaczona)"
+  },
+  "shortcuts_markdown_checklist_done": {
+    "message": "Lista zadań (zaznaczona)"
+  },
+  "shortcuts_markdown_code": {
+    "message": "Kod inline"
+  },
+  "shortcuts_markdown_codeblock": {
+    "message": "→ Blok kodu"
+  },
+  "shortcuts_markdown_codeblock_lang": {
+    "message": "→ Blok kodu z językiem"
+  },
+  "shortcuts_markdown_h1": {
+    "message": "Nagłówek H1"
+  },
+  "shortcuts_markdown_h2": {
+    "message": "Nagłówek H2"
+  },
+  "shortcuts_markdown_h3": {
+    "message": "Nagłówek H3"
+  },
+  "shortcuts_markdown_hr": {
+    "message": "Separator"
+  },
+  "shortcuts_markdown_inline": {
+    "message": "Markdown — inline"
+  },
+  "shortcuts_markdown_link": {
+    "message": "Link"
+  },
+  "shortcuts_markdown_list": {
+    "message": "Lista punktowana"
+  },
+  "shortcuts_markdown_ordered": {
+    "message": "Lista numerowana"
+  },
+  "shortcuts_markdown_quote": {
+    "message": "Cytat"
+  },
+  "shortcuts_markdown_toggle": {
+    "message": "→ Lista rozwijana"
+  },
+  "shortcuts_qc_captureOpen": {
+    "message": "→ capture i otwórz edytor"
+  },
+  "shortcuts_qc_date": {
+    "message": "→ konkretna data"
+  },
+  "shortcuts_qc_dayKeywords": {
+    "message": "→ termin: dziś lub jutro"
+  },
+  "shortcuts_qc_task": {
+    "message": "→ tworzy zadanie"
+  },
+  "shortcuts_qc_taskInProgress": {
+    "message": "→ zadanie w trakcie (!>)"
+  },
+  "shortcuts_qc_time": {
+    "message": "→ godzina i alarm"
+  },
+  "shortcuts_qc_weekdays": {
+    "message": "→ dzień tygodnia (następny)"
+  },
+  "shortcuts_quickCapture": {
+    "message": "Quick capture"
+  },
+  "shortcuts_showAll": {
+    "message": "Wszystkie skróty →"
+  },
+  "shortcuts_sidebar": {
+    "message": "Alt+Shift+Q — otwórz / zamknij sidebar"
+  },
+  "shortcuts_tab_editor": {
+    "message": "Edytor"
+  },
+  "shortcuts_tab_general": {
+    "message": "Ogólne"
+  },
+  "shortcuts_title": {
+    "message": "Skróty klawiszowe"
+  },
+  "shortcuts_toggle_ariaLabel": {
+    "message": "Pokaż skróty klawiszowe"
+  },
+  "shortcuts_toggle_title": {
+    "message": "Skróty klawiszowe"
+  },
+  "shortcuts_toolbarToggle": {
+    "message": "→ pokaż/ukryj toolbar"
+  },
+  "shortcuts_zenMode": {
+    "message": "→ tryb zen"
+  },
+  "sidebar_title": {
+    "message": "AsideNotes"
+  },
+  "slash_block_hint": {
+    "message": "Szukaj lub wybierz opcję…"
+  },
+  "slash_cmd_bullet": {
+    "message": "Lista punktowana"
+  },
+  "slash_cmd_callout_caution": {
+    "message": "Caution"
+  },
+  "slash_cmd_callout_important": {
+    "message": "Important"
+  },
+  "slash_cmd_callout_note": {
+    "message": "Note"
+  },
+  "slash_cmd_callout_tip": {
+    "message": "Tip"
+  },
+  "slash_cmd_callout_warning": {
+    "message": "Warning"
+  },
+  "slash_cmd_checklist": {
+    "message": "Lista zadań"
+  },
+  "slash_cmd_code": {
+    "message": "Blok kodu"
+  },
+  "slash_cmd_h1": {
+    "message": "Nagłówek 1"
+  },
+  "slash_cmd_h2": {
+    "message": "Nagłówek 2"
+  },
+  "slash_cmd_h3": {
+    "message": "Nagłówek 3"
+  },
+  "slash_cmd_link": {
+    "message": "Link"
+  },
+  "slash_cmd_ordered": {
+    "message": "Lista numerowana"
+  },
+  "slash_cmd_paragraph": {
+    "message": "Paragraf"
+  },
+  "slash_cmd_quote": {
+    "message": "Cytat"
+  },
+  "slash_cmd_toggle": {
+    "message": "Lista rozwijana"
+  },
+  "slash_group_blocks": {
+    "message": "Bloki"
+  },
+  "slash_group_callout": {
+    "message": "Callout"
+  },
+  "slash_group_lists": {
+    "message": "Listy"
+  },
+  "slash_group_text": {
+    "message": "Tekst"
+  },
+  "slash_no_results": {
+    "message": "Brak wyników"
+  },
+  "slash_search_placeholder": {
+    "message": "Szukaj komendy…"
+  },
+  "storage_usage_unavailable": {
+    "message": "Brak danych o zajętości"
+  },
+  "tagSelector_addBtn_emptyTitle": {
+    "message": "Dodaj tag"
+  },
+  "tagSelector_addBtn_long": {
+    "message": "+ dodaj tag"
+  },
+  "tagSelector_addBtn_short": {
+    "message": "+"
+  },
+  "tagSelector_managePanel": {
+    "message": "Zarządzaj tagami →"
+  },
+  "tagSelector_noNote": {
+    "message": "Utwórz notatkę żeby dodać tag."
+  },
+  "tagSelector_options_empty": {
+    "message": "Brak tagów. Dodaj tag w ustawieniach."
+  },
+  "tagSelector_pill_removeTitle": {
+    "message": "Usuń tag"
+  },
+  "tag_delete_cancel": {
+    "message": "Anuluj"
+  },
+  "tag_delete_confirm": {
+    "message": "Usuń tag"
+  },
+  "tag_delete_desc": {
+    "message": "Tag \"$1\" straci powiązanie z $2 notatkami i $3 zadaniami."
+  },
+  "tag_delete_title": {
+    "message": "Usuń tag"
+  },
+  "tag_delete_unused": {
+    "message": "Tag \"$1\" nie jest przypisany do żadnego elementu."
+  },
+  "task_markComplete": {
+    "message": "Oznacz jako ukończone"
+  },
+  "task_markIncomplete": {
+    "message": "Oznacz jako nieukończone"
+  },
+  "timeAgo_days": {
+    "message": "$1 dni temu"
+  },
+  "timeAgo_hours": {
+    "message": "$1 godz. temu"
+  },
+  "timeAgo_justNow": {
+    "message": "przed chwilą"
+  },
+  "timeAgo_minutes": {
+    "message": "$1 min temu"
+  },
+  "titleHint_short": {
+    "message": "początek treści pojawi się jako tymczasowy tytuł na liście."
+  },
+  "title_label": {
+    "message": "Tytuł"
+  },
+  "title_placeholder": {
+    "message": "Tytuł"
+  },
+  "toolbar_ariaLabel": {
+    "message": "Formatowanie tekstu"
+  },
+  "toolbar_blockquote": {
+    "message": "Cytat"
+  },
+  "toolbar_blockquote_title": {
+    "message": "Cytat · > + spacja"
+  },
+  "toolbar_bold": {
+    "message": "Pogrubienie"
+  },
+  "toolbar_bold_title": {
+    "message": "Pogrubienie · Ctrl+B"
+  },
+  "toolbar_bulletList": {
+    "message": "Lista punktowana"
+  },
+  "toolbar_bulletList_title": {
+    "message": "Lista punktowana · - + spacja"
+  },
+  "toolbar_callout_menu": {
+    "message": "Typ bloku"
+  },
+  "toolbar_callout_menu_title": {
+    "message": "Wybierz typ bloku cytatu"
+  },
+  "toolbar_checklist": {
+    "message": "Lista zadań"
+  },
+  "toolbar_checklistList": {
+    "message": "Lista zadań"
+  },
+  "toolbar_checklist_title": {
+    "message": "Lista zadań · -[ ] + spacja"
+  },
+  "toolbar_clearFormat": {
+    "message": "Wyczyść formatowanie"
+  },
+  "toolbar_clearFormat_title": {
+    "message": "Wyczyść formatowanie"
+  },
+  "toolbar_code": {
+    "message": "Kod inline"
+  },
+  "toolbar_code_title": {
+    "message": "Kod inline · Ctrl+`"
+  },
+  "toolbar_codeblock": {
+    "message": "Blok kodu"
+  },
+  "toolbar_codeblock_title": {
+    "message": "Blok kodu · ```"
+  },
+  "toolbar_formatBlock_ariaLabel": {
+    "message": "Format bloku"
+  },
+  "toolbar_formatBlock_title": {
+    "message": "Nagłówek · #/##/### + spacja"
+  },
+  "toolbar_format_h1": {
+    "message": "Nagłówek 1"
+  },
+  "toolbar_format_h2": {
+    "message": "Nagłówek 2"
+  },
+  "toolbar_format_h3": {
+    "message": "Nagłówek 3"
+  },
+  "toolbar_format_paragraph": {
+    "message": "Paragraf"
+  },
+  "toolbar_hr": {
+    "message": "Separator"
+  },
+  "toolbar_hr_title": {
+    "message": "Separator · --- + Enter"
+  },
+  "toolbar_italic": {
+    "message": "Kursywa"
+  },
+  "toolbar_italic_title": {
+    "message": "Kursywa · Ctrl+I"
+  },
+  "toolbar_link": {
+    "message": "Link"
+  },
+  "toolbar_link_title": {
+    "message": "Link · Ctrl+K"
+  },
+  "toolbar_list_menu": {
+    "message": "Typ listy"
+  },
+  "toolbar_list_menu_title": {
+    "message": "Wybierz typ listy"
+  },
+  "toolbar_orderedList": {
+    "message": "Lista numerowana"
+  },
+  "toolbar_orderedList_title": {
+    "message": "Lista numerowana · 1. + spacja"
+  },
+  "toolbar_redo": {
+    "message": "Ponów"
+  },
+  "toolbar_redo_title": {
+    "message": "Ponów · Ctrl+Y"
+  },
+  "toolbar_strikethrough": {
+    "message": "Przekreślenie"
+  },
+  "toolbar_strikethrough_title": {
+    "message": "Przekreślenie · Ctrl+Shift+X"
+  },
+  "toolbar_toggleList": {
+    "message": "Lista rozwijana"
+  },
+  "toolbar_underline": {
+    "message": "Podkreślenie"
+  },
+  "toolbar_underline_title": {
+    "message": "Podkreślenie · Ctrl+U"
+  },
+  "toolbar_undo": {
+    "message": "Cofnij"
+  },
+  "toolbar_undo_title": {
+    "message": "Cofnij · Ctrl+Z"
+  },
+  "typeToggle_all": {
+    "message": "Wszystko"
+  },
+  "typeToggle_all_title": {
+    "message": "Wszystko"
+  },
+  "typeToggle_ariaLabel": {
+    "message": "Filtruj typ"
+  },
+  "typeToggle_notes": {
+    "message": "Notatki"
+  },
+  "typeToggle_notes_title": {
+    "message": "Notatki"
+  },
+  "typeToggle_tasks": {
+    "message": "Zadania"
+  },
+  "typeToggle_tasks_title": {
+    "message": "Zadania"
+  },
+  "typeToggle_zen_ariaLabel": {
+    "message": "Tryb zen"
+  },
+  "typeToggle_zen_title": {
+    "message": "Zen — zaległe i dzisiejsze · Alt+Z"
+  },
+  "validation_empty": {
+    "message": "Pole nie może być puste"
+  },
+  "validation_notString": {
+    "message": "Niepoprawny format danych"
+  },
+  "validation_tagNotFound": {
+    "message": "Tag nie istnieje"
+  },
+  "validation_tagTooLong": {
+    "message": "Nazwa tagu nie może mieć więcej niż $MAX$ znaków",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "validation_titleTooLong": {
+    "message": "Tytuł nie może mieć więcej niż $MAX$ znaków",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "200"
+      }
+    }
+  },
+  "validation_tooLong": {
+    "message": "Wartość jest za długa"
+  },
+  "zen_allClear_sub": {
+    "message": "Brak zaległych i dzisiejszych zadań"
+  },
+  "zen_allClear_title": {
+    "message": "Wszystko ogarnięte"
+  },
+  "linkTooltip_open": { "message": "Otwórz link w nowej karcie" },
+  "linkTooltip_edit": { "message": "Edytuj link" },
+  "linkTooltip_delete": { "message": "Usuń link" },
+  "typeToggle_toggle_ariaLabel": { "message": "Przełącz widok filtra typów" },
+  "typeToggle_toggle_title": { "message": "Pokaż / ukryj filtry typów" }
+}

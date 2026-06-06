@@ -1,0 +1,307 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="./styles/tokens.css" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      input,
+      button,
+      select {
+        font: inherit;
+      }
+
+      body {
+        width: 380px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 14px;
+      }
+
+      /* ── Tytuł nad polem ── */
+      .popup-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-3);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      /* ── Input z ikoną prefiksem ── */
+      .popup-capture {
+        position: relative;
+      }
+
+      .popup-capture__icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        background-color: var(--text-3);
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+      }
+      .popup-capture--task .popup-capture__icon {
+        background-color: var(--gold);
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+      }
+
+      .popup-capture__input {
+        width: 100%;
+        padding: 10px 12px 10px 36px;
+        font-size: 14px;
+        font-family: inherit;
+        color: var(--text);
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
+        outline: none;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+
+      .popup-capture__input:focus {
+        background: var(--bg);
+        border-color: var(--border-strong);
+      }
+
+      .popup-capture__input::placeholder {
+        color: var(--text-3);
+      }
+
+      /* ── Hint + help button row ── */
+      .popup-hint-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .popup-hint {
+        font-size: 11px;
+        color: var(--text-3);
+        line-height: 1.5;
+        flex: 1;
+      }
+
+      .popup-help-btn {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.15s,
+          color 0.15s,
+          border-color 0.15s;
+        padding: 0;
+        line-height: 1;
+      }
+
+      .popup-help-btn:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      .popup-help-btn[aria-expanded='true'] {
+        background: var(--accent);
+        color: var(--accent-fg);
+        border-color: var(--accent);
+      }
+
+      /* ── Pełna pomoc (rozwijana in-place) ── */
+      .popup-help-panel {
+        margin-top: 10px;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 11px;
+        line-height: 1.7;
+        color: var(--text-2);
+      }
+
+      .popup-help-panel[hidden] {
+        display: none;
+      }
+
+      .popup-help-panel__section {
+        margin-bottom: 8px;
+      }
+
+      .popup-help-panel__section:last-child {
+        margin-bottom: 0;
+      }
+
+      .popup-help-panel__heading {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-3);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      /* Wiersze pod sobą — każda kategoria w nowej linii */
+      .popup-help-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+
+      .popup-help-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .popup-help-row__desc {
+        font-size: 10px;
+        color: var(--text-3);
+        font-style: italic;
+      }
+
+      .popup-help-panel kbd,
+      .popup-hint kbd,
+      .popup-esc-hint kbd {
+        display: inline-block;
+        padding: 1px 5px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: Consolas, monospace;
+        font-size: 10px;
+        color: var(--text);
+        line-height: 1.4;
+      }
+
+      /* ── Esc hint poza panelem podpowiedzi ── */
+      .popup-esc-hint {
+        font-size: 11px;
+        color: var(--text-3);
+        line-height: 1.5;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+
+      .popup-esc-hint kbd {
+        flex-shrink: 0;
+      }
+
+      /* ── Feedback ── */
+      .popup-feedback {
+        margin-top: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        min-height: 18px;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+
+      .popup-feedback--visible {
+        opacity: 1;
+      }
+
+      .popup-feedback--note {
+        color: var(--text-2);
+      }
+      .popup-feedback--task {
+        color: var(--gold-text);
+      }
+      .popup-feedback--error {
+        color: var(--danger);
+      }
+      .popup-preview {
+        margin-top: 6px;
+        font-size: 11px;
+        color: var(--text-3);
+        font-style: italic;
+        min-height: 16px;
+        padding: 0 2px;
+        transition: opacity 0.15s;
+      }
+      .popup-preview:empty {
+        visibility: hidden;
+      }
+      .popup-preview[data-type='task'] {
+        color: var(--gold);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="popup-title" id="popup-title">Szybkie dodawanie</div>
+
+    <div class="popup-capture" id="popup-capture">
+      <span class="popup-capture__icon" aria-hidden="true"></span>
+      <input
+        id="popup-input"
+        class="popup-capture__input"
+        type="text"
+        autocomplete="off"
+        autofocus
+      />
+    </div>
+
+    <div class="popup-hint-row">
+      <div class="popup-hint" id="popup-hint"></div>
+      <div class="popup-esc-hint" id="popup-esc-hint"></div>
+      <button
+        type="button"
+        class="popup-help-btn"
+        id="popup-help-btn"
+        aria-expanded="false"
+        aria-controls="popup-help-panel"
+        title=""
+      >
+        ?
+      </button>
+    </div>
+
+    <div class="popup-help-panel" id="popup-help-panel" hidden>
+      <div id="popup-help-syntax"></div>
+    </div>
+
+    <div id="popup-preview" class="popup-preview" hidden></div>
+    <div class="popup-feedback" id="popup-feedback"></div>
+
+    <script src="scripts/popup.js" type="module"></script>
+  </body>
+</html>

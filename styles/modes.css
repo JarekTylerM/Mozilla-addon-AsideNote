@@ -1,0 +1,407 @@
+/* ══════════════════════════════════════════════════════════════
+   modes.css — zen mode, focus mode
+   Importuj jako ostatni — override reguły bazowe przez .zen-mode
+   i body.is-focus-mode.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 15. Zen mode ─────────────────────────────── */
+
+.zen-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 28px 16px;
+  text-align: center;
+}
+.zen-empty__check {
+  font-size: var(--text-icon);
+  color: var(--zen);
+  margin-bottom: 4px;
+}
+.zen-empty__title {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--text-2);
+}
+.zen-empty__sub {
+  font-size: var(--text-sm);
+  color: var(--text-3);
+}
+
+/* ── Wyciszenie elementów UI ─────────────────────── */
+
+.zen-mode .quick-capture {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+.zen-mode .quick-capture:focus-within {
+  opacity: 1;
+}
+
+.zen-mode .search-wrapper {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.zen-mode .search-wrapper:focus-within {
+  opacity: 1;
+  border-color: var(--border-strong);
+}
+
+.zen-mode #active-filters {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.zen-mode #filter-bar {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+.zen-mode #filter-bar:focus-within {
+  opacity: 1;
+}
+
+.zen-mode #filter-btn {
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+}
+.zen-mode #filter-btn:hover {
+  opacity: 1;
+  background-color: var(--zen);
+}
+
+.zen-mode #list-expand-btn {
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+}
+.zen-mode #list-expand-btn:hover {
+  opacity: 1;
+  background-color: var(--zen);
+}
+
+.zen-mode #type-toggle {
+  border-color: rgb(107 163 184 / 0.3);
+}
+
+.zen-mode .type-toggle__btn:not(.type-toggle__btn--active) {
+  color: var(--text-3);
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.zen-mode .type-toggle__btn:not(.type-toggle__btn--active):hover {
+  background: #fff0;
+  color: var(--text-3);
+  opacity: 0.5;
+}
+
+.zen-mode .status-row {
+  display: none;
+}
+
+.zen-mode .new-item-link {
+  color: var(--text-3);
+  border-bottom-color: var(--text-3);
+}
+.zen-mode .new-item-inline {
+  color: var(--text-3);
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.zen-mode .tag-pill {
+  --tag-bg: var(--surface);
+  --tag-fg: var(--text-3);
+  opacity: 0.5;
+}
+
+.zen-mode .focusmode-btn {
+  opacity: 0.15;
+}
+
+.zen-mode #collapse-editor-btn {
+  opacity: 0.15;
+}
+
+/* ── Zen btn w search-row ────────────────────────── */
+
+/* W zen mode zen-btn wyróżniony kolorem, nie wyciszony */
+.zen-mode #zen-btn {
+  background-color: var(--zen);
+  opacity: 1;
+}
+
+/* type-toggle-btn wyciszony w zen mode */
+.zen-mode #type-toggle-btn {
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+}
+.zen-mode #type-toggle-btn:hover {
+  opacity: 1;
+  background-color: var(--zen);
+}
+
+/* ── Toolbar ─────────────────────────────────────── */
+
+#main-view.zen-mode #toolbar {
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+#main-view.zen-mode #toolbar:hover,
+#main-view.zen-mode #toolbar:focus-within {
+  opacity: 1;
+}
+
+/* ── Bottom bar ──────────────────────────────────── */
+
+body:has(#main-view.zen-mode) #toggle-shortcuts,
+body:has(#main-view.zen-mode) #panel-btn {
+  opacity: 0.2;
+}
+body:has(#main-view.zen-mode) #toggle-shortcuts:hover,
+body:has(#main-view.zen-mode) #panel-btn:hover {
+  opacity: 0.6;
+}
+
+/* ── Edytor — tytuł i termin ─────────────────────── */
+
+.zen-mode #title {
+  color: var(--text-3);
+  transition: color 0.2s ease;
+}
+.zen-mode #title:focus {
+  color: var(--text);
+}
+
+.zen-mode .due-bar__trigger {
+  color: var(--text-3);
+  transition: color 0.2s ease;
+}
+.zen-mode .due-bar__trigger:hover,
+.zen-mode .due-bar__trigger:focus {
+  color: var(--text);
+}
+.zen-mode .due-bar__trigger.has-value {
+  color: var(--text-2);
+}
+.zen-mode .due-bar__trigger.has-value:hover {
+  color: var(--text);
+}
+
+/* ── Lista notatek — kolejność: ogólne → szczegółowe ── */
+
+.zen-mode #notesList {
+  max-height: min(55vh, calc(100vh - 260px));
+  transition: max-height 0.25s ease;
+}
+
+.zen-mode .note-item {
+  color: var(--text-3);
+}
+
+.zen-mode .note-item__star {
+  opacity: 0.7;
+}
+
+.zen-mode .note-item__preview:hover {
+  background-color: var(--zen);
+}
+
+/* Hover — rozjaśnienie tła, tekst i pełna widoczność */
+.zen-mode .note-item:hover {
+  background: rgb(107 163 184 / 0.06);
+  color: var(--text-2);
+  opacity: 1 !important;
+}
+
+/* Aktywna notatka — zen border + pełny tekst */
+.zen-mode .note-item.active-note {
+  border-left-color: var(--zen);
+  color: var(--text);
+  opacity: 1 !important;
+}
+
+/* Focus highlights — :has() wysoka specyficzność, po .active-note */
+.zen-mode
+  #notesList:has(.note-item--focused)
+  .note-item:not(.note-item--focused) {
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+.zen-mode
+  #notesList:has(.active-note)
+  .note-item:not(.active-note):not(.note-item--focused) {
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+.zen-mode #notesList:has(.active-note) .note-item--focused:not(.active-note) {
+  opacity: 0.6;
+}
+
+/* ── Note header — wyciszenie ikon ──────────────── */
+
+.zen-mode .note-header .icon-btn:not(:disabled) {
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+}
+.zen-mode .note-header .icon-btn:not(:disabled):hover {
+  opacity: 1;
+}
+
+/* ── Title placeholder ───────────────────────────── */
+
+.zen-mode #title::placeholder {
+  color: var(--text-3);
+  opacity: 0.5;
+}
+
+/* ── Tag selector ────────────────────────────────── */
+
+.zen-mode #tag-selector {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.zen-mode #tag-selector:hover,
+.zen-mode #tag-selector:focus-within {
+  opacity: 1;
+}
+
+/* ── List expanded mode ──────────────────────────── */
+
+#main-view.list-expanded .notes-list-wrapper {
+  flex: 1;
+  min-height: 0;
+}
+
+#main-view.list-expanded #notesList {
+  max-height: none;
+  flex: 1;
+  min-height: 0;
+}
+
+#main-view.list-expanded .note-header,
+#main-view.list-expanded #title-error,
+#main-view.list-expanded #due-wrapper,
+#main-view.list-expanded #editor-container,
+#main-view.list-expanded #tag-selector {
+  display: none !important;
+}
+
+/* ── 15b. Focus mode ──────────────────────────── */
+
+/*
+   Layout pionowy (flex column od body w dół):
+     body (flex column, 100vh, padding 0)
+       └─ #main-view (flex: 1, column, overflow hidden)
+            ├─ .note-header   (shrink: 0)
+            ├─ #due-wrapper   (shrink: 0, opcjonalny)
+            ├─ #editor-container (flex: 1, min-height: 0)
+            │    ├─ #toolbar  (shrink: 0)
+            │    └─ #editor   (flex: 1, height auto)
+            └─ #tag-selector  (shrink: 0)
+   #bottom-bar jest position: fixed — padding-bottom: 52px chroni przed zasłonięciem.
+*/
+
+body.is-focus-mode {
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+body.is-focus-mode #main-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 52px;
+}
+
+/* ZAMIEŃ: */
+body.is-focus-mode .quick-capture,
+body.is-focus-mode .search-row,
+body.is-focus-mode #active-filters,
+body.is-focus-mode #filter-bar,
+body.is-focus-mode #type-toggle,
+body.is-focus-mode .notes-list-wrapper,
+body.is-focus-mode .status-row {
+  display: none !important;
+}
+
+body.is-focus-mode .note-header {
+  flex-shrink: 0;
+  padding-inline: 8px;
+}
+body.is-focus-mode #title-error {
+  flex-shrink: 0;
+  padding-inline: 8px;
+}
+body.is-focus-mode #due-wrapper {
+  flex-shrink: 0;
+  padding-inline: 8px;
+}
+
+#editor-container {
+  position: relative;
+  transition:
+    border-radius 0.2s ease,
+    margin 0.2s ease;
+}
+body.is-focus-mode #editor-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+body.is-focus-mode #editor {
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto;
+}
+
+body.is-focus-mode #tag-selector {
+  flex-shrink: 0;
+}
+
+/* Przyciski w rogu edytora */
+.focusmode-btn {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  z-index: var(--z-editor-btn);
+  opacity: 0.4;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
+}
+.focusmode-btn:hover {
+  opacity: 1 !important;
+}
+body.is-focus-mode .focusmode-btn {
+  opacity: 0.5;
+}
+
+#collapse-editor-btn {
+  position: absolute;
+  bottom: 6px;
+  right: 36px;
+  z-index: var(--z-editor-btn);
+  opacity: 0.4;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
+}
+#collapse-editor-btn:hover {
+  opacity: 1 !important;
+}
+body.is-focus-mode #collapse-editor-btn {
+  opacity: 0.5;
+}

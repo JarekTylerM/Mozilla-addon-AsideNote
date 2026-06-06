@@ -1,0 +1,1479 @@
+{
+  "alarmBtn_title": {
+    "message": "Reminder"
+  },
+  "back_ariaLabel": {
+    "message": "Wróć do listy"
+  },
+  "back_title": {
+    "message": "Wróć do listy"
+  },
+  "callout_caution": {
+    "message": "Caution"
+  },
+  "callout_important": {
+    "message": "Important"
+  },
+  "callout_note": {
+    "message": "Note"
+  },
+  "callout_plain": {
+    "message": "Quote"
+  },
+  "callout_tip": {
+    "message": "Tip"
+  },
+  "callout_warning": {
+    "message": "Warning"
+  },
+  "collapseEditor_title": {
+    "message": "Close editor  Esc"
+  },
+  "common_today": {
+    "message": "today"
+  },
+  "common_tomorrow": {
+    "message": "tomorrow"
+  },
+  "common_yesterday": {
+    "message": "yesterday"
+  },
+  "convertType_ariaLabel": {
+    "message": "Change type"
+  },
+  "convertType_toNote_title": {
+    "message": "Convert to note"
+  },
+  "convertType_toTask_title": {
+    "message": "Convert to task"
+  },
+  "datePicker_nextWeek": {
+    "message": "Next week"
+  },
+  "datePicker_rec_custom": {
+    "message": "Days"
+  },
+  "datePicker_rec_daily": {
+    "message": "Daily"
+  },
+  "datePicker_rec_monthly": {
+    "message": "Monthly"
+  },
+  "datePicker_rec_none": {
+    "message": "—"
+  },
+  "datePicker_rec_weekly": {
+    "message": "Weekly"
+  },
+  "datePicker_rec_yearly": {
+    "message": "Yearly"
+  },
+  "datePicker_reminderNoTime": {
+    "message": "Set a time for the reminder to work."
+  },
+  "datePicker_thisWeek": {
+    "message": "This week"
+  },
+  "datePicker_today": {
+    "message": "Today"
+  },
+  "datePicker_tomorrow": {
+    "message": "Tomorrow"
+  },
+  "day_short_0": {
+    "message": "Su"
+  },
+  "day_short_1": {
+    "message": "Mo"
+  },
+  "day_short_2": {
+    "message": "Tu"
+  },
+  "day_short_3": {
+    "message": "We"
+  },
+  "day_short_4": {
+    "message": "Th"
+  },
+  "day_short_5": {
+    "message": "Fr"
+  },
+  "day_short_6": {
+    "message": "Sa"
+  },
+  "delete_ariaLabel": {
+    "message": "Delete note"
+  },
+  "delete_title": {
+    "message": "Delete · Del"
+  },
+  "deletedNote_deletePermanently": {
+    "message": "Delete permanently"
+  },
+  "deletedNote_noContent": {
+    "message": "(no content)"
+  },
+  "deletedNote_restore": {
+    "message": "Restore"
+  },
+  "deletedNote_untitled": {
+    "message": "(untitled)"
+  },
+  "deletedNotes_confirmEmpty": {
+    "message": "Permanently delete all items in trash?"
+  },
+  "dueClear_ariaLabel": {
+    "message": "Clear due date"
+  },
+  "dueClear_title": {
+    "message": "Clear due date and time"
+  },
+  "dueDate_ariaLabel": {
+    "message": "Due date"
+  },
+  "dueDate_placeholder": {
+    "message": "Due date"
+  },
+  "dueDate_title": {
+    "message": "Due date"
+  },
+  "dueReminder_15min": {
+    "message": "15 min before"
+  },
+  "dueReminder_1h": {
+    "message": "1h before"
+  },
+  "dueReminder_30min": {
+    "message": "30 min before"
+  },
+  "dueReminder_5min": {
+    "message": "5 min before"
+  },
+  "dueReminder_Nmin": {
+    "message": "$1 min before",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "dueReminder_ariaLabel": {
+    "message": "Reminder offset"
+  },
+  "dueReminder_needTime": {
+    "message": "Set a time to enable reminders"
+  },
+  "dueReminder_onTime": {
+    "message": "At due time"
+  },
+  "dueReminder_title": {
+    "message": "Reminder"
+  },
+  "dueTime_ariaLabel": {
+    "message": "Due time"
+  },
+  "dueTime_placeholder": {
+    "message": "Time"
+  },
+  "dueTime_title": {
+    "message": "Time"
+  },
+  "due_daysAgo": {
+    "message": "$DAYS$ days ago",
+    "placeholders": {
+      "days": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "due_today": {
+    "message": "today"
+  },
+  "due_tomorrow": {
+    "message": "tomorrow"
+  },
+  "due_yesterday": {
+    "message": "yesterday"
+  },
+  "editor_ariaLabel": {
+    "message": "Note content"
+  },
+  "editor_details_placeholder": {
+    "message": "Toggle content…"
+  },
+  "editor_empty_placeholder": {
+    "message": "Write or type '/' for commands"
+  },
+  "editor_link_ctrlClickHint": {
+    "message": "Ctrl+click to open link"
+  },
+  "editor_summary_placeholder": {
+    "message": "Toggle heading…"
+  },
+  "extension_dataCollectionDescription": {
+    "message": "This add-on does not collect any user data or telemetry. All data (notes) is stored locally in the user's browser."
+  },
+  "extension_description": {
+    "message": "A lightweight notepad in the browser sidebar"
+  },
+  "extension_name": {
+    "message": "AsideNotes by Tyler M.",
+    "description": "Brand name — do not translate."
+  },
+  "filter_active_label": {
+    "message": "Active filters"
+  },
+  "filter_ariaLabel": {
+    "message": "Filters"
+  },
+  "filter_clearAll": {
+    "message": "Clear filters"
+  },
+  "filter_date_ariaLabel": {
+    "message": "Filter by due date"
+  },
+  "filter_date_clear_ariaLabel": {
+    "message": "Clear date filter"
+  },
+  "filter_date_clear_title": {
+    "message": "Clear"
+  },
+  "filter_date_label": {
+    "message": "Due date"
+  },
+  "filter_hideCompleted": {
+    "message": "Hide completed"
+  },
+  "filter_hideCompleted_short": {
+    "message": "Hide completed"
+  },
+  "filter_inProgress": {
+    "message": "In progress only"
+  },
+  "filter_inProgress_short": {
+    "message": "In progress"
+  },
+  "filter_remove_ariaLabel": {
+    "message": "Remove filter"
+  },
+  "filter_tags_empty": {
+    "message": "No tags"
+  },
+  "filter_tags_separator": {
+    "message": "Tags"
+  },
+  "filter_title": {
+    "message": "Filters · Alt+F"
+  },
+  "focusMode_enter_ariaLabel": {
+    "message": "Enter focus mode"
+  },
+  "focusMode_enter_title": {
+    "message": "Focus mode (Alt+M)"
+  },
+  "focusMode_exit_ariaLabel": {
+    "message": "Exit focus mode"
+  },
+  "focusMode_exit_title": {
+    "message": "Exit focus mode (Alt+M)"
+  },
+  "focus_ariaLabel": {
+    "message": "Mark as in progress"
+  },
+  "focus_remove_title": {
+    "message": "In progress — remove mark"
+  },
+  "focus_title": {
+    "message": "In progress — mark as active"
+  },
+  "import_confirm": {
+    "message": "Import will replace all existing notes and tags. Continue?"
+  },
+  "import_error_fileTooLarge": {
+    "message": "File is too large (max 20 MB)"
+  },
+  "import_error_missingNotes": {
+    "message": "Invalid file — expected JSON with a notes field"
+  },
+  "import_error_prefix": {
+    "message": "Import error:"
+  },
+  "import_error_schemaVersion": {
+    "message": "This file was created by a newer version of the app and cannot be imported."
+  },
+  "import_error_tooManyNotes": {
+    "message": "File contains more than $COUNT$ notes",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "10000"
+      }
+    }
+  },
+  "import_error_tooManyTags": {
+    "message": "File contains more than $COUNT$ tags",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
+  },
+  "import_success": {
+    "message": "Imported $NOTES$ notes and $TAGS$ tags.",
+    "placeholders": {
+      "notes": {
+        "content": "$1",
+        "example": "42"
+      },
+      "tags": {
+        "content": "$2",
+        "example": "7"
+      }
+    }
+  },
+  "import_warning_rejected": {
+    "message": "Skipped $NOTES$ invalid notes and $TAGS$ invalid tags.",
+    "placeholders": {
+      "notes": {
+        "content": "$1",
+        "example": "3"
+      },
+      "tags": {
+        "content": "$2",
+        "example": "1"
+      }
+    }
+  },
+  "important_ariaLabel": {
+    "message": "Mark as important"
+  },
+  "important_remove_title": {
+    "message": "Remove importance flag"
+  },
+  "important_title": {
+    "message": "Important"
+  },
+  "linkModal_cancel": {
+    "message": "Cancel"
+  },
+  "linkModal_close": {
+    "message": "Close"
+  },
+  "linkModal_error_emptyUrl": {
+    "message": "Please enter a URL"
+  },
+  "linkModal_error_invalidUrl": {
+    "message": "Invalid URL"
+  },
+  "linkModal_remove": {
+    "message": "Remove link"
+  },
+  "linkModal_save": {
+    "message": "Save"
+  },
+  "linkModal_textLabel": {
+    "message": "Link text"
+  },
+  "linkModal_title": {
+    "message": "Insert link"
+  },
+  "linkModal_title_edit": {
+    "message": "Edit link"
+  },
+  "linkModal_title_new": {
+    "message": "Insert link"
+  },
+  "linkModal_urlLabel": {
+    "message": "URL"
+  },
+  "listCollapse_title": {
+    "message": "Collapse list  Alt+L"
+  },
+  "listExpand_title": {
+    "message": "Expand list  Alt+L"
+  },
+  "list_empty": {
+    "message": "No notes or tasks"
+  },
+  "list_empty_filtered": {
+    "message": "No results"
+  },
+  "list_empty_filtered_clearBtn": {
+    "message": "Clear filters"
+  },
+  "list_empty_noNotes": {
+    "message": "No notes"
+  },
+  "list_empty_noTasks": {
+    "message": "No tasks"
+  },
+  "newItemInline_note": {
+    "message": "note"
+  },
+  "newItemInline_or": {
+    "message": "or"
+  },
+  "newItemInline_prefix": {
+    "message": "Add a"
+  },
+  "newItemInline_task": {
+    "message": "task"
+  },
+  "noteStatus_editing": {
+    "message": "Editing $KIND$",
+    "placeholders": {
+      "kind": {
+        "content": "$1",
+        "example": "task"
+      }
+    }
+  },
+  "noteStatus_editingWithTitle": {
+    "message": "Editing $KIND$: $TITLE$",
+    "placeholders": {
+      "kind": {
+        "content": "$1",
+        "example": "task"
+      },
+      "title": {
+        "content": "$2",
+        "example": "Send report"
+      }
+    }
+  },
+  "noteStatus_kind_note": {
+    "message": "note"
+  },
+  "noteStatus_kind_task": {
+    "message": "task"
+  },
+  "noteStatus_noTitle": {
+    "message": "No title"
+  },
+  "note_deleteItem_ariaLabel": {
+    "message": "Delete note from list"
+  },
+  "note_preview_ariaLabel": {
+    "message": "Preview content"
+  },
+  "note_preview_empty": {
+    "message": "No content"
+  },
+  "note_untitled": {
+    "message": "Untitled"
+  },
+  "notif_message_1hBefore": {
+    "message": "Scheduled for $TIME$ — reminder 1h before",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      }
+    }
+  },
+  "notif_message_minBefore": {
+    "message": "Scheduled for $TIME$ — reminder $MIN$ min before",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      },
+      "min": {
+        "content": "$2",
+        "example": "15"
+      }
+    }
+  },
+  "notif_message_noTime": {
+    "message": "Scheduled — no time set"
+  },
+  "notif_message_onTime": {
+    "message": "Scheduled for $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      }
+    }
+  },
+  "notif_title_fallback": {
+    "message": "Task reminder"
+  },
+  "ob_btn_close": {
+    "message": "Close"
+  },
+  "ob_btn_done": {
+    "message": "Done"
+  },
+  "ob_btn_next": {
+    "message": "Next"
+  },
+  "ob_btn_prev": {
+    "message": "←"
+  },
+  "ob_btn_settings": {
+    "message": "Settings"
+  },
+  "ob_btn_skip": {
+    "message": "Skip all"
+  },
+  "ob_done_s1": {
+    "message": "Done! You know the basics of AsideNotes. You can restart the guide anytime from the settings panel."
+  },
+  "ob_done_s2": {
+    "message": "Great! You now know how to manage tasks with due dates and recurrence. Find more guide stages in settings."
+  },
+  "ob_done_s3": {
+    "message": "Focus modes mastered. Alt+Z and Alt+M are shortcuts worth having in your muscle memory."
+  },
+  "ob_done_s4": {
+    "message": "Guide complete. You now know all the key features of AsideNotes. Go get things done!"
+  },
+  "ob_panel_title": {
+    "message": "Guide"
+  },
+  "ob_s1_1": {
+    "message": "Type something and press Enter. Start with ! to create a task instead of a note."
+  },
+  "ob_s1_2": {
+    "message": "Your notes and tasks live here. Click any item to open it."
+  },
+  "ob_s1_2_empty": {
+    "message": "No notes yet. Go back to step 1 and add your first one — type something in the field above and press Enter."
+  },
+  "ob_s1_3": {
+    "message": "Write here. Markdown works: # heading, - list, --- divider."
+  },
+  "ob_s1_4": {
+    "message": "Type / to see all block types: headings, lists, callouts, code and more."
+  },
+  "ob_s1_5": {
+    "message": "There's also a quick capture mode — a separate popup that opens without having to open the editor. Type a note or task and get back to what you were doing."
+  },
+  "ob_s1_6": {
+    "message": "Alt+Shift+S opens quick capture from any browser tab. You can close and reopen AsideNotes whenever you want — Alt+Shift+Q."
+  },
+  "ob_s2_1": {
+    "message": "Type !call mom tomorrow 6pm and Enter — creates a task with a due date and alarm."
+  },
+  "ob_s2_2": {
+    "message": "Click a task in the list to open it in the editor."
+  },
+  "ob_s2_2_empty": {
+    "message": "No tasks yet. Go back to step 1 — type !something in the field above and press Enter."
+  },
+  "ob_s2_3": {
+    "message": "Click the due date field to set date, time and reminder in one place."
+  },
+  "ob_s2_4_rec": {
+    "message": "At the bottom of the picker you can set recurrence — daily, weekly, monthly, yearly, or specific days of the week."
+  },
+  "ob_s2_5": {
+    "message": "Tasks sort themselves automatically: Overdue, Today, Tomorrow, This week and later."
+  },
+  "ob_s3_1": {
+    "message": "Press Alt+Z — zen mode shows only what matters today and reduces visual noise."
+  },
+  "ob_s3_2": {
+    "message": "Alt+Z again exits zen mode and returns to the normal view."
+  },
+  "ob_s3_3": {
+    "message": "Press Alt+M — the editor takes up the full panel. Great for longer writing."
+  },
+  "ob_s4_1": {
+    "message": "Add a tag to a note — click + add tag below the editor. Filter your list by tags."
+  },
+  "ob_s4_2": {
+    "message": "Filter notes and tasks by tags, type and due date."
+  },
+  "ob_s4_3": {
+    "message": "Full keyboard shortcut reference — useful once you start using the keyboard more."
+  },
+  "ob_s4_4": {
+    "message": "Your data is local — zero cloud, zero trackers. Export whenever you want."
+  },
+  "ob_stage1_label": {
+    "message": "Getting started"
+  },
+  "ob_stage2_label": {
+    "message": "Tasks and due dates"
+  },
+  "ob_stage3_label": {
+    "message": "Focus modes"
+  },
+  "ob_stage4_label": {
+    "message": "Advanced"
+  },
+  "panelBtn_ariaLabel": {
+    "message": "Open personalization panel"
+  },
+  "panelBtn_title": {
+    "message": "Settings · Alt+P"
+  },
+  "panel_appearance_auto": {
+    "message": "Auto"
+  },
+  "panel_appearance_dark": {
+    "message": "Dark"
+  },
+  "panel_appearance_light": {
+    "message": "Light"
+  },
+  "panel_appearance_title": {
+    "message": "Appearance"
+  },
+  "panel_close_ariaLabel": {
+    "message": "Close panel"
+  },
+  "panel_data_export": {
+    "message": "Export to JSON"
+  },
+  "panel_data_import": {
+    "message": "Import from JSON"
+  },
+  "panel_data_title": {
+    "message": "Data"
+  },
+  "panel_data_undoImport": {
+    "message": "Undo last import"
+  },
+  "panel_data_undoImport_confirm": {
+    "message": "Restore state before import? Current notes will be replaced."
+  },
+  "panel_data_undoImport_done": {
+    "message": "State restored from backup."
+  },
+  "panel_data_undoImport_info": {
+    "message": "Backup from $1 · $2 notes"
+  },
+  "panel_deletedNotes_empty": {
+    "message": "Empty"
+  },
+  "panel_deletedNotes_emptyState": {
+    "message": "No deleted items"
+  },
+  "panel_deletedNotes_title": {
+    "message": "Recently Deleted"
+  },
+  "panel_editor_placeholder": {
+    "message": "Show hint in empty line"
+  },
+  "panel_editor_title": {
+    "message": "Editor"
+  },
+  "panel_editor_toolbarToggle": {
+    "message": "Show editor toolbar · Alt+E"
+  },
+  "panel_editor_toolbarTooltips": {
+    "message": "Show toolbar tooltips"
+  },
+  "panel_security_acknowledge": {
+    "message": "I acknowledge the risk — hide the warning icon"
+  },
+  "panel_security_context": {
+    "message": "Data is stored locally in browser memory."
+  },
+  "panel_security_intro": {
+    "message": "AsideNotes does not encrypt notes."
+  },
+  "panel_security_title": {
+    "message": "Privacy & security"
+  },
+  "panel_security_warning": {
+    "message": "Do not store passwords, card numbers or other sensitive data."
+  },
+  "panel_tab_general": {
+    "message": "General"
+  },
+  "panel_tab_general_title": {
+    "message": "General settings"
+  },
+  "panel_tab_settings": {
+    "message": "Settings"
+  },
+  "panel_tab_shortcuts": {
+    "message": "Shortcuts"
+  },
+  "panel_tab_shortcuts_title": {
+    "message": "Keyboard shortcuts"
+  },
+  "panel_tab_tags": {
+    "message": "Tags"
+  },
+  "panel_tab_tags_title": {
+    "message": "Tag management"
+  },
+  "panel_tags_addBtn": {
+    "message": "Add tag"
+  },
+  "panel_tags_changeColor": {
+    "message": "Change color"
+  },
+  "panel_tags_customColor": {
+    "message": "Custom color"
+  },
+  "panel_tags_delete": {
+    "message": "Delete tag"
+  },
+  "panel_tags_deleteConfirm": {
+    "message": "Delete tag \"$1\"? $2 notes will lose this tag."
+  },
+  "panel_tags_edit": {
+    "message": "Edit tag name"
+  },
+  "panel_tags_empty": {
+    "message": "No tags yet. Add your first tag below."
+  },
+  "panel_tags_moveDown": {
+    "message": "Move down"
+  },
+  "panel_tags_moveUp": {
+    "message": "Move up"
+  },
+  "panel_tags_newAriaLabel": {
+    "message": "New tag name"
+  },
+  "panel_tags_newPlaceholder": {
+    "message": "Tag name..."
+  },
+  "panel_tags_save": {
+    "message": "Save"
+  },
+  "panel_tags_title": {
+    "message": "Tags"
+  },
+  "panel_title": {
+    "message": "Personalization"
+  },
+  "popup_added_note": {
+    "message": "✓ Note added"
+  },
+  "popup_added_task": {
+    "message": "✓ Task added"
+  },
+  "popup_browserAction_title": {
+    "message": "Quick add"
+  },
+  "popup_error": {
+    "message": "Error — please try again"
+  },
+  "popup_esc_hint": {
+    "message": "<kbd>Esc</kbd> close"
+  },
+  "popup_help_syntax_body": {
+    "message": "<div class='popup-help-panel__heading'>Notes and tasks</div><div class='popup-help-row'><kbd>project idea</kbd> <span class='popup-help-row__desc'>note</span></div><div class='popup-help-row'><kbd>!check email</kbd> <span class='popup-help-row__desc'>task without date</span></div><div class='popup-help-row'><kbd>!call mom tomorrow</kbd> <span class='popup-help-row__desc'>task for tomorrow</span></div><div class='popup-help-row'><kbd>!package 06/15 2:30pm</kbd> <span class='popup-help-row__desc'>task with date and time</span></div><div class='popup-help-panel__heading'>Priorities</div><div class='popup-help-row'><kbd>!!exam</kbd> <span class='popup-help-row__desc'>important task (★)</span></div><div class='popup-help-row'><kbd>!>project</kbd> <span class='popup-help-row__desc'>task in progress (▶)</span></div><div class='popup-help-row'><kbd>!!>deadline</kbd> <span class='popup-help-row__desc'>important and in progress</span></div>"
+  },
+  "popup_help_title": {
+    "message": "Show syntax examples"
+  },
+  "popup_hint_main": {
+    "message": "<kbd>Enter</kbd> add · <kbd>Shift+Enter</kbd> open in editor"
+  },
+  "popup_placeholder": {
+    "message": "Note or !task"
+  },
+  "popup_title": {
+    "message": "Quick add"
+  },
+  "quickCapture_hint_title": {
+    "message": "Enter add · Shift+Enter open · ! task · !! important · !> in progress"
+  },
+  "quickCapture_placeholder": {
+    "message": "Note or !task"
+  },
+  "quickCapture_preview_date_time": {
+    "message": "$DATE$ at $TIME$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      },
+      "time": {
+        "content": "$2"
+      }
+    }
+  },
+  "quickCapture_preview_note_empty": {
+    "message": "Adding a note"
+  },
+  "quickCapture_preview_note_titled": {
+    "message": "Adding note: $TITLE$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickCapture_preview_task_dated": {
+    "message": "Adding task $DATE$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickCapture_preview_task_dated_titled": {
+    "message": "Adding task $DATE$: $TITLE$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      },
+      "title": {
+        "content": "$2"
+      }
+    }
+  },
+  "quickCapture_preview_task_empty": {
+    "message": "Adding a task"
+  },
+  "quickCapture_preview_task_titled": {
+    "message": "Adding task: $TITLE$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "recurrenceBtn_title": {
+    "message": "Recurrence"
+  },
+  "recurrence_ariaLabel": {
+    "message": "Recurring task"
+  },
+  "recurrence_custom": {
+    "message": "Custom days"
+  },
+  "recurrence_daily": {
+    "message": "Daily"
+  },
+  "recurrence_monthly": {
+    "message": "Monthly"
+  },
+  "recurrence_none": {
+    "message": "Does not repeat"
+  },
+  "recurrence_weekly": {
+    "message": "Weekly"
+  },
+  "recurrence_yearly": {
+    "message": "Yearly"
+  },
+  "search_ariaLabel": {
+    "message": "Search notes and tasks"
+  },
+  "search_clear_ariaLabel": {
+    "message": "Clear search"
+  },
+  "search_clear_title": {
+    "message": "Clear search"
+  },
+  "search_placeholder": {
+    "message": "Search..."
+  },
+  "search_title": {
+    "message": "Search · Alt+S"
+  },
+  "section_done": {
+    "message": "Done"
+  },
+  "section_later": {
+    "message": "Later"
+  },
+  "section_month": {
+    "message": "This month"
+  },
+  "section_notes": {
+    "message": "Notes"
+  },
+  "section_overdue": {
+    "message": "Overdue"
+  },
+  "section_today": {
+    "message": "Today"
+  },
+  "section_tomorrow": {
+    "message": "Tomorrow"
+  },
+  "section_unscheduled": {
+    "message": "Unscheduled"
+  },
+  "section_week": {
+    "message": "This week"
+  },
+  "security_btn_ariaLabel": {
+    "message": "Security warning"
+  },
+  "security_btn_title": {
+    "message": "Security warning"
+  },
+  "security_tooltip_goto": {
+    "message": "Go to settings →"
+  },
+  "security_tooltip_text": {
+    "message": "Notes are not encrypted and are visible to anyone with access to this Firefox profile."
+  },
+  "shortcuts_focusMode": {
+    "message": "→ focus mode"
+  },
+  "shortcuts_formatting": {
+    "message": "Formatting"
+  },
+  "shortcuts_formatting_bold": {
+    "message": "Bold"
+  },
+  "shortcuts_formatting_bold_italic": {
+    "message": "→ Bold + Italic"
+  },
+  "shortcuts_formatting_captureOpen": {
+    "message": "Shift+Enter in capture → add and open editor"
+  },
+  "shortcuts_formatting_code": {
+    "message": "Inline code"
+  },
+  "shortcuts_formatting_hardBreak": {
+    "message": "→ Line break"
+  },
+  "shortcuts_formatting_indent": {
+    "message": "Indent"
+  },
+  "shortcuts_formatting_italic": {
+    "message": "Italic"
+  },
+  "shortcuts_formatting_link": {
+    "message": "→ insert / edit link"
+  },
+  "shortcuts_formatting_linkOpen": {
+    "message": "Open link (Ctrl+click)"
+  },
+  "shortcuts_formatting_moveBlock": {
+    "message": "→ move block / list item"
+  },
+  "shortcuts_formatting_outdent": {
+    "message": "Outdent"
+  },
+  "shortcuts_formatting_redo": {
+    "message": "Redo"
+  },
+  "shortcuts_formatting_softBreak": {
+    "message": "→ soft line break in editor"
+  },
+  "shortcuts_formatting_strike": {
+    "message": "Strikethrough"
+  },
+  "shortcuts_formatting_underline": {
+    "message": "Underline"
+  },
+  "shortcuts_formatting_undo": {
+    "message": "Undo"
+  },
+  "shortcuts_general_capture": {
+    "message": "Focus quick capture"
+  },
+  "shortcuts_general_captureTask": {
+    "message": "Quick capture — task (!)"
+  },
+  "shortcuts_general_esc": {
+    "message": "Back to list / close"
+  },
+  "shortcuts_general_filter": {
+    "message": "Open / close filters"
+  },
+  "shortcuts_general_panel": {
+    "message": "Open / close panel"
+  },
+  "shortcuts_general_popup": {
+    "message": "Quick add (popup)"
+  },
+  "shortcuts_general_save": {
+    "message": "Save immediately"
+  },
+  "shortcuts_general_search": {
+    "message": "Focus search"
+  },
+  "shortcuts_general_shiftTab": {
+    "message": "Previous element"
+  },
+  "shortcuts_general_tab": {
+    "message": "Next element"
+  },
+  "shortcuts_general_toggle": {
+    "message": "Open / close sidebar"
+  },
+  "shortcuts_general_toolbar": {
+    "message": "→ show / hide toolbar (also in zen mode)"
+  },
+  "shortcuts_general_zen": {
+    "message": "→ zen mode"
+  },
+  "shortcuts_list": {
+    "message": "Note list"
+  },
+  "shortcuts_list_arrows": {
+    "message": "Navigate list"
+  },
+  "shortcuts_list_ctrlArrows": {
+    "message": "Go to previous / next note from editor"
+  },
+  "shortcuts_list_delete": {
+    "message": "Delete note"
+  },
+  "shortcuts_list_enter": {
+    "message": "Open note"
+  },
+  "shortcuts_list_space": {
+    "message": "Toggle task checkbox"
+  },
+  "shortcuts_markdown": {
+    "message": "Markdown shortcuts"
+  },
+  "shortcuts_markdown_blocks": {
+    "message": "Markdown — blocks"
+  },
+  "shortcuts_markdown_callout_caution": {
+    "message": ">[!CAUTION] + space → Caution block"
+  },
+  "shortcuts_markdown_callout_important": {
+    "message": ">[!IMPORTANT] + space → Important block"
+  },
+  "shortcuts_markdown_callout_note": {
+    "message": ">[!NOTE] + space → Note block"
+  },
+  "shortcuts_markdown_callout_tip": {
+    "message": ">[!TIP] + space → Tip block"
+  },
+  "shortcuts_markdown_callout_warning": {
+    "message": ">[!WARNING] + space → Warning block"
+  },
+  "shortcuts_markdown_checklist": {
+    "message": "Task list (unchecked)"
+  },
+  "shortcuts_markdown_checklist_done": {
+    "message": "Task list (checked)"
+  },
+  "shortcuts_markdown_code": {
+    "message": "Inline code"
+  },
+  "shortcuts_markdown_codeblock": {
+    "message": "→ Code block"
+  },
+  "shortcuts_markdown_codeblock_lang": {
+    "message": "→ Code block with language"
+  },
+  "shortcuts_markdown_h1": {
+    "message": "Heading H1"
+  },
+  "shortcuts_markdown_h2": {
+    "message": "Heading H2"
+  },
+  "shortcuts_markdown_h3": {
+    "message": "Heading H3"
+  },
+  "shortcuts_markdown_hr": {
+    "message": "Separator"
+  },
+  "shortcuts_markdown_inline": {
+    "message": "Markdown — inline"
+  },
+  "shortcuts_markdown_link": {
+    "message": "Link"
+  },
+  "shortcuts_markdown_list": {
+    "message": "Bullet list"
+  },
+  "shortcuts_markdown_ordered": {
+    "message": "Numbered list"
+  },
+  "shortcuts_markdown_quote": {
+    "message": "Blockquote"
+  },
+  "shortcuts_markdown_toggle": {
+    "message": "→ Toggle list"
+  },
+  "shortcuts_qc_captureOpen": {
+    "message": "→ capture and open editor"
+  },
+  "shortcuts_qc_date": {
+    "message": "→ specific date"
+  },
+  "shortcuts_qc_dayKeywords": {
+    "message": "→ due: today or tomorrow"
+  },
+  "shortcuts_qc_task": {
+    "message": "→ creates a task"
+  },
+  "shortcuts_qc_taskInProgress": {
+    "message": "→ task in progress (!>)"
+  },
+  "shortcuts_qc_time": {
+    "message": "→ time and alarm"
+  },
+  "shortcuts_qc_weekdays": {
+    "message": "→ next weekday"
+  },
+  "shortcuts_quickCapture": {
+    "message": "Quick capture"
+  },
+  "shortcuts_showAll": {
+    "message": "All shortcuts →"
+  },
+  "shortcuts_sidebar": {
+    "message": "Alt+Shift+Q — open / close sidebar"
+  },
+  "shortcuts_tab_editor": {
+    "message": "Editor"
+  },
+  "shortcuts_tab_general": {
+    "message": "General"
+  },
+  "shortcuts_title": {
+    "message": "Keyboard shortcuts"
+  },
+  "shortcuts_toggle_ariaLabel": {
+    "message": "Show keyboard shortcuts"
+  },
+  "shortcuts_toggle_title": {
+    "message": "Keyboard shortcuts"
+  },
+  "shortcuts_toolbarToggle": {
+    "message": "→ show/hide toolbar"
+  },
+  "shortcuts_zenMode": {
+    "message": "→ zen mode"
+  },
+  "sidebar_title": {
+    "message": "AsideNotes"
+  },
+  "slash_block_hint": {
+    "message": "Search or pick an option…"
+  },
+  "slash_cmd_bullet": {
+    "message": "Bullet list"
+  },
+  "slash_cmd_callout_caution": {
+    "message": "Caution"
+  },
+  "slash_cmd_callout_important": {
+    "message": "Important"
+  },
+  "slash_cmd_callout_note": {
+    "message": "Note"
+  },
+  "slash_cmd_callout_tip": {
+    "message": "Tip"
+  },
+  "slash_cmd_callout_warning": {
+    "message": "Warning"
+  },
+  "slash_cmd_checklist": {
+    "message": "Checklist"
+  },
+  "slash_cmd_code": {
+    "message": "Code block"
+  },
+  "slash_cmd_h1": {
+    "message": "Heading 1"
+  },
+  "slash_cmd_h2": {
+    "message": "Heading 2"
+  },
+  "slash_cmd_h3": {
+    "message": "Heading 3"
+  },
+  "slash_cmd_link": {
+    "message": "Link"
+  },
+  "slash_cmd_ordered": {
+    "message": "Numbered list"
+  },
+  "slash_cmd_paragraph": {
+    "message": "Paragraph"
+  },
+  "slash_cmd_quote": {
+    "message": "Quote"
+  },
+  "slash_cmd_toggle": {
+    "message": "Toggle list"
+  },
+  "slash_group_blocks": {
+    "message": "Blocks"
+  },
+  "slash_group_callout": {
+    "message": "Callout"
+  },
+  "slash_group_lists": {
+    "message": "Lists"
+  },
+  "slash_group_text": {
+    "message": "Text"
+  },
+  "slash_no_results": {
+    "message": "No results"
+  },
+  "slash_search_placeholder": {
+    "message": "Search commands…"
+  },
+  "storage_usage_unavailable": {
+    "message": "Storage info unavailable"
+  },
+  "tagSelector_addBtn_emptyTitle": {
+    "message": "Add tag"
+  },
+  "tagSelector_addBtn_long": {
+    "message": "+ add tag"
+  },
+  "tagSelector_addBtn_short": {
+    "message": "+"
+  },
+  "tagSelector_managePanel": {
+    "message": "Manage tags →"
+  },
+  "tagSelector_noNote": {
+    "message": "Create a note to add a tag."
+  },
+  "tagSelector_options_empty": {
+    "message": "No tags yet. Add one in settings."
+  },
+  "tagSelector_pill_removeTitle": {
+    "message": "Remove tag"
+  },
+  "tag_delete_cancel": {
+    "message": "Cancel"
+  },
+  "tag_delete_confirm": {
+    "message": "Delete tag"
+  },
+  "tag_delete_desc": {
+    "message": "Tag \"$1\" will be removed from $2 notes and $3 tasks."
+  },
+  "tag_delete_title": {
+    "message": "Delete tag"
+  },
+  "tag_delete_unused": {
+    "message": "Tag \"$1\" is not assigned to any item."
+  },
+  "task_markComplete": {
+    "message": "Mark as complete"
+  },
+  "task_markIncomplete": {
+    "message": "Mark as incomplete"
+  },
+  "timeAgo_days": {
+    "message": "$1 days ago"
+  },
+  "timeAgo_hours": {
+    "message": "$1 h ago"
+  },
+  "timeAgo_justNow": {
+    "message": "just now"
+  },
+  "timeAgo_minutes": {
+    "message": "$1 min ago"
+  },
+  "titleHint_short": {
+    "message": "the beginning of your note will appear as a temporary title in the list."
+  },
+  "title_label": {
+    "message": "Title"
+  },
+  "title_placeholder": {
+    "message": "Title"
+  },
+  "toolbar_ariaLabel": {
+    "message": "Text formatting"
+  },
+  "toolbar_blockquote": {
+    "message": "Quote"
+  },
+  "toolbar_blockquote_title": {
+    "message": "Quote · > + space"
+  },
+  "toolbar_bold": {
+    "message": "Bold"
+  },
+  "toolbar_bold_title": {
+    "message": "Bold · Ctrl+B"
+  },
+  "toolbar_bulletList": {
+    "message": "Bullet list"
+  },
+  "toolbar_bulletList_title": {
+    "message": "Bullet list · - + space"
+  },
+  "toolbar_callout_menu": {
+    "message": "Block type"
+  },
+  "toolbar_callout_menu_title": {
+    "message": "Select block type"
+  },
+  "toolbar_checklist": {
+    "message": "Task list"
+  },
+  "toolbar_checklistList": {
+    "message": "Checklist"
+  },
+  "toolbar_checklist_title": {
+    "message": "Task list · -[ ] + space"
+  },
+  "toolbar_clearFormat": {
+    "message": "Clear formatting"
+  },
+  "toolbar_clearFormat_title": {
+    "message": "Clear formatting"
+  },
+  "toolbar_code": {
+    "message": "Inline code"
+  },
+  "toolbar_code_title": {
+    "message": "Inline code · Ctrl+`"
+  },
+  "toolbar_codeblock": {
+    "message": "Code block"
+  },
+  "toolbar_codeblock_title": {
+    "message": "Code block · ```"
+  },
+  "toolbar_formatBlock_ariaLabel": {
+    "message": "Block format"
+  },
+  "toolbar_formatBlock_title": {
+    "message": "Heading · #/##/### + space"
+  },
+  "toolbar_format_h1": {
+    "message": "Heading 1"
+  },
+  "toolbar_format_h2": {
+    "message": "Heading 2"
+  },
+  "toolbar_format_h3": {
+    "message": "Heading 3"
+  },
+  "toolbar_format_paragraph": {
+    "message": "Paragraph"
+  },
+  "toolbar_hr": {
+    "message": "Separator"
+  },
+  "toolbar_hr_title": {
+    "message": "Separator · --- + Enter"
+  },
+  "toolbar_italic": {
+    "message": "Italic"
+  },
+  "toolbar_italic_title": {
+    "message": "Italic · Ctrl+I"
+  },
+  "toolbar_link": {
+    "message": "Link"
+  },
+  "toolbar_link_title": {
+    "message": "Link · Ctrl+K"
+  },
+  "toolbar_list_menu": {
+    "message": "List type"
+  },
+  "toolbar_list_menu_title": {
+    "message": "Choose list type"
+  },
+  "toolbar_orderedList": {
+    "message": "Numbered list"
+  },
+  "toolbar_orderedList_title": {
+    "message": "Numbered list · 1. + space"
+  },
+  "toolbar_redo": {
+    "message": "Redo"
+  },
+  "toolbar_redo_title": {
+    "message": "Redo · Ctrl+Y"
+  },
+  "toolbar_strikethrough": {
+    "message": "Strikethrough"
+  },
+  "toolbar_strikethrough_title": {
+    "message": "Strikethrough · Ctrl+Shift+X"
+  },
+  "toolbar_toggleList": {
+    "message": "Toggle list"
+  },
+  "toolbar_underline": {
+    "message": "Underline"
+  },
+  "toolbar_underline_title": {
+    "message": "Underline · Ctrl+U"
+  },
+  "toolbar_undo": {
+    "message": "Undo"
+  },
+  "toolbar_undo_title": {
+    "message": "Undo · Ctrl+Z"
+  },
+  "typeToggle_all": {
+    "message": "All"
+  },
+  "typeToggle_all_title": {
+    "message": "All"
+  },
+  "typeToggle_ariaLabel": {
+    "message": "Filter by type"
+  },
+  "typeToggle_notes": {
+    "message": "Notes"
+  },
+  "typeToggle_notes_title": {
+    "message": "Notes"
+  },
+  "typeToggle_tasks": {
+    "message": "Tasks"
+  },
+  "typeToggle_tasks_title": {
+    "message": "Tasks"
+  },
+  "typeToggle_zen_ariaLabel": {
+    "message": "Zen mode"
+  },
+  "typeToggle_zen_title": {
+    "message": "Zen — overdue and today only · Alt+Z"
+  },
+  "validation_empty": {
+    "message": "Field cannot be empty"
+  },
+  "validation_notString": {
+    "message": "Invalid data format"
+  },
+  "validation_tagNotFound": {
+    "message": "Tag not found"
+  },
+  "validation_tagTooLong": {
+    "message": "Tag name cannot be longer than $MAX$ characters",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "validation_titleTooLong": {
+    "message": "Title cannot be longer than $MAX$ characters",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "200"
+      }
+    }
+  },
+  "validation_tooLong": {
+    "message": "Value is too long"
+  },
+  "zen_allClear_sub": {
+    "message": "No overdue or today's tasks"
+  },
+  "zen_allClear_title": {
+    "message": "All caught up"
+  },
+  "linkTooltip_open": { "message": "Open link in new tab" },
+  "linkTooltip_edit": { "message": "Edit link" },
+  "linkTooltip_delete": { "message": "Remove link" },
+  "typeToggle_toggle_ariaLabel": { "message": "Toggle type filter" },
+  "typeToggle_toggle_title": { "message": "Show / hide type filters" }
+}

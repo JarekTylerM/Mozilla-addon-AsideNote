@@ -1,0 +1,200 @@
+/* ══════════════════════════════════════════════════════════════
+   undo.js — undo/redo manager dla edytora rich-text
+   ──────────────────────────────────────────────────────────────
+   Kontrakt:
+   - init(editorEl)              — podpina się do edytora, zaczyna obserwować
+   - reset(initialContent?)      — wymaż stos, zacznij od nowa (np. przy zmianie notatki)
+   - checkpoint()                — zapisz aktualny stan jako nowy snapshot
+   - undo()                      — przywróć poprzedni snapshot, zwraca true/false
+   - redo()                      — wróć do snapshotu cofniętego, zwraca true/false
+   - canUndo() / canRedo()       — odpytanie stanu (np. dla disabled buttonów)
+   ══════════════════════════════════════════════════════════════ */
+
+const MAX_STACK = 50;
+const TYPING_PAUSE_MS = 500;
+
+let editor = null;
+let undoStack = [];
+let redoStack = [];
+let typingTimer = null;
+let lastSnapshotHTML = null;
+
+/**
+ * Snapshot to obiekt { html, selection } — selekcja przez ścieżkę offsetów,
+ * bo Range nie jest serializable i traci ważność po innerHTML replace.
+ */
+function _captureSnapshot() {
+  if (!editor) return null;
+  return {
+    html: editor.innerHTML,
+    selection: _captureSelection(),
+  };
+}
+
+function _captureSelection() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.startContainer)) return null;
+
+  return {
+    startPath: _nodePath(range.startContainer),
+    startOffset: range.startOffset,
+    endPath: _nodePath(range.endContainer),
+    endOffset: range.endOffset,
+    collapsed: range.collapsed,
+  };
+}
+
+/**
+ * Ścieżka indeksów od editora do node — żeby po innerHTML replace odnaleźć
+ * "ten sam" węzeł w nowym drzewie.
+ */
+function _nodePath(node) {
+  const path = [];
+  let current = node;
+  while (current && current !== editor) {
+    const parent = current.parentNode;
+    if (!parent) return null;
+    path.unshift(Array.prototype.indexOf.call(parent.childNodes, current));
+    current = parent;
+  }
+  return path;
+}
+
+function _restoreSelection(selData) {
+  if (!selData) return;
+  const startNode = _resolvePath(selData.startPath);
+  const endNode = selData.collapsed ? startNode : _resolvePath(selData.endPath);
+  if (!startNode || !endNode) return;
+
+  try {
+    const range = document.createRange();
+    range.setStart(startNode, Math.min(selData.startOffset, _maxOffset(startNode)));
+    range.setEnd(endNode, Math.min(selData.endOffset, _maxOffset(endNode)));
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } catch {
+    // Path zdezaktualizowany, ignore — kursor wyląduje "gdzieś"
+  }
+}
+
+function _resolvePath(path) {
+  if (!path) return null;
+  let current = editor;
+  for (const idx of path) {
+    if (!current.childNodes[idx]) return current;
+    current = current.childNodes[idx];
+  }
+  return current;
+}
+
+function _maxOffset(node) {
+  return node.nodeType === Node.TEXT_NODE
+    ? node.textContent.length
+    : node.childNodes.length;
+}
+
+/**
+ * Push snapshotu na stos. Czyści redo. Limit 50 — najstarsze wypadają.
+ * Pomija duplikaty (gdy nic się realnie nie zmieniło od ostatniego snapshotu).
+ */
+function _pushSnapshot() {
+  const snapshot = _captureSnapshot();
+  if (!snapshot) return;
+  if (snapshot.html === lastSnapshotHTML) return;
+
+  undoStack.push(snapshot);
+  if (undoStack.length > MAX_STACK) undoStack.shift();
+  redoStack = [];
+  lastSnapshotHTML = snapshot.html;
+}
+
+/**
+ * Restore — zastępuje innerHTML i przywraca selekcję.
+ */
+function _restoreSnapshot(snapshot) {
+  if (!snapshot || !editor) return;
+  editor.innerHTML = snapshot.html;
+  lastSnapshotHTML = snapshot.html;
+  _restoreSelection(snapshot.selection);
+}
+
+/* ── Public API ──────────────────────────────────────── */
+
+export function init(editorEl) {
+  editor = editorEl;
+  reset();
+
+  // Typing pauza — po 500ms bez input, zapisz snapshot
+  editor.addEventListener("input", () => {
+    if (typingTimer) clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+      _pushSnapshot();
+      typingTimer = null;
+    }, TYPING_PAUSE_MS);
+  });
+}
+
+export function reset(initialContent) {
+  undoStack = [];
+  redoStack = [];
+  if (typingTimer) {
+    clearTimeout(typingTimer);
+    typingTimer = null;
+  }
+  // Inicjalny snapshot — żeby pierwszy undo cofał do "stanu początkowego notatki"
+  if (editor) {
+    lastSnapshotHTML = initialContent ?? editor.innerHTML;
+    undoStack.push({
+      html: lastSnapshotHTML,
+      selection: null,
+    });
+  }
+}
+
+/**
+ * Wymuś natychmiastowy snapshot (przed/po operacji blokowej, paste, format change).
+ * Anuluje typing timer — operacja blokowa = atomowy krok.
+ */
+export function checkpoint() {
+  if (typingTimer) {
+    clearTimeout(typingTimer);
+    typingTimer = null;
+  }
+  _pushSnapshot();
+}
+
+export function undo() {
+  // Anuluj pending typing snapshot, zapisz aktualny stan jeśli się zmienił
+  if (typingTimer) {
+    clearTimeout(typingTimer);
+    typingTimer = null;
+    _pushSnapshot();
+  }
+
+  if (undoStack.length <= 1) return false; // Pierwszy snapshot to stan inicjalny — nie cofamy
+
+  const current = undoStack.pop();
+  redoStack.push(current);
+  const previous = undoStack[undoStack.length - 1];
+  _restoreSnapshot(previous);
+  return true;
+}
+
+export function redo() {
+  if (redoStack.length === 0) return false;
+  const next = redoStack.pop();
+  undoStack.push(next);
+  _restoreSnapshot(next);
+  return true;
+}
+
+export function canUndo() {
+  return undoStack.length > 1;
+}
+
+export function canRedo() {
+  return redoStack.length > 0;
+}

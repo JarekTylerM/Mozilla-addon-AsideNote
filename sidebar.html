@@ -1,0 +1,995 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+
+<body>
+  <div id="main-view">
+    <div class="quick-capture">
+      <input id="quick-capture" data-i18n-attr="placeholder:quickCapture_placeholder;title:quickCapture_hint_title"
+        autocomplete="off" />
+      <span class="quick-capture__hint" data-i18n-attr="title:quickCapture_hint_title">↵</span>
+    </div>
+    <div id="quick-capture-preview" class="quick-capture-preview" hidden></div>
+    <div class="search-row">
+      <div class="search-wrapper">
+        <input id="search"
+          data-i18n-attr="placeholder:search_placeholder;aria-label:search_ariaLabel;title:search_title" />
+        <button id="search-clear" class="search-clear icon--close" hidden
+          data-i18n-attr="aria-label:search_clear_ariaLabel;title:search_clear_title"></button>
+      </div>
+      <button id="filter-btn" class="icon-btn icon-btn--md icon-btn--ghost icon--filter"
+        data-i18n-attr="aria-label:filter_ariaLabel;title:filter_title" aria-expanded="false"></button>
+      <button id="type-toggle-btn" class="icon-btn icon-btn--md icon-btn--ghost icon--type-all"
+        data-i18n-attr="aria-label:typeToggle_toggle_ariaLabel;title:typeToggle_toggle_title"
+        aria-expanded="true"></button>
+      <button data-type="zen" class="icon-btn icon-btn--md icon-btn--ghost icon-zen" id="zen-btn"
+        data-i18n-attr="aria-label:typeToggle_zen_ariaLabel;title:typeToggle_zen_title"></button>
+    </div>
+    <div id="active-filters" hidden class="active-filters">
+      <span class="active-filters__label" data-i18n="filter_active_label">Aktywne filtry</span>
+    </div>
+    <div id="filter-bar" hidden>
+      <div id="filter-options"></div>
+      <span class="filter-separator" data-i18n="filter_date_label">Termin zadania</span>
+      <div class="filter-date-wrapper">
+        <input type="date" id="filter-date" class="filter-date-input"
+          data-i18n-attr="aria-label:filter_date_ariaLabel" />
+        <button id="filter-date-clear" class="filter-date-clear" hidden
+          data-i18n-attr="aria-label:filter_date_clear_ariaLabel;title:filter_date_clear_title">
+          ×
+        </button>
+      </div>
+      <button id="filter-clear-btn" class="filter-clear-btn" hidden data-i18n="filter_clearAll">
+        Wyczyść filtry
+      </button>
+    </div>
+
+    <div id="type-toggle" role="tablist" data-i18n-attr="aria-label:typeToggle_ariaLabel">
+      <button data-type="all" class="type-toggle__btn type-toggle__btn--active"
+        data-i18n-attr="title:typeToggle_all_title">
+        <span class="type-toggle__icon icon--type-all"></span>
+        <span data-i18n="typeToggle_all">Wszystko</span>
+      </button>
+      <button data-type="note" class="type-toggle__btn" data-i18n-attr="title:typeToggle_notes_title">
+        <span class="type-toggle__icon icon--type-note"></span>
+        <span data-i18n="typeToggle_notes">Notatki</span>
+      </button>
+      <button data-type="task" class="type-toggle__btn" data-i18n-attr="title:typeToggle_tasks_title">
+        <span class="type-toggle__icon icon--type-task"></span>
+        <span data-i18n="typeToggle_tasks">Zadania</span>
+      </button>
+    </div>
+
+    <div class="notes-list-wrapper">
+      <div id="notesList"></div>
+      <div class="new-item-inline">
+        <span data-i18n="newItemInline_prefix">Dodaj</span>
+        <button id="new-note" class="new-item-link" data-i18n="newItemInline_note">
+          notatkę
+        </button>
+        <span data-i18n="newItemInline_or">lub</span>
+        <button id="new-task" class="new-item-link" data-i18n="newItemInline_task">
+          zadanie
+        </button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <button id="list-expand-btn" class="icon-btn icon-btn--sm icon-btn--ghost icon--list-expand"
+        data-i18n-attr="aria-label:listExpand_title;title:listExpand_title"></button>
+      <div id="note-status"></div>
+    </div>
+
+    <div class="note-header">
+      <button id="back-btn" class="icon-btn icon-btn--sm icon-btn--ghost icon--back"
+        data-i18n-attr="aria-label:back_ariaLabel;title:back_title" hidden></button>
+      <button id="convert-type" class="icon-btn icon-btn--sm icon-btn--ghost" data-type="note"
+        data-i18n-attr="aria-label:convertType_ariaLabel;title:convertType_toTask_title" disabled></button>
+      <label for="title" class="sr-only" data-i18n="title_label">Tytuł</label>
+      <input id="title" data-i18n-attr="placeholder:title_placeholder" />
+      <button id="focus-btn" class="icon-btn icon-btn--sm icon--focus"
+        data-i18n-attr="aria-label:focus_ariaLabel;title:focus_title" hidden></button>
+      <button id="important-btn" class="icon-btn icon-btn--sm"
+        data-i18n-attr="aria-label:important_ariaLabel;title:important_title" hidden></button>
+      <button id="delete" class="icon-btn icon-btn--sm icon-btn--ghost icon--bin"
+        data-i18n-attr="aria-label:delete_ariaLabel;title:delete_title" disabled></button>
+    </div>
+
+    <div id="title-error" class="validation-error" hidden></div>
+    <div class="due-wrapper" id="due-wrapper" hidden>
+      <input id="due-date" type="date" hidden />
+      <input id="due-time" type="time" hidden />
+
+      <div class="due-bar">
+        <button type="button" id="due-display-btn" class="due-bar__trigger"
+          data-i18n-attr="aria-label:dueDate_ariaLabel" aria-label="Data terminu">
+          <span class="due-bar__cal-icon icon--calendar-clock"></span>
+          <span id="due-display-text" class="due-bar__text">
+            <span id="due-date-text"></span>
+            <span id="due-alarm-pill" class="due-bar__alarm" hidden>
+              <span id="alarm-label"></span>
+            </span>
+            <span id="due-recurrence-badge" class="due-bar__recurrence" hidden>↺</span>
+          </span>
+        </button>
+        <button type="button" id="due-clear" class="due-bar__clear"
+          data-i18n-attr="title:dueClear_title;aria-label:dueClear_ariaLabel"></button>
+      </div>
+    </div>
+
+    <section id="editor-container">
+      <div id="toolbar" role="toolbar" data-i18n-attr="aria-label:toolbar_ariaLabel">
+        <!-- Grupa: format bloku + tekst -->
+        <div class="toolbar-group">
+          <div class="toolbar-split" id="format-block-split">
+            <button tabindex="-1" id="format-block-main" class="panel-icon icon--paragraph toolbar-split__main"
+              data-i18n-attr="aria-label:toolbar_formatBlock_ariaLabel;title:toolbar_formatBlock_title"></button>
+            <button tabindex="-1" id="format-block-arrow" class="toolbar-split__arrow" aria-haspopup="true"
+              aria-expanded="false" data-i18n-attr="aria-label:toolbar_formatBlock_ariaLabel">
+              <span class="toolbar-split__caret"></span>
+            </button>
+            <div id="format-block-dropdown" class="callout-dropdown" role="menu">
+              <button class="callout-dropdown__item" data-format="p" role="menuitem">
+                <span class="callout-dropdown__icon icon--paragraph" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_format_paragraph">Paragraf</span>
+                <kbd class="callout-dropdown__kbd"></kbd>
+              </button>
+              <button class="callout-dropdown__item" data-format="h1" role="menuitem">
+                <span class="callout-dropdown__icon icon--h1" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_format_h1">Nagłówek 1</span>
+                <kbd class="callout-dropdown__kbd"># spacja</kbd>
+              </button>
+              <button class="callout-dropdown__item" data-format="h2" role="menuitem">
+                <span class="callout-dropdown__icon icon--h2" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_format_h2">Nagłówek 2</span>
+                <kbd class="callout-dropdown__kbd">## spacja</kbd>
+              </button>
+              <button class="callout-dropdown__item" data-format="h3" role="menuitem">
+                <span class="callout-dropdown__icon icon--h3" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_format_h3">Nagłówek 3</span>
+                <kbd class="callout-dropdown__kbd">### spacja</kbd>
+              </button>
+            </div>
+          </div>
+          <button tabindex="-1" data-cmd="bold" class="panel-icon icon--bold"
+            data-i18n-attr="aria-label:toolbar_bold;title:toolbar_bold_title"></button>
+          <button tabindex="-1" data-cmd="italic" class="panel-icon icon--italic"
+            data-i18n-attr="aria-label:toolbar_italic;title:toolbar_italic_title"></button>
+          <button tabindex="-1" data-cmd="underline" class="panel-icon icon--underline"
+            data-i18n-attr="aria-label:toolbar_underline;title:toolbar_underline_title"></button>
+          <button tabindex="-1" data-cmd="strikeThrough" class="panel-icon icon--strikethrough"
+            data-i18n-attr="aria-label:toolbar_strikethrough;title:toolbar_strikethrough_title"></button>
+          <button tabindex="-1" data-cmd="removeFormat" class="panel-icon icon--clear-format"
+            data-i18n-attr="aria-label:toolbar_clearFormat;title:toolbar_clearFormat_title"></button>
+        </div>
+
+        <!-- Grupa: listy — split button -->
+        <div class="toolbar-group">
+          <div class="toolbar-split" id="list-split">
+            <button tabindex="-1" id="list-main-btn" class="panel-icon icon--list-bullet toolbar-split__main"
+              data-i18n-attr="aria-label:toolbar_bulletList;title:toolbar_bulletList_title"></button>
+            <button tabindex="-1" id="list-arrow" class="toolbar-split__arrow" aria-haspopup="true"
+              aria-expanded="false" data-i18n-attr="aria-label:toolbar_list_menu;title:toolbar_list_menu_title">
+              <span class="toolbar-split__caret"></span>
+            </button>
+            <div id="list-dropdown" class="callout-dropdown" role="menu">
+              <button class="callout-dropdown__item" data-list-type="bullet" role="menuitem"
+                data-i18n-attr="aria-label:toolbar_bulletList">
+                <span class="callout-dropdown__icon icon--list-bullet" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_bulletList">Lista punktowana</span>
+                <kbd class="callout-dropdown__kbd">- spacja</kbd>
+              </button>
+              <button class="callout-dropdown__item" data-list-type="ordered" role="menuitem"
+                data-i18n-attr="aria-label:toolbar_orderedList">
+                <span class="callout-dropdown__icon icon--list-number" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_orderedList">Lista numerowana</span>
+                <kbd class="callout-dropdown__kbd">1. spacja</kbd>
+              </button>
+              <button class="callout-dropdown__item" id="checklist-btn" data-list-type="checklist" role="menuitem"
+                data-i18n-attr="aria-label:toolbar_checklist">
+                <span class="callout-dropdown__icon icon--checklist" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_checklistList">Lista zadań</span>
+                <kbd class="callout-dropdown__kbd">-[ ] spacja</kbd>
+              </button>
+              <button class="callout-dropdown__item" id="toggle-list-btn" role="menuitem" data-list-type="toggle"
+                data-i18n-attr="aria-label:toolbar_toggleList">
+                <span class="callout-dropdown__icon icon--toggle-list" style="
+                      -webkit-mask-size: contain;
+                      mask-size: contain;
+                      width: 16px;
+                      height: 16px;
+                      display: inline-block;
+                      background-color: currentColor;
+                      -webkit-mask-repeat: no-repeat;
+                      mask-repeat: no-repeat;
+                      -webkit-mask-position: center;
+                      mask-position: center;
+                    "></span>
+                <span data-i18n="toolbar_toggleList">Lista rozwijana</span>
+                <kbd class="callout-dropdown__kbd">&gt;- spacja</kbd>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grupa: wstawianie -->
+        <div class="toolbar-group">
+          <button tabindex="-1" id="link-btn" class="panel-icon icon--link"
+            data-i18n-attr="aria-label:toolbar_link;title:toolbar_link_title"></button>
+          <button tabindex="-1" id="code-btn" class="panel-icon icon--code"
+            data-i18n-attr="aria-label:toolbar_code;title:toolbar_code_title"></button>
+          <button id="codeblock-btn" class="icon-btn icon-btn--sm icon-btn--ghost icon--codeblock"
+            data-i18n-attr="aria-label:toolbar_codeblock;title:toolbar_codeblock_title"></button>
+          <!-- Split button: blockquote + callout dropdown -->
+          <div class="toolbar-split" id="blockquote-split">
+            <button tabindex="-1" id="blockquote-btn" class="panel-icon icon--quote toolbar-split__main"
+              data-i18n-attr="aria-label:toolbar_blockquote;title:toolbar_blockquote_title"></button>
+            <button tabindex="-1" id="blockquote-arrow" class="toolbar-split__arrow" aria-haspopup="true"
+              aria-expanded="false" data-i18n-attr="aria-label:toolbar_callout_menu;title:toolbar_callout_menu_title">
+              <span class="toolbar-split__caret"></span>
+            </button>
+            <div id="callout-dropdown" class="callout-dropdown" role="menu">
+              <button class="callout-dropdown__item" data-callout="" role="menuitem"
+                data-i18n-attr="aria-label:toolbar_blockquote">
+                <span class="callout-dropdown__icon callout-dropdown__icon--quote"></span>
+                <span data-i18n="callout_plain">Cytat</span>
+              </button>
+              <button class="callout-dropdown__item" data-callout="note" role="menuitem"
+                data-i18n-attr="aria-label:callout_note">
+                <span class="callout-dropdown__icon callout-dropdown__icon--note"></span>
+                <span data-i18n="callout_note">Note</span>
+                <kbd class="callout-dropdown__kbd">&gt;[!NOTE]</kbd>
+              </button>
+              <button class="callout-dropdown__item" data-callout="tip" role="menuitem"
+                data-i18n-attr="aria-label:callout_tip">
+                <span class="callout-dropdown__icon callout-dropdown__icon--tip"></span>
+                <span data-i18n="callout_tip">Tip</span>
+                <kbd class="callout-dropdown__kbd">&gt;[!TIP]</kbd>
+              </button>
+              <button class="callout-dropdown__item" data-callout="important" role="menuitem"
+                data-i18n-attr="aria-label:callout_important">
+                <span class="callout-dropdown__icon callout-dropdown__icon--important"></span>
+                <span data-i18n="callout_important">Important</span>
+                <kbd class="callout-dropdown__kbd">&gt;[!IMPORTANT]</kbd>
+              </button>
+              <button class="callout-dropdown__item" data-callout="warning" role="menuitem"
+                data-i18n-attr="aria-label:callout_warning">
+                <span class="callout-dropdown__icon callout-dropdown__icon--warning"></span>
+                <span data-i18n="callout_warning">Warning</span>
+                <kbd class="callout-dropdown__kbd">&gt;[!WARNING]</kbd>
+              </button>
+              <button class="callout-dropdown__item" data-callout="caution" role="menuitem"
+                data-i18n-attr="aria-label:callout_caution">
+                <span class="callout-dropdown__icon callout-dropdown__icon--caution"></span>
+                <span data-i18n="callout_caution">Caution</span>
+                <kbd class="callout-dropdown__kbd">&gt;[!CAUTION]</kbd>
+              </button>
+            </div>
+          </div>
+          <button tabindex="-1" data-cmd="insertHorizontalRule" class="panel-icon icon--hr"
+            data-i18n-attr="aria-label:toolbar_hr;title:toolbar_hr_title"></button>
+        </div>
+
+        <!-- Grupa: akcje -->
+        <div class="toolbar-group">
+          <button tabindex="-1" id="undo-btn" class="panel-icon icon--undo"
+            data-i18n-attr="aria-label:toolbar_undo;title:toolbar_undo_title"></button>
+          <button tabindex="-1" id="redo-btn" class="panel-icon icon--redo"
+            data-i18n-attr="aria-label:toolbar_redo;title:toolbar_redo_title"></button>
+        </div>
+      </div>
+      <div id="editor" contenteditable="true" role="textbox" aria-multiline="true"
+        data-i18n-attr="aria-label:editor_ariaLabel"></div>
+      <button id="collapse-editor-btn" class="icon-btn icon-btn--sm icon-btn--ghost icon--collapse-editor"
+        data-i18n-attr="title:collapseEditor_title;aria-label:collapseEditor_title" hidden></button>
+      <button id="focusmode-btn" class="icon-btn icon-btn--sm icon-btn--ghost icon--focusmode-enter focusmode-btn"
+        data-i18n-attr="title:focusMode_enter_title;aria-label:focusMode_enter_ariaLabel"></button>
+    </section>
+
+    <div id="tag-selector">
+      <div id="tag-selector-pills"></div>
+      <div id="tag-dropdown" hidden>
+        <div id="tag-options"></div>
+        <button id="goto-panel" data-i18n="tagSelector_managePanel">
+          → Zarządzaj tagami
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="panel-header">
+      <h2 data-i18n="panel_title">Personalizacja</h2>
+      <button id="close-panel" data-i18n-attr="aria-label:panel_close_ariaLabel">
+        ✕
+      </button>
+    </div>
+    <!-- Taby -->
+    <div class="panel-tabs" role="tablist">
+      <button type="button" class="panel-tab panel-tab--active" id="panel-tab-general" role="tab" aria-selected="true"
+        aria-controls="panel-pane-general" data-i18n-attr="title:panel_tab_general_title">
+        <span class="panel-tab__icon icon--panel-general"></span>
+        <span data-i18n="panel_tab_general">Ogólne</span>
+      </button>
+      <button type="button" class="panel-tab" id="panel-tab-tags" role="tab" aria-selected="false"
+        aria-controls="panel-pane-tags" data-i18n-attr="title:panel_tab_tags_title">
+        <span class="panel-tab__icon icon--panel-tags"></span>
+        <span data-i18n="panel_tab_tags">Tagi</span>
+      </button>
+      <button type="button" class="panel-tab" id="panel-tab-shortcuts" role="tab" aria-selected="false"
+        aria-controls="panel-pane-shortcuts" data-i18n-attr="title:panel_tab_shortcuts_title">
+        <span class="panel-tab__icon icon--panel-shortcuts"></span>
+        <span data-i18n="panel_tab_shortcuts">Skróty</span>
+      </button>
+    </div>
+    <!-- Tab: Ogólne -->
+    <div class="panel-pane" id="panel-pane-general" role="tabpanel">
+      <div class="panel-body">
+        <section class="panel-section">
+          <h3 data-i18n="panel_appearance_title">Wygląd</h3>
+          <div class="scheme-toggle" role="group" aria-label="Tryb kolorów">
+            <button type="button" class="scheme-btn" data-scheme="dark">
+              <span class="scheme-btn__icon icon--scheme-dark"></span>
+              <span data-i18n="panel_appearance_dark">Ciemny</span>
+            </button>
+            <button type="button" class="scheme-btn scheme-btn--active" data-scheme="auto">
+              <span class="scheme-btn__icon icon--scheme-auto"></span>
+              <span data-i18n="panel_appearance_auto">Auto</span>
+            </button>
+            <button type="button" class="scheme-btn" data-scheme="light">
+              <span class="scheme-btn__icon icon--scheme-light"></span>
+              <span data-i18n="panel_appearance_light">Jasny</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3 data-i18n="panel_editor_title">Edytor</h3>
+          <label class="panel-toggle">
+            <input type="checkbox" id="toolbar-toggle" checked />
+            <span data-i18n="panel_editor_toolbarToggle">Pokaż toolbar formatowania</span>
+          </label>
+          <label class="panel-toggle">
+            <input type="checkbox" id="toolbar-tooltips-toggle" checked />
+            <span data-i18n="panel_editor_toolbarTooltips">Pokaż podpowiedzi ikon toolbara</span>
+          </label>
+          <label class="panel-toggle">
+            <input type="checkbox" id="editor-placeholder-toggle" checked />
+            <span data-i18n="panel_editor_placeholder">Pokaż podpowiedź w pustej linii</span>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h3 data-i18n="panel_security_title">
+            Prywatność i bezpieczeństwo
+          </h3>
+          <div class="panel-info">
+            <p data-i18n="panel_security_intro">
+              AsideNotes przechowuje wszystkie dane lokalnie w przeglądarce —
+              bez szyfrowania, bez chmury, bez telemetrii.
+            </p>
+            <p data-i18n="panel_security_warning">
+              Nie wpisuj tutaj haseł, kodów dostępu, PIN-ów, numerów kart,
+              danych logowania ani innych wrażliwych informacji.
+            </p>
+            <p data-i18n="panel_security_context">
+              Każdy z dostępem do tego profilu Firefox (inny użytkownik
+              komputera, malware, kopia zapasowa) widzi notatki w postaci
+              czystego tekstu.
+            </p>
+          </div>
+          <label class="panel-toggle panel-toggle--mt">
+            <input type="checkbox" id="security-acknowledge-toggle" />
+            <span data-i18n="panel_security_acknowledge">
+              Zapoznałem się z ryzykiem — ukryj ikonę ostrzeżenia
+            </span>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h3 data-i18n="panel_data_title">Dane</h3>
+          <div class="storage-usage" id="storage-usage">
+            <div class="storage-usage__bar-wrap">
+              <div class="storage-usage__bar" id="storage-bar"></div>
+            </div>
+            <div class="storage-usage__label" id="storage-label">—</div>
+          </div>
+          <div class="data-actions">
+            <button id="export-btn" class="btn btn--block btn--icon-left">
+              <span class="btn__icon icon--file-download"></span>
+              <span data-i18n="panel_data_export">Eksportuj dane (JSON)</span>
+            </button>
+            <label class="btn btn--block btn--icon-left" id="import-label">
+              <span class="btn__icon icon--file-upload"></span>
+              <span data-i18n="panel_data_import">Importuj dane (JSON)</span>
+              <input type="file" id="import-input" accept=".json" hidden />
+            </label>
+          </div>
+          <div id="import-feedback" hidden></div>
+          <div id="undo-import-wrapper" hidden>
+            <button id="undo-import-btn" class="btn btn--block btn--danger-ghost btn--icon-left">
+              <span class="btn__icon icon--file-restore"></span>
+              <span data-i18n="panel_data_undoImport">Cofnij ostatni import</span>
+            </button>
+            <p id="undo-import-info" class="panel-empty"></p>
+          </div>
+        </section>
+        <section class="panel-section">
+          <h3 data-i18n="ob_panel_title">Przewodnik</h3>
+          <div id="onboarding-panel-stages">
+            <button type="button" class="onboarding-stage-btn" data-ob-stage="1">
+              <span class="onboarding-stage-btn__num">1</span>
+              <span class="onboarding-stage-btn__label" data-i18n="ob_stage1_label">Start</span>
+              <span class="onboarding-stage-btn__check" hidden>✓</span>
+            </button>
+            <button type="button" class="onboarding-stage-btn" data-ob-stage="2">
+              <span class="onboarding-stage-btn__num">2</span>
+              <span class="onboarding-stage-btn__label" data-i18n="ob_stage2_label">Zadania i terminy</span>
+              <span class="onboarding-stage-btn__check" hidden>✓</span>
+            </button>
+            <button type="button" class="onboarding-stage-btn" data-ob-stage="3">
+              <span class="onboarding-stage-btn__num">3</span>
+              <span class="onboarding-stage-btn__label" data-i18n="ob_stage3_label">Tryby skupienia</span>
+              <span class="onboarding-stage-btn__check" hidden>✓</span>
+            </button>
+            <button type="button" class="onboarding-stage-btn" data-ob-stage="4">
+              <span class="onboarding-stage-btn__num">4</span>
+              <span class="onboarding-stage-btn__label" data-i18n="ob_stage4_label">Zaawansowany</span>
+              <span class="onboarding-stage-btn__check" hidden>✓</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3>
+            <span data-i18n="panel_deletedNotes_title">Niedawno usunięte</span>
+            <span id="deleted-notes-count" class="panel-section__count"></span>
+            <button id="deleted-empty-btn" class="btn btn--xs btn--danger-ghost panel-section__action" hidden
+              data-i18n="panel_deletedNotes_empty">
+              Opróżnij
+            </button>
+          </h3>
+          <p id="deleted-notes-empty" class="panel-empty" data-i18n="panel_deletedNotes_emptyState">
+            Brak usuniętych elementów
+          </p>
+          <div id="deleted-notes-list" hidden></div>
+        </section>
+      </div>
+      <!-- koniec panel-body -->
+    </div>
+    <!-- koniec panel-pane-settings -->
+    <!-- Tab tagi -->
+    <div class="panel-pane panel-pane--hidden" id="panel-pane-tags" role="tabpanel">
+      <div class="panel-body">
+        <section class="panel-section">
+          <h3 data-i18n="panel_tags_title">Tagi</h3>
+          <div id="tags-list"></div>
+          <div class="add-tag-form">
+            <input id="new-tag-input"
+              data-i18n-attr="placeholder:panel_tags_newPlaceholder;aria-label:panel_tags_newAriaLabel" />
+            <button id="add-tag-btn" class="icon--add"
+              data-i18n-attr="aria-label:panel_tags_addBtn;title:panel_tags_addBtn" aria-label="Dodaj tag"></button>
+          </div>
+          <div id="new-tag-error" class="validation-error" hidden></div>
+        </section>
+      </div>
+    </div>
+    <!-- Tab: Skróty -->
+    <div class="panel-pane panel-pane--hidden" id="panel-pane-shortcuts" role="tabpanel">
+      <div class="shortcuts-subtabs">
+        <button class="shortcuts-subtab shortcuts-subtab--active" data-shortcuts-tab="general"
+          data-i18n="shortcuts_tab_general">Ogólne</button>
+        <button class="shortcuts-subtab" data-shortcuts-tab="editor" data-i18n="shortcuts_tab_editor">Edytor</button>
+      </div>
+
+      <!-- Zakładka: Ogólne -->
+      <div class="panel-shortcuts" id="shortcuts-pane-general">
+
+        <div class="panel-shortcuts__section">
+          <b data-i18n="shortcuts_sidebar">Sidebar</b>
+          <ul>
+            <li><code>Alt+Shift+Q</code><span data-i18n="shortcuts_general_toggle">→ otwórz / zamknij sidebar</span>
+            </li>
+            <li><code>Alt+Shift+S</code><span data-i18n="shortcuts_general_popup">→ popup szybkiego dodawania</span>
+            </li>
+            <li><code>Alt+C</code><span data-i18n="shortcuts_general_capture">→ fokus na quick capture</span></li>
+            <li><code>Alt+T</code><span data-i18n="shortcuts_general_captureTask">→ quick capture zadania (!)</span>
+            </li>
+            <li><code>Alt+S</code><span data-i18n="shortcuts_general_search">→ fokus na wyszukiwarkę</span></li>
+            <li><code>Alt+F</code><span data-i18n="shortcuts_general_filter">→ filtry</span></li>
+            <li><code>Alt+M</code><span data-i18n="shortcuts_focusMode">→ tryb skupienia</span></li>
+            <li><code>Alt+Z</code><span data-i18n="shortcuts_zenMode">→ tryb zen</span></li>
+            <li><code>Alt+E</code><span data-i18n="shortcuts_toolbarToggle">→ pokaż/ukryj toolbar</span></li>
+            <li><code>Ctrl+S</code><span data-i18n="shortcuts_general_save">→ zapisz natychmiast</span></li>
+            <li><code>Alt+P</code><span data-i18n="shortcuts_general_panel">→ panel personalizacji</span></li>
+            <li><code>Tab</code><span data-i18n="shortcuts_general_tab">→ następny element</span></li>
+            <li><code>Shift+Tab</code><span data-i18n="shortcuts_general_shiftTab">→ poprzedni element</span></li>
+            <li><code>Esc</code><span data-i18n="shortcuts_general_esc">→ wróć na listę / wyczyść capture</span></li>
+          </ul>
+        </div>
+
+        <div class="panel-shortcuts__section">
+          <b data-i18n="shortcuts_list">Nawigacja listy</b>
+          <ul>
+            <li><code>↓</code><code>↑</code><span data-i18n="shortcuts_list_arrows">→ poruszanie się</span></li>
+            <li><code>Enter</code><span data-i18n="shortcuts_list_enter">→ otwórz w edytorze</span></li>
+            <li><code>Space</code><span data-i18n="shortcuts_list_space">→ toggle checkbox (zadanie)</span></li>
+            <li><code>Delete</code><span data-i18n="shortcuts_list_delete">→ usuń element</span></li>
+            <li><code>Ctrl+↑</code><code>Ctrl+↓</code><span data-i18n="shortcuts_list_ctrlArrows">→ z edytora do
+                listy</span></li>
+          </ul>
+        </div>
+
+        <div class="panel-shortcuts__section">
+          <b data-i18n="shortcuts_quickCapture">Quick capture</b>
+          <ul>
+            <li><code>!</code><span data-i18n="shortcuts_qc_task">→ zadanie</span></li>
+            <li><code>!&gt;</code><span data-i18n="shortcuts_qc_taskInProgress">→ zadanie w trakcie</span></li>
+            <li><code>jutro</code><code>dziś</code><span data-i18n="shortcuts_qc_dayKeywords">→ termin</span></li>
+            <li><code>poniedziałek</code><span data-i18n="shortcuts_qc_weekdays">→ dzień tygodnia (następny)</span></li>
+            <li><code>HH:MM</code><span data-i18n="shortcuts_qc_time">→ godzina + alarm</span></li>
+            <li><code>DD.MM</code><span data-i18n="shortcuts_qc_date">→ konkretna data</span></li>
+            <li><code>Shift+Enter</code><span data-i18n="shortcuts_qc_captureOpen">→ capture i otwórz edytor</span></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Zakładka: Edytor -->
+      <div class="panel-shortcuts" id="shortcuts-pane-editor" hidden>
+
+        <div class="panel-shortcuts__section">
+          <b data-i18n="shortcuts_markdown_blocks">Markdown — bloki</b>
+          <ul>
+            <li><code>#</code><span data-i18n="shortcuts_markdown_h1">→ H1</span></li>
+            <li><code>##</code><span data-i18n="shortcuts_markdown_h2">→ H2</span></li>
+            <li><code>###</code><span data-i18n="shortcuts_markdown_h3">→ H3</span></li>
+            <li><code>-</code><span data-i18n="shortcuts_markdown_list">→ Lista punktowana</span></li>
+            <li><code>1.</code><span data-i18n="shortcuts_markdown_ordered">→ Lista numerowana</span></li>
+            <li><code>-[ ]</code><span data-i18n="shortcuts_markdown_checklist">→ Lista zadań</span></li>
+            <li><code>-[x]</code><span data-i18n="shortcuts_markdown_checklist_done">→ Lista zadań (zaznaczone)</span>
+            </li>
+            <li><code>&gt;</code><span data-i18n="shortcuts_markdown_quote">→ Cytat</span></li>
+            <li><code>---</code><span data-i18n="shortcuts_markdown_hr">→ Separator</span></li>
+            <li><code>```</code><span data-i18n="shortcuts_markdown_codeblock">→ Blok kodu</span></li>
+            <li><code>```js</code><span data-i18n="shortcuts_markdown_codeblock_lang">→ Blok kodu z językiem</span></li>
+            <li><code>&gt;-</code><span data-i18n="shortcuts_markdown_toggle">→ Lista rozwijana</span></li>
+            <li><code>&gt;[!NOTE]</code><span data-i18n="shortcuts_markdown_callout_note">→ Note</span></li>
+            <li><code>&gt;[!TIP]</code><span data-i18n="shortcuts_markdown_callout_tip">→ Tip</span></li>
+            <li><code>&gt;[!IMPORTANT]</code><span data-i18n="shortcuts_markdown_callout_important">→ Important</span>
+            </li>
+            <li><code>&gt;[!WARNING]</code><span data-i18n="shortcuts_markdown_callout_warning">→ Warning</span></li>
+            <li><code>&gt;[!CAUTION]</code><span data-i18n="shortcuts_markdown_callout_caution">→ Caution</span></li>
+          </ul>
+        </div>
+
+        <div class="panel-shortcuts__section">
+          <b data-i18n="shortcuts_markdown_inline">Markdown — inline</b>
+          <ul>
+            <li><code>**bold**</code><code>__bold__</code><span data-i18n="shortcuts_formatting_bold">→ Bold</span></li>
+            <li><code>*italic*</code><code>_italic_</code><span data-i18n="shortcuts_formatting_italic">→ Italic</span>
+            </li>
+            <li><code>***tekst***</code><code>___tekst___</code><span data-i18n="shortcuts_formatting_bold_italic">→
+                Bold + Italic</span></li>
+            <li><code>~~strike~~</code><span data-i18n="shortcuts_formatting_strike">→ Przekreślenie</span></li>
+            <li><code>`kod`</code><span data-i18n="shortcuts_markdown_code">→ Kod inline</span></li>
+            <li><code>[tekst](url)</code><span data-i18n="shortcuts_markdown_link">→ Link</span></li>
+            <li><code>2× spacja + Enter</code><span data-i18n="shortcuts_formatting_hardBreak">→ Łamanie linii</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="panel-shortcuts__section">
+          <b data-i18n="shortcuts_formatting">Formatowanie (klawiatura)</b>
+          <ul>
+            <li><code>Ctrl+B</code><span data-i18n="shortcuts_formatting_bold">→ Bold</span></li>
+            <li><code>Ctrl+I</code><span data-i18n="shortcuts_formatting_italic">→ Italic</span></li>
+            <li><code>Ctrl+U</code><span data-i18n="shortcuts_formatting_underline">→ Podkreślenie</span></li>
+            <li><code>Ctrl+`</code><span data-i18n="shortcuts_formatting_code">→ Kod inline</span></li>
+            <li><code>Ctrl+Shift+X</code><span data-i18n="shortcuts_formatting_strike">→ Przekreślenie</span></li>
+            <li><code>Ctrl+K</code><span data-i18n="shortcuts_formatting_link">→ wstaw / edytuj link</span></li>
+            <li><code>Ctrl+klik</code><span data-i18n="shortcuts_formatting_linkOpen">→ otwórz link w nowej
+                karcie</span></li>
+            <li><code>Tab</code><span data-i18n="shortcuts_formatting_indent">→ wcięcie listy</span></li>
+            <li><code>Shift+Tab</code><span data-i18n="shortcuts_formatting_outdent">→ cofnięcie wcięcia</span></li>
+            <li><code>Shift+Enter</code><span data-i18n="shortcuts_formatting_softBreak">→ nowa linia (soft
+                break)</span></li>
+            <li><code>Alt+↑</code><code>Alt+↓</code><span data-i18n="shortcuts_formatting_moveBlock">→ przesuń blok /
+                element listy</span></li>
+            <li><code>Ctrl+Z</code><span data-i18n="shortcuts_formatting_undo">→ cofnij</span></li>
+            <li><code>Ctrl+Y</code><code>Ctrl+Shift+Z</code><span data-i18n="shortcuts_formatting_redo">→ ponów</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+      <!-- koniec panel-pane-shortcuts -->
+    </div>
+  </div>
+  <!-- koniec panel -->
+  <div id="link-modal" hidden>
+    <div class="link-modal__backdrop"></div>
+    <div class="link-modal__panel" role="dialog" aria-modal="true" data-i18n-attr="aria-label:linkModal_title">
+      <div class="link-modal__header">
+        <h3 data-i18n="linkModal_title">Edytuj link</h3>
+        <button class="link-modal__close" id="link-modal-close" data-i18n-attr="aria-label:linkModal_close">
+          ✕
+        </button>
+      </div>
+
+      <div class="link-modal__body">
+        <label class="link-modal__field">
+          <span data-i18n="linkModal_urlLabel">URL</span>
+          <input type="url" id="link-modal-url" placeholder="https://example.com" />
+        </label>
+
+        <label class="link-modal__field">
+          <span data-i18n="linkModal_textLabel">Tekst</span>
+          <input type="text" id="link-modal-text" />
+        </label>
+
+        <div class="link-modal__error" id="link-modal-error" hidden></div>
+      </div>
+
+      <div class="link-modal__actions">
+        <button class="btn btn--danger" id="link-modal-remove" hidden data-i18n="linkModal_remove">
+          Usuń link
+        </button>
+        <div class="link-modal__actions-right">
+          <button class="btn" id="link-modal-cancel" data-i18n="linkModal_cancel">
+            Anuluj
+          </button>
+          <button class="btn btn--primary" id="link-modal-save" data-i18n="linkModal_save">
+            Zapisz
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottom-bar">
+    <div id="security-btn-wrapper">
+      <button id="security-btn" class="icon-btn icon-btn--md icon--security"
+        data-i18n-attr="aria-label:security_btn_ariaLabel;title:security_btn_title"></button>
+      <div id="security-tooltip" class="security-tooltip" hidden>
+        <p data-i18n="security_tooltip_text">
+          Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do
+          profilu Firefox.
+        </p>
+        <button id="security-tooltip-goto" class="security-tooltip__btn" data-i18n="security_tooltip_goto">
+          Przejdź do ustawień →
+        </button>
+      </div>
+    </div>
+    <div id="shortcut-tooltip-wrapper">
+      <button id="toggle-shortcuts" class="icon-btn icon-btn--md icon--keyboard"
+        data-i18n-attr="aria-label:shortcuts_toggle_ariaLabel;title:shortcuts_toggle_title"
+        aria-expanded="false"></button>
+      <div id="shortcut-tooltip" role="tooltip">
+        <div class="tooltip-content">
+          <h4 data-i18n="shortcuts_title">Skróty</h4>
+
+          <div class="tooltip-section">
+            <ul>
+              <li>
+                <code>Alt+Shift+Q</code><span data-i18n="shortcuts_general_toggle">→ otwórz / zamknij</span>
+              </li>
+              <li>
+                <code>Alt+Shift+S</code><span data-i18n="shortcuts_general_popup">→ szybkie dodawanie (popup)</span>
+              </li>
+              <li>
+                <code>Alt+C</code><span data-i18n="shortcuts_general_capture">→ quick capture</span>
+              </li>
+              <li>
+                <code>Alt+M</code><span data-i18n="shortcuts_focusMode">→ tryb skupienia</span>
+              </li>
+              <li>
+                <code>Alt+S</code><span data-i18n="shortcuts_general_search">→ wyszukiwarka</span>
+              </li>
+              <li>
+                <code>Alt+F</code><span data-i18n="shortcuts_general_filter">→ filtry</span>
+              </li>
+              <li>
+                <code>Ctrl+S</code><span data-i18n="shortcuts_general_save">→ zapisz natychmiast</span>
+              </li>
+              <li>
+                <code>Tab</code><span data-i18n="shortcuts_general_tab">→ następny element</span>
+              </li>
+              <li>
+                <code>Shift+Tab</code><span data-i18n="shortcuts_general_shiftTab">→ poprzedni element</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="tooltip-section">
+            <b data-i18n="shortcuts_markdown">Markdown</b>
+            <ul>
+              <li>
+                <code>#</code><span data-i18n="shortcuts_markdown_h1">→ H1</span>
+              </li>
+              <li>
+                <code>##</code><span data-i18n="shortcuts_markdown_h2">→ H2</span>
+              </li>
+              <li>
+                <code>###</code><span data-i18n="shortcuts_markdown_h3">→ H3</span>
+              </li>
+              <li>
+                <code>-</code><span data-i18n="shortcuts_markdown_list">→ Lista</span>
+              </li>
+              <li>
+                <code>1.</code><span data-i18n="shortcuts_markdown_ordered">→ Lista numerowana</span>
+              </li>
+              <li>
+                <code>-[ ]</code><span data-i18n="shortcuts_markdown_checklist">→ Lista zadań</span>
+              </li>
+              <li>
+                <code>-[x]</code><span data-i18n="shortcuts_markdown_checklist_done">→ zaznaczone</span>
+              </li>
+              <li>
+                <code>&gt;</code><span data-i18n="shortcuts_markdown_quote">→ Cytat</span>
+              </li>
+              <li>
+                <code>---</code><span data-i18n="shortcuts_markdown_hr">→ Separator</span>
+              </li>
+              <li>
+                <code>[tekst](url)</code><span data-i18n="shortcuts_markdown_link">→ Link</span>
+              </li>
+              <li>
+                <code>`kod`</code><span data-i18n="shortcuts_markdown_code">→ Kod inline</span>
+              </li>
+              <li>
+                <code>&gt;[!NOTE]</code><span data-i18n="shortcuts_markdown_callout_note">→ Note</span>
+              </li>
+              <li>
+                <code>&gt;[!TIP]</code><span data-i18n="shortcuts_markdown_callout_tip">→ Tip</span>
+              </li>
+              <li>
+                <code>&gt;[!WARNING]</code><span data-i18n="shortcuts_markdown_callout_warning">→ Warning</span>
+              </li>
+            </ul>
+          </div>
+
+          <button type="button" class="tooltip-all-shortcuts-btn" id="tooltip-all-shortcuts-btn"
+            data-i18n="shortcuts_showAll">
+            Wszystkie skróty →
+          </button>
+        </div>
+      </div>
+    </div>
+    <button id="panel-btn" class="icon-btn icon-btn--md icon--settings"
+      data-i18n-attr="aria-label:panelBtn_ariaLabel;title:panelBtn_title"></button>
+  </div>
+
+  <!-- Date picker popover -->
+  <div id="date-picker-popover" class="date-picker-popover" hidden>
+    <div class="date-picker-shortcuts">
+      <button type="button" class="date-picker-shortcut" data-preset="today" data-i18n="datePicker_today">
+        Dziś
+      </button>
+      <button type="button" class="date-picker-shortcut" data-preset="tomorrow" data-i18n="datePicker_tomorrow">
+        Jutro
+      </button>
+      <button type="button" class="date-picker-clear icon--calendar-remove" id="date-picker-clear"
+        data-i18n-attr="title:dueClear_title;aria-label:dueClear_ariaLabel"></button>
+    </div>
+    <div class="date-picker-calendar__nav">
+      <button type="button" id="date-picker-prev" class="date-picker-calendar__nav-btn">
+        ‹
+      </button>
+      <span id="date-picker-month-label" class="date-picker-calendar__month"></span>
+      <button type="button" id="date-picker-next" class="date-picker-calendar__nav-btn">
+        ›
+      </button>
+    </div>
+    <div id="date-picker-grid" class="date-picker-calendar__grid"></div>
+    <div class="date-picker-footer">
+      <div class="date-picker-time" id="date-picker-time-wrapper">
+        <input type="time" id="date-picker-time-input" class="date-picker-time__input"
+          data-i18n-attr="placeholder:dueTime_placeholder" />
+        <span class="date-picker-time__alarm-icon"></span>
+        <select id="date-picker-reminder-select" class="date-picker-reminder-select">
+          <option value="0" data-i18n="dueReminder_onTime">W terminie</option>
+          <option value="5" data-i18n="dueReminder_5min">5 min przed</option>
+          <option value="15" data-i18n="dueReminder_15min">
+            15 min przed
+          </option>
+          <option value="30" data-i18n="dueReminder_30min">
+            30 min przed
+          </option>
+          <option value="60" data-i18n="dueReminder_1h">1h przed</option>
+        </select>
+      </div>
+      <div class="date-picker-recurrence">
+        <span class="date-picker-recurrence__icon" data-i18n-attr="title:recurrenceBtn_title">↺</span>
+        <button type="button" class="date-picker-rec-btn" data-recurrence="" data-i18n="datePicker_rec_none"
+          data-i18n-attr="title:recurrence_none">
+          —
+        </button>
+        <button type="button" class="date-picker-rec-btn" data-recurrence="daily" data-i18n="datePicker_rec_daily"
+          data-i18n-attr="title:recurrence_daily">
+          Codz.
+        </button>
+        <button type="button" class="date-picker-rec-btn" data-recurrence="weekly" data-i18n="datePicker_rec_weekly"
+          data-i18n-attr="title:recurrence_weekly">
+          Tydz.
+        </button>
+        <button type="button" class="date-picker-rec-btn" data-recurrence="monthly" data-i18n="datePicker_rec_monthly"
+          data-i18n-attr="title:recurrence_monthly">
+          Mies.
+        </button>
+        <button type="button" class="date-picker-rec-btn" data-recurrence="yearly" data-i18n="datePicker_rec_yearly"
+          data-i18n-attr="title:recurrence_yearly" title="" data-tooltip-content="Co rok">Rok</button>
+        <button type="button" class="date-picker-rec-btn" data-recurrence="custom" data-i18n="datePicker_rec_custom"
+          data-i18n-attr="title:recurrence_custom" title="" data-tooltip-content="Wybrane dni">Dni</button>
+      </div>
+      <div class="date-picker-days-row" id="date-picker-days-row" hidden>
+        <button type="button" class="date-picker-day-btn" data-day="1" data-i18n="day_short_1">Pn</button>
+        <button type="button" class="date-picker-day-btn" data-day="2" data-i18n="day_short_2">Wt</button>
+        <button type="button" class="date-picker-day-btn" data-day="3" data-i18n="day_short_3">Śr</button>
+        <button type="button" class="date-picker-day-btn" data-day="4" data-i18n="day_short_4">Cz</button>
+        <button type="button" class="date-picker-day-btn" data-day="5" data-i18n="day_short_5">Pt</button>
+        <button type="button" class="date-picker-day-btn" data-day="6" data-i18n="day_short_6">Sb</button>
+        <button type="button" class="date-picker-day-btn" data-day="0" data-i18n="day_short_0">Nd</button>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div id="link-tooltip" hidden>
+    <span class="panel-icon icon--link link-tooltip__icon"></span>
+    <span id="link-tooltip-url"></span>
+    <button id="link-tooltip-open" class="icon-btn icon-btn--sm icon--open-link"
+      data-i18n-attr="aria-label:linkTooltip_open;title:linkTooltip_open"></button>
+    <button id="link-tooltip-edit" class="icon-btn icon-btn--sm icon--edit"
+      data-i18n-attr="aria-label:linkTooltip_edit;title:linkTooltip_edit"></button>
+    <button id="link-tooltip-delete" class="icon-btn icon-btn--sm icon--bin"
+      data-i18n-attr="aria-label:linkTooltip_delete;title:linkTooltip_delete"></button>
+  </div>
+  <!-- Global custom tooltip — wypełniany przez tooltip.js -->
+  <div id="app-tooltip" role="tooltip" aria-hidden="true">
+    <span class="app-tooltip__label"></span>
+    <kbd class="app-tooltip__hint"></kbd>
+  </div>
+  <!-- Modal: potwierdź usunięcie tagu -->
+  <div id="tag-delete-modal" hidden>
+    <div class="link-modal__backdrop" id="tag-delete-backdrop"></div>
+    <div class="link-modal__panel" role="dialog" aria-modal="true" aria-labelledby="tag-delete-title">
+      <div class="link-modal__header">
+        <h3 id="tag-delete-title" data-i18n="tag_delete_title">Usuń tag</h3>
+        <button class="link-modal__close" id="tag-delete-close">✕</button>
+      </div>
+      <div class="link-modal__body">
+        <p id="tag-delete-desc" class="tag-delete-desc"></p>
+        <div id="tag-delete-list" class="tag-delete-list"></div>
+        <div class="tag-delete-actions">
+          <button id="tag-delete-cancel" class="btn" data-i18n="tag_delete_cancel">
+            Anuluj
+          </button>
+          <button id="tag-delete-confirm" class="btn btn--danger" data-i18n="tag_delete_confirm">
+            Usuń tag
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Slash menu — komendy formatowania -->
+  <div id="slash-menu" hidden>
+    <div class="slash-menu__backdrop"></div>
+    <div class="slash-menu__panel">
+      <div class="slash-menu__search">
+        <input id="slash-menu-input" type="text" autocomplete="off"
+          data-i18n-attr="placeholder:slash_search_placeholder" />
+      </div>
+      <div id="slash-menu-list" class="slash-menu__list"></div>
+    </div>
+  </div>
+  <!-- Onboarding overlay -->
+  <div id="onboarding-overlay" hidden>
+    <div id="onboarding-backdrop"></div>
+    <div id="onboarding-tooltip" role="dialog" aria-modal="true">
+      <div class="onboarding-tooltip__header">
+        <span id="onboarding-stage-label"></span>
+        <span id="onboarding-progress"></span>
+      </div>
+      <p id="onboarding-text"></p>
+      <div class="onboarding-tooltip__actions">
+        <button type="button" id="onboarding-skip" data-i18n="ob_btn_skip">
+          Pomiń wszystko
+        </button>
+        <button type="button" id="onboarding-settings" hidden
+          class="icon-btn icon-btn--sm icon-btn--ghost icon--settings"
+          data-i18n-attr="title:ob_btn_settings;aria-label:ob_btn_settings"></button>
+        <div class="onboarding-tooltip__nav">
+          <button type="button" id="onboarding-prev" data-i18n="ob_btn_prev">
+            ←
+          </button>
+          <button type="button" id="onboarding-next" data-i18n="ob_btn_next">
+            Dalej
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="scripts/app.js"></script>
+</body>
+
+</html>

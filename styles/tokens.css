@@ -1,0 +1,238 @@
+/* ══════════════════════════════════════════════════════════════
+   Design tokens — kolory, spacing, radius
+   Tryby: light (default) | dark (override)
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Surfaces */
+  --bg: #fafaf9;
+  --surface: #f3f3f0;
+  --surface-hover: rgb(0 0 0 / 0.06);
+
+  /* Borders */
+  --border: rgb(0 0 0 / 0.08);
+  --border-strong: rgb(0 0 0 / 0.2);
+
+  /* Text — zmiękczony z pure-black (17:1 → 13.7:1) by uniknąć halation
+     effect i zmęczenia wzroku; nadal grubo powyżej WCAG AAA (7:1) */
+  --text: #2a2a2e;
+  --text-2: #595961;
+  --text-3: #8c8c96;
+
+  /* Accent */
+  --accent: #27272a;
+  --accent-fg: #ffffff;
+  --accent-bg: #f4f4f5;
+  --accent-border: #a1a1aa;
+
+  /* Semantic */
+  --success: #5b8c6a;
+  /* Danger zdesaturowany z #dc2626 — niższy arousal, mniej kortyzolu,
+     nadal czytelnie destrukcyjny i WCAG AA (5.1:1) */
+  --danger: #be4038;
+  --danger-bg: rgb(190 64 56 / 0.08);
+  --danger-border: #e0a39e;
+  --danger-soft: #cc6a63;
+
+  /* Zen mode */
+  --zen: #5e8e83;
+
+  /* Code & quote */
+  --code-bg:     #211e2d;
+  --code-border: #6c7086;  /* krawędź i label code blocka */
+  --code-text: #cdd6f4;
+  --quote-bar: #d0cfc8;
+  --quote-text: #71717a;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-pill: 10px;
+
+  /* Typography */
+  --font-mono: Consolas, 'Courier New', monospace;
+
+  /* Icon masks */
+  --icon-alarm-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 20a7 7 0 0 1-7-7a7 7 0 0 1 7-7a7 7 0 0 1 7 7a7 7 0 0 1-7 7m0-16a9 9 0 0 0-9 9a9 9 0 0 0 9 9a9 9 0 0 0 9-9a9 9 0 0 0-9-9m.5 4H11v6l4.75 2.85l.75-1.23l-4-2.37zM7.88 3.39L6.6 1.86L2 5.71l1.29 1.53zM22 5.72l-4.6-3.86l-1.29 1.53l4.6 3.86z'/%3E%3C/svg%3E");
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgb(39 39 42 / 0.08);
+  --shadow-md: 0 4px 12px rgb(39 39 42 / 0.1),
+               0 1px 3px rgb(39 39 42 / 0.06);
+
+  /* Z-index scale */
+  --z-editor-btn: 2;    /* przyciski collapse/focus w rogu edytora */
+  --z-dropdown:   100;  /* tagi, overlays dropdown */
+  --z-overlay:    200;  /* callout dropdown, date picker */
+  --z-modal:      355;  /* link modal, modals */
+  --z-bar:        999;  /* bottom bar, fixed elements */
+  --z-onboarding: 1000; /* onboarding backdrop */
+  --z-ob-target:  1001; /* podświetlony element */
+  --z-ob-tooltip: 1002; /* tooltip onboardingu */
+
+  /* Transitions */
+  --transition: 0.15s;
+
+  /* Gold accent (focus, important, starred) */
+  --gold: #a8882e;
+  --gold-border: #e4c98d;
+  --gold-bg: rgb(194 154 69 / 0.08);
+  --gold-bg-strong: rgb(194 154 69 / 0.14);
+  --gold-text: #8a6822;
+
+  /* Bottom bar glass */
+  --bar-bg: rgb(255 255 255 / 0.88);
+
+  /* Tooltips */
+  --tooltip-bg: #27272a;
+  --tooltip-text: #e4e4e7;
+  --tooltip-border: #3f3f46;
+
+  --toggle-active-bg: var(--bg);
+
+  /* Typographic scale — rem-based, anchor: html { font-size: 81.25% } = 1rem ≈ 13px
+     Skaluje się z preferencjami przeglądarki użytkownika (accessibility). */
+  --text-xs:   0.769rem;  /* ≈10px — meta, chevron, pill, badge */
+  --text-sm:   0.846rem;  /* ≈11px — hint, label, ago, note-status */
+  --text-md:   0.923rem;  /* ≈12px — btn, toolbar, filter, item meta */
+  --text-base: 1rem;      /* ≈13px — body, input, treść notatki */
+  --text-lg:   1.077rem;  /* ≈14px — nagłówki panelu, tytuły sekcji */
+  --text-xl:   1.231rem;  /* ≈16px — nagłówki modali, akcenty */
+  --text-icon: 1.846rem;  /* ≈24px — ikony emoji (zen-empty__check) */
+
+  /* Line-height scale */
+  --lh-tight:   1.4;   /* kompaktowe preview, hint */
+  --lh-base:    1.6;   /* domyślne wieloliniowe — listy, code, pill */
+  --lh-content: 1.65;  /* treść edytora — maksymalny komfort czytania */
+
+
+
+
+  /* Callout blocks */
+  --callout-note-bg: rgb(59 130 246 / 0.07);
+  --callout-note-bar: #5588d4;
+  --callout-note-title: #3b6fc9;
+
+  --callout-tip-bg: rgb(34 197 94 / 0.07);
+  --callout-tip-bar: #3fa860;
+  --callout-tip-title: #2f8a4f;
+
+  --callout-important-bg: rgb(139 92 200 / 0.07);
+  --callout-important-bar: #8f6bc4;
+  --callout-important-title: #7e51ba;
+
+  --callout-warning-bg: rgb(234 179 8 / 0.07);
+  --callout-warning-bar: #c49500;
+  --callout-warning-title: #a87d0a;
+
+  --callout-caution-bg: rgb(190 64 56 / 0.07);
+  --callout-caution-bar: #c66059;
+  --callout-caution-title: #be4038;
+}
+
+/* ── Dark mode — auto (system preference) ───────── */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #1c1c1e;
+    --surface: #252729;
+    --surface-hover: rgb(255 255 255 / 0.07);
+
+    --border: rgb(255 255 255 / 0.12);
+    --border-strong: rgb(255 255 255 / 0.28);
+
+    /* Text zmiękczony (13:1 → 10.7:1) — w dark mode halation silniejszy */
+    --text: #cdcdd0;
+    --text-2: #a0a0a8;
+    --text-3: #707070;
+
+    --accent: #d4d4d4;
+    --accent-fg: #141414;
+    --accent-bg: #252729;
+    --accent-border: #606060;
+
+    --success: #7aa688;
+
+    --danger: #e89490;
+    --danger-bg: rgb(190 64 56 / 0.15);
+    --danger-border: rgb(190 64 56 / 0.35);
+    --danger-soft: #e89490;
+
+    --zen: #8eb8ac;
+
+    --quote-bar: #404040;
+    --quote-text: #909090;
+
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 12px rgb(0 0 0 / 0.5),
+                 0 1px 3px rgb(0 0 0 / 0.3);
+
+    --gold: #d4ae63;
+    --gold-border: rgb(212 174 99 / 0.35);
+    --gold-bg: rgb(212 174 99 / 0.08);
+    --gold-bg-strong: rgb(212 174 99 / 0.15);
+    --gold-text: #e7c98a;
+
+    --bar-bg: rgb(20 20 20 / 0.9);
+    --toggle-active-bg: #303030;
+
+    --callout-note-title: #93b4f8;
+    --callout-tip-title: #6fcf8a;
+    --callout-important-title: #c59df5;
+    --callout-warning-title: #f5c842;
+    --callout-caution-title: #f28b8b;
+  }
+}
+
+/* ── Dark mode — wymuszone przez użytkownika ─────── */
+
+[data-theme='dark'] {
+  --bg: #1c1c1e;
+  --surface: #252729;
+  --surface-hover: rgb(255 255 255 / 0.07);
+
+  --border: rgb(255 255 255 / 0.12);
+  --border-strong: rgb(255 255 255 / 0.28);
+
+  /* Text zmiękczony (13:1 → 10.7:1) — w dark mode halation silniejszy */
+  --text: #cdcdd0;
+  --text-2: #a0a0a8;
+  --text-3: #707070;
+
+  --accent: #d4d4d4;
+  --accent-fg: #141414;
+  --accent-bg: #252729;
+  --accent-border: #606060;
+
+  --success: #7aa688;
+
+  --danger: #e89490;
+  --danger-bg: rgb(190 64 56 / 0.15);
+  --danger-border: rgb(190 64 56 / 0.35);
+  --danger-soft: #e89490;
+
+  --zen: #8eb8ac;
+
+  --quote-bar: #404040;
+  --quote-text: #909090;
+
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.5),
+               0 1px 3px rgb(0 0 0 / 0.3);
+
+  --gold: #d4ae63;
+  --gold-border: rgb(212 174 99 / 0.35);
+  --gold-bg: rgb(212 174 99 / 0.08);
+  --gold-bg-strong: rgb(212 174 99 / 0.15);
+  --gold-text: #e7c98a;
+
+  --bar-bg: rgb(20 20 20 / 0.9);
+  --toggle-active-bg: #303030;
+
+  --callout-note-title: #93b4f8;
+  --callout-tip-title: #6fcf8a;
+  --callout-important-title: #c59df5;
+  --callout-warning-title: #f5c842;
+  --callout-caution-title: #f28b8b;
+}

@@ -1,0 +1,71 @@
+{
+  "manifest_version": 2,
+  "name": "__MSG_extension_name__",
+  "version": "1.0.6",
+  "version_name": "1.0.6 Preview",
+  "description": "__MSG_extension_description__",
+  "default_locale": "en",
+  "author": "Jarek Tyler M.",
+  "developer": {
+    "name": "Jarek Tyler M."
+  },
+  "content_security_policy": "script-src 'self'; object-src 'none'; img-src 'self' data:; base-uri 'none'",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "asidenotes-tyler-preview@addons.mozilla.org",
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "icons": {
+    "48": "assets/icons/mdi--notebook-edit-outline-48.png",
+    "128": "assets/icons/mdi--notebook-edit-outline-128.png"
+  },
+  "sidebar_action": {
+    "default_title": "__MSG_sidebar_title__",
+    "default_panel": "sidebar.html",
+    "default_icon": {
+      "16": "assets/icons/mdi--notebook-edit-outline-16.png",
+      "32": "assets/icons/mdi--notebook-edit-outline-32.png"
+    }
+  },
+  "browser_action": {
+    "default_title": "__MSG_popup_browserAction_title__",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icons/mdi--notebook-edit-outline-16.png",
+      "32": "assets/icons/mdi--notebook-edit-outline-32.png"
+    },
+    "theme_icons": [
+      {
+        "light": "assets/icons/mdi--notebook-edit-outline-16.png",
+        "dark": "assets/icons/mdi--notebook-edit-outline-16-light.png",
+        "size": 16
+      },
+      {
+        "light": "assets/icons/mdi--notebook-edit-outline-32.png",
+        "dark": "assets/icons/mdi--notebook-edit-outline-32-light.png",
+        "size": 32
+      }
+    ]
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "commands": {
+    "toggle-sidebar": {
+      "suggested_key": {
+        "default": "Alt+Shift+Q"
+      }
+    },
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      }
+    }
+  },
+  "permissions": ["storage", "alarms", "notifications"]
+}

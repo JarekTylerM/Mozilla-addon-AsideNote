@@ -1,0 +1,27 @@
+# Build output
+dist/
+*.zip
+
+# Node
+node_modules/
+
+# Test sync — generowane przez sync.bat, nie commitować
+tests/parser.mjs
+tests/sanitize.mjs
+tests/alarms.mjs
+tests/storage.mjs
+tests/quick-capture-core.mjs
+tests/utils.mjs
+tests/editor-url.mjs
+tests/editor-pattern.mjs
+tests/editor-block-analyzer.mjs
+tests/editor-selection.mjs
+
+# System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VSCode
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,72 @@
+/* ══════════════════════════════════════════════════════════════
+   chrome.css — bottom bar, security button, responsive
+   ══════════════════════════════════════════════════════════════ */
+
+.status-row {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+}
+
+.status-row #note-status {
+  flex: 1;
+  min-width: 0;
+}
+/* ── 14. Bottom bar & tooltip skrótów ────────── */
+
+#bottom-bar {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: var(--z-bar);
+  background: var(--bar-bg);
+  border-radius: var(--radius-lg);
+  padding: 3px;
+}
+#shortcut-tooltip-wrapper {
+  position: relative;
+}
+
+/* Ikony bottom-bar */
+#toggle-shortcuts,
+#panel-btn {
+  background-color: var(--text-2);
+  opacity: 0.5;
+}
+#toggle-shortcuts:hover,
+#panel-btn:hover {
+  opacity: 1;
+}
+
+/* ── Security button ────────────────────────── */
+#security-btn-wrapper {
+  position: relative;
+}
+#security-btn {
+  background-color: var(--danger-border);
+  opacity: 0.7;
+  transition:
+    opacity var(--transition),
+    background-color var(--transition);
+}
+#security-btn:hover {
+  background-color: var(--danger-soft);
+  opacity: 1;
+}
+
+/* ── 18. Responsive ───────────────────────────── */
+
+@media (max-width: 400px) {
+  .due-wrapper {
+    flex-wrap: wrap;
+  }
+  .due-date-wrapper {
+    flex: 1 1 100%;
+  }
+  .due-time-wrapper {
+    flex: 1 1 100%;
+  }
+}
