@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
    panel.js — panel personalizacji + tag selector + filter bar
    ══════════════════════════════════════════════════════════════ */
-import { switchPanelTab } from './app.js';
+import { switchPanelTab } from "./app.js";
 import {
   tagState,
   getTag,
@@ -11,8 +11,8 @@ import {
   makeTagPill,
   PALETTE,
   updateTagColor,
-} from './tags.js';
-import { state, renderList, saveActiveNote, selectNote } from './notes.js';
+} from "./tags.js";
+import { state, renderList, saveActiveNote, selectNote } from "./notes.js";
 import {
   saveNotes,
   saveFilterPrefs,
@@ -23,10 +23,10 @@ import {
   CURRENT_SCHEMA,
   saveDeletedNotes,
   loadLastBackupBeforeImport,
-} from './storage.js';
-import { rescheduleAll } from './alarms.js';
-import { t } from './i18n.js';
-import { setTooltipsEnabled } from './tooltip.js';
+} from "./storage.js";
+import { rescheduleAll } from "./alarms.js";
+import { t } from "./i18n.js";
+import { setTooltipsEnabled } from "./tooltip.js";
 import {
   sanitizeHTML,
   sanitizeImportedNote,
@@ -34,13 +34,13 @@ import {
   MAX_TAG_NAME_LEN,
   MAX_IMPORT_NOTES,
   MAX_IMPORT_TAGS,
-} from './sanitize.js';
-const mainView = document.getElementById('main-view');
-const panelEl = document.getElementById('panel');
-const tagsList = document.getElementById('tags-list');
-const tagDropdown = document.getElementById('tag-dropdown');
-const tagOptions = document.getElementById('tag-options');
-const selectorPills = document.getElementById('tag-selector-pills');
+} from "./sanitize.js";
+const mainView = document.getElementById("main-view");
+const panelEl = document.getElementById("panel");
+const tagsList = document.getElementById("tags-list");
+const tagDropdown = document.getElementById("tag-dropdown");
+const tagOptions = document.getElementById("tag-options");
+const selectorPills = document.getElementById("tag-selector-pills");
 
 /* ══ Panel personalizacji ═══════════════════════ */
 
@@ -59,12 +59,12 @@ export function closePanel() {
 }
 
 function _renderTagsPanel() {
-  tagsList.innerHTML = '';
+  tagsList.innerHTML = "";
 
   if (tagState.tags.length === 0) {
-    const msg = document.createElement('p');
-    msg.className = 'panel-empty';
-    msg.textContent = t('panel_tags_empty');
+    const msg = document.createElement("p");
+    msg.className = "panel-empty";
+    msg.textContent = t("panel_tags_empty");
     tagsList.appendChild(msg);
     return;
   }
@@ -73,47 +73,47 @@ function _renderTagsPanel() {
 }
 
 function _renderTagRow(tag) {
-  const row = document.createElement('div');
-  row.className = 'tag-manage-row';
+  const row = document.createElement("div");
+  row.className = "tag-manage-row";
 
-  const left = document.createElement('div');
-  left.className = 'tag-manage-left';
+  const left = document.createElement("div");
+  left.className = "tag-manage-left";
   left.appendChild(makeTagPill(tag));
 
   const count = state.notes.filter(
     (n) => Array.isArray(n.tags) && n.tags.includes(tag.id),
   ).length;
-  const countEl = document.createElement('span');
-  countEl.className = 'tag-manage-count';
+  const countEl = document.createElement("span");
+  countEl.className = "tag-manage-count";
   countEl.textContent = count;
   if (tag.color?.bg && tag.color?.fg) {
     countEl.style.backgroundColor = _hexAlpha(tag.color.bg, 0.35);
     countEl.style.color = tag.color.fg;
     countEl.style.borderColor = _hexAlpha(tag.color.fg, 0.25);
   }
-  const nameEl = document.createElement('span');
-  nameEl.className = 'tag-manage-name';
+  const nameEl = document.createElement("span");
+  nameEl.className = "tag-manage-name";
   nameEl.textContent = tag.name;
 
-  const editInput = document.createElement('input');
-  editInput.className = 'tag-manage-input';
+  const editInput = document.createElement("input");
+  editInput.className = "tag-manage-input";
   editInput.value = tag.name;
   editInput.hidden = true;
 
   left.appendChild(nameEl);
   left.appendChild(editInput);
 
-  const actions = document.createElement('div');
-  actions.className = 'tag-manage-actions';
+  const actions = document.createElement("div");
+  actions.className = "tag-manage-actions";
 
-  const editBtn = document.createElement('button');
-  editBtn.className = 'icon-btn icon-btn--sm icon-btn--ghost icon--edit';
-  editBtn.setAttribute('aria-label', t('panel_tags_edit'));
-  editBtn.title = t('panel_tags_edit');
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn icon-btn--sm icon-btn--ghost icon--edit";
+  editBtn.setAttribute("aria-label", t("panel_tags_edit"));
+  editBtn.title = t("panel_tags_edit");
 
   // Inline error pod editInput — pokazywany gdy walidacja zwróci błąd
-  const editError = document.createElement('div');
-  editError.className = 'validation-error';
+  const editError = document.createElement("div");
+  editError.className = "validation-error";
   editError.hidden = true;
 
   let editing = false;
@@ -125,11 +125,11 @@ function _renderTagRow(tag) {
       editError.hidden = true;
       editInput.focus();
       editBtn.className =
-        'icon-btn icon-btn--sm icon-btn--ghost icon--edit is-active';
+        "icon-btn icon-btn--sm icon-btn--ghost icon--edit is-active";
     } else {
       const name = editInput.value.trim();
       if (!name) {
-        editError.textContent = t('validation_empty');
+        editError.textContent = t("validation_empty");
         editError.hidden = false;
         return;
       }
@@ -146,31 +146,31 @@ function _renderTagRow(tag) {
   };
 
   // Live feedback przy wpisywaniu — pokazuj komunikat o limicie zanim user kliknie save
-  editInput.addEventListener('input', () => {
+  editInput.addEventListener("input", () => {
     const value = editInput.value;
     if (value.length > MAX_TAG_NAME_LEN) {
-      editError.textContent = t('validation_tooLong');
+      editError.textContent = t("validation_tooLong");
       editError.hidden = false;
     } else {
       editError.hidden = true;
     }
   });
 
-  editInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') editBtn.click();
-    if (e.key === 'Escape') {
+  editInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") editBtn.click();
+    if (e.key === "Escape") {
       editing = false;
       editInput.hidden = true;
       nameEl.hidden = false;
       editError.hidden = true;
-      editBtn.className = 'icon-btn icon-btn--sm icon-btn--ghost icon--edit';
+      editBtn.className = "icon-btn icon-btn--sm icon-btn--ghost icon--edit";
     }
   });
 
-  const upBtn = document.createElement('button');
-  upBtn.className = 'icon-btn icon-btn--sm icon-btn--ghost icon--tag-up';
-  upBtn.setAttribute('aria-label', t('panel_tags_moveUp'));
-  upBtn.title = t('panel_tags_moveUp');
+  const upBtn = document.createElement("button");
+  upBtn.className = "icon-btn icon-btn--sm icon-btn--ghost icon--tag-up";
+  upBtn.setAttribute("aria-label", t("panel_tags_moveUp"));
+  upBtn.title = t("panel_tags_moveUp");
   upBtn.onclick = () => {
     const idx = tagState.tags.findIndex((t) => t.id === tag.id);
     if (idx <= 0) return;
@@ -182,10 +182,10 @@ function _renderTagRow(tag) {
     _renderTagsPanel();
   };
 
-  const downBtn = document.createElement('button');
-  downBtn.className = 'icon-btn icon-btn--sm icon-btn--ghost icon--tag-down';
-  downBtn.setAttribute('aria-label', t('panel_tags_moveDown'));
-  downBtn.title = t('panel_tags_moveDown');
+  const downBtn = document.createElement("button");
+  downBtn.className = "icon-btn icon-btn--sm icon-btn--ghost icon--tag-down";
+  downBtn.setAttribute("aria-label", t("panel_tags_moveDown"));
+  downBtn.title = t("panel_tags_moveDown");
   downBtn.onclick = () => {
     const idx = tagState.tags.findIndex((t) => t.id === tag.id);
     if (idx >= tagState.tags.length - 1) return;
@@ -197,18 +197,18 @@ function _renderTagRow(tag) {
     _renderTagsPanel();
   };
 
-  const delBtn = document.createElement('button');
+  const delBtn = document.createElement("button");
   delBtn.className =
-    'icon-btn icon-btn--sm icon-btn--ghost icon--bin tag-manage-del';
-  delBtn.setAttribute('aria-label', t('panel_tags_delete'));
-  delBtn.title = t('panel_tags_delete');
+    "icon-btn icon-btn--sm icon-btn--ghost icon--bin tag-manage-del";
+  delBtn.setAttribute("aria-label", t("panel_tags_delete"));
+  delBtn.title = t("panel_tags_delete");
   delBtn.onclick = () => _openTagDeleteModal(tag);
 
-  const colorBtn = document.createElement('button');
+  const colorBtn = document.createElement("button");
   colorBtn.className =
-    'icon-btn icon-btn--sm icon-btn--ghost icon--color-palette';
-  colorBtn.setAttribute('aria-label', t('panel_tags_changeColor'));
-  colorBtn.title = t('panel_tags_changeColor');
+    "icon-btn icon-btn--sm icon-btn--ghost icon--color-palette";
+  colorBtn.setAttribute("aria-label", t("panel_tags_changeColor"));
+  colorBtn.title = t("panel_tags_changeColor");
   colorBtn.onclick = (e) => {
     e.stopPropagation();
     _openColorPicker(tag, colorBtn);
@@ -226,26 +226,26 @@ function _renderTagRow(tag) {
 }
 
 function _openTagDeleteModal(tag) {
-  const modal = document.getElementById('tag-delete-modal');
-  const desc = document.getElementById('tag-delete-desc');
-  const list = document.getElementById('tag-delete-list');
-  const btnConfirm = document.getElementById('tag-delete-confirm');
-  const btnCancel = document.getElementById('tag-delete-cancel');
-  const btnClose = document.getElementById('tag-delete-close');
-  const backdrop = document.getElementById('tag-delete-backdrop');
+  const modal = document.getElementById("tag-delete-modal");
+  const desc = document.getElementById("tag-delete-desc");
+  const list = document.getElementById("tag-delete-list");
+  const btnConfirm = document.getElementById("tag-delete-confirm");
+  const btnCancel = document.getElementById("tag-delete-cancel");
+  const btnClose = document.getElementById("tag-delete-close");
+  const backdrop = document.getElementById("tag-delete-backdrop");
 
   // Znajdź powiązane elementy
   const affected = state.notes.filter(
     (n) => Array.isArray(n.tags) && n.tags.includes(tag.id),
   );
-  const notes = affected.filter((n) => n.type === 'note');
-  const tasks = affected.filter((n) => n.type === 'task');
+  const notes = affected.filter((n) => n.type === "note");
+  const tasks = affected.filter((n) => n.type === "task");
 
   // Opis
   if (affected.length === 0) {
-    desc.textContent = t('tag_delete_unused', [tag.name]);
+    desc.textContent = t("tag_delete_unused", [tag.name]);
   } else {
-    desc.textContent = t('tag_delete_desc', [
+    desc.textContent = t("tag_delete_desc", [
       tag.name,
       String(notes.length),
       String(tasks.length),
@@ -253,17 +253,17 @@ function _openTagDeleteModal(tag) {
   }
 
   // Lista elementów
-  list.innerHTML = '';
+  list.innerHTML = "";
   affected.forEach((n) => {
-    const item = document.createElement('div');
-    item.className = 'tag-delete-item';
+    const item = document.createElement("div");
+    item.className = "tag-delete-item";
 
-    const icon = document.createElement('span');
+    const icon = document.createElement("span");
     icon.className = `tag-delete-item__icon tag-delete-item__icon--${n.type}`;
 
-    const title = document.createElement('span');
-    title.className = 'tag-delete-item__title';
-    title.textContent = n.title || t('note_untitled');
+    const title = document.createElement("span");
+    title.className = "tag-delete-item__title";
+    title.textContent = n.title || t("note_untitled");
 
     item.appendChild(icon);
     item.appendChild(title);
@@ -302,9 +302,9 @@ function _hexAlpha(hex, alpha) {
 }
 
 export function initAddTagForm() {
-  const input = document.getElementById('new-tag-input');
-  const btn = document.getElementById('add-tag-btn');
-  const errorEl = document.getElementById('new-tag-error');
+  const input = document.getElementById("new-tag-input");
+  const btn = document.getElementById("add-tag-btn");
+  const errorEl = document.getElementById("new-tag-error");
 
   const showError = (key) => {
     if (errorEl) {
@@ -319,7 +319,7 @@ export function initAddTagForm() {
   const doAdd = () => {
     const name = input.value.trim();
     if (!name) {
-      showError('validation_empty');
+      showError("validation_empty");
       return;
     }
     const result = createTag(name);
@@ -328,20 +328,20 @@ export function initAddTagForm() {
       return;
     }
     hideError();
-    input.value = '';
+    input.value = "";
     _renderTagsPanel();
     renderTagSelector();
   };
 
   btn.onclick = doAdd;
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') doAdd();
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doAdd();
   });
 
   // Live feedback przy wpisywaniu — pokazuj limit zanim user kliknie add
-  input.addEventListener('input', () => {
+  input.addEventListener("input", () => {
     if (input.value.length > MAX_TAG_NAME_LEN) {
-      showError('validation_tooLong');
+      showError("validation_tooLong");
     } else {
       hideError();
     }
@@ -351,33 +351,33 @@ export function initAddTagForm() {
 /* ══ Tag selector (w edytorze) ══════════════════ */
 
 export function initTagSelector() {
-  document.addEventListener('click', (e) => {
-    const sel = document.getElementById('tag-selector');
+  document.addEventListener("click", (e) => {
+    const sel = document.getElementById("tag-selector");
     if (!sel?.contains(e.target)) tagDropdown.hidden = true;
   });
 
   // Esc zamyka dropdown gdy fokus jest w środku
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || tagDropdown.hidden) return;
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || tagDropdown.hidden) return;
     const focused = document.activeElement;
     if (!tagDropdown.contains(focused)) return;
     e.preventDefault();
     e.stopPropagation();
     tagDropdown.hidden = true;
     // Wróć fokus na addBtn (tam skąd dropdown został otwarty)
-    const addBtn = document.querySelector('#tag-selector-pills .tag-add-btn');
+    const addBtn = document.querySelector("#tag-selector-pills .tag-add-btn");
     if (addBtn) addBtn.focus();
   });
 
-  document.getElementById('goto-panel').onclick = () => {
+  document.getElementById("goto-panel").onclick = () => {
     tagDropdown.hidden = true;
     openPanel();
-    switchPanelTab('tags');
+    switchPanelTab("tags");
   };
 }
 
 export function renderTagSelector() {
-  selectorPills.innerHTML = '';
+  selectorPills.innerHTML = "";
 
   const note = state.activeId
     ? state.notes.find((n) => n.id === state.activeId)
@@ -388,17 +388,17 @@ export function renderTagSelector() {
     const tag = getTag(id);
     if (!tag) return;
     const pill = makeTagPill(tag, { removable: true });
-    pill.title = t('tagSelector_pill_removeTitle');
+    pill.title = t("tagSelector_pill_removeTitle");
     pill.onclick = () => _toggleTag(id);
     selectorPills.appendChild(pill);
   });
 
-  const addBtn = document.createElement('button');
-  addBtn.className = 'tag-add-btn';
+  const addBtn = document.createElement("button");
+  addBtn.className = "tag-add-btn";
 
   if (tagState.tags.length === 0) {
-    addBtn.textContent = t('tagSelector_addBtn_long');
-    addBtn.title = t('tagSelector_addBtn_emptyTitle');
+    addBtn.textContent = t("tagSelector_addBtn_long");
+    addBtn.title = t("tagSelector_addBtn_emptyTitle");
     addBtn.onclick = (e) => {
       e.stopPropagation();
       const willOpen = tagDropdown.hidden;
@@ -408,8 +408,8 @@ export function renderTagSelector() {
   } else {
     addBtn.textContent =
       activeTags.length === 0
-        ? t('tagSelector_addBtn_long')
-        : t('tagSelector_addBtn_short');
+        ? t("tagSelector_addBtn_long")
+        : t("tagSelector_addBtn_short");
     addBtn.onclick = (e) => {
       e.stopPropagation();
       const willOpen = tagDropdown.hidden;
@@ -422,35 +422,35 @@ export function renderTagSelector() {
 }
 
 function _renderTagOptions(activeTags) {
-  tagOptions.innerHTML = '';
+  tagOptions.innerHTML = "";
 
   if (tagState.tags.length === 0) {
-    const msg = document.createElement('div');
-    msg.className = 'tag-option-empty';
-    msg.textContent = t('tagSelector_options_empty');
+    const msg = document.createElement("div");
+    msg.className = "tag-option-empty";
+    msg.textContent = t("tagSelector_options_empty");
     tagOptions.appendChild(msg);
     return;
   }
 
   tagState.tags.forEach((tag) => {
     const isActive = activeTags.includes(tag.id);
-    const item = document.createElement('button');
-    item.type = 'button';
+    const item = document.createElement("button");
+    item.type = "button";
     item.className =
-      'tag-option-item' + (isActive ? ' tag-option-item--active' : '');
+      "tag-option-item" + (isActive ? " tag-option-item--active" : "");
     item.dataset.tagId = tag.id;
 
-    const check = document.createElement('span');
-    check.className = 'tag-option-check';
-    check.textContent = isActive ? '✓' : '';
+    const check = document.createElement("span");
+    check.className = "tag-option-check";
+    check.textContent = isActive ? "✓" : "";
 
     item.appendChild(check);
     item.appendChild(makeTagPill(tag));
     item.onclick = () => {
       _toggleTag(tag.id);
       // In-place toggle — zachowuje fokus klawiatury, dropdown zostaje otwarty
-      const nowActive = item.classList.toggle('tag-option-item--active');
-      check.textContent = nowActive ? '✓' : '';
+      const nowActive = item.classList.toggle("tag-option-item--active");
+      check.textContent = nowActive ? "✓" : "";
     };
 
     tagOptions.appendChild(item);
@@ -458,13 +458,13 @@ function _renderTagOptions(activeTags) {
 }
 
 function _showTagHint(msg) {
-  const pills = document.getElementById('tag-selector-pills');
+  const pills = document.getElementById("tag-selector-pills");
   if (!pills) return;
-  let hint = document.getElementById('tag-selector-hint');
+  let hint = document.getElementById("tag-selector-hint");
   if (!hint) {
-    hint = document.createElement('span');
-    hint.id = 'tag-selector-hint';
-    hint.className = 'tag-selector-hint';
+    hint = document.createElement("span");
+    hint.id = "tag-selector-hint";
+    hint.className = "tag-selector-hint";
     pills.appendChild(hint);
   }
   hint.textContent = msg;
@@ -479,7 +479,7 @@ function _toggleTag(tagId) {
   if (!state.activeId) {
     saveActiveNote();
     if (!state.activeId) {
-      _showTagHint(t('tagSelector_noNote'));
+      _showTagHint(t("tagSelector_noNote"));
       return;
     }
   }
@@ -500,68 +500,68 @@ function _toggleTag(tagId) {
 /* ══ Filter bar ═════════════════════════════════ */
 
 export function initFilter() {
-  const filterBtn = document.getElementById('filter-btn');
-  const filterBar = document.getElementById('filter-bar');
-  const filterOpts = document.getElementById('filter-options');
+  const filterBtn = document.getElementById("filter-btn");
+  const filterBar = document.getElementById("filter-bar");
+  const filterOpts = document.getElementById("filter-options");
 
   filterBtn.onclick = () => {
     const willOpen = filterBar.hidden;
     filterBar.hidden = !filterBar.hidden;
-    filterBtn.classList.toggle('is-active', !filterBar.hidden);
+    filterBtn.classList.toggle("is-active", !filterBar.hidden);
     if (willOpen) _renderFilterOptions(filterOpts);
   };
 }
 
 function _renderFilterOptions(container) {
-  container.innerHTML = '';
+  container.innerHTML = "";
 
   // Toggle: ukryj zakończone
-  const toggleRow = document.createElement('label');
-  toggleRow.className = 'filter-toggle';
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
+  const toggleRow = document.createElement("label");
+  toggleRow.className = "filter-toggle";
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
   checkbox.checked = state.filterHideCompleted;
-  const labelText = document.createElement('span');
-  labelText.textContent = t('filter_hideCompleted');
+  const labelText = document.createElement("span");
+  labelText.textContent = t("filter_hideCompleted");
   toggleRow.appendChild(checkbox);
   toggleRow.appendChild(labelText);
   checkbox.onchange = (e) => {
     state.filterHideCompleted = e.target.checked;
     saveFilterPrefs({ hideCompleted: state.filterHideCompleted });
     renderList();
-    document.dispatchEvent(new CustomEvent('filterChanged'));
+    document.dispatchEvent(new CustomEvent("filterChanged"));
   };
   container.appendChild(toggleRow);
 
   // Toggle: tylko w trakcie
-  const inProgressRow = document.createElement('label');
-  inProgressRow.className = 'filter-toggle';
-  const inProgressCb = document.createElement('input');
-  inProgressCb.type = 'checkbox';
+  const inProgressRow = document.createElement("label");
+  inProgressRow.className = "filter-toggle";
+  const inProgressCb = document.createElement("input");
+  inProgressCb.type = "checkbox";
   inProgressCb.checked = state.filterInProgress;
-  const inProgressText = document.createElement('span');
-  inProgressText.textContent = t('filter_inProgress');
+  const inProgressText = document.createElement("span");
+  inProgressText.textContent = t("filter_inProgress");
   inProgressRow.appendChild(inProgressCb);
   inProgressRow.appendChild(inProgressText);
   inProgressCb.onchange = (e) => {
     state.filterInProgress = e.target.checked;
     renderList();
-    document.dispatchEvent(new CustomEvent('filterChanged'));
+    document.dispatchEvent(new CustomEvent("filterChanged"));
   };
   container.appendChild(inProgressRow);
 
   // Tagi
   if (tagState.tags.length === 0) {
-    const msg = document.createElement('span');
-    msg.className = 'filter-empty';
-    msg.textContent = t('filter_tags_empty');
+    const msg = document.createElement("span");
+    msg.className = "filter-empty";
+    msg.textContent = t("filter_tags_empty");
     container.appendChild(msg);
     return;
   }
 
-  const sep = document.createElement('div');
-  sep.className = 'filter-separator';
-  sep.textContent = t('filter_tags_separator');
+  const sep = document.createElement("div");
+  sep.className = "filter-separator";
+  sep.textContent = t("filter_tags_separator");
   container.appendChild(sep);
 
   tagState.tags.forEach((tag) => {
@@ -570,19 +570,19 @@ function _renderFilterOptions(container) {
       (n) => Array.isArray(n.tags) && n.tags.includes(tag.id),
     ).length;
     const pill = makeTagPill(tag, { interactive: true });
-    pill.classList.toggle('tag-pill--filter-active', isActive);
+    pill.classList.toggle("tag-pill--filter-active", isActive);
     pill.dataset.tagId = tag.id;
-    const badge = document.createElement('span');
-    badge.className = 'tag-pill__count';
+    const badge = document.createElement("span");
+    badge.className = "tag-pill__count";
     badge.textContent = count;
     pill.appendChild(badge);
     pill.onclick = () => {
       const idx = state.filterTags.indexOf(tag.id);
       if (idx === -1) state.filterTags.push(tag.id);
       else state.filterTags.splice(idx, 1);
-      pill.classList.toggle('tag-pill--filter-active');
+      pill.classList.toggle("tag-pill--filter-active");
       renderList();
-      document.dispatchEvent(new CustomEvent('filterChanged'));
+      document.dispatchEvent(new CustomEvent("filterChanged"));
     };
     container.appendChild(pill);
   });
@@ -591,9 +591,9 @@ function _renderFilterOptions(container) {
 /* ── Cofnij ostatni import ─────────────────────── */
 
 export async function initUndoImport(backupOverride = null) {
-  const btn = document.getElementById('undo-import-btn');
-  const wrapper = document.getElementById('undo-import-wrapper');
-  const info = document.getElementById('undo-import-info');
+  const btn = document.getElementById("undo-import-btn");
+  const wrapper = document.getElementById("undo-import-wrapper");
+  const info = document.getElementById("undo-import-info");
   if (!btn || !wrapper) return;
 
   const backup = backupOverride ?? (await loadLastBackupBeforeImport());
@@ -604,42 +604,42 @@ export async function initUndoImport(backupOverride = null) {
 
   const date = new Date(backup.savedAt).toLocaleString();
   const count = backup.notes?.length ?? 0;
-  info.textContent = t('panel_data_undoImport_info', [date, String(count)]);
+  info.textContent = t("panel_data_undoImport_info", [date, String(count)]);
   wrapper.hidden = false;
 
   btn.onclick = async () => {
-    if (!window.confirm(t('panel_data_undoImport_confirm'))) return;
+    if (!window.confirm(t("panel_data_undoImport_confirm"))) return;
 
     state.notes = backup.notes ?? [];
     tagState.tags = backup.tags ?? [];
 
     await saveNotes(state.notes);
     await saveTags(tagState.tags);
-    await browser.storage.local.remove('_lastBackupBeforeImport');
+    await browser.storage.local.remove("_lastBackupBeforeImport");
 
     wrapper.hidden = true;
     renderList();
     _renderTagsPanel();
     updateStorageUsage();
 
-    info.textContent = t('panel_data_undoImport_done');
+    info.textContent = t("panel_data_undoImport_done");
     info.hidden = false;
     setTimeout(() => {
-      info.textContent = '';
+      info.textContent = "";
     }, 3000);
   };
 }
 
 export function initDataActions() {
-  document.getElementById('export-btn').onclick = _exportData;
-  document.getElementById('import-input').addEventListener('change', (e) => {
+  document.getElementById("export-btn").onclick = _exportData;
+  document.getElementById("import-input").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) _importData(file);
-    e.target.value = '';
+    e.target.value = "";
   });
   document
-    .getElementById('deleted-empty-btn')
-    ?.addEventListener('click', _emptyDeletedNotes);
+    .getElementById("deleted-empty-btn")
+    ?.addEventListener("click", _emptyDeletedNotes);
 }
 
 /* ── Storage usage ─────────────────────────────── */
@@ -653,8 +653,8 @@ function _fmtBytes(bytes) {
 }
 
 export async function updateStorageUsage() {
-  const bar = document.getElementById('storage-bar');
-  const label = document.getElementById('storage-label');
+  const bar = document.getElementById("storage-bar");
+  const label = document.getElementById("storage-label");
   if (!bar || !label) return;
 
   try {
@@ -662,17 +662,17 @@ export async function updateStorageUsage() {
     const free = Math.max(0, STORAGE_QUOTA - used);
     const pct = Math.min(100, (used / STORAGE_QUOTA) * 100);
 
-    const level = pct > 80 ? 'danger' : pct > 55 ? 'warn' : '';
+    const level = pct > 80 ? "danger" : pct > 55 ? "warn" : "";
 
     bar.style.width = `${pct}%`;
     bar.className =
-      'storage-usage__bar' + (level ? ` storage-usage__bar--${level}` : '');
+      "storage-usage__bar" + (level ? ` storage-usage__bar--${level}` : "");
 
     label.textContent = `${_fmtBytes(used)} z ${_fmtBytes(STORAGE_QUOTA)} — wolne: ${_fmtBytes(free)}`;
     label.className =
-      'storage-usage__label' + (level ? ` storage-usage__label--${level}` : '');
+      "storage-usage__label" + (level ? ` storage-usage__label--${level}` : "");
   } catch {
-    label.textContent = t('storage_usage_unavailable');
+    label.textContent = t("storage_usage_unavailable");
   }
 }
 
@@ -686,10 +686,10 @@ function _exportData() {
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json',
+    type: "application/json",
   });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = `asidenotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a);
@@ -699,13 +699,13 @@ function _exportData() {
 }
 
 function _importData(file) {
-  const confirmed = window.confirm(t('import_confirm'));
+  const confirmed = window.confirm(t("import_confirm"));
   if (!confirmed) return;
 
   // Limit rozmiaru pliku — 5 MB to dużo nawet dla pełnych eksportów.
   // Chroni przed wyczerpaniem pamięci przy próbie wczytania monstrualnego JSON.
   if (file.size > STORAGE_QUOTA) {
-    _showImportFeedback(t('import_error_fileTooLarge'), 'error');
+    _showImportFeedback(t("import_error_fileTooLarge"), "error");
     return;
   }
 
@@ -715,18 +715,18 @@ function _importData(file) {
       const data = JSON.parse(e.target.result);
 
       if (!Array.isArray(data.notes))
-        throw new Error(t('import_error_missingNotes'));
+        throw new Error(t("import_error_missingNotes"));
 
       // Hard limit liczby notatek/tagów — chroni przed DoS przez ogromny plik
       // który przeszedł walidację rozmiaru (np. milion pustych obiektów).
       if (data.notes.length > MAX_IMPORT_NOTES) {
         throw new Error(
-          t('import_error_tooManyNotes', [String(MAX_IMPORT_NOTES)]),
+          t("import_error_tooManyNotes", [String(MAX_IMPORT_NOTES)]),
         );
       }
       if (Array.isArray(data.tags) && data.tags.length > MAX_IMPORT_TAGS) {
         throw new Error(
-          t('import_error_tooManyTags', [String(MAX_IMPORT_TAGS)]),
+          t("import_error_tooManyTags", [String(MAX_IMPORT_TAGS)]),
         );
       }
 
@@ -744,7 +744,7 @@ function _importData(file) {
       // schematu. Przepuszczamy przez ten sam mechanizm co loadNotes.
       const importedVersion = data.schemaVersion ?? 0;
       if (importedVersion > CURRENT_SCHEMA) {
-        throw new Error(t('import_error_schemaVersion'));
+        throw new Error(t("import_error_schemaVersion"));
       }
       const migrated = migrateNotes(data.notes, importedVersion);
 
@@ -811,8 +811,8 @@ function _importData(file) {
 
       // reset aktywnej notatki
       state.activeId = null;
-      document.getElementById('title').value = '';
-      document.getElementById('editor').innerHTML = '';
+      document.getElementById("title").value = "";
+      document.getElementById("editor").innerHTML = "";
 
       renderList();
       renderTagSelector();
@@ -820,25 +820,25 @@ function _importData(file) {
       _renderTagsPanel();
 
       // Info o sukcesie + ostrzeżenie jeśli były odrzucone
-      const successMsg = t('import_success', [
+      const successMsg = t("import_success", [
         String(state.notes.length),
         String(tagState.tags.length),
       ]);
       if (rejectedNotes > 0 || rejectedTags > 0) {
         _showImportFeedback(
           successMsg +
-            ' ' +
-            t('import_warning_rejected', [
+            " " +
+            t("import_warning_rejected", [
               String(rejectedNotes),
               String(rejectedTags),
             ]),
-          'warning',
+          "warning",
         );
       } else {
-        _showImportFeedback(successMsg, 'success');
+        _showImportFeedback(successMsg, "success");
       }
     } catch (err) {
-      _showImportFeedback(t('import_error_prefix') + err.message, 'error');
+      _showImportFeedback(t("import_error_prefix") + err.message, "error");
     }
   };
   reader.readAsText(file);
@@ -850,14 +850,14 @@ function _importData(file) {
  * Gdyby go nie było — graceful fallback do console.
  */
 function _showImportFeedback(text, variant) {
-  const el = document.getElementById('import-feedback');
+  const el = document.getElementById("import-feedback");
   if (!el) {
-    if (variant === 'error') console.error(text);
+    if (variant === "error") console.error(text);
     else console.info(text);
     return;
   }
   el.textContent = text;
-  el.className = 'import-feedback import-feedback--' + variant;
+  el.className = "import-feedback import-feedback--" + variant;
   el.hidden = false;
   setTimeout(() => {
     el.hidden = true;
@@ -871,7 +871,7 @@ export function togglePanel() {
 
 export function initUiSettings(settings) {
   // Toolbar toggle
-  const toggle = document.getElementById('toolbar-toggle');
+  const toggle = document.getElementById("toolbar-toggle");
   if (toggle) {
     toggle.checked = settings.showToolbar ?? true;
     _applyToolbar(toggle.checked);
@@ -882,7 +882,7 @@ export function initUiSettings(settings) {
   }
 
   // Toolbar tooltips toggle
-  const tooltipsToggle = document.getElementById('toolbar-tooltips-toggle');
+  const tooltipsToggle = document.getElementById("toolbar-tooltips-toggle");
   if (tooltipsToggle) {
     tooltipsToggle.checked = settings.showToolbarTooltips ?? true;
     _applyToolbarTooltips(tooltipsToggle.checked);
@@ -894,21 +894,21 @@ export function initUiSettings(settings) {
 
   // Editor placeholder toggle
   const placeholderToggle = document.getElementById(
-    'editor-placeholder-toggle',
+    "editor-placeholder-toggle",
   );
   if (placeholderToggle) {
     placeholderToggle.checked = settings.showEditorPlaceholder ?? true;
     document.documentElement.dataset.editorPlaceholder =
-      placeholderToggle.checked ? '' : 'off';
+      placeholderToggle.checked ? "" : "off";
     placeholderToggle.onchange = () => {
       document.documentElement.dataset.editorPlaceholder =
-        placeholderToggle.checked ? '' : 'off';
+        placeholderToggle.checked ? "" : "off";
       saveUiSettings({ showEditorPlaceholder: placeholderToggle.checked });
     };
   }
 
   // Zoom
-  const zoomSelect = document.getElementById('ui-zoom-select');
+  const zoomSelect = document.getElementById("ui-zoom-select");
   if (zoomSelect) {
     zoomSelect.value = String(settings.uiZoom ?? 100);
     _applyZoom(settings.uiZoom ?? 100);
@@ -920,19 +920,19 @@ export function initUiSettings(settings) {
   }
 
   // Color scheme
-  _applyColorScheme(settings.colorScheme ?? 'auto');
-  _initSchemeToggle(settings.colorScheme ?? 'auto');
+  _applyColorScheme(settings.colorScheme ?? "auto");
+  _initSchemeToggle(settings.colorScheme ?? "auto");
 }
 
 function _applyToolbar(show) {
-  document.getElementById('toolbar').hidden = !show;
+  document.getElementById("toolbar").hidden = !show;
 }
 
 function _applyZoom(value) {
   // Bazowy font-size to 81.25% (z base.css). Skalujemy proporcjonalnie.
   const base = 81.25;
   document.documentElement.style.fontSize =
-    value === 100 ? '' : `${(base * value) / 100}%`;
+    value === 100 ? "" : `${(base * value) / 100}%`;
 }
 
 /**
@@ -943,21 +943,21 @@ function _applyZoom(value) {
  */
 function _applyColorScheme(scheme) {
   const html = document.documentElement;
-  if (scheme === 'auto') {
-    html.removeAttribute('data-theme');
+  if (scheme === "auto") {
+    html.removeAttribute("data-theme");
   } else {
     html.dataset.theme = scheme;
   }
 }
 
 function _initSchemeToggle(activeScheme) {
-  const btns = document.querySelectorAll('.scheme-btn');
+  const btns = document.querySelectorAll(".scheme-btn");
   if (!btns.length) return;
 
   // Zaznacz aktywny przycisk
   btns.forEach((btn) => {
     btn.classList.toggle(
-      'scheme-btn--active',
+      "scheme-btn--active",
       btn.dataset.scheme === activeScheme,
     );
   });
@@ -968,8 +968,8 @@ function _initSchemeToggle(activeScheme) {
       const scheme = btn.dataset.scheme;
       _applyColorScheme(scheme);
       saveUiSettings({ colorScheme: scheme });
-      btns.forEach((b) => b.classList.toggle('scheme-btn--active', b === btn));
-      document.dispatchEvent(new CustomEvent('themeChanged'));
+      btns.forEach((b) => b.classList.toggle("scheme-btn--active", b === btn));
+      document.dispatchEvent(new CustomEvent("themeChanged"));
     };
   });
 }
@@ -995,19 +995,25 @@ function _openColorPicker(tag, anchor) {
     _colorPickerEl = null;
   }
 
-  const picker = document.createElement('div');
-  picker.className = 'color-picker-popup';
+  const picker = document.createElement("div");
+  picker.className = "color-picker-popup";
   _colorPickerEl = picker;
 
-  const grid = document.createElement('div');
-  grid.className = 'color-picker-grid';
+  const grid = document.createElement("div");
+  grid.className = "color-picker-grid";
 
+  const isDark =
+    document.documentElement.dataset.theme === "dark" ||
+    (!document.documentElement.dataset.theme &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
   PALETTE.forEach((color) => {
-    const swatch = document.createElement('button');
-    swatch.className = 'color-picker-swatch';
-    swatch.style.setProperty('--swatch-bg', color.bg);
-    swatch.style.setProperty('--swatch-fg', color.fg);
-    if (tag.color.bg === color.bg) swatch.classList.add('is-active');
+    const swatch = document.createElement("button");
+    swatch.className = "color-picker-swatch";
+    const swatchBg = isDark && color.darkBg ? color.darkBg : color.bg;
+    const swatchFg = isDark && color.darkFg ? color.darkFg : color.fg;
+    swatch.style.setProperty("--swatch-bg", swatchBg);
+    swatch.style.setProperty("--swatch-fg", swatchFg);
+    if (tag.color.bg === color.bg) swatch.classList.add("is-active");
     swatch.title = color.bg;
     swatch.onclick = () => {
       updateTagColor(tag.id, color);
@@ -1022,28 +1028,28 @@ function _openColorPicker(tag, anchor) {
 
   picker.appendChild(grid);
 
-  const sep = document.createElement('div');
-  sep.className = 'color-picker-sep';
+  const sep = document.createElement("div");
+  sep.className = "color-picker-sep";
   picker.appendChild(sep);
 
-  const customRow = document.createElement('label');
-  customRow.className = 'color-picker-custom';
+  const customRow = document.createElement("label");
+  customRow.className = "color-picker-custom";
 
-  const customLabel = document.createElement('span');
-  customLabel.textContent = t('panel_tags_customColor');
+  const customLabel = document.createElement("span");
+  customLabel.textContent = t("panel_tags_customColor");
 
-  const customInput = document.createElement('input');
-  customInput.type = 'color';
+  const customInput = document.createElement("input");
+  customInput.type = "color";
   customInput.value = tag.color.bg;
-  customInput.className = 'color-picker-input';
+  customInput.className = "color-picker-input";
 
-  customInput.addEventListener('change', () => {
+  customInput.addEventListener("change", () => {
     const bg = customInput.value;
     const r = parseInt(bg.slice(1, 3), 16);
     const g = parseInt(bg.slice(3, 5), 16);
     const b = parseInt(bg.slice(5, 7), 16);
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    const fg = luminance > 0.5 ? '#1f2937' : '#f9fafb';
+    const fg = luminance > 0.5 ? "#1f2937" : "#f9fafb";
     updateTagColor(tag.id, { bg, fg });
     _colorPickerEl?.remove();
     _colorPickerEl = null;
@@ -1058,16 +1064,16 @@ function _openColorPicker(tag, anchor) {
 
   document.body.appendChild(picker);
   const rect = anchor.getBoundingClientRect();
-  picker.style.position = 'fixed';
+  picker.style.position = "fixed";
   picker.style.top = `${rect.bottom + 4}px`;
-  picker.style.left = `${Math.min(rect.left, window.innerWidth - 180)}px`;
-  picker.style.zIndex = '9999';
+  picker.style.left = `${Math.min(rect.left, window.innerWidth - (picker.getBoundingClientRect().width || 180) - 8)}px`;
+  picker.style.zIndex = "9999";
 
   setTimeout(() => {
-    document.addEventListener('click', function _close() {
+    document.addEventListener("click", function _close() {
       _colorPickerEl?.remove();
       _colorPickerEl = null;
-      document.removeEventListener('click', _close);
+      document.removeEventListener("click", _close);
     });
   }, 0);
 }
@@ -1075,14 +1081,14 @@ function _openColorPicker(tag, anchor) {
 /* ── Niedawno usunięte ─────────────────────────── */
 
 export function renderDeletedNotes() {
-  const container = document.getElementById('deleted-notes-list');
-  const countEl = document.getElementById('deleted-notes-count');
-  const emptyEl = document.getElementById('deleted-notes-empty');
-  const emptyBtn = document.getElementById('deleted-empty-btn');
+  const container = document.getElementById("deleted-notes-list");
+  const countEl = document.getElementById("deleted-notes-count");
+  const emptyEl = document.getElementById("deleted-notes-empty");
+  const emptyBtn = document.getElementById("deleted-empty-btn");
   if (!container) return;
 
   const items = state.deletedNotes ?? [];
-  if (countEl) countEl.textContent = items.length ? `(${items.length})` : '';
+  if (countEl) countEl.textContent = items.length ? `(${items.length})` : "";
   if (emptyBtn) emptyBtn.hidden = items.length === 0;
 
   if (items.length === 0) {
@@ -1094,62 +1100,62 @@ export function renderDeletedNotes() {
   container.hidden = false;
   if (emptyEl) emptyEl.hidden = true;
 
-  container.innerHTML = '';
+  container.innerHTML = "";
   items.forEach((note) => {
-    const row = document.createElement('div');
-    row.className = 'deleted-item';
+    const row = document.createElement("div");
+    row.className = "deleted-item";
 
-    const info = document.createElement('div');
-    info.className = 'deleted-item__info';
+    const info = document.createElement("div");
+    info.className = "deleted-item__info";
 
-    const iconClass = note.type === 'task' ? 'icon--task' : 'icon--note';
-    const title = note.title?.trim() || t('deletedNote_untitled');
+    const iconClass = note.type === "task" ? "icon--task" : "icon--note";
+    const title = note.title?.trim() || t("deletedNote_untitled");
     const ago = _timeAgo(note.deletedAt);
     const preview = _contentPreview(note.content);
 
     const previewTip = preview
       ? preview.length > 160
-        ? preview.slice(0, 160) + '…'
+        ? preview.slice(0, 160) + "…"
         : preview
-      : t('note_preview_empty');
+      : t("note_preview_empty");
 
     info.innerHTML = `<span class="deleted-item__icon ${iconClass}"></span>
       <span class="deleted-item__title">${_esc(title)}</span>
       <span class="deleted-item__ago">${_esc(ago)}</span>`;
 
-    const previewEl = document.createElement('div');
-    previewEl.className = 'deleted-item__preview';
+    const previewEl = document.createElement("div");
+    previewEl.className = "deleted-item__preview";
     previewEl.hidden = true;
-    previewEl.textContent = preview || t('deletedNote_noContent');
+    previewEl.textContent = preview || t("deletedNote_noContent");
 
-    info.style.cursor = 'pointer';
-    info.addEventListener('click', () => {
+    info.style.cursor = "pointer";
+    info.addEventListener("click", () => {
       previewEl.hidden = !previewEl.hidden;
-      row.classList.toggle('deleted-item--expanded', !previewEl.hidden);
+      row.classList.toggle("deleted-item--expanded", !previewEl.hidden);
     });
 
-    const actions = document.createElement('div');
-    actions.className = 'deleted-item__actions';
+    const actions = document.createElement("div");
+    actions.className = "deleted-item__actions";
 
-    const previewIconBtn = document.createElement('button');
-    previewIconBtn.className = 'note-item__preview icon--preview';
-    previewIconBtn.setAttribute('aria-label', t('note_preview_ariaLabel'));
+    const previewIconBtn = document.createElement("button");
+    previewIconBtn.className = "note-item__preview icon--preview";
+    previewIconBtn.setAttribute("aria-label", t("note_preview_ariaLabel"));
     previewIconBtn.title = previewTip;
-    previewIconBtn.addEventListener('click', (e) => e.stopPropagation());
+    previewIconBtn.addEventListener("click", (e) => e.stopPropagation());
     actions.appendChild(previewIconBtn);
 
-    const restoreBtn = document.createElement('button');
+    const restoreBtn = document.createElement("button");
     restoreBtn.className =
-      'icon-btn icon-btn--sm icon-btn--ghost icon--restore';
-    restoreBtn.title = t('deletedNote_restore');
-    restoreBtn.setAttribute('aria-label', t('deletedNote_restore'));
+      "icon-btn icon-btn--sm icon-btn--ghost icon--restore";
+    restoreBtn.title = t("deletedNote_restore");
+    restoreBtn.setAttribute("aria-label", t("deletedNote_restore"));
     restoreBtn.onclick = () => _restoreNote(note.id);
 
-    const permBtn = document.createElement('button');
+    const permBtn = document.createElement("button");
     permBtn.className =
-      'icon-btn icon-btn--sm icon-btn--ghost icon--delete-forever deleted-item__delete-btn';
-    permBtn.title = t('deletedNote_deletePermanently');
-    permBtn.setAttribute('aria-label', t('deletedNote_deletePermanently'));
+      "icon-btn icon-btn--sm icon-btn--ghost icon--delete-forever deleted-item__delete-btn";
+    permBtn.title = t("deletedNote_deletePermanently");
+    permBtn.setAttribute("aria-label", t("deletedNote_deletePermanently"));
     permBtn.onclick = () => _permanentDelete(note.id);
 
     actions.appendChild(restoreBtn);
@@ -1186,7 +1192,7 @@ function _permanentDelete(id) {
 
 function _emptyDeletedNotes() {
   if (!state.deletedNotes.length) return;
-  if (!window.confirm(t('deletedNotes_confirmEmpty'))) return;
+  if (!window.confirm(t("deletedNotes_confirmEmpty"))) return;
   state.deletedNotes = [];
   saveDeletedNotes([]);
   renderDeletedNotes();
@@ -1195,28 +1201,28 @@ function _emptyDeletedNotes() {
 
 function _timeAgo(ts) {
   const sec = Math.floor((Date.now() - ts) / 1000);
-  if (sec < 60) return t('timeAgo_justNow');
-  if (sec < 3600) return t('timeAgo_minutes', [String(Math.floor(sec / 60))]);
-  if (sec < 86400) return t('timeAgo_hours', [String(Math.floor(sec / 3600))]);
+  if (sec < 60) return t("timeAgo_justNow");
+  if (sec < 3600) return t("timeAgo_minutes", [String(Math.floor(sec / 60))]);
+  if (sec < 86400) return t("timeAgo_hours", [String(Math.floor(sec / 3600))]);
   if (sec < 30 * 86400)
-    return t('timeAgo_days', [String(Math.floor(sec / 86400))]);
+    return t("timeAgo_days", [String(Math.floor(sec / 86400))]);
   return new Date(ts).toLocaleDateString();
 }
 
 function _esc(s) {
   return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function _contentPreview(html) {
-  if (!html) return '';
+  if (!html) return "";
   const text = html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
-  return text.length > 120 ? text.slice(0, 120) + '…' : text;
+  return text.length > 120 ? text.slice(0, 120) + "…" : text;
 }

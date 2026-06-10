@@ -551,6 +551,8 @@ quickCaptureInput.addEventListener("keydown", (e) => {
 /* ── Panel personalizacji ──────────────────────── */
 
 document.getElementById("panel-btn").onclick = () => {
+  shortcutTooltip.classList.remove("show");
+  toggleShortcutsBtn.setAttribute("aria-expanded", "false");
   togglePanel();
   if (!document.getElementById("panel").hidden) {
     switchPanelTab("general");

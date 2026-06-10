@@ -52,10 +52,10 @@
 /* Tooltip */
 #shortcut-tooltip {
   display: none;
-  position: absolute;
-  bottom: 40px;
-  right: 0;
-  width: 240px;
+  position: fixed;
+  bottom: 52px;
+  right: 4px;
+  width: min(240px, 100vw - 8px);
   background: var(--tooltip-bg);
   color: var(--tooltip-text);
   border-radius: var(--radius-lg);

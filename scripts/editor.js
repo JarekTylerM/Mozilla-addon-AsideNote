@@ -92,9 +92,10 @@ function _initLinkTooltip() {
     const href = el.getAttribute('href') || '';
     urlLabel.textContent = href.length > 50 ? href.slice(0, 47) + '…' : href;
     const rect = el.getBoundingClientRect();
-    const left = Math.min(rect.left, window.innerWidth - 268);
+    const tw   = tooltip.getBoundingClientRect().width || 268;
+    const left = Math.min(rect.left, window.innerWidth - tw - 8);
     tooltip.style.left = `${Math.max(8, left)}px`;
-    tooltip.style.top = `${rect.bottom + 4}px`;
+    tooltip.style.top  = `${rect.bottom + 4}px`;
     tooltip.hidden = false;
   }
 
