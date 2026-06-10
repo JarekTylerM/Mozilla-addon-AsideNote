@@ -405,3 +405,9 @@ body.is-focus-mode .focusmode-btn {
 body.is-focus-mode #collapse-editor-btn {
   opacity: 0.5;
 }
+
+#main-view.no-transition *,
+#main-view.no-transition *::before,
+#main-view.no-transition *::after {
+  transition: none !important;
+}

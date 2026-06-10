@@ -9,6 +9,12 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+#main-view.is-ready {
+  opacity: 1;
 }
 
 /* ── 01. Quick capture ─────────────────────────── */
@@ -699,9 +705,7 @@
   border-top: 1px solid transparent;
   transition: border-color 0.2s;
 }
-#note-status:not(:empty) {
-  border-top-color: var(--border);
-}
+
 .note-status__title {
   font-weight: inherit;
   font-style: normal;

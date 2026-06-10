@@ -37,13 +37,13 @@ export function migrateNotes(notes, fromVersion = 0) {
 
   // v0 → v1: zapewnij pole `type` na każdej notatce.
   if (fromVersion < 1) {
-    result = result.map((n) => (n.type ? n : { ...n, type: 'note' }));
+    result = result.map((n) => (n.type ? n : { ...n, type: "note" }));
   }
 
-// v1 → v2: dodaj pole recurrence na taskach
+  // v1 → v2: dodaj pole recurrence na taskach
   if (fromVersion < 2) {
     result = result.map((n) =>
-      n.type === 'task' && n.recurrence === undefined
+      n.type === "task" && n.recurrence === undefined
         ? { ...n, recurrence: null }
         : n,
     );
@@ -52,7 +52,7 @@ export function migrateNotes(notes, fromVersion = 0) {
   // v2 → v3: dodaj pole recurrenceDays na taskach
   if (fromVersion < 3) {
     result = result.map((n) =>
-      n.type === 'task' && n.recurrenceDays === undefined
+      n.type === "task" && n.recurrenceDays === undefined
         ? { ...n, recurrenceDays: null }
         : n,
     );
@@ -64,7 +64,7 @@ export function migrateNotes(notes, fromVersion = 0) {
 /* ── Notes ────────────────────────────────────── */
 
 export async function loadNotes() {
-  const res = await browser.storage.local.get(['notes', 'schemaVersion']);
+  const res = await browser.storage.local.get(["notes", "schemaVersion"]);
 
   // Defensywna normalizacja — wykonywana zawsze, niezależnie od schemaVersion.
   // Odrzuca wpisy bez poprawnego ID i normalizuje typy pól.
@@ -75,20 +75,20 @@ export async function loadNotes() {
     .filter(
       (n) =>
         n &&
-        typeof n === 'object' &&
-        typeof n.id === 'string' &&
+        typeof n === "object" &&
+        typeof n.id === "string" &&
         n.id.length > 0,
     )
     .map((n) => ({
       ...n,
-      title:   typeof n.title   === 'string' ? n.title   : '',
-      content: typeof n.content === 'string' ? n.content : '',
-      type:    n.type === 'task'              ? 'task'    : 'note',
-      tags:    Array.isArray(n.tags)          ? n.tags    : [],
-      created: typeof n.created === 'number'  ? n.created : Date.now(),
+      title: typeof n.title === "string" ? n.title : "",
+      content: typeof n.content === "string" ? n.content : "",
+      type: n.type === "task" ? "task" : "note",
+      tags: Array.isArray(n.tags) ? n.tags : [],
+      created: typeof n.created === "number" ? n.created : Date.now(),
     }));
 
-  const version = typeof res.schemaVersion === 'number' ? res.schemaVersion : 0;
+  const version = typeof res.schemaVersion === "number" ? res.schemaVersion : 0;
 
   if (version < CURRENT_SCHEMA) {
     notes = migrateNotes(notes, version);
@@ -96,7 +96,7 @@ export async function loadNotes() {
     try {
       await browser.storage.local.set({ notes, schemaVersion: CURRENT_SCHEMA });
     } catch (e) {
-      console.error('[storage] schema migration save failed:', e);
+      console.error("[storage] schema migration save failed:", e);
       // Nie rzucamy — lepiej zwrócić zmigrowane dane w pamięci
       // niż wywalić boot; przy następnym starcie migracja spróbuje ponownie
     }
@@ -109,7 +109,7 @@ export async function saveNotes(notes) {
   try {
     await browser.storage.local.set({ notes });
   } catch (e) {
-    console.error('[storage] saveNotes failed:', e);
+    console.error("[storage] saveNotes failed:", e);
     throw e;
   }
 }
@@ -117,7 +117,7 @@ export async function saveNotes(notes) {
 /* ── Tags ─────────────────────────────────────── */
 
 export async function loadTags() {
-  const res = await browser.storage.local.get('tags');
+  const res = await browser.storage.local.get("tags");
   // Array.isArray guard — tags: {} po poisoning crashowałoby tagState.tags.find()
   return Array.isArray(res.tags) ? res.tags : [];
 }
@@ -126,7 +126,7 @@ export async function saveTags(tags) {
   try {
     await browser.storage.local.set({ tags });
   } catch (e) {
-    console.error('[storage] saveTags failed:', e);
+    console.error("[storage] saveTags failed:", e);
     throw e;
   }
 }
@@ -134,17 +134,17 @@ export async function saveTags(tags) {
 /* ── Collapsed sections ───────────────────────── */
 
 export async function loadCollapsedSections() {
-  const res = await browser.storage.local.get('collapsedSections');
+  const res = await browser.storage.local.get("collapsedSections");
   return Array.isArray(res.collapsedSections)
     ? res.collapsedSections
-    : ['done', 'overdue'];
+    : ["done", "overdue"];
 }
 
 export async function saveCollapsedSections(sections) {
   try {
     await browser.storage.local.set({ collapsedSections: sections });
   } catch (e) {
-    console.error('[storage] saveCollapsedSections failed:', e);
+    console.error("[storage] saveCollapsedSections failed:", e);
     throw e;
   }
 }
@@ -152,7 +152,7 @@ export async function saveCollapsedSections(sections) {
 /* ── Filter prefs ─────────────────────────────── */
 
 export async function loadFilterPrefs() {
-  const res = await browser.storage.local.get('filterPrefs');
+  const res = await browser.storage.local.get("filterPrefs");
   return res.filterPrefs || {};
 }
 
@@ -160,7 +160,7 @@ export async function saveFilterPrefs(prefs) {
   try {
     await browser.storage.local.set({ filterPrefs: prefs });
   } catch (e) {
-    console.error('[storage] saveFilterPrefs failed:', e);
+    console.error("[storage] saveFilterPrefs failed:", e);
     throw e;
   }
 }
@@ -168,11 +168,11 @@ export async function saveFilterPrefs(prefs) {
 /* ── Focus id ─────────────────────────────────── */
 
 export async function loadFocusId() {
-  const res = await browser.storage.local.get('focusId');
+  const res = await browser.storage.local.get("focusId");
   // Migracja: stary format to string lub null → konwertuj na tablicę
   const val = res.focusId;
   if (Array.isArray(val)) return val;
-  if (val && typeof val === 'string') return [val];
+  if (val && typeof val === "string") return [val];
   return [];
 }
 
@@ -180,19 +180,21 @@ export async function saveFocusId(ids) {
   try {
     await browser.storage.local.set({ focusId: ids });
   } catch (e) {
-    console.error('[storage] saveFocusId failed:', e);
+    console.error("[storage] saveFocusId failed:", e);
   }
 }
 
 /* ── UI settings ──────────────────────────────── */
 
 export async function loadUiSettings() {
-  const res = await browser.storage.local.get('uiSettings');
+  const res = await browser.storage.local.get("uiSettings");
   return {
-    showToolbar:         true,
+    showToolbar: true,
     showToolbarTooltips: true,
-    colorScheme:         'auto',
+    colorScheme: "auto",
     showEditorPlaceholder: true,
+    uiZoom: 100,
+    zenMode: false,
     ...(res.uiSettings || {}),
   };
 }
@@ -203,7 +205,7 @@ export async function saveUiSettings(patch) {
     const current = await loadUiSettings();
     await browser.storage.local.set({ uiSettings: { ...current, ...patch } });
   } catch (e) {
-    console.error('[storage] saveUiSettings failed:', e);
+    console.error("[storage] saveUiSettings failed:", e);
     throw e;
   }
 }
@@ -219,29 +221,33 @@ export async function saveLastBackupBeforeImport(snapshot) {
   try {
     await browser.storage.local.set({ _lastBackupBeforeImport: snapshot });
   } catch (e) {
-    console.error('[storage] saveLastBackupBeforeImport failed:', e);
+    console.error("[storage] saveLastBackupBeforeImport failed:", e);
     throw e;
   }
 }
 
 export async function loadLastBackupBeforeImport() {
-  const res = await browser.storage.local.get('_lastBackupBeforeImport');
+  const res = await browser.storage.local.get("_lastBackupBeforeImport");
   return res._lastBackupBeforeImport || null;
 }
 
 /* ── Deleted notes (kosz) ─────────────────────── */
 
-const MAX_DELETED    = 50;                       // max elementów w koszu
+const MAX_DELETED = 50; // max elementów w koszu
 const DELETED_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 dni auto-expire
 
 export async function loadDeletedNotes() {
-  const res = await browser.storage.local.get('deletedNotes');
+  const res = await browser.storage.local.get("deletedNotes");
   // Array.isArray guard — deletedNotes: {} po poisoning crashowałoby .filter()
   const all = Array.isArray(res.deletedNotes) ? res.deletedNotes : [];
   const cutoff = Date.now() - DELETED_TTL_MS;
   // Odfiltruj elementy starsze niż TTL. Brak deletedAt (NaN) → zawsze filtrowane.
   return all.filter(
-    (n) => n && typeof n === 'object' && typeof n.deletedAt === 'number' && n.deletedAt >= cutoff,
+    (n) =>
+      n &&
+      typeof n === "object" &&
+      typeof n.deletedAt === "number" &&
+      n.deletedAt >= cutoff,
   );
 }
 
@@ -251,7 +257,7 @@ export async function saveDeletedNotes(notes) {
       deletedNotes: notes.slice(0, MAX_DELETED),
     });
   } catch (e) {
-    console.error('[storage] saveDeletedNotes failed:', e);
+    console.error("[storage] saveDeletedNotes failed:", e);
     throw e;
   }
 }

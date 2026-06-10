@@ -621,6 +621,7 @@
   "panel_appearance_light": {
     "message": "Jasny"
   },
+  "panel_zoom_label": { "message": "Zoom interfejsu" },
   "panel_appearance_title": {
     "message": "Wygląd"
   },

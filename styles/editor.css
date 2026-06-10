@@ -248,7 +248,9 @@
 
 #editor-container {
   border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
   margin-block: 4px;
   background: var(--bg);
   box-shadow: var(--shadow-sm);

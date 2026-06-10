@@ -605,3 +605,32 @@
 .panel-toggle--mt {
   margin-top: 12px;
 }
+
+.panel-zoom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.panel-zoom-row__label {
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
+
+.panel-zoom-row__select {
+  font-size: var(--text-md);
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px 6px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.panel-zoom-row__select:focus {
+  border-color: var(--border-strong);
+}

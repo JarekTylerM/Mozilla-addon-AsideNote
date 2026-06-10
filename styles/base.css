@@ -13,12 +13,16 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   background: radial-gradient(ellipse at top, var(--bg), var(--surface) 100%);
   color: var(--text);
-  padding: 8px 8px 60px;
+  padding: 8px 0 60px;
   font-size: var(--text-base);
   height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.main-view-padded {
+  padding-inline: 8px;
 }
 
 button {

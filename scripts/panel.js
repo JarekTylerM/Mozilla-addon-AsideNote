@@ -907,6 +907,18 @@ export function initUiSettings(settings) {
     };
   }
 
+  // Zoom
+  const zoomSelect = document.getElementById('ui-zoom-select');
+  if (zoomSelect) {
+    zoomSelect.value = String(settings.uiZoom ?? 100);
+    _applyZoom(settings.uiZoom ?? 100);
+    zoomSelect.onchange = () => {
+      const val = Number(zoomSelect.value);
+      _applyZoom(val);
+      saveUiSettings({ uiZoom: val });
+    };
+  }
+
   // Color scheme
   _applyColorScheme(settings.colorScheme ?? 'auto');
   _initSchemeToggle(settings.colorScheme ?? 'auto');
@@ -914,6 +926,13 @@ export function initUiSettings(settings) {
 
 function _applyToolbar(show) {
   document.getElementById('toolbar').hidden = !show;
+}
+
+function _applyZoom(value) {
+  // Bazowy font-size to 81.25% (z base.css). Skalujemy proporcjonalnie.
+  const base = 81.25;
+  document.documentElement.style.fontSize =
+    value === 100 ? '' : `${(base * value) / 100}%`;
 }
 
 /**
