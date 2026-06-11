@@ -904,3 +904,8 @@ if (backBtn) {
     }
   });
 }
+
+// clear tag after delete note or task from flist 
+document.addEventListener('noteDeleted', () => {
+  renderTagSelector();
+});

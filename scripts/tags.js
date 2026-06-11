@@ -107,18 +107,10 @@ export function makeTagPill(
     truncate && tag.name.length > truncate
       ? tag.name.slice(0, truncate) + '…'
       : tag.name;
-  const isDark =
-    document.documentElement.dataset.theme === 'dark' ||
-    (!document.documentElement.dataset.theme &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches);
-  pill.style.setProperty(
-    '--tag-bg',
-    isDark && tag.color.darkBg ? tag.color.darkBg : tag.color.bg,
-  );
-  pill.style.setProperty(
-    '--tag-fg',
-    isDark && tag.color.darkFg ? tag.color.darkFg : tag.color.fg,
-  );
+  pill.style.setProperty('--tag-bg-light', tag.color.bg);
+  pill.style.setProperty('--tag-fg-light', tag.color.fg);
+  pill.style.setProperty('--tag-bg-dark',  tag.color.darkBg || tag.color.bg);
+  pill.style.setProperty('--tag-fg-dark',  tag.color.darkFg || tag.color.fg);
   if (truncate) pill.title = tag.name;
   return pill;
 }

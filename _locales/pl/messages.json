@@ -1476,5 +1476,6 @@
   "linkTooltip_edit": { "message": "Edytuj link" },
   "linkTooltip_delete": { "message": "Usuń link" },
   "typeToggle_toggle_ariaLabel": { "message": "Przełącz widok filtra typów" },
-  "typeToggle_toggle_title": { "message": "Pokaż / ukryj filtry typów" }
+  "typeToggle_toggle_title": { "message": "Pokaż / ukryj filtry typów" },
+  "note_postponeToTomorrow": { "message": "Przesuń na jutro" }
 }

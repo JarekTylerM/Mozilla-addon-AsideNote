@@ -1476,5 +1476,6 @@
   "linkTooltip_edit": { "message": "Edit link" },
   "linkTooltip_delete": { "message": "Remove link" },
   "typeToggle_toggle_ariaLabel": { "message": "Toggle type filter" },
-  "typeToggle_toggle_title": { "message": "Show / hide type filters" }
+  "typeToggle_toggle_title": { "message": "Show / hide type filters" },
+  "note_postponeToTomorrow": { "message": "Postpone to tomorrow" }
 }

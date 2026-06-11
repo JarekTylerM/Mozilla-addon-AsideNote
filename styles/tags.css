@@ -25,8 +25,8 @@
 }
 
 .tag-pill {
-  background: var(--tag-bg, var(--surface));
-  color: var(--tag-fg, var(--text-2));
+  background: var(--tag-bg-light, var(--surface));
+  color: var(--tag-fg-light, var(--text-2));
   font-family: inherit;
   font-size: inherit;
   cursor: pointer;
@@ -256,3 +256,14 @@ button.tag-pill {
   background-color: var(--accent);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .tag-pill {
+    background: var(--tag-bg-dark, var(--surface));
+    color: var(--tag-fg-dark, var(--text-2));
+  }
+}
+
+[data-theme='dark'] .tag-pill {
+  background: var(--tag-bg-dark, var(--surface));
+  color: var(--tag-fg-dark, var(--text-2));
+}

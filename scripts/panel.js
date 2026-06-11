@@ -384,14 +384,16 @@ export function renderTagSelector() {
     : null;
   const activeTags = note?.tags ?? [];
 
-  activeTags.forEach((id) => {
-    const tag = getTag(id);
-    if (!tag) return;
-    const pill = makeTagPill(tag, { removable: true });
-    pill.title = t("tagSelector_pill_removeTitle");
-    pill.onclick = () => _toggleTag(id);
-    selectorPills.appendChild(pill);
-  });
+  [...activeTags]
+    .map((id) => getTag(id))
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach((tag) => {
+      const pill = makeTagPill(tag, { removable: true });
+      pill.title = t("tagSelector_pill_removeTitle");
+      pill.onclick = () => _toggleTag(tag.id);
+      selectorPills.appendChild(pill);
+    });
 
   const addBtn = document.createElement("button");
   addBtn.className = "tag-add-btn";
