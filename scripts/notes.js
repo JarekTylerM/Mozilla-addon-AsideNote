@@ -171,7 +171,7 @@ export function setDueDate(value) {
 
 export function postponeToTomorrow(id) {
   const note = state.notes.find((n) => n.id === id);
-  if (!note || note.type !== 'task') return;
+  if (!note || note.type !== "task") return;
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
@@ -960,7 +960,23 @@ function _renderNoteItem(note) {
     title.dataset.tooltipContent = _previewFull;
   }
   title.onclick = () => selectNote(note.id);
-  div.appendChild(title);
+
+  const titleWrapper = document.createElement("div");
+  titleWrapper.className = "note-item__title-wrap";
+  titleWrapper.appendChild(title);
+
+  const previewBtn = document.createElement("button");
+  previewBtn.className = "note-item__preview icon--preview";
+  previewBtn.setAttribute("aria-label", t("note_preview_ariaLabel"));
+  previewBtn.onclick = (e) => e.stopPropagation();
+  const previewText = _stripHtml(note.content);
+  previewBtn.title = previewText
+    ? previewText.length > 160
+      ? previewText.slice(0, 160) + "…"
+      : previewText
+    : t("note_preview_empty");
+  titleWrapper.appendChild(previewBtn);
+  div.appendChild(titleWrapper);
 
   // Ikona recurrence
   if (note.recurrence) {
@@ -1007,20 +1023,9 @@ function _renderNoteItem(note) {
   // focus
   if (state.focusIds.includes(note.id)) div.classList.add("note-item--focused");
   // Due indicator — jeden, z godziną jeśli ustawiona
-if (note.type === "task" && note.due && !note.completed) {
-    const today = new Date(); today.setHours(0,0,0,0);
-    if (note.due < today.getTime()) {
-      const tomorrowBtn = document.createElement('button');
-      tomorrowBtn.className = 'note-item__postpone';
-      tomorrowBtn.textContent = '→';
-      tomorrowBtn.setAttribute('aria-label', t('note_postponeToTomorrow'));
-      tomorrowBtn.title = t('note_postponeToTomorrow');
-      tomorrowBtn.onclick = (e) => {
-        e.stopPropagation();
-        postponeToTomorrow(note.id);
-      };
-      div.appendChild(tomorrowBtn);
-    }
+  if (note.type === "task" && note.due && !note.completed) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     let label = _formatDueRelative(note.due);
     if (note.time) label += ` ${note.time}`;
     if (label) {
@@ -1029,20 +1034,19 @@ if (note.type === "task" && note.due && !note.completed) {
       dueSpan.textContent = label;
       div.appendChild(dueSpan);
     }
+    if (note.due < today.getTime()) {
+      const tomorrowBtn = document.createElement("button");
+      tomorrowBtn.className = "note-item__postpone";
+      tomorrowBtn.textContent = "→";
+      tomorrowBtn.setAttribute("aria-label", t("note_postponeToTomorrow"));
+      tomorrowBtn.title = t("note_postponeToTomorrow");
+      tomorrowBtn.onclick = (e) => {
+        e.stopPropagation();
+        postponeToTomorrow(note.id);
+      };
+      div.appendChild(tomorrowBtn);
+    }
   }
-
-  // Preview button
-  const previewBtn = document.createElement("button");
-  previewBtn.className = "note-item__preview icon--preview";
-  previewBtn.setAttribute("aria-label", t("note_preview_ariaLabel"));
-  previewBtn.onclick = (e) => e.stopPropagation();
-  const previewText = _stripHtml(note.content);
-  previewBtn.title = previewText
-    ? previewText.length > 160
-      ? previewText.slice(0, 160) + "…"
-      : previewText
-    : t("note_preview_empty");
-  div.appendChild(previewBtn);
 
   // Delete button
   const delBtn = document.createElement("button");
@@ -1054,7 +1058,6 @@ if (note.type === "task" && note.due && !note.completed) {
     _deleteAndMoveFocus(note.id, div);
   };
   div.appendChild(delBtn);
-
 
   // Tagi (max 2 + "+N")
   const tags = note.tags ?? [];
