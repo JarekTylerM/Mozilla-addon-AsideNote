@@ -4,7 +4,6 @@
    API publiczne:
      initOnboarding(uiSettings)  — wywołaj z boot po renderList()
      startStage(n)               — uruchom etap 1-4 (z panelu)
-     getStagesDone()             — { 1: bool, … 4: bool }
    ══════════════════════════════════════════════════════════════ */
 
 import { t } from './i18n.js';
@@ -278,10 +277,6 @@ export function startStage(stageNum) {
     document.getElementById('panel-btn')?.click();
   }
   setTimeout(() => _show(firstIdx), 150);
-}
-
-export function getStagesDone() {
-  return { ..._stagesDone };
 }
 
 /* ── Budowanie overlay ───────────────────────────────────────── */

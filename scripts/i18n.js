@@ -31,37 +31,6 @@ export function getUILocale() {
 }
 
 /**
- * Format daty wg locale przeglądarki.
- * Domyślnie: krótka data + godzina HH:MM (24h zawsze, niezależnie od locale).
- */
-export function formatDateTime(timestamp, opts = {}) {
-  const date = new Date(timestamp);
-  return new Intl.DateTimeFormat(getUILocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    hour12: false,
-    ...opts,
-  }).format(date);
-}
-
-export function formatDate(timestamp, opts = {}) {
-  const date = new Date(timestamp);
-  return new Intl.DateTimeFormat(getUILocale(), {
-    dateStyle: 'short',
-    ...opts,
-  }).format(date);
-}
-
-export function formatTime(timestamp, opts = {}) {
-  const date = new Date(timestamp);
-  return new Intl.DateTimeFormat(getUILocale(), {
-    timeStyle: 'short',
-    hour12: false,
-    ...opts,
-  }).format(date);
-}
-
-/**
  * Względne nazwy ("dziś", "jutro", "wczoraj") — używane w sekcjach listy.
  * Daty spoza zakresu zwracają null — caller sam decyduje co wtedy.
  */
@@ -133,16 +102,4 @@ export function getShortWeekdays() {
   _shortWeekdaysCache = arr;
   _shortWeekdaysLocaleCache = locale;
   return arr;
-}
-
-/**
- * Czy aktywny UI locale używa formatu daty DD.MM/DD-MM-YYYY (Europa)
- * czy MM/DD/MM-DD-YYYY (US). Używane przez parser quick capture.
- *
- * Decyzja: traktujemy "en" i "en-US" jako MM/DD; en-GB i wszystko inne jako DD.MM.
- * To uproszczenie — pełna lista regionów byłaby przesadą.
- */
-export function isMonthFirstLocale() {
-  const locale = getUILocale().toLowerCase();
-  return locale === "en" || locale.startsWith("en-us");
 }

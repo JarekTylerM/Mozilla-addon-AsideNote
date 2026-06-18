@@ -23,6 +23,9 @@ export function _isCursorAtListStart(li) {
   const sel = window.getSelection();
   if (!sel.rangeCount) return false;
   const range = sel.getRangeAt(0);
+  // Guard: kursor musi być wewnątrz li — inaczej setEnd rzuci (cross-tree),
+  // a logicznie kursor poza li z definicji nie jest "na początku listy"
+  if (!li.contains(range.startContainer)) return false;
   const check = document.createRange();
   check.setStart(li, 0);
   check.setEnd(range.startContainer, range.startOffset);
@@ -41,7 +44,7 @@ export function _focusLi(li) {
 
 export function _indentListItem(li) {
   const prev = li.previousElementSibling;
-  if (!prev) return;
+  if (!prev || prev.tagName !== "LI") return;
 
   const tag = li.parentElement.tagName;
   let nested = prev.querySelector(`:scope > ${tag}`);

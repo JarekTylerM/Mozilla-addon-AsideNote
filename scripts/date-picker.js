@@ -198,11 +198,6 @@ export function syncRecurrence(value) {
   _recurrence = value || null;
 }
 
-export function syncRecurrenceDays(days) {
-  _recurrenceDays =
-    Array.isArray(days) && days.length > 0 ? days : [1, 2, 3, 4, 5];
-}
-
 export function syncReminder(value) {
   _currentReminder = Number(value) || 0;
 }
@@ -284,13 +279,11 @@ function _open() {
     const ph = (popRect.height || 300) / zoom;
     const pw = (popRect.width || 240) / zoom;
     const vw = window.innerWidth / zoom;
-    const vh = window.innerHeight / zoom;
     const top0 = rect.bottom / zoom;
     const top1 = rect.top / zoom;
     const left0 = rect.left / zoom;
 
     const spaceAbove = top1 - 4;
-    const spaceBelow = vh - top0 - 4;
     const top  = spaceAbove >= ph ? top1 - ph - 4 : top0 + 4;
     const left = Math.max(4, Math.min(left0, vw - pw - 4));
     _popover.style.top = `${top}px`;

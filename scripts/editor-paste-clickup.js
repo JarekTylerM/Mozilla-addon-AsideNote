@@ -2,7 +2,7 @@
  * editor-paste-clickup.js — preprocessor dla HTML z ClickUp (Quill.js)
  *
  * Wykrywa HTML z edytora ClickUp i konwertuje do struktury
- * którą AsideNotes rozumie — przed sanitizeHTML.
+ * którą AsideNote rozumie — przed sanitizeHTML.
  *
  * Czysta funkcja — zero DOM side effects, zero imports.
  */
@@ -34,19 +34,7 @@ function _cleanNode(node) {
 }
 
 /**
- * Pobierz poziom wcięcia z klasy ql-indent-N.
- */
-function _getIndent(li) {
-  for (const cls of li.classList) {
-    const m = cls.match(/^ql-indent-(\d+)$/);
-    if (m) return parseInt(m[1], 10);
-  }
-  return 0;
-}
-
-
-/**
- * Rekurencyjnie konwertuje listę ClickUp na format AsideNotes.
+ * Rekurencyjnie konwertuje listę ClickUp na format AsideNote.
  * data-list="unchecked/checked" → ul[data-list="checklist"] li[data-checked]
  * data-list="toggled" + data-list="none" → details/summary
  */
@@ -178,7 +166,7 @@ export function preprocessClickUp(html) {
       continue;
     }
 
-    // Listy — konwertuj data-list na format AsideNotes
+    // Listy — konwertuj data-list na format AsideNote
     if (tag === "OL" || tag === "UL") {
       result.appendChild(_convertList(node));
       continue;

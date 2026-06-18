@@ -59,7 +59,7 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
     type: "basic",
     iconUrl: browser.runtime.getURL("assets/icons/mdi--event-note.png"),
     title:
-      "AsideNotes: " +
+      "AsideNote: " +
       (note?.title || browser.i18n.getMessage("notif_title_fallback")),
     message,
   });

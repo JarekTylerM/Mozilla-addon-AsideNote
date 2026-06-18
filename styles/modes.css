@@ -267,6 +267,16 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 /* ── List expanded mode ──────────────────────────── */
 
+/* Wrapper listy (dodany przy full-width edytora) musi przekazać wysokość
+   w łańcuchu flex — inaczej flex:1 na .notes-list-wrapper nie działa
+   i lista rozrasta się do treści, wychodząc poza ekran. */
+#main-view.list-expanded .main-view-padded:first-of-type {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 #main-view.list-expanded .notes-list-wrapper {
   flex: 1;
   min-height: 0;

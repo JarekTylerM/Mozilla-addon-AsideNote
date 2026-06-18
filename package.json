@@ -1,8 +1,9 @@
 {
   "devDependencies": {
-    "prettier": "3.8.3"
+    "prettier": "3.8.3",
+    "jsdom": "26.1.0"
   },
-  "dependencies": {
-    "jsdom": "^29.1.1"
+  "overrides": {
+    "html-encoding-sniffer": "4.0.0"
   }
 }
