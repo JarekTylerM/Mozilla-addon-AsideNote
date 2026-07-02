@@ -53,7 +53,7 @@
   },
   "background": {
     "scripts": ["background.js"],
-    "persistent": true
+    "persistent": false
   },
   "commands": {
     "toggle-sidebar": {

@@ -469,6 +469,9 @@ summary:empty::after {
   text-decoration-color: var(--accent-border);
   text-underline-offset: 2px;
   font-weight: 700;
+  /* Klik otwiera link (editor-link-modal.js::initLinkClick) — pointer
+     sygnalizuje klikalność zamiast domyślnego kursora tekstowego */
+  cursor: pointer;
 }
 
 /* ── Code block (pre w edytorze) ─────────────── */

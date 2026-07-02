@@ -211,21 +211,43 @@ function _initCodeBtn() {
 
 function _initCodeBlockBtn() {
   document.getElementById('codeblock-btn')?.addEventListener('click', () => {
+    // Detekcja <pre> bezpośrednio z selekcji — _getCurrentBlock() nie zna
+    // tagu PRE (nie ma go w blockTags) i dla kursora w bloku kodu zwraca
+    // sam #editor, przez co toggle-off nigdy nie odpalał, a toggle-on
+    // czyścił CAŁĄ notatkę przez _clearBlock(editor).
+    const sel = window.getSelection();
+    const selNode = sel?.rangeCount ? sel.getRangeAt(0).startContainer : null;
+    const selEl =
+      selNode == null
+        ? null
+        : selNode.nodeType === Node.TEXT_NODE
+          ? selNode.parentElement
+          : selNode;
+    const pre = selEl?.closest('pre') ?? null;
     const block = _getCurrentBlock();
-    const pre =
-      (block?.closest('pre') ?? block?.tagName === 'PRE') ? block : null;
     undo.checkpoint();
     if (pre) {
       // Toggle off — konwertuj pre z powrotem do paragrafów
       const fragment = document.createDocumentFragment();
       const lines = pre.textContent.split('\n');
+      let firstP = null;
       lines.forEach((line) => {
         const p = document.createElement('p');
         p.textContent = line || '';
         if (!p.firstChild) p.innerHTML = '<br>';
+        if (!firstP) firstP = p;
         fragment.appendChild(p);
       });
       pre.replaceWith(fragment);
+      // Kursor na początek pierwszego akapitu — replaceWith unieważnia selekcję
+      if (firstP) {
+        const r = document.createRange();
+        r.setStart(firstP, 0);
+        r.collapse(true);
+        const s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+      }
     } else {
       // Toggle on
       _clearBlock(block);

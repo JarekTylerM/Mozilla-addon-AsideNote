@@ -9,6 +9,7 @@ import {
   saveFilterPrefs,
   saveDeletedNotes,
   loadUiSettings,
+  MAX_DELETED,
 } from "./storage.js";
 import * as undo from "./undo.js";
 import { debounce } from "./utils.js";
@@ -17,7 +18,7 @@ import { clearAlarm, scheduleAlarm, isAlarmable } from "./alarms.js";
 import { t, getUILocale, getShortWeekdays } from "./i18n.js";
 import { buildItemFromCapture, newNoteId } from "./quick-capture-core.js";
 import { sanitizeHTML, validateText, MAX_TITLE_LEN } from "./sanitize.js";
-import { setCursorOffset } from "./editor.js";
+import { setCursorOffset } from "./editor-selection.js";
 import { updateDueDisplay } from "./date-picker.js";
 /* ── State ────────────────────────────────────── */
 
@@ -315,7 +316,7 @@ function _deleteNoteCore(id, { resetUndo = false } = {}) {
   const note = state.notes.find((n) => n.id === id);
   if (note) {
     const deleted = { ...note, deletedAt: Date.now() };
-    state.deletedNotes = [deleted, ...state.deletedNotes].slice(0, 50);
+    state.deletedNotes = [deleted, ...state.deletedNotes].slice(0, MAX_DELETED);
     saveDeletedNotes(state.deletedNotes);
   }
 
@@ -389,9 +390,24 @@ export function toggleCompleted(id) {
       };
       state.notes.unshift(spawn);
       if (isAlarmable(spawn)) scheduleAlarm(spawn);
+      // Zapamiętaj link do spawna — odznaczenie ukończenia musi go cofnąć,
+      // inaczej po pomyłkowym odhaczeniu zostają dwie instancje zadania
+      note.spawnedNextId = spawn.id;
     }
   } else {
     delete note.completedAt;
+
+    // Cofnij automatycznie utworzoną następną instancję — tylko jeśli
+    // nadal jest nieukończona (ukończonej/przetworzonej nie ruszamy).
+    // Usunięcie bez kosza: spawn to duplikat, nie treść użytkownika.
+    if (note.spawnedNextId) {
+      const spawn = state.notes.find((n) => n.id === note.spawnedNextId);
+      if (spawn && spawn.type === "task" && !spawn.completed) {
+        clearAlarm(spawn.id);
+        state.notes = state.notes.filter((n) => n.id !== spawn.id);
+      }
+      delete note.spawnedNextId;
+    }
   }
 
   saveNotes(state.notes);
@@ -457,56 +473,85 @@ export function updateNoteStatus() {
   });
 }
 
+/**
+ * Czytelna etykieta cykliczności notatki ("" gdy brak).
+ * Jedno źródło etykiety dla badge w edytorze i ikony ↺ na liście —
+ * wcześniej ta sama logika była zduplikowana w dwóch miejscach.
+ */
+function _recurrenceLabel(note) {
+  if (!note?.recurrence) return "";
+  const DAY_NAMES = [0, 1, 2, 3, 4, 5, 6].map((d) => t(`day_short_${d}`));
+
+  if (note.recurrence === "custom" && Array.isArray(note.recurrenceDays)) {
+    return note.recurrenceDays.map((d) => DAY_NAMES[d] ?? "").join(", ");
+  }
+  if (note.recurrence === "weekly" && note.due) {
+    return `${t("recurrence_weekly")} (${DAY_NAMES[new Date(note.due).getDay()]})`;
+  }
+  return (
+    {
+      daily: t("recurrence_daily"),
+      weekly: t("recurrence_weekly"),
+      monthly: t("recurrence_monthly"),
+      yearly: t("recurrence_yearly"),
+      custom: t("recurrence_custom"),
+    }[note.recurrence] ?? ""
+  );
+}
+
+/**
+ * Synchronizuje cały stan UI edytora z aktywną notatką.
+ * Rozbite na wyspecjalizowane helpery — każdy dotyka jednej grupy
+ * elementów; updateDeleteState pozostaje jedynym publicznym wejściem
+ * (nazwa historyczna, wołana z wielu miejsc).
+ */
 export function updateDeleteState() {
+  const activeNote = state.notes.find((n) => n.id === state.activeId) ?? null;
+  _syncEditorActionButtons(activeNote);
+  _syncTaskMeta(activeNote);
+  _syncRecurrenceBadge(activeNote);
+  updateNoteStatus();
+}
+
+/* Przyciski akcji edytora: delete / convert / focus / important / collapse */
+function _syncEditorActionButtons(note) {
   const deleteBtn = document.getElementById("delete");
+  if (deleteBtn) deleteBtn.disabled = !state.activeId || isNoteEmpty();
+
   const convertBtn = document.getElementById("convert-type");
-  const empty = !state.activeId || isNoteEmpty();
-  if (deleteBtn) deleteBtn.disabled = empty;
   if (convertBtn) {
     convertBtn.disabled = false;
     const type = state.activeId
-      ? (state.notes.find((n) => n.id === state.activeId)?.type ?? "note")
+      ? (note?.type ?? "note")
       : (state.pendingType ?? "note");
     convertBtn.dataset.type = type;
     convertBtn.title = t(
       type === "note" ? "convertType_toTask_title" : "convertType_toNote_title",
     );
   }
+
   const focusBtn = document.getElementById("focus-btn");
   if (focusBtn) {
-    const note = state.notes.find((n) => n.id === state.activeId);
     const isFocusable =
       !!state.activeId && !(note?.type === "task" && note?.completed);
     focusBtn.hidden = !isFocusable;
-    const isActiveInFocus = state.focusIds.includes(state.activeId);
+    const inFocus = state.focusIds.includes(state.activeId);
     focusBtn.classList.toggle(
       "is-active",
-      state.activeId !== null && isActiveInFocus,
+      state.activeId !== null && inFocus,
     );
-    focusBtn.title = t(isActiveInFocus ? "focus_remove_title" : "focus_title");
+    focusBtn.title = t(inFocus ? "focus_remove_title" : "focus_title");
   }
-  const noteMeta = document.getElementById("note-meta");
-  const isTask =
-    (state.activeId &&
-      state.notes.find((n) => n.id === state.activeId)?.type === "task") ||
-    (!state.activeId && state.pendingType === "task");
-  if (noteMeta) noteMeta.hidden = !isTask;
-  if (dueWrapper) dueWrapper.hidden = !isTask;
-  if (dueInput && !state.activeId) dueInput.value = "";
-  updateDueDisplay();
+
   const importantBtn = document.getElementById("important-btn");
   if (importantBtn) {
-    const note = state.notes.find((n) => n.id === state.activeId);
-    const isTask = note?.type === "task";
     importantBtn.hidden = !state.activeId;
     importantBtn.classList.toggle("is-active", !!note?.important);
     importantBtn.title = t(
       note?.important ? "important_remove_title" : "important_title",
     );
   }
-  updateNoteStatus();
-  const timeInput = document.getElementById("due-time");
-  const activeNote = state.notes.find((n) => n.id === state.activeId);
+
   const collapseBtn = document.getElementById("collapse-editor-btn");
   if (collapseBtn) {
     const listExpanded = document
@@ -514,13 +559,25 @@ export function updateDeleteState() {
       ?.classList.contains("list-expanded");
     collapseBtn.hidden = !!listExpanded;
   }
-  const displayBtn = document.getElementById("due-display-btn");
+}
 
-  // Alarm pill wewnątrz due-bar
+/* Metadane zadania: widoczność due-bar, pill alarmu, przycisk daty */
+function _syncTaskMeta(note) {
+  const isTask = state.activeId
+    ? note?.type === "task"
+    : state.pendingType === "task";
+
+  const noteMeta = document.getElementById("note-meta");
+  if (noteMeta) noteMeta.hidden = !isTask;
+  if (dueWrapper) dueWrapper.hidden = !isTask;
+  if (dueInput && !state.activeId) dueInput.value = "";
+  updateDueDisplay();
+
+  const timeInput = document.getElementById("due-time");
   const alarmPill = document.getElementById("due-alarm-pill");
   const alarmLabel = document.getElementById("alarm-label");
   if (alarmPill) {
-    const reminder = activeNote?.reminder ?? 0;
+    const reminder = note?.reminder ?? 0;
     const hasTime = !!timeInput?.value;
     alarmPill.hidden = !hasTime || reminder === 0;
     if (alarmLabel && hasTime && reminder > 0) {
@@ -530,57 +587,31 @@ export function updateDeleteState() {
           : t("dueReminder_Nmin", [String(reminder)]);
     }
   }
+
+  const displayBtn = document.getElementById("due-display-btn");
   if (displayBtn) {
     displayBtn.classList.toggle("has-value", !!dueInput?.value);
   }
+
   document.dispatchEvent(
     new CustomEvent("reminderChanged", {
-      detail: { value: activeNote?.reminder ?? 0 },
+      detail: { value: note?.reminder ?? 0 },
     }),
   );
+}
 
-  const recurrenceBadge = document.getElementById("due-recurrence-badge");
-  if (recurrenceBadge) {
-    recurrenceBadge.hidden = !activeNote?.recurrence || !activeNote?.due;
-    if (activeNote?.recurrence) {
-      const DAY_NAMES = [
-        t("day_short_0"),
-        t("day_short_1"),
-        t("day_short_2"),
-        t("day_short_3"),
-        t("day_short_4"),
-        t("day_short_5"),
-        t("day_short_6"),
-      ];
-      let _label = "";
-      if (
-        activeNote.recurrence === "custom" &&
-        Array.isArray(activeNote.recurrenceDays)
-      ) {
-        _label = activeNote.recurrenceDays
-          .map((d) => DAY_NAMES[d] ?? "")
-          .join(", ");
-      } else if (activeNote.recurrence === "weekly" && activeNote.due) {
-        const dayName = DAY_NAMES[new Date(activeNote.due).getDay()];
-        _label = `${t("recurrence_weekly")} (${dayName})`;
-      } else {
-        _label =
-          {
-            daily: t("recurrence_daily"),
-            monthly: t("recurrence_monthly"),
-            yearly: t("recurrence_yearly"),
-          }[activeNote.recurrence] ?? "";
-      }
-      recurrenceBadge.title = _label;
-      recurrenceBadge.dataset.tooltipContent = _label;
-    } else {
-      recurrenceBadge.title = "";
-      recurrenceBadge.dataset.tooltipContent = "";
-    }
+/* Badge cykliczności przy dacie + event dla date-pickera */
+function _syncRecurrenceBadge(note) {
+  const badge = document.getElementById("due-recurrence-badge");
+  if (badge) {
+    badge.hidden = !note?.recurrence || !note?.due;
+    const label = _recurrenceLabel(note);
+    badge.title = label;
+    badge.dataset.tooltipContent = label;
   }
   document.dispatchEvent(
     new CustomEvent("recurrenceChanged", {
-      detail: { value: activeNote?.recurrence ?? null },
+      detail: { value: note?.recurrence ?? null },
     }),
   );
 }
@@ -676,12 +707,15 @@ export function renderList() {
     .getElementById("main-view")
     ?.classList.toggle("zen-mode", state.zenMode);
 
-  const filtered = state.notes.filter((note) => {
-    const q = state.searchQuery.toLowerCase();
-    const text = (note.content || "").replace(/<[^>]+>/g, "").toLowerCase();
+  // Hoist poza pętlę filtra — toLowerCase raz, a strip HTML z treści tylko
+  // gdy faktycznie jest czego szukać (przy pustym q każda notatka pasuje).
+  const q = state.searchQuery.toLowerCase();
 
+  const filtered = state.notes.filter((note) => {
     const matchesSearch =
-      (note.title || "").toLowerCase().includes(q) || text.includes(q);
+      !q ||
+      (note.title || "").toLowerCase().includes(q) ||
+      (note.content || "").replace(/<[^>]+>/g, "").toLowerCase().includes(q);
     const matchesTags =
       state.filterTags.length === 0 ||
       state.filterTags.every((id) => note.tags?.includes(id));
@@ -907,7 +941,7 @@ function _renderSection(key, items) {
   header.appendChild(label);
   header.appendChild(meta);
 
-  header.onclick = () => _toggleSection(key);
+  // Klik obsługiwany przez delegację na #notesList (data-section)
   notesList.appendChild(header);
   if (!isCollapsed) items.forEach(_renderNoteItem);
 }
@@ -929,7 +963,7 @@ function _renderNoteItem(note) {
   if (note.type === "task" && note.completed)
     div.classList.add("note-item--completed");
 
-  // Checkbox dla tasków
+  // Checkbox dla tasków — klik obsługiwany przez delegację na #notesList
   if (note.type === "task") {
     const cb = document.createElement("button");
     cb.className =
@@ -939,10 +973,6 @@ function _renderNoteItem(note) {
       "aria-label",
       t(note.completed ? "task_markIncomplete" : "task_markComplete"),
     );
-    cb.onclick = (e) => {
-      e.stopPropagation();
-      toggleCompleted(note.id);
-    };
     div.appendChild(cb);
   }
 
@@ -959,7 +989,6 @@ function _renderNoteItem(note) {
   if (!_titleText && _previewFull && _previewFull !== _previewShort) {
     title.dataset.tooltipContent = _previewFull;
   }
-  title.onclick = () => selectNote(note.id);
 
   const titleWrapper = document.createElement("div");
   titleWrapper.className = "note-item__title-wrap";
@@ -968,7 +997,6 @@ function _renderNoteItem(note) {
   const previewBtn = document.createElement("button");
   previewBtn.className = "note-item__preview icon--preview";
   previewBtn.setAttribute("aria-label", t("note_preview_ariaLabel"));
-  previewBtn.onclick = (e) => e.stopPropagation();
   const previewText = _stripHtml(note.content);
   previewBtn.title = previewText
     ? previewText.length > 160
@@ -978,35 +1006,12 @@ function _renderNoteItem(note) {
   titleWrapper.appendChild(previewBtn);
   div.appendChild(titleWrapper);
 
-  // Ikona recurrence
+  // Ikona recurrence — etykieta współdzielona z badge (patrz _recurrenceLabel)
   if (note.recurrence) {
     const rec = document.createElement("span");
     rec.className = "note-item__recurrence";
     rec.textContent = "↺";
-    const DAY_NAMES = [
-      t("day_short_0"),
-      t("day_short_1"),
-      t("day_short_2"),
-      t("day_short_3"),
-      t("day_short_4"),
-      t("day_short_5"),
-      t("day_short_6"),
-    ];
-    let recLabel;
-    if (note.recurrence === "custom" && Array.isArray(note.recurrenceDays)) {
-      recLabel = note.recurrenceDays.map((d) => DAY_NAMES[d] ?? "").join(", ");
-    } else if (note.recurrence === "weekly" && note.due) {
-      const dayName = DAY_NAMES[new Date(note.due).getDay()];
-      recLabel = `${t("recurrence_weekly")} (${dayName})`;
-    } else {
-      recLabel =
-        {
-          daily: t("recurrence_daily"),
-          monthly: t("recurrence_monthly"),
-          yearly: t("recurrence_yearly"),
-          custom: t("recurrence_custom"),
-        }[note.recurrence] ?? t("recurrence_ariaLabel");
-    }
+    const recLabel = _recurrenceLabel(note) || t("recurrence_ariaLabel");
     rec.setAttribute("aria-label", recLabel);
     rec.title = recLabel;
     div.appendChild(rec);
@@ -1040,23 +1045,15 @@ function _renderNoteItem(note) {
       tomorrowBtn.textContent = "→";
       tomorrowBtn.setAttribute("aria-label", t("note_postponeToTomorrow"));
       tomorrowBtn.title = t("note_postponeToTomorrow");
-      tomorrowBtn.onclick = (e) => {
-        e.stopPropagation();
-        postponeToTomorrow(note.id);
-      };
       div.appendChild(tomorrowBtn);
     }
   }
 
-  // Delete button
+  // Delete button — klik obsługiwany przez delegację na #notesList
   const delBtn = document.createElement("button");
   delBtn.className = "note-item__delete";
   delBtn.textContent = "✕";
   delBtn.setAttribute("aria-label", t("note_deleteItem_ariaLabel"));
-  delBtn.onclick = (e) => {
-    e.stopPropagation();
-    _deleteAndMoveFocus(note.id, div);
-  };
   div.appendChild(delBtn);
 
   // Tagi (max 2 + "+N")
@@ -1080,46 +1077,7 @@ function _renderNoteItem(note) {
     }
     div.appendChild(row);
   }
-  // Nawigacja klawiaturowa
-  div.addEventListener("keydown", (e) => {
-    switch (e.key) {
-      case "Enter":
-        e.preventDefault();
-        selectNote(note.id);
-        setTimeout(() => titleInput.focus(), 50);
-        break;
-
-      case " ":
-        if (note.type === "task") {
-          e.preventDefault();
-          toggleCompleted(note.id);
-        }
-        break;
-
-      case "Delete":
-        e.preventDefault();
-        _deleteAndMoveFocus(note.id, div);
-        break;
-
-      case "ArrowDown": {
-        e.preventDefault();
-        let next = div.nextElementSibling;
-        while (next && !next.classList.contains("note-item"))
-          next = next.nextElementSibling;
-        if (next) next.focus();
-        break;
-      }
-
-      case "ArrowUp": {
-        e.preventDefault();
-        let prev = div.previousElementSibling;
-        while (prev && !prev.classList.contains("note-item"))
-          prev = prev.previousElementSibling;
-        if (prev) prev.focus();
-        break;
-      }
-    }
-  });
+  // Klawiatura i kliki — delegacja na #notesList (patrz niżej)
   notesList.appendChild(div);
 }
 
@@ -1149,6 +1107,82 @@ function _deleteAndMoveFocus(id, el) {
   }
 }
 
+/* ── Delegacja zdarzeń listy ──────────────────────
+   renderList() przebudowuje listę od zera przy każdym filtrze i zapisie —
+   pojedyncze listenery na kontenerze zamiast handlerów per-element
+   eliminują koszt ponownego podpinania i churn GC przy każdym renderze. */
+
+notesList.addEventListener("click", (e) => {
+  const header = e.target.closest(".section-header");
+  if (header?.dataset.section) {
+    _toggleSection(header.dataset.section);
+    return;
+  }
+
+  const item = e.target.closest(".note-item");
+  if (!item?.dataset.id) return;
+  const id = item.dataset.id;
+
+  if (e.target.closest(".note-checkbox")) {
+    toggleCompleted(id);
+  } else if (e.target.closest(".note-item__postpone")) {
+    postponeToTomorrow(id);
+  } else if (e.target.closest(".note-item__delete")) {
+    _deleteAndMoveFocus(id, item);
+  } else if (e.target.closest(".note-item__preview")) {
+    // tylko hover tooltip — klik nie robi nic
+  } else if (e.target.closest(".note-item__title")) {
+    selectNote(id);
+  }
+});
+
+// Nawigacja klawiaturowa po liście (elementy mają tabindex=0)
+notesList.addEventListener("keydown", (e) => {
+  const div = e.target.closest(".note-item");
+  if (!div?.dataset.id) return;
+  const id = div.dataset.id;
+
+  switch (e.key) {
+    case "Enter":
+      e.preventDefault();
+      selectNote(id);
+      setTimeout(() => titleInput.focus(), 50);
+      break;
+
+    case " ": {
+      const note = state.notes.find((n) => n.id === id);
+      if (note?.type === "task") {
+        e.preventDefault();
+        toggleCompleted(id);
+      }
+      break;
+    }
+
+    case "Delete":
+      e.preventDefault();
+      _deleteAndMoveFocus(id, div);
+      break;
+
+    case "ArrowDown": {
+      e.preventDefault();
+      let next = div.nextElementSibling;
+      while (next && !next.classList.contains("note-item"))
+        next = next.nextElementSibling;
+      if (next) next.focus();
+      break;
+    }
+
+    case "ArrowUp": {
+      e.preventDefault();
+      let prev = div.previousElementSibling;
+      while (prev && !prev.classList.contains("note-item"))
+        prev = prev.previousElementSibling;
+      if (prev) prev.focus();
+      break;
+    }
+  }
+});
+
 export function quickCapture(raw) {
   const item = buildItemFromCapture(raw);
   if (!item) return null;
@@ -1160,6 +1194,9 @@ export function quickCapture(raw) {
     }
     saveFocusId(state.focusIds);
   }
+  // Flaga focus z parsera to jednorazowy seed dla focusIds — nie zapisujemy
+  // jej na notatce (jedno źródło prawdy; eksport materializuje ją z focusIds)
+  delete item.focus;
   saveNotes(state.notes);
 
   if (isAlarmable(item)) {

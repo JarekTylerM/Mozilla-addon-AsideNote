@@ -3,15 +3,15 @@
  *
  * Odpowiedzialność:
  *   - Stan: _editingLink, _savedRange
- *   - Ctrl+klik → otwórz link w nowej karcie
+ *   - Klik → otwórz link w nowej karcie (link jest jednostką atomową)
  *   - Przycisk link w toolbarze → _openLinkModal
  *   - Modal: walidacja, zapis, usunięcie, zamknięcie
  *
  * Publiczne API:
- *   initLinkCtrlClick()  — wywołaj z initEditor()
- *   initLinkButton()     — wywołaj z initEditor()
- *   initLinkModal()      — wywołaj z initEditor()
- *   openLinkModal()      — wywołaj z _initKeydown (Ctrl+K)
+ *   initLinkClick()   — wywołaj z initEditor()
+ *   initLinkButton()  — wywołaj z initEditor()
+ *   initLinkModal()   — wywołaj z initEditor()
+ *   openLinkModal()   — wywołaj z _initKeydown (Ctrl+K)
  */
 
 import { t } from './i18n.js';
@@ -21,19 +21,19 @@ import { debouncedSave } from './notes.js';
 
 const editor = document.getElementById('editor');
 
-/* ── Ctrl+klik na linku → otwórz w nowej karcie ─ */
+/* ── Klik na linku → otwórz w nowej karcie ────── */
 
-export function initLinkCtrlClick() {
+export function initLinkClick() {
   editor.addEventListener('click', (e) => {
     const link = e.target.closest('a');
     if (!link) return;
 
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const href = link.getAttribute('href');
-      if (href) window.open(href, '_blank', 'noopener,noreferrer');
-    }
-    // Bez Ctrl — pozwól na normalne zachowanie contenteditable (kursor w link)
+    // Lewy klik (także z Ctrl/Cmd) otwiera link — link jest jednostką
+    // atomową, nie miejscem do stawiania kursora. Edycja: hover tooltip
+    // (Edytuj) albo Ctrl+K; kursor można wprowadzić strzałkami.
+    e.preventDefault();
+    const href = link.getAttribute('href');
+    if (href) window.open(href, '_blank', 'noopener,noreferrer');
   });
 }
 

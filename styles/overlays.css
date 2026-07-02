@@ -209,7 +209,7 @@
   user-select: text;
 }
 
-#link-tooltip-open,
+#link-tooltip-copy,
 #link-tooltip-edit,
 #link-tooltip-delete {
   flex-shrink: 0;
@@ -219,7 +219,7 @@
   transition: opacity var(--transition);
 }
 
-#link-tooltip-open:hover,
+#link-tooltip-copy:hover,
 #link-tooltip-edit:hover,
 #link-tooltip-delete:hover {
   opacity: 1;

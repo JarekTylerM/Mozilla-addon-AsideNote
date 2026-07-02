@@ -249,12 +249,13 @@ export function openSlashMenu(block) {
     menu.style.setProperty("--slash-left", "-9999px");
     menu.hidden = false;
     requestAnimationFrame(() => {
-      const zoom     = parseFloat(document.body.style.zoom) / 100 || 1;
+      // Zoom UI działa przez font-size na <html> (panel.js::_applyZoom) —
+      // getBoundingClientRect zwraca realne px, bez przeliczeń.
       const panelRect = panel?.getBoundingClientRect();
-      const panelH   = (panelRect?.height || 320) / zoom;
-      const topAbove = rect.top / zoom - panelH - 4;
-      const top      = topAbove >= 0 ? topAbove : rect.bottom / zoom + 4;
-      const left     = Math.max(0, rect.left / zoom);
+      const panelH = panelRect?.height || 320;
+      const topAbove = rect.top - panelH - 4;
+      const top = topAbove >= 0 ? topAbove : rect.bottom + 4;
+      const left = Math.max(0, rect.left);
       menu.style.setProperty("--slash-top", `${top}px`);
       menu.style.setProperty("--slash-left", `${left}px`);
     });

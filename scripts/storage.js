@@ -19,6 +19,53 @@
 
 export const CURRENT_SCHEMA = 3;
 
+/* ── Self-write tracking (sync między oknami) ── */
+
+/*
+ * browser.storage.onChanged odpala się także w kontekście, który wykonał
+ * zapis. Sidebar (app.js) odróżnia własne zapisy od zapisów z innego okna
+ * lub popupu przez znaczniki per-klucz: każdy zapis przez _set() zostawia
+ * znacznik, a handler onChanged konsumuje go przez consumeSelfWrite().
+ * TTL chroni przed "przeciekiem" znaczników, gdy zapis identycznej wartości
+ * nie wygeneruje eventu — przeterminowane znaczniki są ignorowane.
+ */
+const SELF_WRITE_TTL_MS = 5000;
+const _selfWrites = new Map(); // klucz → tablica timestampów zapisów
+
+function _markSelfWrites(keys) {
+  const now = Date.now();
+  for (const k of keys) {
+    const arr = _selfWrites.get(k) ?? [];
+    arr.push(now);
+    _selfWrites.set(k, arr);
+  }
+}
+
+/**
+ * Czy ostatnia zmiana klucza pochodzi z tego kontekstu?
+ * Konsumuje jeden znacznik (FIFO). Wołane z handlera storage.onChanged.
+ *
+ * @param {string} key
+ * @returns {boolean} true = zapis własny, zignoruj event
+ */
+export function consumeSelfWrite(key) {
+  const now = Date.now();
+  const arr = (_selfWrites.get(key) ?? []).filter(
+    (ts) => now - ts < SELF_WRITE_TTL_MS,
+  );
+  const own = arr.length > 0;
+  if (own) arr.shift();
+  _selfWrites.set(key, arr);
+  return own;
+}
+
+/** Jedyne wejście zapisu — znakuje klucze przed browser.storage.local.set. */
+async function _set(obj) {
+  const keys = Object.keys(obj);
+  _markSelfWrites(keys);
+  await browser.storage.local.set(obj);
+}
+
 /* ── Migracja modelu notatek ──────────────────── */
 
 /**
@@ -79,14 +126,20 @@ export async function loadNotes() {
         typeof n.id === "string" &&
         n.id.length > 0,
     )
-    .map((n) => ({
-      ...n,
-      title: typeof n.title === "string" ? n.title : "",
-      content: typeof n.content === "string" ? n.content : "",
-      type: n.type === "task" ? "task" : "note",
-      tags: Array.isArray(n.tags) ? n.tags : [],
-      created: typeof n.created === "number" ? n.created : Date.now(),
-    }));
+    .map((n) => {
+      // Flaga `focus` na notatce to relikt — stan "w trakcie" żyje w kluczu
+      // focusId; szczątkowe flagi z historycznych zapisów są zdejmowane,
+      // żeby nie zasilały focusIds przy przyszłym eksporcie/imporcie.
+      const { focus, ...rest } = n;
+      return {
+        ...rest,
+        title: typeof n.title === "string" ? n.title : "",
+        content: typeof n.content === "string" ? n.content : "",
+        type: n.type === "task" ? "task" : "note",
+        tags: Array.isArray(n.tags) ? n.tags : [],
+        created: typeof n.created === "number" ? n.created : Date.now(),
+      };
+    });
 
   const version = typeof res.schemaVersion === "number" ? res.schemaVersion : 0;
 
@@ -94,7 +147,7 @@ export async function loadNotes() {
     notes = migrateNotes(notes, version);
     // Utrwal zmigrowane dane + nową wersję schematu
     try {
-      await browser.storage.local.set({ notes, schemaVersion: CURRENT_SCHEMA });
+      await _set({ notes, schemaVersion: CURRENT_SCHEMA });
     } catch (e) {
       console.error("[storage] schema migration save failed:", e);
       // Nie rzucamy — lepiej zwrócić zmigrowane dane w pamięci
@@ -107,7 +160,7 @@ export async function loadNotes() {
 
 export async function saveNotes(notes) {
   try {
-    await browser.storage.local.set({ notes });
+    await _set({ notes });
   } catch (e) {
     console.error("[storage] saveNotes failed:", e);
     throw e;
@@ -124,7 +177,7 @@ export async function loadTags() {
 
 export async function saveTags(tags) {
   try {
-    await browser.storage.local.set({ tags });
+    await _set({ tags });
   } catch (e) {
     console.error("[storage] saveTags failed:", e);
     throw e;
@@ -142,7 +195,7 @@ export async function loadCollapsedSections() {
 
 export async function saveCollapsedSections(sections) {
   try {
-    await browser.storage.local.set({ collapsedSections: sections });
+    await _set({ collapsedSections: sections });
   } catch (e) {
     console.error("[storage] saveCollapsedSections failed:", e);
     throw e;
@@ -158,7 +211,7 @@ export async function loadFilterPrefs() {
 
 export async function saveFilterPrefs(prefs) {
   try {
-    await browser.storage.local.set({ filterPrefs: prefs });
+    await _set({ filterPrefs: prefs });
   } catch (e) {
     console.error("[storage] saveFilterPrefs failed:", e);
     throw e;
@@ -178,7 +231,7 @@ export async function loadFocusId() {
 
 export async function saveFocusId(ids) {
   try {
-    await browser.storage.local.set({ focusId: ids });
+    await _set({ focusId: ids });
   } catch (e) {
     console.error("[storage] saveFocusId failed:", e);
   }
@@ -203,7 +256,7 @@ export async function saveUiSettings(patch) {
   // Merge z istniejącymi — żeby zmiana jednego pola nie kasowała pozostałych
   try {
     const current = await loadUiSettings();
-    await browser.storage.local.set({ uiSettings: { ...current, ...patch } });
+    await _set({ uiSettings: { ...current, ...patch } });
   } catch (e) {
     console.error("[storage] saveUiSettings failed:", e);
     throw e;
@@ -219,7 +272,7 @@ export async function saveUiSettings(patch) {
  */
 export async function saveLastBackupBeforeImport(snapshot) {
   try {
-    await browser.storage.local.set({ _lastBackupBeforeImport: snapshot });
+    await _set({ _lastBackupBeforeImport: snapshot });
   } catch (e) {
     console.error("[storage] saveLastBackupBeforeImport failed:", e);
     throw e;
@@ -231,9 +284,38 @@ export async function loadLastBackupBeforeImport() {
   return res._lastBackupBeforeImport || null;
 }
 
+/* ── Cursor resume — sprzątanie osieroconych wpisów ── */
+
+/**
+ * Usuwa z uiSettings klucze `cursor_<id>` dla notatek, które już nie
+ * istnieją. Bez tego każda kiedykolwiek otwarta notatka zostawia po sobie
+ * wpis na zawsze — uiSettings rośnie bez ograniczeń. Wołane raz na boot.
+ *
+ * @param {Iterable<string>} validIds - ID istniejących notatek (aktywne + kosz)
+ */
+export async function pruneCursorSettings(validIds) {
+  try {
+    const res = await browser.storage.local.get("uiSettings");
+    const ui = res.uiSettings;
+    if (!ui || typeof ui !== "object") return;
+    const valid = new Set(validIds);
+    let changed = false;
+    for (const key of Object.keys(ui)) {
+      if (key.startsWith("cursor_") && !valid.has(key.slice(7))) {
+        delete ui[key];
+        changed = true;
+      }
+    }
+    if (changed) await _set({ uiSettings: ui });
+  } catch (e) {
+    // Sprzątanie jest best-effort — błąd nie może blokować bootu
+    console.error("[storage] pruneCursorSettings failed:", e);
+  }
+}
+
 /* ── Deleted notes (kosz) ─────────────────────── */
 
-const MAX_DELETED = 50; // max elementów w koszu
+export const MAX_DELETED = 50; // max elementów w koszu (używane też w notes.js)
 const DELETED_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 dni auto-expire
 
 export async function loadDeletedNotes() {
@@ -253,7 +335,7 @@ export async function loadDeletedNotes() {
 
 export async function saveDeletedNotes(notes) {
   try {
-    await browser.storage.local.set({
+    await _set({
       deletedNotes: notes.slice(0, MAX_DELETED),
     });
   } catch (e) {

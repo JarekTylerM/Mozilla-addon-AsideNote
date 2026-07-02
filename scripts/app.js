@@ -11,8 +11,12 @@ import {
   loadUiSettings,
   saveUiSettings,
   saveNotes,
+  saveFocusId,
   loadDeletedNotes,
+  pruneCursorSettings,
+  consumeSelfWrite,
 } from "./storage.js";
+import { debounce } from "./utils.js";
 
 import {
   state,
@@ -97,8 +101,19 @@ Promise.all([
     tagState.tags = tags;
     state.collapsedSections = collapsed;
     state.filterHideCompleted = prefs.hideCompleted ?? false;
-    state.focusIds = focusId;
     state.deletedNotes = deletedNotes;
+
+    // focusIds: odfiltruj wpisy wskazujące nieistniejące notatki
+    // (pozostałość po usunięciach/imporcie w innej sesji)
+    const validIds = new Set(notes.map((n) => n.id));
+    state.focusIds = focusId.filter((id) => validIds.has(id));
+    if (state.focusIds.length !== focusId.length) {
+      saveFocusId(state.focusIds);
+    }
+
+    // Usuń osierocone pozycje kursora (cursor_<id> notatek które nie istnieją)
+    // — bez tego uiSettings rośnie z każdą kiedykolwiek otwartą notatką.
+    pruneCursorSettings([...notes, ...deletedNotes].map((n) => n.id));
 
     rescheduleAll(state.notes);
     initUiSettings(uiSettings);
@@ -149,18 +164,62 @@ Promise.all([
   },
 );
 
-// Komunikacja z popup — odśwież listę gdy popup dodał element.
-// Weryfikacja sender.id: akceptujemy wyłącznie wiadomości z własnych stron
-// rozszerzenia. Bez tego dowolne inne zainstalowane rozszerzenie mogłoby
-// wymusić przeładowanie listy przez browser.runtime.sendMessage(naszId, msg).
-browser.runtime.onMessage.addListener((msg, sender) => {
-  if (sender.id !== browser.runtime.id) return;
-  if (msg.action === "noteAdded") {
-    loadNotes().then((notes) => {
-      state.notes = notes;
-      renderList();
-    });
+/* ── Synchronizacja między kontekstami (okna / popup) ─────────────
+   Sidebar jest per-okno — każde okno trzyma własny stan w pamięci i
+   zapisuje CAŁĄ tablicę notes. Bez nasłuchu na storage.onChanged edycja
+   w dwóch oknach kończy się nadpisaniem zmian drugiego okna (wygrywa
+   ostatni zapis). Zapisy własne odfiltrowuje consumeSelfWrite()
+   (znaczniki per-klucz w storage.js).
+
+   Reload NIE dotyka edytora ani pola tytułu — trwająca edycja aktywnej
+   notatki nie może zostać nadpisana; jej treść trafi do storage przy
+   najbliższym debouncedSave. Okno kolizji zawęża się z "cały zbiór
+   danych" do "jedna notatka edytowana równolegle w dwóch oknach". */
+
+const SYNCED_KEYS = ["notes", "tags", "focusId", "deletedNotes"];
+
+async function _reloadStateFromStorage() {
+  const [notes, tags, focusId, deletedNotes] = await Promise.all([
+    loadNotes(),
+    loadTags(),
+    loadFocusId(),
+    loadDeletedNotes(),
+  ]);
+  state.notes = notes;
+  tagState.tags = tags;
+  state.focusIds = focusId;
+  state.deletedNotes = deletedNotes;
+  renderList();
+  renderTagSelector();
+  updateDeleteState();
+}
+
+// Debounce: jedna operacja w drugim oknie to zwykle kilka zapisów pod rząd
+// (notes + focusId + deletedNotes) — scal je w jeden reload.
+const _debouncedExternalReload = debounce(_reloadStateFromStorage, 150);
+
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return;
+
+  // Live select — popup (Shift+Enter) lub kliknięcie powiadomienia zapisuje
+  // _pendingSelectId gdy sidebar jest już otwarty. Boot-owy odczyt tego
+  // klucza obsługuje tylko zimny start; tu reagujemy na żywo.
+  const pending = changes._pendingSelectId?.newValue;
+  if (typeof pending === "string" && isValidId(pending)) {
+    browser.storage.local.remove("_pendingSelectId");
+    // Notatka mogła zostać dodana w tym samym batchu zapisów — najpierw
+    // świeży stan, potem select
+    _debouncedExternalReload.cancel?.();
+    _reloadStateFromStorage().then(() => selectNote(pending));
+    return;
   }
+
+  // filter (nie some) — znacznik self-write KAŻDEGO zmienionego klucza musi
+  // zostać skonsumowany, inaczej zalega i maskuje przyszłe zewnętrzne zmiany
+  const externalKeys = SYNCED_KEYS.filter(
+    (key) => key in changes && !consumeSelfWrite(key),
+  );
+  if (externalKeys.length > 0) _debouncedExternalReload();
 });
 
 initEditor();
@@ -317,10 +376,6 @@ document.getElementById("due-time").addEventListener("change", (e) => {
   updateDeleteState();
 });
 
-//   setReminder(e.target.value);
-//   _rescheduleActive();
-// });
-
 document.getElementById("due-clear").onclick = () => {
   if (!state.activeId) return;
   const note = state.notes.find((n) => n.id === state.activeId);
@@ -345,10 +400,15 @@ document.getElementById("due-clear").onclick = () => {
 
 const searchClear = document.getElementById("search-clear");
 
+// Debounce renderu — renderList() przebudowuje całą listę; przy szybkim
+// pisaniu w wyszukiwarce nie ma sensu renderować każdego znaku.
+// Stan i przycisk czyszczenia aktualizują się natychmiast.
+const _debouncedSearchRender = debounce(renderList, 150);
+
 searchInput.addEventListener("input", (e) => {
   state.searchQuery = e.target.value;
-  renderList();
   if (searchClear) searchClear.hidden = !e.target.value;
+  _debouncedSearchRender();
 });
 
 searchClear?.addEventListener("click", () => {
@@ -670,8 +730,12 @@ document.addEventListener("keydown", (e) => {
   const inEditor = active?.id === "editor" || active?.id === "title";
   const inCapture = active?.id === "quick-capture";
 
+  // e.key?.toLowerCase() we wszystkich skrótach Alt — bez tego skróty
+  // przestają działać z włączonym CapsLockiem (e.key = "C" zamiast "c")
+  const altKey = e.altKey ? e.key?.toLowerCase() : null;
+
   // Alt+C — fokus quick capture
-  if (e.altKey && e.key === "c") {
+  if (altKey === "c") {
     e.preventDefault();
     quickCaptureInput.focus();
     quickCaptureInput.select();
@@ -679,7 +743,7 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Alt+T — quick capture z prefiksem ! (od razu zadanie)
-  if (e.altKey && e.key === "t") {
+  if (altKey === "t") {
     e.preventDefault();
     quickCaptureInput.focus();
     if (!quickCaptureInput.value.startsWith("!")) quickCaptureInput.value = "!";
@@ -691,7 +755,7 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Alt+S — fokus na wyszukiwarkę
-  if (e.altKey && e.key === "s") {
+  if (altKey === "s") {
     e.preventDefault();
     searchInput.focus();
     searchInput.select();
@@ -699,7 +763,7 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Alt+F — toggle filter bar + fokus na pierwszy element
-  if (e.altKey && e.key === "f") {
+  if (altKey === "f") {
     e.preventDefault();
     document.getElementById("filter-btn").click();
     const filterBar = document.getElementById("filter-bar");
@@ -714,21 +778,21 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Alt+P — toggle panel personalizacji
-  if (e.altKey && e.key === "p") {
+  if (altKey === "p") {
     e.preventDefault();
     togglePanel();
     return;
   }
 
   // Alt+M — toggle tryb skupienia (focus mode)
-  if (e.altKey && e.key?.toLowerCase() === "m") {
+  if (altKey === "m") {
     e.preventDefault();
     document.getElementById("focusmode-btn")?.click();
     return;
   }
 
   // Alt+L — toggle list expand
-  if (e.altKey && e.key?.toLowerCase() === "l") {
+  if (altKey === "l") {
     e.preventDefault();
     document.getElementById("list-expand-btn")?.click();
     return;
@@ -747,15 +811,14 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Alt+Z — toggle zen mode
-  if (e.altKey && e.key?.toLowerCase() === "z") {
+  if (altKey === "z") {
     e.preventDefault();
-    document;
     document.getElementById("zen-btn")?.click();
     return;
   }
 
   // Alt+E — toggle toolbar edytora (działa też w zen mode)
-  if (e.altKey && e.key?.toLowerCase() === "e") {
+  if (altKey === "e") {
     e.preventDefault();
     const toggle = document.getElementById("toolbar-toggle");
     const toolbar = document.getElementById("toolbar");

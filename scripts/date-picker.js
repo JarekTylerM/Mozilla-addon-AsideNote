@@ -271,21 +271,16 @@ function _open() {
       document.getElementById("due-wrapper");
     if (!anchor) return;
 
-    // Przy zoom na body, position:fixed używa zoomed viewport.
-    // getBoundingClientRect zwraca unzoomed px — przeliczamy przez zoom factor.
-    const zoom = parseFloat(document.body.style.zoom) / 100 || 1;
+    // Zoom UI działa przez font-size na <html> (panel.js::_applyZoom) —
+    // getBoundingClientRect zwraca realne px, bez przeliczeń.
     const rect = anchor.getBoundingClientRect();
     const popRect = _popover.getBoundingClientRect();
-    const ph = (popRect.height || 300) / zoom;
-    const pw = (popRect.width || 240) / zoom;
-    const vw = window.innerWidth / zoom;
-    const top0 = rect.bottom / zoom;
-    const top1 = rect.top / zoom;
-    const left0 = rect.left / zoom;
+    const ph = popRect.height || 300;
+    const pw = popRect.width || 240;
 
-    const spaceAbove = top1 - 4;
-    const top  = spaceAbove >= ph ? top1 - ph - 4 : top0 + 4;
-    const left = Math.max(4, Math.min(left0, vw - pw - 4));
+    const spaceAbove = rect.top - 4;
+    const top = spaceAbove >= ph ? rect.top - ph - 4 : rect.bottom + 4;
+    const left = Math.max(4, Math.min(rect.left, window.innerWidth - pw - 4));
     _popover.style.top = `${top}px`;
     _popover.style.left = `${left}px`;
   });

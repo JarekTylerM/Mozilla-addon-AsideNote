@@ -135,3 +135,58 @@ export function _restoreCursorTo(el) {
   sel.addRange(range);
   getEditor().focus();
 }
+
+/* ── Context Resume — pozycja kursora jako offset tekstowy ────
+   Przeniesione z editor.js: notes.js potrzebuje setCursorOffset przy
+   selectNote, a import z editor.js tworzył cykl notes.js ↔ editor.js
+   (działał dzięki hoistingowi ESM, ale był miną na przyszłość). */
+
+/**
+ * Zwraca pozycję kursora jako liczbę znaków tekstu od początku edytora
+ * (offset niezależny od struktury DOM — przeżywa re-render innerHTML).
+ * @returns {number|null} null gdy brak selekcji lub kursor poza edytorem
+ */
+export function getCursorOffset(editorEl) {
+  const sel = window.getSelection();
+  if (!sel?.rangeCount || !editorEl) return null;
+  const range = sel.getRangeAt(0);
+  try {
+    const pre = document.createRange();
+    pre.selectNodeContents(editorEl);
+    pre.setEnd(range.startContainer, range.startOffset);
+    return pre.toString().length;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Ustawia kursor na zadanym offsecie tekstowym (odwrotność getCursorOffset).
+ * Offset poza zakresem → kursor na końcu edytora.
+ */
+export function setCursorOffset(editorEl, offset) {
+  if (offset == null || offset < 0) return;
+  const walker = document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT);
+  let remaining = offset;
+  let node = walker.nextNode();
+  while (node) {
+    if (remaining <= node.textContent.length) {
+      const range = document.createRange();
+      range.setStart(node, remaining);
+      range.collapse(true);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      node.parentElement?.scrollIntoView?.({ block: "nearest" });
+      return;
+    }
+    remaining -= node.textContent.length;
+    node = walker.nextNode();
+  }
+  // Fallback: kursor na końcu
+  const range = document.createRange();
+  range.selectNodeContents(editorEl);
+  range.collapse(false);
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(range);
+}

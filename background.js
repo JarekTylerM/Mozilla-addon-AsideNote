@@ -28,7 +28,10 @@ async function rescheduleOnBoot() {
     // uwzględnij reminder offset — tak samo jak alarms.js::scheduleAlarm
     const offsetMs = (note.reminder ?? 0) * 60000;
     const when = dt.getTime() - offsetMs;
-    if (when > now) browser.alarms.create(note.id, { when });
+    // Number.isFinite odrzuca NaN z niepoprawnego time/due (storage poisoning)
+    if (Number.isFinite(when) && when > now) {
+      browser.alarms.create(note.id, { when });
+    }
   });
 }
 browser.runtime.onStartup.addListener(rescheduleOnBoot);
@@ -57,7 +60,9 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
 
   browser.notifications.create("notif_" + alarm.name, {
     type: "basic",
-    iconUrl: browser.runtime.getURL("assets/icons/mdi--event-note.png"),
+    iconUrl: browser.runtime.getURL(
+      "assets/icons/mdi--notebook-edit-outline-48.png",
+    ),
     title:
       "AsideNote: " +
       (note?.title || browser.i18n.getMessage("notif_title_fallback")),
@@ -70,7 +75,16 @@ browser.commands.onCommand.addListener((command) => {
   if (command === "toggle-sidebar") browser.sidebarAction.toggle();
 });
 
-browser.notifications.onClicked.addListener(() => {
+browser.notifications.onClicked.addListener((notificationId) => {
+  // ID powiadomienia = "notif_<noteId>" (patrz onAlarm wyżej) — zapisz
+  // pending select, żeby sidebar zaznaczył zadanie którego dotyczył alarm.
+  // Sidebar otwarty: odbierze przez storage.onChanged; zamknięty: przy boot.
+  if (notificationId.startsWith("notif_")) {
+    const noteId = notificationId.slice("notif_".length);
+    if (/^[A-Za-z0-9_-]{1,100}$/.test(noteId)) {
+      browser.storage.local.set({ _pendingSelectId: noteId });
+    }
+  }
   browser.sidebarAction.open();
 });
 
@@ -79,6 +93,7 @@ browser.notifications.onClicked.addListener(() => {
 // _pendingSelectId jest walidowany przed zapisem (isValidId regex).
 browser.runtime.onMessage.addListener((msg, sender) => {
   if (sender.id !== browser.runtime.id) return;
+  if (!msg || typeof msg !== "object") return;
   if (msg.action === "openAndSelect") {
     // Waliduj noteId przed zapisem do storage — zapobiega wstrzyknięciu
     // przez potencjalnie skompromitowany kontekst popup.html
@@ -89,5 +104,6 @@ browser.runtime.onMessage.addListener((msg, sender) => {
       browser.storage.local.set({ _pendingSelectId: msg.noteId });
     }
   }
-  // 'noteAdded' jest nasłuchiwane bezpośrednio przez sidebar (app.js)
+  // Odświeżenie listy w sidebarze po dodaniu notatki z popupu dzieje się
+  // przez storage.onChanged (app.js) — nie wymaga osobnego komunikatu.
 });

@@ -371,22 +371,29 @@ export function safeHref(href) {
  * @param {string} html
  * @returns {string}
  */
+// Maksymalna głębokość drzewa przy sanityzacji. Sensowna notatka nie
+// przekracza kilkunastu poziomów (listy zagnieżdżone + inline formatting);
+// 60 daje duży zapas. Głębsze poddrzewa są spłaszczane do textContent —
+// chroni _cleanNode (rekurencja) przed stack overflow na wrogim HTML
+// z importu/paste (np. 50 000 zagnieżdżonych <span>).
+const MAX_SANITIZE_DEPTH = 60;
+
 export function sanitizeHTML(html) {
   if (!html || typeof html !== 'string') return '';
 
   // DOMParser w detached document — <img onerror=...> nie strzeli przy parse
   const doc = new DOMParser().parseFromString(html, 'text/html');
-  _cleanNode(doc.body, doc);
+  _cleanNode(doc.body, doc, 0);
   return doc.body.innerHTML;
 }
 
-function _cleanNode(node, doc) {
+function _cleanNode(node, doc, depth) {
   // Iteruj od końca — modyfikujemy drzewo w trakcie
   const children = Array.from(node.children);
   for (let i = children.length - 1; i >= 0; i--) {
     const child = children[i];
 
-    if (!ALLOWED_TAGS.has(child.tagName)) {
+    if (!ALLOWED_TAGS.has(child.tagName) || depth >= MAX_SANITIZE_DEPTH) {
       // Użyj doc zamiast globalnego document — poprawny kontekst DOMParsera
       child.replaceWith(doc.createTextNode(child.textContent || ''));
       continue;
@@ -412,6 +419,6 @@ function _cleanNode(node, doc) {
       child.setAttribute('rel', 'noopener noreferrer');
     }
 
-    _cleanNode(child, doc);
+    _cleanNode(child, doc, depth + 1);
   }
 }

@@ -2,10 +2,10 @@
  * sanitize.test.mjs — testy sanitize.js
  *
  * Pokrycie: validateText, isValidId, safeHref, sanitizeImportedNote,
- *           sanitizeImportedTag
- * Pominięte: sanitizeHTML — wymaga DOMParser (browser API)
+ *           sanitizeImportedTag, sanitizeHTML (przez jsdom DOMParser)
  */
 
+import { createRequire } from 'module';
 import { test, testBug, expect, results } from './_runner.mjs';
 import {
   validateText,
@@ -13,11 +13,18 @@ import {
   safeHref,
   sanitizeImportedNote,
   sanitizeImportedTag,
+  sanitizeHTML,
   MAX_TITLE_LEN,
   MAX_TAG_NAME_LEN,
   MAX_CONTENT_LEN,
   MAX_ID_LEN,
 } from './sanitize.mjs';
+
+// jsdom dostarcza DOMParser — sanitizeHTML używa go dopiero przy wywołaniu,
+// więc global można ustawić po imporcie modułu.
+const require = createRequire(import.meta.url);
+const { JSDOM } = require('jsdom');
+global.DOMParser = new JSDOM().window.DOMParser;
 
 // ── validateText ─────────────────────────────────────────────────
 
@@ -413,6 +420,99 @@ test('za długa nazwa → przycinana do MAX_TAG_NAME_LEN', () => {
   expect(r.name.length).toBe(MAX_TAG_NAME_LEN);
 });
 
+// ── sanitizeHTML (jsdom) ──────────────────────────────────────────
+
+console.log('\n6. sanitizeHTML');
+
+test('<script> usunięty, tekst zachowany', () => {
+  const out = sanitizeHTML('<p>przed<script>alert(1)</script>po</p>');
+  expect(out).toContain('przed');
+  expect(out).toContain('po');
+  expect(out.includes('<script')).toBe(false);
+});
+
+test('<img onerror> → tag usunięty w całości', () => {
+  const out = sanitizeHTML('<p>x<img src=1 onerror="alert(1)">y</p>');
+  expect(out.includes('<img')).toBe(false);
+  expect(out.includes('onerror')).toBe(false);
+  expect(out).toContain('x');
+  expect(out).toContain('y');
+});
+
+test('onclick na dozwolonym tagu → atrybut usunięty', () => {
+  const out = sanitizeHTML('<p onclick="alert(1)">tekst</p>');
+  expect(out.includes('onclick')).toBe(false);
+  expect(out).toContain('<p>tekst</p>');
+});
+
+test('style i class usunięte z dozwolonego tagu', () => {
+  const out = sanitizeHTML('<p style="color:red" class="x">tekst</p>');
+  expect(out.includes('style=')).toBe(false);
+  expect(out.includes('class=')).toBe(false);
+});
+
+test('link javascript: → zamieniony na tekst', () => {
+  const out = sanitizeHTML('<p><a href="javascript:alert(1)">klik</a></p>');
+  expect(out.includes('<a')).toBe(false);
+  expect(out).toContain('klik');
+});
+
+test('link https → zachowany z wymuszonym target/rel', () => {
+  const out = sanitizeHTML('<p><a href="https://example.com">ok</a></p>');
+  expect(out).toContain('href="https://example.com"');
+  expect(out).toContain('target="_blank"');
+  expect(out).toContain('rel="noopener noreferrer"');
+});
+
+test('checklist: ul[data-list] i li[data-checked] zachowane', () => {
+  const out = sanitizeHTML(
+    '<ul data-list="checklist"><li data-checked="true">zrobione</li></ul>',
+  );
+  expect(out).toContain('data-list="checklist"');
+  expect(out).toContain('data-checked="true"');
+});
+
+test('callout: blockquote[data-callout] zachowany', () => {
+  const out = sanitizeHTML(
+    '<blockquote data-callout="warning" data-callout-label="Uwaga"><p>x</p></blockquote>',
+  );
+  expect(out).toContain('data-callout="warning"');
+  expect(out).toContain('data-callout-label="Uwaga"');
+});
+
+test('iframe → tag usunięty, treść jako tekst', () => {
+  const out = sanitizeHTML('<iframe src="https://evil.example">fallback</iframe>');
+  expect(out.includes('<iframe')).toBe(false);
+});
+
+test('dozwolone formatowanie inline zachowane', () => {
+  const out = sanitizeHTML('<p><strong>b</strong><em>i</em><code>c</code></p>');
+  expect(out).toContain('<strong>b</strong>');
+  expect(out).toContain('<em>i</em>');
+  expect(out).toContain('<code>c</code>');
+});
+
+test('zagnieżdżenie ponad limit głębokości → spłaszczone, tekst zachowany', () => {
+  const html = '<div>'.repeat(100) + 'rdzeń' + '</div>'.repeat(100);
+  const out = sanitizeHTML(html);
+  expect(out).toContain('rdzeń');
+  const depth = (out.match(/<div>/g) || []).length;
+  expect(depth <= 60).toBe(true);
+});
+
+test('nie-string → pusty string', () => {
+  expect(sanitizeHTML(null)).toBe('');
+  expect(sanitizeHTML(42)).toBe('');
+  expect(sanitizeHTML(undefined)).toBe('');
+});
+
+test('form/input → tagi usunięte', () => {
+  const out = sanitizeHTML('<form action="https://x"><input value="a">tekst</form>');
+  expect(out.includes('<form')).toBe(false);
+  expect(out.includes('<input')).toBe(false);
+  expect(out).toContain('tekst');
+});
+
 // ── WYNIKI ────────────────────────────────────────────────────────
 
-results(['sanitizeHTML pominięte — wymaga DOMParser (browser API)']);
+results();

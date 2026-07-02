@@ -387,7 +387,8 @@
   mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20fill='black'%20d='M6%201v2H5c-1.11%200-2%20.89-2%202v14a2%202%200%200%200%202%202h6.1c1.26%201.24%202.99%202%204.9%202c3.87%200%207-3.13%207-7c0-1.91-.76-3.64-2-4.9V5a2%202%200%200%200-2-2h-1V1h-2v2H8V1M5%205h14v2H5m0%202h14v.67c-.91-.43-1.93-.67-3-.67c-3.87%200-7%203.13-7%207c0%201.07.24%202.09.67%203H5m11-7.85c2.68%200%204.85%202.17%204.85%204.85s-2.17%204.85-4.85%204.85s-4.85-2.17-4.85-4.85s2.17-4.85%204.85-4.85M15%2013v3.69l3.19%201.84l.75-1.3l-2.44-1.41V13Z'/%3E%3C/svg%3E");
 }
 
-.icon--open-link {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M0%200h24v24H0z'%20fill='none'/%3E%3Cpath%20fill='black'%20d='M14%203v2h3.59l-9.83%209.83l1.41%201.41L19%206.41V10h2V3m-2%2016H5V5h7V3H5a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h14a2%202%200%200%200%202-2v-7h-2z'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M0%200h24v24H0z'%20fill='none'/%3E%3Cpath%20fill='black'%20d='M14%203v2h3.59l-9.83%209.83l1.41%201.41L19%206.41V10h2V3m-2%2016H5V5h7V3H5a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h14a2%202%200%200%200%202-2v-7h-2z'/%3E%3C/svg%3E");
+/* mdi:content-copy — przycisk "kopiuj adres" w link tooltip */
+.icon--copy {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M0%200h24v24H0z'%20fill='none'/%3E%3Cpath%20fill='black'%20d='M19%2021H8V7h11m0-2H8a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2V7a2%202%200%200%200-2-2m-3-4H4a2%202%200%200%200-2%202v14h2V3h12z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M0%200h24v24H0z'%20fill='none'/%3E%3Cpath%20fill='black'%20d='M19%2021H8V7h11m0-2H8a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2V7a2%202%200%200%200-2-2m-3-4H4a2%202%200%200%200-2%202v14h2V3h12z'/%3E%3C/svg%3E");
 }

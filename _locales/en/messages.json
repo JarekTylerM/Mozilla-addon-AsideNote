@@ -206,7 +206,7 @@
     "message": "Write or type '/' for commands"
   },
   "editor_link_ctrlClickHint": {
-    "message": "Ctrl+click to open link"
+    "message": "Click to open link"
   },
   "editor_summary_placeholder": {
     "message": "Toggle heading…"
@@ -945,7 +945,7 @@
     "message": "→ insert / edit link"
   },
   "shortcuts_formatting_linkOpen": {
-    "message": "Open link (Ctrl+click)"
+    "message": "→ open link in new tab"
   },
   "shortcuts_formatting_moveBlock": {
     "message": "→ move block / list item"
@@ -1214,6 +1214,14 @@
   "slash_search_placeholder": {
     "message": "Search commands…"
   },
+  "storage_usage_label": {
+    "message": "$1 of $2 — free: $3",
+    "placeholders": {
+      "used": { "content": "$1" },
+      "quota": { "content": "$2" },
+      "free": { "content": "$3" }
+    }
+  },
   "storage_usage_unavailable": {
     "message": "Storage info unavailable"
   },
@@ -1472,7 +1480,8 @@
   "zen_allClear_title": {
     "message": "All caught up"
   },
-  "linkTooltip_open": { "message": "Open link in new tab" },
+  "linkTooltip_copy": { "message": "Copy link address" },
+  "linkTooltip_copied": { "message": "Copied ✓" },
   "linkTooltip_edit": { "message": "Edit link" },
   "linkTooltip_delete": { "message": "Remove link" },
   "typeToggle_toggle_ariaLabel": { "message": "Toggle type filter" },

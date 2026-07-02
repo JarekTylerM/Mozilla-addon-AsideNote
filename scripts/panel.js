@@ -18,13 +18,14 @@ import {
   saveFilterPrefs,
   saveTags,
   saveUiSettings,
+  saveFocusId,
   saveLastBackupBeforeImport,
   migrateNotes,
   CURRENT_SCHEMA,
   saveDeletedNotes,
   loadLastBackupBeforeImport,
 } from "./storage.js";
-import { rescheduleAll } from "./alarms.js";
+import { rescheduleAll, scheduleAlarm, isAlarmable } from "./alarms.js";
 import { t } from "./i18n.js";
 import { setTooltipsEnabled } from "./tooltip.js";
 import {
@@ -654,13 +655,31 @@ function _fmtBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+/**
+ * Zwraca liczbę bajtów zajętych w storage.local.
+ * Firefox nie implementuje storage.local.getBytesInUse (bug 1385832) —
+ * fallback: serializacja wszystkich kluczy i pomiar długości w UTF-8.
+ * Przybliżenie jest wystarczające dla paska zajętości.
+ */
+async function _getStorageBytes() {
+  if (typeof browser.storage.local.getBytesInUse === "function") {
+    try {
+      return await browser.storage.local.getBytesInUse(null);
+    } catch {
+      // spadnij do fallbacku poniżej
+    }
+  }
+  const all = await browser.storage.local.get(null);
+  return new TextEncoder().encode(JSON.stringify(all)).length;
+}
+
 export async function updateStorageUsage() {
   const bar = document.getElementById("storage-bar");
   const label = document.getElementById("storage-label");
   if (!bar || !label) return;
 
   try {
-    const used = await browser.storage.local.getBytesInUse(null);
+    const used = await _getStorageBytes();
     const free = Math.max(0, STORAGE_QUOTA - used);
     const pct = Math.min(100, (used / STORAGE_QUOTA) * 100);
 
@@ -670,7 +689,11 @@ export async function updateStorageUsage() {
     bar.className =
       "storage-usage__bar" + (level ? ` storage-usage__bar--${level}` : "");
 
-    label.textContent = `${_fmtBytes(used)} z ${_fmtBytes(STORAGE_QUOTA)} — wolne: ${_fmtBytes(free)}`;
+    label.textContent = t("storage_usage_label", [
+      _fmtBytes(used),
+      _fmtBytes(STORAGE_QUOTA),
+      _fmtBytes(free),
+    ]);
     label.className =
       "storage-usage__label" + (level ? ` storage-usage__label--${level}` : "");
   } catch {
@@ -683,7 +706,12 @@ function _exportData() {
     version: browser.runtime.getManifest().version,
     schemaVersion: CURRENT_SCHEMA,
     exportedAt: new Date().toISOString(),
-    notes: state.notes,
+    // Stan "w trakcie" żyje w focusIds (runtime) — do eksportu materializujemy
+    // go jako flagę focus na zadaniach, żeby przetrwał cykl eksport/import
+    // (import odczytuje flagę i odbudowuje focusIds — patrz _importData).
+    notes: state.notes.map((n) =>
+      state.focusIds.includes(n.id) ? { ...n, focus: true } : n,
+    ),
     tags: tagState.tags,
   };
 
@@ -712,7 +740,10 @@ function _importData(file) {
   }
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onerror = () => {
+    _showImportFeedback(t("import_error_prefix") + reader.error?.message, "error");
+  };
+  reader.onload = async (e) => {
     try {
       const data = JSON.parse(e.target.result);
 
@@ -734,13 +765,15 @@ function _importData(file) {
 
       // Backup bieżącego stanu PRZED nadpisaniem — import jest destruktywny
       // (zastępuje wszystkie notatki/tagi). Migawka pozwala cofnąć pomyłkę.
+      // await: gdy zapis migawki się nie powiedzie, przerywamy import —
+      // nadpisanie danych bez działającego backupu byłoby nieodwracalne.
       const _snapshot = {
         schemaVersion: CURRENT_SCHEMA,
         savedAt: new Date().toISOString(),
         notes: state.notes,
         tags: tagState.tags,
       };
-      saveLastBackupBeforeImport(_snapshot);
+      await saveLastBackupBeforeImport(_snapshot);
 
       // Migracja: importowany plik może pochodzić ze starszej wersji
       // schematu. Przepuszczamy przez ten sam mechanizm co loadNotes.
@@ -797,18 +830,31 @@ function _importData(file) {
         }
       }
 
-      // Wyczyść referencje do tagów których nie ma w zaimportowanej liście
+      // Wyczyść referencje do tagów których nie ma w zaimportowanej liście.
+      // Flagi focus z eksportu zasilają focusIds i są zdejmowane z notatek —
+      // jedynym źródłem prawdy stanu "w trakcie" w runtime jest focusIds.
       const validTagIds = new Set(acceptedTags.map((t) => t.id));
-      const cleanedNotes = acceptedNotes.map((note) => ({
-        ...note,
-        tags: (note.tags ?? []).filter((id) => validTagIds.has(id)),
-      }));
+      const importedFocusIds = [];
+      const cleanedNotes = acceptedNotes.map((note) => {
+        if (note.type === "task" && note.focus === true && !note.completed) {
+          importedFocusIds.push(note.id);
+        }
+        const { focus, ...rest } = note;
+        return {
+          ...rest,
+          tags: (note.tags ?? []).filter((id) => validTagIds.has(id)),
+        };
+      });
 
       state.notes = cleanedNotes;
       tagState.tags = acceptedTags;
+      state.focusIds = importedFocusIds;
 
-      saveNotes(state.notes);
-      saveTags(tagState.tags);
+      // await — komunikat sukcesu dopiero gdy dane faktycznie trafiły do
+      // storage; błąd zapisu (np. przekroczona quota) trafia do catch niżej.
+      await saveNotes(state.notes);
+      await saveTags(tagState.tags);
+      await saveFocusId(state.focusIds);
       rescheduleAll(state.notes);
 
       // reset aktywnej notatki
@@ -1181,6 +1227,12 @@ function _restoreNote(id) {
 
   saveNotes(state.notes);
   saveDeletedNotes(state.deletedNotes);
+
+  // Usunięcie wyczyściło alarm (clearAlarm w _deleteNoteCore) — przywrócone
+  // zadanie z datą i godziną musi odzyskać przypomnienie od razu, nie
+  // dopiero po restarcie przeglądarki (rescheduleOnBoot).
+  if (isAlarmable(note)) scheduleAlarm(note);
+
   renderList();
   renderDeletedNotes();
 }

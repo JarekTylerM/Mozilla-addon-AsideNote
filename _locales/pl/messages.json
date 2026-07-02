@@ -206,7 +206,7 @@
     "message": "Pisz lub wpisz '/' aby wybrać typ bloku"
   },
   "editor_link_ctrlClickHint": {
-    "message": "Ctrl+klik aby otworzyć link"
+    "message": "Kliknij, aby otworzyć link"
   },
   "editor_summary_placeholder": {
     "message": "Nagłówek listy…"
@@ -945,7 +945,7 @@
     "message": "→ wstaw / edytuj link"
   },
   "shortcuts_formatting_linkOpen": {
-    "message": "Otwórz link (Ctrl+klik)"
+    "message": "→ otwórz link w nowej karcie"
   },
   "shortcuts_formatting_moveBlock": {
     "message": "→ przesuń blok / element listy"
@@ -1214,6 +1214,14 @@
   "slash_search_placeholder": {
     "message": "Szukaj komendy…"
   },
+  "storage_usage_label": {
+    "message": "$1 z $2 — wolne: $3",
+    "placeholders": {
+      "used": { "content": "$1" },
+      "quota": { "content": "$2" },
+      "free": { "content": "$3" }
+    }
+  },
   "storage_usage_unavailable": {
     "message": "Brak danych o zajętości"
   },
@@ -1472,7 +1480,8 @@
   "zen_allClear_title": {
     "message": "Wszystko ogarnięte"
   },
-  "linkTooltip_open": { "message": "Otwórz link w nowej karcie" },
+  "linkTooltip_copy": { "message": "Kopiuj adres linku" },
+  "linkTooltip_copied": { "message": "Skopiowano ✓" },
   "linkTooltip_edit": { "message": "Edytuj link" },
   "linkTooltip_delete": { "message": "Usuń link" },
   "typeToggle_toggle_ariaLabel": { "message": "Przełącz widok filtra typów" },

@@ -169,17 +169,14 @@ function _updateTypeIndicator() {
 // ── Keyboard handler ────────────────────────────
 
 input.addEventListener('keydown', async (e) => {
-if (e.key === 'Escape') {
+  if (e.key === 'Escape') {
     window.close();
     return;
   }
 
-  if (e.key === 'Enter') {
-    preview.hidden = true;
-  }
-
   if (e.key !== 'Enter') return;
   e.preventDefault();
+  preview.hidden = true;
 
   const raw = input.value.trim();
   if (!raw) return;
@@ -189,13 +186,18 @@ if (e.key === 'Escape') {
 
   const isTask = item.type === 'task';
 
+  // Flaga focus z parsera to jednorazowy seed — źródłem prawdy stanu
+  // "w trakcie" jest tablica focusId w storage, nie pole na notatce.
+  const wantsFocus = (item.focus || item.important) && isTask;
+  delete item.focus;
+
   try {
     const res = await browser.storage.local.get(['notes', 'focusId']);
     const notes = res.notes || [];
     notes.unshift(item);
     await browser.storage.local.set({ notes });
 
-    if ((item.focus || item.important) && item.type === 'task') {
+    if (wantsFocus) {
       const focusIds = Array.isArray(res.focusId) ? res.focusId : [];
       if (!focusIds.includes(item.id)) {
         focusIds.push(item.id);
@@ -207,7 +209,8 @@ if (e.key === 'Escape') {
       scheduleAlarm(item);
     }
 
-    browser.runtime.sendMessage({ action: 'noteAdded', noteId: item.id }).catch(() => {});
+    // Sidebar odświeża się sam przez storage.onChanged (zapisy powyżej
+    // pochodzą z innego kontekstu niż sidebar) — osobny komunikat zbędny.
 
     if (e.shiftKey) {
       browser.runtime.sendMessage({ action: 'openAndSelect', noteId: item.id }).catch(() => {});

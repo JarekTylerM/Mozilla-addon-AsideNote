@@ -11,6 +11,11 @@
    ══════════════════════════════════════════════════════════════ */
 
 const MAX_STACK = 50;
+// Budżet pamięci stosu: suma długości snapshotów HTML. 50 snapshotów
+// notatki 50 KB to 2,5 MB w pamięci — przy dużych notatkach ograniczamy
+// łączny rozmiar, wyrzucając najstarsze wpisy (głębokość undo maleje,
+// ale pamięć pozostaje pod kontrolą).
+const MAX_STACK_CHARS = 500_000;
 const TYPING_PAUSE_MS = 500;
 
 let editor = null;
@@ -107,6 +112,14 @@ function _pushSnapshot() {
 
   undoStack.push(snapshot);
   if (undoStack.length > MAX_STACK) undoStack.shift();
+
+  // Budżet pamięci — wyrzucaj najstarsze aż suma zmieści się w limicie
+  // (min. 2 wpisy: stan inicjalny + bieżący, żeby undo dalej działało)
+  let total = undoStack.reduce((sum, s) => sum + s.html.length, 0);
+  while (total > MAX_STACK_CHARS && undoStack.length > 2) {
+    total -= undoStack.shift().html.length;
+  }
+
   redoStack = [];
   lastSnapshotHTML = snapshot.html;
 }

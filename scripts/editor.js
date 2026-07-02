@@ -10,7 +10,7 @@ import { sanitizeHTML } from './sanitize.js';
 import { looksLikeUrl, normalizeUrl, BLOCKED_SCHEMES } from './editor-url.js';
 import { initToolbar } from './editor-toolbar.js';
 import {
-  initLinkCtrlClick,
+  initLinkClick,
   initLinkButton,
   initLinkModal,
   openLinkModal,
@@ -30,6 +30,7 @@ import {
   _getCurrentBlock,
   _clearBlock,
   _restoreCursorTo,
+  getCursorOffset,
 } from './editor-selection.js';
 import { findInlinePattern, MD_LINK_RX } from './editor-pattern.js';
 import { isClickUpHTML, preprocessClickUp } from './editor-paste-clickup.js';
@@ -78,16 +79,20 @@ function _updateEmptyBlockPlaceholder() {
 function _initLinkTooltip() {
   const tooltip = document.getElementById('link-tooltip');
   const urlLabel = document.getElementById('link-tooltip-url');
-  const openBtn = document.getElementById('link-tooltip-open');
+  const copyBtn = document.getElementById('link-tooltip-copy');
   const editBtn = document.getElementById('link-tooltip-edit');
   const delBtn = document.getElementById('link-tooltip-delete');
   if (!tooltip || !urlLabel || !editBtn || !delBtn) return;
 
   let _currentLink = null;
   let _hideTimer = null;
+  let _copiedTimer = null; // feedback "Skopiowano" — patrz copyBtn niżej
 
   function _show(el) {
     clearTimeout(_hideTimer);
+    // Anuluj pending przywracanie tekstu po kopiowaniu — _show ustawia
+    // świeży URL; stary timer przywróciłby adres poprzedniego linku
+    clearTimeout(_copiedTimer);
     _currentLink = el;
     const href = el.getAttribute('href') || '';
     urlLabel.textContent = href.length > 50 ? href.slice(0, 47) + '…' : href;
@@ -127,10 +132,32 @@ function _initLinkTooltip() {
     openLinkModalForElement(_currentLink);
   });
 
-  openBtn?.addEventListener('click', () => {
+  // Kopiuj adres do schowka. Otwieranie ma teraz zwykły klik na linku
+  // (initLinkClick), więc przycisk "otwórz" byłby redundantny.
+  copyBtn?.addEventListener('click', async () => {
     if (!_currentLink) return;
     const href = _currentLink.getAttribute('href');
-    if (href) window.open(href, '_blank', 'noopener,noreferrer');
+    if (!href) return;
+    try {
+      await navigator.clipboard.writeText(href);
+    } catch {
+      // Fallback: starsze konteksty bez clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = href;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    // Feedback w miejscu URL — wraca po chwili
+    clearTimeout(_copiedTimer);
+    const prevText = urlLabel.textContent;
+    urlLabel.textContent = t('linkTooltip_copied');
+    _copiedTimer = setTimeout(() => {
+      urlLabel.textContent = prevText;
+    }, 1200);
   });
 
   delBtn.addEventListener('click', () => {
@@ -202,7 +229,7 @@ export function initEditor() {
   _initCopy();
   _initCursorResume();
   _initEmptyBlockPlaceholder();
-  initLinkCtrlClick();
+  initLinkClick();
   initLinkButton();
   initLinkModal();
   initSlashMenu();
@@ -271,7 +298,7 @@ let _updateUndoRedoStateGlobal = () => {};
 
 // _outdentListItem → editor-selection.js
 
-// initLinkCtrlClick, initLinkButton, link modal → editor-link-modal.js
+// initLinkClick, initLinkButton, link modal → editor-link-modal.js
 
 /* ── Toolbar ──────────────────────────────────── */
 
@@ -1308,6 +1335,49 @@ function _handleTab(e) {
   e.shiftKey ? _outdentListItem(li) : _indentListItem(li);
 }
 
+/**
+ * Linki są jednostkami atomowymi: Backspace nie usuwa pojedynczych znaków
+ * z tekstu linku, tylko cały element <a>. Zwraca link do usunięcia albo
+ * null, gdy Backspace ma się zachować standardowo.
+ *
+ * Przypadki:
+ * - kursor wewnątrz linku (ale nie na samym jego początku) → ten link
+ * - kursor bezpośrednio za linkiem → ten link
+ * - kursor na samym początku linku → null (znak przed kursorem leży
+ *   POZA linkiem — standardowy Backspace)
+ */
+function _linkToDeleteOnBackspace(range) {
+  const node = range.startContainer;
+  const offset = range.startOffset;
+  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+
+  const inside = el?.closest('a');
+  if (inside && editor.contains(inside)) {
+    // Probe: tekst między początkiem linku a kursorem. Pusty = kursor na
+    // samym początku linku → nie ruszamy (Backspace kasuje znak przed <a>).
+    const probe = document.createRange();
+    probe.setStart(inside, 0);
+    probe.setEnd(node, offset);
+    return probe.toString() !== '' ? inside : null;
+  }
+
+  // Kursor bezpośrednio za linkiem (poprzedni węzeł-sąsiad to <a>)?
+  let prev = null;
+  if (node.nodeType === Node.TEXT_NODE) {
+    if (offset > 0) return null; // jest znak przed kursorem w tym text node
+    prev = node.previousSibling;
+  } else {
+    prev = offset > 0 ? node.childNodes[offset - 1] : null;
+  }
+  // Pomiń puste text nody między linkiem a kursorem
+  while (prev && prev.nodeType === Node.TEXT_NODE && !prev.textContent) {
+    prev = prev.previousSibling;
+  }
+  return prev?.nodeType === Node.ELEMENT_NODE && prev.tagName === 'A'
+    ? prev
+    : null;
+}
+
 function _handleBackspace(e) {
   const bkSel = window.getSelection();
   if (!bkSel.rangeCount) return;
@@ -1316,6 +1386,32 @@ function _handleBackspace(e) {
   const bkNode = bkRange.startContainer;
   const bkEl =
     bkNode.nodeType === Node.TEXT_NODE ? bkNode.parentElement : bkNode;
+
+  // ── Link jako jednostka atomowa — usuń cały <a> ───────────────
+  // Tylko przy zwiniętej selekcji; zaznaczenie kasuje się standardowo.
+  if (bkRange.collapsed) {
+    const link = _linkToDeleteOnBackspace(bkRange);
+    if (link) {
+      e.preventDefault();
+      undo.checkpoint(); // stan sprzed usunięcia
+      const parent = link.parentNode;
+      const r = document.createRange();
+      r.setStartBefore(link);
+      r.collapse(true);
+      link.remove();
+      // Pusty blok po usunięciu linku — dołóż <br>, żeby pozostał edytowalny
+      if (parent instanceof Element && parent !== editor && !parent.firstChild) {
+        parent.appendChild(document.createElement('br'));
+        r.setStart(parent, 0);
+        r.collapse(true);
+      }
+      bkSel.removeAllRanges();
+      bkSel.addRange(r);
+      undo.checkpoint(); // stan po — Ctrl+Z przywraca link w całości
+      document.dispatchEvent(new Event('forceSave'));
+      return;
+    }
+  }
 
   // ── Zbierz kontekst ───────────────────────────────────────────
   const summary = bkEl.closest('summary');
@@ -1714,47 +1810,8 @@ function _handleCopy(e, isCut) {
 
 /* ── Context Resume — zapamiętaj/przywróć pozycję kursora ── */
 
-export function getCursorOffset(editor) {
-  const sel = window.getSelection();
-  if (!sel?.rangeCount) return null;
-  const range = sel.getRangeAt(0);
-  if (!editor) return null;
-  try {
-    const pre = document.createRange();
-    pre.selectNodeContents(editor);
-    pre.setEnd(range.startContainer, range.startOffset);
-    return pre.toString().length;
-  } catch {
-    return null;
-  }
-}
-
-export function setCursorOffset(editorEl, offset) {
-  if (offset == null || offset < 0) return;
-  const walker = document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT);
-  let remaining = offset;
-  let node = walker.nextNode();
-  while (node) {
-    if (remaining <= node.textContent.length) {
-      const range = document.createRange();
-      range.setStart(node, remaining);
-      range.collapse(true);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      node.parentElement?.scrollIntoView?.({ block: 'nearest' });
-      return;
-    }
-    remaining -= node.textContent.length;
-    node = walker.nextNode();
-  }
-  // Fallback: kursor na końcu
-  const range = document.createRange();
-  range.selectNodeContents(editorEl);
-  range.collapse(false);
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
-}
+// getCursorOffset / setCursorOffset → editor-selection.js
+// (przeniesione, żeby notes.js nie importował z editor.js — cykl)
 
 const _saveCursorDebounced = debounce((activeId) => {
   if (!activeId) return;

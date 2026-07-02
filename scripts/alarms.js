@@ -39,7 +39,9 @@ export function scheduleAlarm(note) {
   const offsetMs = (note.reminder ?? 0) * 60000;
   const when     = dt.getTime() - offsetMs;
 
-  if (when <= Date.now()) {
+  // Number.isFinite: niepoprawny time (np. "abc" po storage poisoning) daje
+  // NaN — bez guardu alarms.create({ when: NaN }) rzuca TypeError.
+  if (!Number.isFinite(when) || when <= Date.now()) {
     browser.alarms.clear(note.id);
     return;
   }
