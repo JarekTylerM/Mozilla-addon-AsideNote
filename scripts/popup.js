@@ -78,6 +78,54 @@ browser.storage.local.get('uiSettings').then((res) => {
   // Brak danych — zostaje auto (system preference)
 });
 
+// ── Autofocus fallback ──────────────────────────
+//
+// Firefox nie zawsze przekazuje fokus dokumentowi popupu otwartemu
+// skrótem klawiszowym (_execute_browser_action) — atrybut autofocus
+// wtedy przepada (Bugzilla #1324255) i kursor nie trafia do inputa.
+// Ponawiamy focus() aż input faktycznie go dostanie (maks. ~1 s).
+//
+// Mechanizm jest JEDNORAZOWY i rozbraja się po pierwszym udanym
+// fokusie (lub po deadline). Trwały nasłuch fokusa okna kradł fokus
+// z powrotem w trakcie window.close() po Shift+Enter i popup nie
+// zamykał się po dodaniu wpisu — dlatego nic nie może zostać
+// uzbrojone dłużej niż to konieczne.
+
+(function _ensureInputFocus() {
+  const deadline = Date.now() + 1000;
+  let timer = null;
+
+  const tryFocus = () => {
+    const active = document.activeElement;
+    const userMovedFocus =
+      active && active !== input &&
+      active !== document.body && active !== document.documentElement;
+    if (userMovedFocus) return true; // użytkownik przejął fokus — nie walcz
+    input.focus();
+    return document.hasFocus() && document.activeElement === input;
+  };
+
+  const disarm = () => {
+    if (timer !== null) { clearTimeout(timer); timer = null; }
+    window.removeEventListener('focus', onWindowFocus);
+  };
+
+  const tick = () => {
+    timer = null;
+    if (tryFocus() || Date.now() >= deadline) { disarm(); return; }
+    timer = setTimeout(tick, 50);
+  };
+
+  const onWindowFocus = () => {
+    // { once: true } — pierwszy fokus okna to moment otwarcia popupu;
+    // późniejsze zdarzenia fokusa nie mogą już niczego przechwycić.
+    if (tryFocus()) disarm();
+  };
+
+  window.addEventListener('focus', onWindowFocus, { once: true });
+  tick();
+})();
+
 // ── Init ────────────────────────────────────────
 
 titleEl.textContent = t('popup_title');
@@ -191,6 +239,14 @@ input.addEventListener('keydown', async (e) => {
   const wantsFocus = (item.focus || item.important) && isTask;
   delete item.focus;
 
+  // sidebarAction.open() musi zostać wywołane synchronicznie w handlerze
+  // zdarzenia — po pierwszym await Firefox odrzuca je z "may only be
+  // called from a user input handler". Promise domykamy przed
+  // window.close(), żeby zamknięcie popupu nie ubiło wywołania w locie.
+  const sidebarOpening = e.shiftKey
+    ? browser.sidebarAction.open().catch(() => {})
+    : null;
+
   try {
     const res = await browser.storage.local.get(['notes', 'focusId']);
     const notes = res.notes || [];
@@ -212,18 +268,17 @@ input.addEventListener('keydown', async (e) => {
     // Sidebar odświeża się sam przez storage.onChanged (zapisy powyżej
     // pochodzą z innego kontekstu niż sidebar) — osobny komunikat zbędny.
 
-    if (e.shiftKey) {
-      browser.runtime.sendMessage({ action: 'openAndSelect', noteId: item.id }).catch(() => {});
-      browser.sidebarAction.open();
-      window.close();
-    } else {
-      _showFeedback(
-        isTask ? t('popup_added_task') : t('popup_added_note'),
-        isTask ? 'task' : 'note'
-      );
-      input.value = '';
-      _updateTypeIndicator();
+    // Enter: dodaj i zamknij popup. Shift+Enter: dodatkowo otwórz
+    // sidebar (już otwierany powyżej) z zaznaczonym wpisem.
+    // await na sendMessage — komunikat musi dotrzeć do background
+    // zanim window.close() zniszczy kontekst popupu.
+    if (sidebarOpening) {
+      await browser.runtime
+        .sendMessage({ action: 'openAndSelect', noteId: item.id })
+        .catch(() => {});
+      await sidebarOpening;
     }
+    window.close();
   } catch (err) {
     _showFeedback(t('popup_error'), 'error');
   }

@@ -44,17 +44,11 @@ code {
   color: var(--code-text);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
-blockquote {
-  border-left: 3px solid var(--quote-bar);
-  padding-left: 10px;
-  margin: 6px 0;
-  color: var(--quote-text);
-  font-style: italic;
-}
+/* blockquote — style w editor.css (jedyne miejsce użycia to #editor) */
 
 /* ── Listy w edytorze — poziomy zagnieżdżenia ── */
 

@@ -204,14 +204,12 @@
 
 .section-header__count,
 .section-header__chevron {
-  font-family: monospace;
   font-size: var(--text-xs);
   color: var(--text-3);
 }
 
-.section-header__chevron {
-  font-family: inherit;
-  font-size: var(--text-xs);
+.section-header__count {
+  font-family: var(--font-mono);
 }
 
 /* Stan zwinięty — wyciszone */

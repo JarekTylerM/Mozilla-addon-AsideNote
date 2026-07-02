@@ -980,6 +980,9 @@
   "shortcuts_general_filter": {
     "message": "Open / close filters"
   },
+  "shortcuts_general_list": {
+    "message": "Focus the notes list"
+  },
   "shortcuts_general_panel": {
     "message": "Open / close panel"
   },

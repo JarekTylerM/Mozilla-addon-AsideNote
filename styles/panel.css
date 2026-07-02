@@ -6,7 +6,10 @@
 
 #panel {
   flex-direction: column;
-  height: 98vh;
+  /* body to flex column 100vh z paddingiem — flex:1 wypełnia dostępną
+     przestrzeń bez magic-number (wcześniej 98vh) */
+  flex: 1;
+  min-height: 0;
   padding-bottom: 52px;
   overflow: hidden;
 }
@@ -540,7 +543,7 @@
 }
 .panel-shortcuts__section code {
   font-size: var(--text-xs);
-  font-family: Consolas, monospace;
+  font-family: var(--font-mono);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

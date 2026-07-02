@@ -980,6 +980,9 @@
   "shortcuts_general_filter": {
     "message": "Otwórz / zamknij filtry"
   },
+  "shortcuts_general_list": {
+    "message": "Fokus na listę notatek"
+  },
   "shortcuts_general_panel": {
     "message": "Otwórz / zamknij panel"
   },

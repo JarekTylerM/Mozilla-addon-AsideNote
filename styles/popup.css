@@ -55,14 +55,16 @@ body {
   width: 16px;
   height: 16px;
   background-color: var(--text-3);
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+  mask-image: var(--icon-note-mask);
   mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;
 }
+/* Typ komunikuje ikona + tekst preview, NIE kolor — złoto zarezerwowane
+   dla "wymaga uwagi" (tokens.css --gold), spójnie z sidebarem */
 .popup-capture--task .popup-capture__icon {
-  background-color: var(--gold);
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
+  background-color: var(--text-2);
+  mask-image: var(--icon-task-mask);
 }
 
 .popup-capture__input {

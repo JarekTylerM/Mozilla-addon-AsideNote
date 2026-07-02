@@ -29,51 +29,87 @@
   color: var(--text-3);
 }
 
-/* ── Wyciszenie elementów UI ─────────────────────── */
+/* ── Wyciszenie elementów UI — JEDEN mechanizm ─────
+   Element w zen mode przygasa do poziomu --zen-dim (domyślnie 0.5);
+   hover / focus-within przywraca pełną widoczność.
+   Nowy komponent: dopisz selektor do obu list APLIKACJI, a poziom
+   inny niż 0.5 przypisz w sekcji POZIOMY. Wyjątki (inne zachowanie
+   hover, wyciszenie kolorem, elementy poza #main-view) niżej. */
 
-.zen-mode .quick-capture {
-  opacity: 0.6;
+/* APLIKACJA — przygaszenie */
+.zen-mode :is(
+    .quick-capture,
+    .search-wrapper,
+    #active-filters,
+    #filter-bar,
+    #filter-btn,
+    #type-toggle-btn,
+    #toolbar,
+    #tag-selector,
+    .new-item-inline,
+    .focusmode-btn,
+    #collapse-editor-btn
+  ) {
+  opacity: var(--zen-dim, 0.5);
   transition: opacity var(--transition-slow) ease;
 }
-.zen-mode .quick-capture:focus-within {
+
+/* APLIKACJA — przywracanie */
+.zen-mode :is(
+    .quick-capture,
+    .search-wrapper,
+    #active-filters,
+    #filter-bar,
+    #filter-btn,
+    #type-toggle-btn,
+    #toolbar,
+    #tag-selector,
+    .new-item-inline,
+    .focusmode-btn,
+    #collapse-editor-btn
+  ):is(:hover, :focus-within) {
   opacity: 1;
 }
 
-.zen-mode .search-wrapper {
-  opacity: 0.5;
-  transition: opacity var(--transition-slow) ease;
+/* POZIOMY — odstępstwa od domyślnego 0.5 */
+.zen-mode :is(.quick-capture, #filter-bar, .new-item-inline) {
+  --zen-dim: 0.6;
 }
+.zen-mode #toolbar {
+  --zen-dim: 0.45;
+}
+.zen-mode :is(#filter-btn, #type-toggle-btn) {
+  --zen-dim: 0.2;
+}
+.zen-mode :is(.focusmode-btn, #collapse-editor-btn) {
+  --zen-dim: 0.15;
+}
+
+/* ── Wyjątki mechanizmu ──────────────────────────── */
+
+/* Fokus w wyszukiwarce dodatkowo wzmacnia ramkę */
 .zen-mode .search-wrapper:focus-within {
-  opacity: 1;
   border-color: var(--border-strong);
 }
 
-.zen-mode #active-filters {
-  opacity: 0.5;
-  transition: opacity var(--transition-slow) ease;
-}
-
-.zen-mode #filter-bar {
-  opacity: 0.6;
-  transition: opacity var(--transition-slow) ease;
-}
-.zen-mode #filter-bar:focus-within {
-  opacity: 1;
-}
-
-.zen-mode #filter-btn {
-  opacity: 0.2;
-  transition: opacity var(--transition-slow) ease;
-}
-.zen-mode #filter-btn:hover {
-  opacity: 1;
+/* Ikony filter/type-toggle na hover barwią się na zen */
+.zen-mode #filter-btn:hover,
+.zen-mode #type-toggle-btn:hover {
   background-color: var(--zen);
 }
 
-.zen-mode #type-toggle {
-  border-color: rgb(107 163 184 / 0.3);
+/* Zen-btn wyróżniony kolorem, nie wyciszony */
+.zen-mode #zen-btn {
+  background-color: var(--zen);
+  opacity: 1;
 }
 
+.zen-mode #type-toggle {
+  border-color: var(--zen-border);
+}
+
+/* Nieaktywne przyciski type-toggle: wyciszone kolorem, hover celowo
+   NIE przywraca pełnej widoczności (przełącznik nie ma kusić w zen) */
 .zen-mode .type-toggle__btn:not(.is-active) {
   color: var(--text-3);
   opacity: 0.5;
@@ -93,56 +129,16 @@
   color: var(--text-3);
   border-bottom-color: var(--text-3);
 }
-.zen-mode .new-item-inline {
-  color: var(--text-3);
-  opacity: 0.6;
-  transition: opacity var(--transition-slow) ease;
-}
 
+/* Tag pille: wyciszenie remapem koloru, bez hover-restore */
 .zen-mode .tag-pill {
   --tag-bg: var(--surface);
   --tag-fg: var(--text-3);
   opacity: 0.5;
 }
 
-.zen-mode .focusmode-btn {
-  opacity: 0.15;
-}
-
-.zen-mode #collapse-editor-btn {
-  opacity: 0.15;
-}
-
-/* ── Zen btn w search-row ────────────────────────── */
-
-/* W zen mode zen-btn wyróżniony kolorem, nie wyciszony */
-.zen-mode #zen-btn {
-  background-color: var(--zen);
-  opacity: 1;
-}
-
-/* type-toggle-btn wyciszony w zen mode */
-.zen-mode #type-toggle-btn {
-  opacity: 0.2;
-  transition: opacity var(--transition-slow) ease;
-}
-.zen-mode #type-toggle-btn:hover {
-  opacity: 1;
-  background-color: var(--zen);
-}
-
-/* ── Toolbar ─────────────────────────────────────── */
-
-#main-view.zen-mode #toolbar {
-  opacity: 0.45;
-  transition: opacity var(--transition-slow) ease;
-}
-#main-view.zen-mode #toolbar:hover,
-#main-view.zen-mode #toolbar:focus-within {
-  opacity: 1;
-}
-
-/* ── Bottom bar ──────────────────────────────────── */
+/* ── Bottom bar — poza #main-view (stąd body:has); hover przywraca
+   tylko do 0.6 — pasek ma zostać cichy nawet pod kursorem ── */
 
 body:has(#main-view.zen-mode) #toggle-shortcuts,
 body:has(#main-view.zen-mode) #panel-btn {
@@ -199,7 +195,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 /* Hover — rozjaśnienie tła, tekst i pełna widoczność */
 .zen-mode .note-item:hover {
-  background: rgb(107 163 184 / 0.06);
+  background: var(--zen-bg);
   color: var(--text-2);
   opacity: 1 !important;
 }
@@ -228,7 +224,11 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
   opacity: 0.6;
 }
 
-/* ── Note header — wyciszenie ikon ──────────────── */
+/* ── Note header — wyciszenie ikon ────────────────
+   Celowo POZA wspólnym mechanizmem: przyciski note-headera mają
+   style ID-owe w list.css (#important-btn.is-active, #delete:hover…),
+   które muszą wygrywać specyficznością — wspólny blok :is() z ID-ami
+   by je przykrył (zgaszona gwiazdka ważności itd.). */
 
 .zen-mode .note-header .icon-btn:not(:disabled) {
   opacity: 0.35;
@@ -245,16 +245,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
   opacity: 0.5;
 }
 
-/* ── Tag selector ────────────────────────────────── */
-
-.zen-mode #tag-selector {
-  opacity: 0.5;
-  transition: opacity var(--transition-slow) ease;
-}
-.zen-mode #tag-selector:hover,
-.zen-mode #tag-selector:focus-within {
-  opacity: 1;
-}
+/* Tag selector: pokryty wspólnym mechanizmem dim (lista APLIKACJI) */
 
 /* ── List expanded mode ──────────────────────────── */
 

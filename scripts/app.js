@@ -860,6 +860,17 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  // Alt+L — fokus na listę notatek (aktywna pozycja lub pierwsza);
+  // domyka pętlę capture → lista → edytor bez myszy
+  if (altKey === "l") {
+    e.preventDefault();
+    const target =
+      document.querySelector("#notesList .note-item.is-active") ||
+      document.querySelector("#notesList .note-item");
+    target?.focus();
+    return;
+  }
+
   // Alt+P — toggle panel personalizacji
   if (altKey === "p") {
     e.preventDefault();
