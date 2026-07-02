@@ -15,6 +15,7 @@ import {
   loadDeletedNotes,
   pruneCursorSettings,
   consumeSelfWrite,
+  retryPendingWrites,
 } from "./storage.js";
 import { debounce } from "./utils.js";
 
@@ -37,6 +38,7 @@ import {
   clearFilters,
   updateActiveFilters,
   setRecurrence,
+  restoreDeletedNote,
 } from "./notes.js";
 
 import { tagState } from "./tags.js";
@@ -138,7 +140,7 @@ Promise.all([
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", () => renderList());
-    _initListExpand(uiSettings.listExpanded ?? false);
+    _setListExpanded(uiSettings.listExpanded ?? false);
     if (uiSettings.zenMode) {
       state.zenMode = true;
       document.getElementById("zen-btn")?.classList.add("is-active");
@@ -247,7 +249,7 @@ document.addEventListener("reminderFromPicker", (e) => {
 function _resetForm(type) {
   const mainView = document.getElementById("main-view");
   if (mainView?.classList.contains("list-expanded")) {
-    _setListExpanded(false, document.getElementById("list-expand-btn"));
+    _setListExpanded(false);
     saveUiSettings({ listExpanded: false });
   }
   state.activeId = null;
@@ -279,13 +281,12 @@ function _collapseEditor() {
   updateDeleteState();
   renderList();
 
-  const expandBtn = document.getElementById("list-expand-btn");
   if (document.body.classList.contains("is-focus-mode")) {
     const focusModeBtn = document.getElementById("focusmode-btn");
     _setFocusMode(false, focusModeBtn);
     saveUiSettings({ focusMode: false });
   }
-  _setListExpanded(true, expandBtn);
+  _setListExpanded(true);
   saveUiSettings({ listExpanded: true });
 
   // Przywróć fokus na element z którego wyszliśmy
@@ -448,7 +449,7 @@ document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((btn) => {
     state.filterType = btn.dataset.type;
 
     document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((b) => {
-      b.classList.toggle("type-toggle__btn--active", b === btn);
+      b.classList.toggle("is-active", b === btn);
     });
 
     _updateTypeToggleBtn();
@@ -660,7 +661,7 @@ export function switchPanelTab(id) {
   _PANEL_TABS.forEach(({ id: tid, tab, pane }) => {
     if (!tab || !pane) return;
     const active = tid === id;
-    tab.classList.toggle("panel-tab--active", active);
+    tab.classList.toggle("is-active", active);
     tab.setAttribute("aria-selected", String(active));
     pane.classList.toggle("panel-pane--hidden", !active);
   });
@@ -692,7 +693,7 @@ document.querySelectorAll(".shortcuts-subtab").forEach((btn) => {
     document
       .querySelectorAll(".shortcuts-subtab")
       .forEach((b) =>
-        b.classList.toggle("shortcuts-subtab--active", b === btn),
+        b.classList.toggle("is-active", b === btn),
       );
     const tab = btn.dataset.shortcutsTab;
     document.getElementById("shortcuts-pane-general").hidden =
@@ -708,8 +709,7 @@ editor.addEventListener("input", _updateTitleHint);
 document.addEventListener("noteSelected", () => {
   const mainView = document.getElementById("main-view");
   if (mainView?.classList.contains("list-expanded")) {
-    const btn = document.getElementById("list-expand-btn");
-    _setListExpanded(false, btn);
+    _setListExpanded(false);
     saveUiSettings({ listExpanded: false });
     // Po zmianie list-expanded odśwież stan przycisków — collapse-editor-btn
     // musi wiedzieć że lista już nie jest rozszerzona
@@ -721,6 +721,89 @@ document.addEventListener("noteSelected", () => {
 
 document.addEventListener("forceSave", () => {
   saveActiveNote();
+});
+
+/* ── Odporność zapisu ──────────────────────────────
+   Baner błędu: storage.js emituje storage:save-error gdy
+   browser.storage.local.set się nie powiedzie (quota, IO) — bez tego
+   użytkownik traciłby zmiany bez żadnego sygnału. save-ok (udany zapis
+   lub retry) chowa baner. */
+
+const _saveErrorBanner = document.getElementById("save-error-banner");
+
+document.addEventListener("storage:save-error", () => {
+  if (_saveErrorBanner) _saveErrorBanner.hidden = false;
+});
+document.addEventListener("storage:save-ok", () => {
+  if (_saveErrorBanner) _saveErrorBanner.hidden = true;
+});
+document.getElementById("save-error-retry")?.addEventListener("click", () => {
+  retryPendingWrites();
+});
+
+/* Zamknięcie sidebara (np. Alt+Shift+Q) może ubiec debounce autosave'u
+   (600 ms) — flush dopisuje oczekujące zmiany zanim dokument zniknie.
+   visibilitychange łapie dodatkowo throttling timerów ukrytej karty.
+   flush() jest no-opem gdy nic nie czeka — zero zbędnych zapisów. */
+window.addEventListener("pagehide", () => debouncedSave.flush());
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") debouncedSave.flush();
+});
+
+/* ── Toast "Przeniesiono do kosza" + Cofnij ────────
+   Usunięcie z listy (✕ / Delete) i z edytora jest natychmiastowe, bez
+   potwierdzenia — kosz istnieje, ale jest schowany w panelu. Toast daje
+   widoczną ścieżkę odwrotu bez modalnego "czy na pewno?". */
+
+const _undoToast = document.getElementById("undo-toast");
+const _undoToastText = _undoToast?.querySelector(".undo-toast__text");
+let _undoToastTimer = null;
+let _undoToastNoteId = null;
+
+function _hideUndoToast() {
+  clearTimeout(_undoToastTimer);
+  _undoToastTimer = null;
+  _undoToastNoteId = null;
+  if (_undoToast) _undoToast.hidden = true;
+}
+
+function _armUndoToastTimer(ms) {
+  clearTimeout(_undoToastTimer);
+  _undoToastTimer = setTimeout(_hideUndoToast, ms);
+}
+
+document.addEventListener("noteTrashed", (e) => {
+  if (!_undoToast || !_undoToastText) return;
+  _undoToastNoteId = e.detail.id;
+  const title = (e.detail.title || "").trim();
+  const short = title.length > 24 ? title.slice(0, 24) + "…" : title;
+  _undoToastText.textContent = short
+    ? `${t("toast_trashed")} «${short}»`
+    : t("toast_trashed");
+  _undoToast.hidden = false;
+  _armUndoToastTimer(5000);
+});
+
+// Hover/fokus wstrzymuje auto-hide — użytkownik klawiatury potrzebuje
+// czasu na dotarcie Tabem do przycisku Cofnij
+_undoToast?.addEventListener("mouseenter", () =>
+  clearTimeout(_undoToastTimer),
+);
+_undoToast?.addEventListener("focusin", () => clearTimeout(_undoToastTimer));
+_undoToast?.addEventListener("mouseleave", () => _armUndoToastTimer(2500));
+_undoToast?.addEventListener("focusout", () => _armUndoToastTimer(2500));
+
+document.getElementById("undo-toast-btn")?.addEventListener("click", () => {
+  const id = _undoToastNoteId;
+  _hideUndoToast();
+  if (!id) return;
+  const note = restoreDeletedNote(id);
+  // Fokus na przywrócony element — kontynuacja nawigacji z miejsca akcji
+  if (note) {
+    document
+      .querySelector(`#notesList .note-item[data-id="${note.id}"]`)
+      ?.focus();
+  }
 });
 
 /* ── Globalne skróty klawiszowe ────────────────── */
@@ -788,13 +871,6 @@ document.addEventListener("keydown", (e) => {
   if (altKey === "m") {
     e.preventDefault();
     document.getElementById("focusmode-btn")?.click();
-    return;
-  }
-
-  // Alt+L — toggle list expand
-  if (altKey === "l") {
-    e.preventDefault();
-    document.getElementById("list-expand-btn")?.click();
     return;
   }
 
@@ -925,36 +1001,10 @@ function _setFocusMode(active, btn) {
   if (backBtn) backBtn.hidden = !active;
 }
 
-function _initListExpand(initial = false) {
-  const btn = document.getElementById("list-expand-btn");
-  if (!btn) return;
-  _setListExpanded(initial, btn);
-  btn.addEventListener("click", () => {
-    const next = !document
-      .getElementById("main-view")
-      ?.classList.contains("list-expanded");
-    _setListExpanded(next, btn);
-    saveUiSettings({ listExpanded: next });
-  });
-}
-
-function _setListExpanded(active, btn) {
+function _setListExpanded(active) {
   document
     .getElementById("main-view")
     ?.classList.toggle("list-expanded", active);
-  btn.classList.toggle("icon--list-expand", !active);
-  btn.classList.toggle("icon--list-collapse", active);
-  btn.setAttribute(
-    "data-i18n-attr",
-    active
-      ? "aria-label:listCollapse_title;title:listCollapse_title"
-      : "aria-label:listExpand_title;title:listExpand_title",
-  );
-  btn.title = t(active ? "listCollapse_title" : "listExpand_title");
-  btn.setAttribute(
-    "aria-label",
-    t(active ? "listCollapse_title" : "listExpand_title"),
-  );
 }
 
 const backBtn = document.getElementById("back-btn");

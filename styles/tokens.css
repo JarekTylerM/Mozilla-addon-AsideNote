@@ -45,6 +45,7 @@
   --quote-text: #71717a;
 
   /* Radius */
+  --radius-xs: 3px; /* checkboxy, chipy kbd, focus ring */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -71,10 +72,19 @@
   --z-ob-target:  1001; /* podświetlony element */
   --z-ob-tooltip: 1002; /* tooltip onboardingu */
 
-  /* Transitions */
+  /* Transitions — dwa tempa: --transition dla mikrointerakcji (hover,
+     kolor), --transition-slow dla zmian stanu/trybu (zen dim, wysokości) */
   --transition: 0.15s;
+  --transition-slow: 0.2s;
 
-  /* Gold accent (focus, important, starred) */
+  /* Feedback flash — potwierdzenie quick capture na liście. Osobny token,
+     bo kierunek rozjaśnienia zależy od motywu (ciemny błysk na jasnym tle,
+     jasny na ciemnym). */
+  --flash-bg: rgb(39 39 42 / 0.1);
+
+  /* Gold accent — semantyka: "wymaga uwagi TERAZ" (ważne ★, w trakcie).
+     Nie używać do oznaczania typu elementu ani dekoracji — złoto kieruje
+     uwagą tylko dopóki jest rzadkie. */
   --gold: #a8882e;
   --gold-border: #e4c98d;
   --gold-bg: rgb(194 154 69 / 0.08);
@@ -84,10 +94,14 @@
   /* Bottom bar glass */
   --bar-bg: rgb(255 255 255 / 0.88);
 
-  /* Tooltips */
+  /* Tooltips — celowo zawsze ciemne (oba motywy); pełen komplet odcieni,
+     żeby overlays.css nie hardkodował szarości */
   --tooltip-bg: #27272a;
   --tooltip-text: #e4e4e7;
   --tooltip-border: #3f3f46;
+  --tooltip-heading: #ffffff;
+  --tooltip-muted: #a1a1aa;
+  --tooltip-btn-border: #52525b;
 
   --toggle-active-bg: var(--bg);
 
@@ -175,6 +189,7 @@
     --gold-text: #e7c98a;
 
     --bar-bg: rgb(20 20 20 / 0.9);
+    --flash-bg: rgb(255 255 255 / 0.1);
     --toggle-active-bg: #303030;
 
     --callout-note-title: #93b4f8;
@@ -228,6 +243,7 @@
   --gold-text: #e7c98a;
 
   --bar-bg: rgb(20 20 20 / 0.9);
+  --flash-bg: rgb(255 255 255 / 0.1);
   --toggle-active-bg: #303030;
 
   --callout-note-title: #93b4f8;

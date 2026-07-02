@@ -2,7 +2,7 @@
    panel.css — panel structure, tabs, settings, shortcuts
    ══════════════════════════════════════════════════════════════ */
 
-/* ── 11. Panel — struktura, taby, pane'y ──────── */
+/* ── Panel — struktura, taby, pane'y ──────── */
 
 #panel {
   flex-direction: column;
@@ -34,8 +34,8 @@
   background: #fff0;
   border-radius: var(--radius-sm);
   transition:
-    background 0.1s,
-    color 0.1s;
+    background var(--transition),
+    color var(--transition);
 }
 #close-panel:hover {
   background: var(--surface-hover);
@@ -59,8 +59,8 @@
   border-bottom: 2px solid transparent;
   cursor: pointer;
   transition:
-    color 0.15s,
-    border-color 0.15s;
+    color var(--transition),
+    border-color var(--transition);
   font-family: inherit;
   margin-bottom: -1.5px;
   display: flex;
@@ -71,7 +71,7 @@
 .panel-tab:hover {
   color: var(--text-2);
 }
-.panel-tab--active {
+.panel-tab.is-active {
   color: var(--text);
   border-bottom-color: var(--accent);
 }
@@ -81,11 +81,8 @@
   width: 16px;
   height: 16px;
   background-color: var(--text-3);
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
   transition: background-color var(--transition);
   flex-shrink: 0;
@@ -96,7 +93,7 @@
 .panel-tab:hover .panel-tab__icon {
   background-color: var(--text-2);
 }
-.panel-tab--active .panel-tab__icon {
+.panel-tab.is-active .panel-tab__icon {
   background-color: var(--text);
 }
 
@@ -111,7 +108,7 @@
   display: none;
 }
 
-/* ── 12. Panel — zawartość (Ustawienia) ───────── */
+/* ── Panel — zawartość (Ustawienia) ───────── */
 
 .panel-body {
   padding: 12px 14px;
@@ -226,11 +223,8 @@
   height: 12px;
   flex-shrink: 0;
   background-color: var(--text-3);
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
 }
 .deleted-item__title {
@@ -356,11 +350,8 @@
   background-color: var(--text-3);
   opacity: 0.8;
   cursor: pointer;
-  -webkit-mask-size: 55%;
   mask-size: 55%;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
   transition:
     background-color var(--transition),
@@ -382,7 +373,7 @@
   background: var(--surface);
   outline: none;
   font-family: inherit;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition);
 }
 #new-tag-input:focus {
   border-color: var(--border-strong);
@@ -398,7 +389,7 @@
 .storage-usage__bar-wrap {
   height: 3px;
   background: var(--border);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   overflow: hidden;
   margin-bottom: 5px;
 }
@@ -406,7 +397,7 @@
   height: 100%;
   width: 0%;
   background: var(--accent);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   transition: width 0.4s ease;
 }
 .storage-usage__bar--warn {
@@ -447,11 +438,8 @@
   width: 15px;
   height: 15px;
   background-color: currentColor;
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
   vertical-align: middle;
   flex-shrink: 0;
@@ -495,11 +483,11 @@
   background: var(--surface-hover);
   color: var(--text);
 }
-.scheme-btn--active {
+.scheme-btn.is-active {
   background: var(--bg);
   color: var(--text);
   font-weight: 500;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .scheme-btn__icon {
@@ -508,15 +496,12 @@
   height: 14px;
   flex-shrink: 0;
   background-color: currentColor;
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
 }
 
-/* ── 13. Panel — skróty (shortcuts pane) ─────── */
+/* ── Panel — skróty (shortcuts pane) ─────── */
 
 .panel-shortcuts {
   padding: 12px 14px;
@@ -597,7 +582,7 @@
   color: var(--text-2);
 }
 
-.shortcuts-subtab--active {
+.shortcuts-subtab.is-active {
   color: var(--text);
   border-bottom-color: var(--accent);
 }

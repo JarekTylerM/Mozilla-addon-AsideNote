@@ -136,15 +136,13 @@ function _formatDueRelative(timestamp) {
   }).format(new Date(timestamp));
 }
 
-/* Wyciąga plain text z HTML content i zwraca pierwsze ~60 znaków.
-   Używane jako fallback gdy note.title jest puste.
-   DOMParser zamiast tmp.innerHTML — audytorzy oznaczają każde
-   innerHTML bez sanityzacji, nawet na detached node (choć CSP
-   i tak blokuje inline scripts). */
+/* Wyciąga plain text z HTML content (podgląd przy przycisku 👁).
+   DOMParser zamiast detached div z innerHTML — nie tworzy żywych węzłów
+   i nie zapala flag audytu na innerHTML bez sanityzacji. */
 function _stripHtml(html) {
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html || "";
-  return (tmp.textContent || tmp.innerText || "").replace(/\s+/g, " ").trim();
+  if (!html) return "";
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
 }
 
 function _contentPreview(content, maxLen = 60) {
@@ -285,14 +283,27 @@ export function saveActiveNote() {
     state.notes.unshift(newNote);
     state.activeId = newNote.id;
     state.pendingType = "note";
-  } else {
-    const note = state.notes.find((n) => n.id === state.activeId);
-    if (!note) return;
-    note.title = cleanTitle;
-    note.content = cleanContent;
+    saveNotes(state.notes);
+    renderList();
+    return;
   }
 
+  const note = state.notes.find((n) => n.id === state.activeId);
+  if (!note) return;
+  note.title = cleanTitle;
+  note.content = cleanContent;
   saveNotes(state.notes);
+
+  // Autosave odpala co 600 ms w trakcie pisania — pełny rebuild listy przy
+  // każdym zapisie to zbędny koszt i migotanie. Sekcja (bucket) i kolejność
+  // elementu nie zależą od tytułu ani treści, więc wystarczy podmiana
+  // etykiety w miejscu. Pełny render tylko gdy aktywne wyszukiwanie (edycja
+  // może zmienić dopasowanie) lub elementu nie ma w DOM (odfiltrowany /
+  // zwinięta sekcja).
+  if (!state.searchQuery && _syncActiveItemLabel(note)) {
+    updateDeleteState();
+    return;
+  }
   renderList();
 }
 
@@ -318,6 +329,13 @@ function _deleteNoteCore(id, { resetUndo = false } = {}) {
     const deleted = { ...note, deletedAt: Date.now() };
     state.deletedNotes = [deleted, ...state.deletedNotes].slice(0, MAX_DELETED);
     saveDeletedNotes(state.deletedNotes);
+    // Sygnał dla toastu "Cofnij" (app.js) — usunięcie z listy i z edytora
+    // przechodzi przez ten rdzeń, więc jeden punkt emisji wystarcza
+    document.dispatchEvent(
+      new CustomEvent("noteTrashed", {
+        detail: { id, title: note.title || "" },
+      }),
+    );
   }
 
   state.notes = state.notes.filter((n) => n.id !== id);
@@ -334,6 +352,36 @@ export function deleteActiveNote() {
   if (!state.activeId) return;
   _deleteNoteCore(state.activeId, { resetUndo: true });
   renderList();
+}
+
+/**
+ * Przywraca notatkę z kosza — odwrotność _deleteNoteCore. Wspólny rdzeń
+ * dla przycisku "Przywróć" w panelu (panel.js) i akcji Cofnij w toaście
+ * po usunięciu (app.js).
+ *
+ * @param {string} id
+ * @returns {object|null} przywrócona notatka lub null gdy nie ma jej w koszu
+ */
+export function restoreDeletedNote(id) {
+  const idx = state.deletedNotes.findIndex((n) => n.id === id);
+  if (idx === -1) return null;
+
+  const note = { ...state.deletedNotes[idx] };
+  delete note.deletedAt;
+
+  state.notes.unshift(note);
+  state.deletedNotes.splice(idx, 1);
+
+  saveNotes(state.notes);
+  saveDeletedNotes(state.deletedNotes);
+
+  // Usunięcie wyczyściło alarm (clearAlarm w _deleteNoteCore) — przywrócone
+  // zadanie z datą i godziną musi odzyskać przypomnienie od razu, nie
+  // dopiero po restarcie przeglądarki (rescheduleOnBoot).
+  if (isAlarmable(note)) scheduleAlarm(note);
+
+  renderList();
+  return note;
 }
 
 export function convertType(id) {
@@ -631,7 +679,7 @@ export function clearFilters() {
   if (searchInput) searchInput.value = "";
 
   document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((b) => {
-    b.classList.toggle("type-toggle__btn--active", b.dataset.type === "all");
+    b.classList.toggle("is-active", b.dataset.type === "all");
   });
 
   // Filter bar zostaje otwarty/zamknięty jak był; tylko jego stan checkboxa się
@@ -652,8 +700,8 @@ function _updateNewItemHint() {
   // W zen mode filterType jest wymuszany na 'task' (patrz app.js handler type-toggle)
   const activeType = state.zenMode ? "task" : state.filterType;
 
-  noteBtn.classList.toggle("new-item-link--active", activeType === "note");
-  taskBtn.classList.toggle("new-item-link--active", activeType === "task");
+  noteBtn.classList.toggle("is-active", activeType === "note");
+  taskBtn.classList.toggle("is-active", activeType === "task");
 }
 
 function _nextDueDate(due, recurrence, recurrenceDays = null) {
@@ -920,6 +968,9 @@ function _renderSection(key, items) {
   header.className =
     "section-header" + (isCollapsed ? " section-header--collapsed" : "");
   header.dataset.section = key;
+  // Czytniki ekranu muszą wiedzieć że nagłówek zwija/rozwija sekcję —
+  // sam chevron tekstowy (▸/▾) tego nie komunikuje
+  header.setAttribute("aria-expanded", String(!isCollapsed));
 
   const label = document.createElement("span");
   label.className = "section-header__label";
@@ -935,6 +986,8 @@ function _renderSection(key, items) {
   const chevron = document.createElement("span");
   chevron.className = "section-header__chevron";
   chevron.textContent = isCollapsed ? "▸" : "▾";
+  // Dekoracja — stan komunikuje aria-expanded na nagłówku
+  chevron.setAttribute("aria-hidden", "true");
 
   meta.appendChild(count);
   meta.appendChild(chevron);
@@ -954,12 +1007,54 @@ function _toggleSection(key) {
   renderList();
 }
 
+/* Etykieta elementu listy: tytuł (fallback: fragment treści), tooltip
+   pełnego podglądu i title przycisku 👁. Jedno źródło prawdy dla renderu
+   (_renderNoteItem) i aktualizacji in-place przy autosave. */
+function _applyItemLabel(item, note) {
+  const titleEl = item.querySelector(".note-item__title");
+  if (!titleEl) return;
+
+  const titleText = note.title?.trim();
+  const previewFull = !titleText ? _contentPreview(note.content, 120) : null;
+  const previewShort = !titleText ? _contentPreview(note.content, 30) : null;
+
+  titleEl.textContent = titleText || previewShort || t("note_untitled");
+
+  // Hover tooltip — pełny podgląd gdy tytuł pochodzi z treści
+  if (!titleText && previewFull && previewFull !== previewShort) {
+    titleEl.dataset.tooltipContent = previewFull;
+  } else {
+    delete titleEl.dataset.tooltipContent;
+  }
+
+  const previewBtn = item.querySelector(".note-item__preview");
+  if (previewBtn) {
+    const previewText = _stripHtml(note.content);
+    previewBtn.title = previewText
+      ? previewText.length > 160
+        ? previewText.slice(0, 160) + "…"
+        : previewText
+      : t("note_preview_empty");
+  }
+}
+
+/* Aktualizacja etykiety aktywnej notatki w miejscu (bez renderList).
+   false → elementu nie ma w DOM, caller musi zrobić pełny render. */
+function _syncActiveItemLabel(note) {
+  const item = notesList.querySelector(
+    `.note-item[data-id="${CSS.escape(note.id)}"]`,
+  );
+  if (!item) return false;
+  _applyItemLabel(item, note);
+  return true;
+}
+
 function _renderNoteItem(note) {
   const div = document.createElement("div");
   div.className = "note-item";
   div.dataset.id = note.id;
   div.tabIndex = 0;
-  if (note.id === state.activeId) div.classList.add("active-note");
+  if (note.id === state.activeId) div.classList.add("is-active");
   if (note.type === "task" && note.completed)
     div.classList.add("note-item--completed");
 
@@ -976,19 +1071,10 @@ function _renderNoteItem(note) {
     div.appendChild(cb);
   }
 
-  // Tytuł — fallback: fragment treści, ostateczność: "Bez tytułu"
+  // Tytuł + przycisk podglądu — tekst i tooltipy wypełnia _applyItemLabel
+  // (wspólne z aktualizacją in-place przy autosave)
   const title = document.createElement("span");
   title.className = "note-item__title";
-  const _titleText = note.title?.trim();
-  const _previewFull = !_titleText ? _contentPreview(note.content, 120) : null;
-  const _previewShort = !_titleText ? _contentPreview(note.content, 30) : null;
-
-  title.textContent = _titleText || _previewShort || t("note_untitled");
-
-  // Hover tooltip — pełny podgląd gdy tytuł pochodzi z treści
-  if (!_titleText && _previewFull && _previewFull !== _previewShort) {
-    title.dataset.tooltipContent = _previewFull;
-  }
 
   const titleWrapper = document.createElement("div");
   titleWrapper.className = "note-item__title-wrap";
@@ -997,14 +1083,9 @@ function _renderNoteItem(note) {
   const previewBtn = document.createElement("button");
   previewBtn.className = "note-item__preview icon--preview";
   previewBtn.setAttribute("aria-label", t("note_preview_ariaLabel"));
-  const previewText = _stripHtml(note.content);
-  previewBtn.title = previewText
-    ? previewText.length > 160
-      ? previewText.slice(0, 160) + "…"
-      : previewText
-    : t("note_preview_empty");
   titleWrapper.appendChild(previewBtn);
   div.appendChild(titleWrapper);
+  _applyItemLabel(div, note);
 
   // Ikona recurrence — etykieta współdzielona z badge (patrz _recurrenceLabel)
   if (note.recurrence) {
@@ -1178,6 +1259,16 @@ notesList.addEventListener("keydown", (e) => {
       while (prev && !prev.classList.contains("note-item"))
         prev = prev.previousElementSibling;
       if (prev) prev.focus();
+      break;
+    }
+
+    // Skok na początek/koniec listy — standard nawigacji list w Firefoksie
+    case "Home":
+    case "End": {
+      e.preventDefault();
+      const items = notesList.querySelectorAll(".note-item");
+      const target = e.key === "Home" ? items[0] : items[items.length - 1];
+      target?.focus();
       break;
     }
   }

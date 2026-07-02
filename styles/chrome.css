@@ -1,6 +1,104 @@
 /* ══════════════════════════════════════════════════════════════
-   chrome.css — bottom bar, security button, responsive
+   chrome.css — bottom bar, security button, baner błędu zapisu,
+   toast "Cofnij", responsive
    ══════════════════════════════════════════════════════════════ */
+
+/* ── Baner błędu zapisu ───────────────────────── */
+
+.save-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 8px 6px;
+  padding: 6px 10px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+.save-error-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.save-error-banner__btn {
+  flex: none;
+  border: 1px solid var(--danger-border);
+  background: none;
+  color: var(--danger);
+  font-size: var(--text-sm);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition);
+}
+
+.save-error-banner__btn:hover {
+  background: var(--danger-bg);
+}
+
+/* ── Toast "Przeniesiono do kosza" + Cofnij ───── */
+
+.undo-toast {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  z-index: var(--z-bar);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* nie nachodź na bottom-bar (fixed po prawej) */
+  max-width: calc(100% - 120px);
+  padding: 6px 12px;
+  background: var(--bar-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  animation: undo-toast-in 0.18s ease-out;
+}
+
+.undo-toast__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo-toast__btn {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition);
+}
+
+.undo-toast__btn:hover {
+  background: var(--surface-hover);
+}
+
+@keyframes undo-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .undo-toast {
+    animation: none;
+  }
+}
 
 .status-row {
   display: flex;
@@ -12,7 +110,7 @@
   flex: 1;
   min-width: 0;
 }
-/* ── 14. Bottom bar & tooltip skrótów ────────── */
+/* ── Bottom bar & tooltip skrótów ────────── */
 
 #bottom-bar {
   position: fixed;
@@ -57,7 +155,7 @@
   opacity: 1;
 }
 
-/* ── 18. Responsive ───────────────────────────── */
+/* ── Responsive ───────────────────────────── */
 
 @media (max-width: 400px) {
   .due-wrapper {
@@ -68,5 +166,16 @@
   }
   .due-time-wrapper {
     flex: 1 1 100%;
+  }
+}
+
+/* Bardzo wąski sidebar — etykiety type-toggle chowane, zostają ikony
+   (mają title/aria-label), wyszukiwarka może się kurczyć */
+@media (max-width: 300px) {
+  .type-toggle__btn span[data-i18n] {
+    display: none;
+  }
+  .type-toggle__icon {
+    margin-right: 0;
   }
 }

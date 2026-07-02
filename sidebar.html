@@ -7,6 +7,19 @@
 
   <body>
     <div id="main-view">
+      <!-- Baner błędu zapisu — pokazywany przez app.js po storage:save-error -->
+      <div id="save-error-banner" class="save-error-banner" role="alert" hidden>
+        <span class="save-error-banner__text" data-i18n="saveError_text"
+          >Nie udało się zapisać zmian</span
+        >
+        <button
+          id="save-error-retry"
+          class="save-error-banner__btn"
+          data-i18n="saveError_retry"
+        >
+          Ponów
+        </button>
+      </div>
       <div class="main-view-padded">
         <div class="quick-capture">
           <input
@@ -100,7 +113,7 @@
         >
           <button
             data-type="all"
-            class="type-toggle__btn type-toggle__btn--active"
+            class="type-toggle__btn is-active"
             data-i18n-attr="title:typeToggle_all_title"
           >
             <span class="type-toggle__icon icon--type-all"></span>
@@ -147,11 +160,6 @@
         </div>
 
         <div class="status-row">
-          <button
-            id="list-expand-btn"
-            class="icon-btn icon-btn--sm icon-btn--ghost icon--list-expand"
-            data-i18n-attr="aria-label:listExpand_title;title:listExpand_title"
-          ></button>
           <div id="note-status"></div>
         </div>
       </div>
@@ -161,13 +169,13 @@
         <div class="note-header">
           <button
             id="back-btn"
-            class="icon-btn icon-btn--sm icon-btn--ghost icon--back"
+            class="icon-btn icon-btn--xs icon-btn--ghost icon--back"
             data-i18n-attr="aria-label:back_ariaLabel;title:back_title"
             hidden
           ></button>
           <button
             id="convert-type"
-            class="icon-btn icon-btn--sm icon-btn--ghost"
+            class="icon-btn icon-btn--xs icon-btn--ghost"
             data-type="note"
             data-i18n-attr="aria-label:convertType_ariaLabel;title:convertType_toTask_title"
             disabled
@@ -178,19 +186,19 @@
           <input id="title" data-i18n-attr="placeholder:title_placeholder" />
           <button
             id="focus-btn"
-            class="icon-btn icon-btn--sm icon--focus"
+            class="icon-btn icon-btn--xs icon--focus"
             data-i18n-attr="aria-label:focus_ariaLabel;title:focus_title"
             hidden
           ></button>
           <button
             id="important-btn"
-            class="icon-btn icon-btn--sm"
+            class="icon-btn icon-btn--xs"
             data-i18n-attr="aria-label:important_ariaLabel;title:important_title"
             hidden
           ></button>
           <button
             id="delete"
-            class="icon-btn icon-btn--sm icon-btn--ghost icon--bin"
+            class="icon-btn icon-btn--xs icon-btn--ghost icon--bin"
             data-i18n-attr="aria-label:delete_ariaLabel;title:delete_title"
             disabled
           ></button>
@@ -693,7 +701,7 @@
       <div class="panel-tabs" role="tablist">
         <button
           type="button"
-          class="panel-tab panel-tab--active"
+          class="panel-tab is-active"
           id="panel-tab-general"
           role="tab"
           aria-selected="true"
@@ -740,7 +748,7 @@
               </button>
               <button
                 type="button"
-                class="scheme-btn scheme-btn--active"
+                class="scheme-btn is-active"
                 data-scheme="auto"
               >
                 <span class="scheme-btn__icon icon--scheme-auto"></span>
@@ -973,7 +981,7 @@
       >
         <div class="shortcuts-subtabs">
           <button
-            class="shortcuts-subtab shortcuts-subtab--active"
+            class="shortcuts-subtab is-active"
             data-shortcuts-tab="general"
             data-i18n="shortcuts_tab_general"
           >
@@ -1425,6 +1433,13 @@
           </div>
         </div>
       </div>
+    </div>
+    <!-- Toast po przeniesieniu do kosza — akcja Cofnij, auto-hide (app.js) -->
+    <div id="undo-toast" class="undo-toast" role="status" hidden>
+      <span class="undo-toast__text"></span>
+      <button id="undo-toast-btn" class="undo-toast__btn" data-i18n="toast_undo">
+        Cofnij
+      </button>
     </div>
     <div id="bottom-bar">
       <div id="security-btn-wrapper">

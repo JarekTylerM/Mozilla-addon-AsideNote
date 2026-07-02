@@ -388,12 +388,6 @@
   "linkModal_urlLabel": {
     "message": "Adres URL"
   },
-  "listCollapse_title": {
-    "message": "Zwiń listę  Alt+L"
-  },
-  "listExpand_title": {
-    "message": "Rozwiń listę  Alt+L"
-  },
   "list_empty": {
     "message": "Brak notatek i zadań"
   },
@@ -860,6 +854,12 @@
   "recurrence_yearly": {
     "message": "Co rok"
   },
+  "saveError_retry": {
+    "message": "Ponów"
+  },
+  "saveError_text": {
+    "message": "Nie udało się zapisać zmian"
+  },
   "search_ariaLabel": {
     "message": "Wyszukaj notatki i zadania"
   },
@@ -1287,6 +1287,12 @@
   },
   "title_placeholder": {
     "message": "Tytuł"
+  },
+  "toast_trashed": {
+    "message": "Przeniesiono do kosza"
+  },
+  "toast_undo": {
+    "message": "Cofnij"
   },
   "toolbar_ariaLabel": {
     "message": "Formatowanie tekstu"

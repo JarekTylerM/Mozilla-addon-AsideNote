@@ -12,7 +12,13 @@ import {
   PALETTE,
   updateTagColor,
 } from "./tags.js";
-import { state, renderList, saveActiveNote, selectNote } from "./notes.js";
+import {
+  state,
+  renderList,
+  saveActiveNote,
+  selectNote,
+  restoreDeletedNote,
+} from "./notes.js";
 import {
   saveNotes,
   saveFilterPrefs,
@@ -25,7 +31,7 @@ import {
   saveDeletedNotes,
   loadLastBackupBeforeImport,
 } from "./storage.js";
-import { rescheduleAll, scheduleAlarm, isAlarmable } from "./alarms.js";
+import { rescheduleAll } from "./alarms.js";
 import { t } from "./i18n.js";
 import { setTooltipsEnabled } from "./tooltip.js";
 import {
@@ -440,7 +446,7 @@ function _renderTagOptions(activeTags) {
     const item = document.createElement("button");
     item.type = "button";
     item.className =
-      "tag-option-item" + (isActive ? " tag-option-item--active" : "");
+      "tag-option-item" + (isActive ? " is-active" : "");
     item.dataset.tagId = tag.id;
 
     const check = document.createElement("span");
@@ -452,7 +458,7 @@ function _renderTagOptions(activeTags) {
     item.onclick = () => {
       _toggleTag(tag.id);
       // In-place toggle — zachowuje fokus klawiatury, dropdown zostaje otwarty
-      const nowActive = item.classList.toggle("tag-option-item--active");
+      const nowActive = item.classList.toggle("is-active");
       check.textContent = nowActive ? "✓" : "";
     };
 
@@ -1005,7 +1011,7 @@ function _initSchemeToggle(activeScheme) {
   // Zaznacz aktywny przycisk
   btns.forEach((btn) => {
     btn.classList.toggle(
-      "scheme-btn--active",
+      "is-active",
       btn.dataset.scheme === activeScheme,
     );
   });
@@ -1016,7 +1022,7 @@ function _initSchemeToggle(activeScheme) {
       const scheme = btn.dataset.scheme;
       _applyColorScheme(scheme);
       saveUiSettings({ colorScheme: scheme });
-      btns.forEach((b) => b.classList.toggle("scheme-btn--active", b === btn));
+      btns.forEach((b) => b.classList.toggle("is-active", b === btn));
       document.dispatchEvent(new CustomEvent("themeChanged"));
     };
   });
@@ -1216,24 +1222,9 @@ export function renderDeletedNotes() {
 }
 
 function _restoreNote(id) {
-  const idx = state.deletedNotes.findIndex((n) => n.id === id);
-  if (idx === -1) return;
-
-  const note = { ...state.deletedNotes[idx] };
-  delete note.deletedAt;
-
-  state.notes.unshift(note);
-  state.deletedNotes.splice(idx, 1);
-
-  saveNotes(state.notes);
-  saveDeletedNotes(state.deletedNotes);
-
-  // Usunięcie wyczyściło alarm (clearAlarm w _deleteNoteCore) — przywrócone
-  // zadanie z datą i godziną musi odzyskać przypomnienie od razu, nie
-  // dopiero po restarcie przeglądarki (rescheduleOnBoot).
-  if (isAlarmable(note)) scheduleAlarm(note);
-
-  renderList();
+  // Rdzeń przywracania (stan + zapis + alarm + renderList) współdzielony
+  // z akcją Cofnij w toaście — patrz notes.js::restoreDeletedNote
+  if (!restoreDeletedNote(id)) return;
   renderDeletedNotes();
 }
 

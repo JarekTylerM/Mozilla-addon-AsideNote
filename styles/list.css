@@ -10,19 +10,19 @@
   flex-direction: column;
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.1s ease;
+  transition: opacity var(--transition) ease;
 }
 
 #main-view.is-ready {
   opacity: 1;
 }
 
-/* ── 01. Quick capture ─────────────────────────── */
+/* ── Quick capture ─────────────────────────── */
 
 .quick-capture {
   margin-bottom: 10px;
   background: var(--surface);
-  border: 1.5px solid rgb(0 0 0 / 0.12);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   position: relative;
   transition:
@@ -32,10 +32,7 @@
 .quick-capture:focus-within {
   background: var(--bg);
   border-color: var(--accent);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.06);
-}
-#quick-capture::placeholder {
-  color: var(--text-3);
+  box-shadow: var(--shadow-sm);
 }
 .quick-capture__hint {
   position: absolute;
@@ -78,11 +75,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Typ elementu w preview komunikuje tekst ("Zadanie: …"), nie kolor —
+   złoto zarezerwowane dla "wymaga uwagi" (patrz tokens.css --gold) */
 .quick-capture-preview[data-type="task"] {
-  color: var(--gold);
+  color: var(--text-2);
 }
 
-/* ── 02. Search & filter ──────────────────────── */
+/* ── Search & filter ──────────────────────── */
 
 .search-row {
   display: flex;
@@ -93,6 +92,7 @@
 .search-wrapper {
   position: relative;
   flex: 1;
+  min-width: 0; /* pozwól inputowi się kurczyć przy wąskim sidebarze */
   padding-left: 26px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
@@ -112,11 +112,8 @@
   width: 14px;
   height: 14px;
   background-color: var(--text-3);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5l-1.5 1.5l-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16A6.5 6.5 0 0 1 3 9.5A6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14S14 12 14 9.5S12 5 9.5 5'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5l-1.5 1.5l-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16A6.5 6.5 0 0 1 3 9.5A6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14S14 12 14 9.5S12 5 9.5 5'/%3E%3C/svg%3E");
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 }
 .search-wrapper input {
@@ -322,7 +319,7 @@
 .active-filter-pill__remove:hover {
   opacity: 1;
 }
-/* ── 03. Type toggle ──────────────────────────── */
+/* ── Type toggle ──────────────────────────── */
 
 #type-toggle {
   display: flex;
@@ -343,24 +340,22 @@
   border: none;
   cursor: pointer;
   transition:
-    background 0.1s,
-    color 0.1s;
+    background var(--transition),
+    color var(--transition);
 }
 .type-toggle__btn:hover {
   background: var(--surface-hover);
   color: var(--text);
 }
-.type-toggle__btn--active {
+.type-toggle__btn.is-active {
   background: var(--toggle-active-bg, var(--bg));
   color: var(--text);
   font-weight: 500;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  box-shadow: var(--shadow-sm);
 }
 
 .icon-zen {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='M12 4c1.11 0 2 .89 2 2s-.89 2-2 2s-2-.89-2-2s.9-2 2-2m9 12v-2c-2.24 0-4.16-.96-5.6-2.68l-1.34-1.6A1.98 1.98 0 0 0 12.53 9H11.5c-.61 0-1.17.26-1.55.72l-1.34 1.6C7.16 13.04 5.24 14 3 14v2c2.77 0 5.19-1.17 7-3.25V15l-3.88 1.55c-.67.27-1.12.95-1.12 1.66C5 19.2 5.8 20 6.79 20H9v-.5a2.5 2.5 0 0 1 2.5-2.5h3c.28 0 .5.22.5.5s-.22.5-.5.5h-3c-.83 0-1.5.67-1.5 1.5v.5h7.21c.99 0 1.79-.8 1.79-1.79c0-.71-.45-1.39-1.12-1.66L14 15v-2.25c1.81 2.08 4.23 3.25 7 3.25'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='M12 4c1.11 0 2 .89 2 2s-.89 2-2 2s-2-.89-2-2s.9-2 2-2m9 12v-2c-2.24 0-4.16-.96-5.6-2.68l-1.34-1.6A1.98 1.98 0 0 0 12.53 9H11.5c-.61 0-1.17.26-1.55.72l-1.34 1.6C7.16 13.04 5.24 14 3 14v2c2.77 0 5.19-1.17 7-3.25V15l-3.88 1.55c-.67.27-1.12.95-1.12 1.66C5 19.2 5.8 20 6.79 20H9v-.5a2.5 2.5 0 0 1 2.5-2.5h3c.28 0 .5.22.5.5s-.22.5-.5.5h-3c-.83 0-1.5.67-1.5 1.5v.5h7.21c.99 0 1.79-.8 1.79-1.79c0-.71-.45-1.39-1.12-1.66L14 15v-2.25c1.81 2.08 4.23 3.25 7 3.25'/%3E%3C/svg%3E");
-  -webkit-mask-size: 65%; /* było: cover */
   mask-size: 65%; /* było: cover */
   background-color: var(--text-2);
 }
@@ -380,16 +375,13 @@
   height: 13px;
   flex-shrink: 0;
   background-color: currentColor;
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
   vertical-align: middle;
   margin-right: 4px;
 }
-/* ── 04. Notes list & sections ────────────────── */
+/* ── Notes list & sections ────────────────── */
 
 .notes-list-wrapper {
   margin-bottom: 0;
@@ -451,19 +443,19 @@
   text-decoration-color: var(--text-3);
   text-decoration-style: solid;
   transition:
-    color 0.15s,
-    text-decoration-color 0.15s;
+    color var(--transition),
+    text-decoration-color var(--transition);
 }
 .new-item-link:hover {
   color: var(--text-2);
   text-decoration-color: var(--text-2);
 }
-.new-item-link--active {
+.new-item-link.is-active {
   color: var(--text);
   text-decoration-color: var(--text);
   font-weight: 500;
 }
-.new-item-link--active:hover {
+.new-item-link.is-active:hover {
   color: var(--text);
   text-decoration-color: var(--text);
 }
@@ -480,7 +472,7 @@
   background: var(--gold-bg-strong);
 }
 
-/* ── 05. Note item ────────────────────────────── */
+/* ── Note item ────────────────────────────── */
 
 .note-item {
   padding: 6px 36px 6px 10px;
@@ -493,8 +485,8 @@
   flex-wrap: wrap;
   gap: 6px;
   transition:
-    background 0.1s,
-    color 0.1s;
+    background var(--transition),
+    color var(--transition);
 }
 .note-item:hover {
   background: var(--surface);
@@ -543,14 +535,14 @@
   flex-shrink: 0;
   opacity: 0;
   transition:
-    opacity 0.15s,
-    color 0.15s;
+    opacity var(--transition),
+    color var(--transition);
 }
 .note-item__postpone:hover {
   color: var(--accent);
 }
 .note-item:hover .note-item__postpone,
-.note-item.active-note .note-item__postpone,
+.note-item.is-active .note-item__postpone,
 .note-item:focus .note-item__postpone {
   opacity: 1;
 }
@@ -569,14 +561,14 @@
   line-height: 1;
   opacity: 0;
   transition:
-    opacity 0.15s,
-    color 0.15s;
+    opacity var(--transition),
+    color var(--transition);
 }
 .note-item__delete:hover {
   color: var(--danger);
 }
 .note-item:hover .note-item__delete,
-.note-item.active-note .note-item__delete,
+.note-item.is-active .note-item__delete,
 .note-item:focus .note-item__delete {
   opacity: 1;
 }
@@ -591,18 +583,15 @@
   cursor: default;
   opacity: 0;
   flex-shrink: 0;
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
   transition:
-    opacity 0.15s,
-    background-color 0.15s;
+    opacity var(--transition),
+    background-color var(--transition);
 }
 .note-item:hover .note-item__preview,
-.note-item.active-note .note-item__preview,
+.note-item.is-active .note-item__preview,
 .note-item:focus .note-item__preview {
   opacity: 1;
 }
@@ -630,27 +619,16 @@
   opacity: 0.7;
 }
 
-.note-item,
-.section-header {
-  animation: sectionItemIn 0.12s ease both;
-}
-
-@keyframes sectionItemIn {
-  from {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Celowo BEZ animacji wejścia elementów: renderList() przebudowuje listę
+   przy każdej interakcji — animowane "wjeżdżanie" wszystkich pozycji przy
+   każdym kliknięciu to szum wizualny. Feedback nowego elementu daje
+   punktowo .note-item--flash. */
 
 .note-checkbox {
   width: 14px;
   height: 14px;
   border: 1.5px solid var(--border-strong);
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   background: #fff0;
   display: flex;
   align-items: center;
@@ -661,8 +639,8 @@
   cursor: pointer;
   padding: 0;
   transition:
-    background 0.15s,
-    border-color 0.15s;
+    background var(--transition),
+    border-color var(--transition);
 }
 .note-checkbox:hover {
   border-color: var(--text-2);
@@ -687,9 +665,9 @@
   line-height: var(--lh-base);
 }
 
-/* ── 06. Note item — stany ────────────────────── */
+/* ── Note item — stany ────────────────────── */
 
-.note-item.active-note {
+.note-item.is-active {
   background: var(--surface);
   border-left: 2px solid var(--text);
   box-shadow: inset 0 0 0 1px var(--border-strong);
@@ -713,7 +691,7 @@
 
 @keyframes noteFlash {
   0% {
-    background: rgb(39 39 42 / 0.1);
+    background: var(--flash-bg);
   }
   100% {
     background: #fff0;
@@ -723,7 +701,7 @@
   animation: noteFlash 0.8s ease-out;
 }
 
-/* ── 07. Note header & meta ───────────────────── */
+/* ── Note header & meta ───────────────────── */
 
 #note-status {
   font-size: var(--text-sm);
@@ -733,7 +711,7 @@
   font-style: italic;
   white-space: normal;
   border-top: 1px solid transparent;
-  transition: border-color 0.2s;
+  transition: border-color var(--transition-slow);
 }
 
 .note-status__title {
@@ -746,14 +724,10 @@
   font-family: inherit;
   font-size: inherit;
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color var(--transition);
 }
 .note-status__title:hover {
   color: var(--zen);
-}
-.note-status__hint {
-  color: var(--text-3);
-  font-weight: 400;
 }
 .note-header {
   display: flex;
@@ -761,10 +735,6 @@
   gap: 2px;
   margin-block: 8px 0;
   flex-shrink: 0;
-}
-.note-header .icon-btn--sm {
-  width: 24px;
-  height: 24px;
 }
 .note-header input[type="text"],
 .note-header #title {
@@ -777,7 +747,7 @@
   font-size: var(--text-base);
   color: var(--text);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition);
   font-family: inherit;
 }
 .note-header #title:focus {
@@ -789,15 +759,12 @@
 
 /* Convert type button */
 #convert-type[data-type="note"] {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 12h8v2H8v-2zm0 4h5v2H8v-2zm0-8h3v2H8V8z'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 12h8v2H8v-2zm0 4h5v2H8v-2zm0-8h3v2H8V8z'/%3E%3C/svg%3E");
 }
 #convert-type[data-type="task"] {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m0 2v14H5V5zm-9 12l-4-4l1.41-1.42L10 14.17l6.59-6.59L18 9'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m0 2v14H5V5zm-9 12l-4-4l1.41-1.42L10 14.17l6.59-6.59L18 9'/%3E%3C/svg%3E");
 }
 #convert-type {
-  -webkit-mask-size: 65%;
   mask-size: 65%;
 }
 #convert-type:not(:disabled):hover {
@@ -807,9 +774,7 @@
 
 /* Important button */
 #important-btn {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/%3E%3C/svg%3E");
-  -webkit-mask-size: 65%;
   mask-size: 65%;
   opacity: 0.3;
   border-color: #fff0;
@@ -844,7 +809,6 @@
 
 /* Delete button hover */
 #delete:not(:disabled):hover {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='m20.37 8.91l-1 1.73l-12.13-7l1-1.73l3.04 1.75l1.36-.37l4.33 2.5l.37 1.37zM6 19V7h5.07L18 11v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='m20.37 8.91l-1 1.73l-12.13-7l1-1.73l3.04 1.75l1.36-.37l4.33 2.5l.37 1.37zM6 19V7h5.07L18 11v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2'/%3E%3C/svg%3E");
   background-color: var(--danger);
   opacity: 0.6;

@@ -518,7 +518,7 @@ function _initKeydown() {
 /* ── Exit to list (Ctrl+↑/↓) ──────────────────── */
 
 function _exitToList(direction) {
-  // Znajdź obecnie aktywny element listy (active-note) lub pierwszy
+  // Znajdź obecnie aktywny element listy (is-active) lub pierwszy
   const activeId = state.activeId;
   const list = document.getElementById('notesList');
   if (!list) return;

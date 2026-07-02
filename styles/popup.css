@@ -1,0 +1,263 @@
+/* ══════════════════════════════════════════════════════════════
+   popup.css — mikro-okno quick capture (popup.html)
+   Wcześniej style inline w popup.html — wyniesione do design systemu,
+   żeby popup ewoluował razem z tokenami (tokens.css ładowany osobno
+   w popup.html, przed tym plikiem).
+   ══════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+input,
+button,
+select {
+  font: inherit;
+}
+
+html {
+  /* Ta sama kotwica rem co base.css — tokeny --text-* dają identyczne
+     rozmiary w popupie i sidebarze */
+  font-size: 81.25%;
+}
+
+body {
+  width: 380px;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 14px;
+}
+
+/* ── Tytuł nad polem ── */
+.popup-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* ── Input z ikoną prefiksem ── */
+.popup-capture {
+  position: relative;
+}
+
+.popup-capture__icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-color: var(--text-3);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+.popup-capture--task .popup-capture__icon {
+  background-color: var(--gold);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
+}
+
+.popup-capture__input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  font-size: var(--text-lg);
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition:
+    border-color var(--transition),
+    background var(--transition);
+}
+
+.popup-capture__input:focus {
+  background: var(--bg);
+  border-color: var(--border-strong);
+}
+
+.popup-capture__input::placeholder {
+  color: var(--text-3);
+}
+
+/* ── Hint + help button row ── */
+.popup-hint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.popup-hint {
+  font-size: var(--text-sm);
+  color: var(--text-3);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.popup-help-btn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 50%;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--transition),
+    color var(--transition),
+    border-color var(--transition);
+  padding: 0;
+  line-height: 1;
+}
+
+.popup-help-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.popup-help-btn[aria-expanded='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+
+/* ── Pełna pomoc (rozwijana in-place) ── */
+.popup-help-panel {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+.popup-help-panel[hidden] {
+  display: none;
+}
+
+.popup-help-panel__section {
+  margin-bottom: 8px;
+}
+
+.popup-help-panel__section:last-child {
+  margin-bottom: 0;
+}
+
+.popup-help-panel__heading {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* Wiersze pod sobą — każda kategoria w nowej linii */
+.popup-help-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.popup-help-row:last-child {
+  margin-bottom: 0;
+}
+
+.popup-help-row__desc {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.popup-help-panel kbd,
+.popup-hint kbd,
+.popup-esc-hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* ── Esc hint poza panelem podpowiedzi ── */
+.popup-esc-hint {
+  font-size: var(--text-sm);
+  color: var(--text-3);
+  line-height: 1.5;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.popup-esc-hint kbd {
+  flex-shrink: 0;
+}
+
+/* ── Feedback ── */
+.popup-feedback {
+  margin-top: 8px;
+  font-size: var(--text-md);
+  font-weight: 500;
+  min-height: 18px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.popup-feedback--visible {
+  opacity: 1;
+}
+
+.popup-feedback--note {
+  color: var(--text-2);
+}
+.popup-feedback--task {
+  color: var(--gold-text);
+}
+.popup-feedback--error {
+  color: var(--danger);
+}
+.popup-preview {
+  margin-top: 6px;
+  font-size: var(--text-sm);
+  color: var(--text-3);
+  font-style: italic;
+  min-height: 16px;
+  padding: 0 2px;
+  transition: opacity var(--transition);
+}
+.popup-preview:empty {
+  visibility: hidden;
+}
+/* Typ komunikuje tekst preview, nie kolor — spójnie z sidebarem
+   (złoto = "wymaga uwagi", patrz tokens.css --gold) */
+.popup-preview[data-type='task'] {
+  color: var(--text-2);
+}

@@ -67,7 +67,7 @@
 }
 .tooltip-content h4 {
   font-size: var(--text-base);
-  color: #fff;
+  color: var(--tooltip-heading);
   margin-bottom: 8px;
 }
 .tooltip-section {
@@ -86,13 +86,13 @@
 }
 .tooltip-section li {
   margin-bottom: 3px;
-  color: #a1a1aa;
+  color: var(--tooltip-muted);
 }
 .tooltip-section code {
   background: var(--tooltip-border);
   color: var(--tooltip-text);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   font-size: var(--text-xs);
 }
 .tooltip-all-shortcuts-btn {
@@ -104,7 +104,7 @@
   font-weight: 500;
   color: var(--tooltip-text);
   background: var(--tooltip-border);
-  border: 1px solid #52525b;
+  border: 1px solid var(--tooltip-btn-border);
   border-radius: var(--radius-md);
   cursor: pointer;
   text-align: center;
@@ -132,7 +132,7 @@
   white-space: nowrap;
   max-width: calc(100vw - 16px);
   pointer-events: none;
-  box-shadow: 0 3px 10px rgb(0 0 0 / 0.18);
+  box-shadow: var(--shadow-md);
   opacity: 0;
   transform: translateX(-50%) translateY(3px);
   transition:
@@ -169,7 +169,7 @@
   opacity: 0.65;
   background: rgb(255 255 255 / 0.14);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   border: none;
   letter-spacing: 0.02em;
 }
@@ -229,7 +229,7 @@
   background-color: var(--danger);
 }
 
-/* ── 16. Link modal ───────────────────────────── */
+/* ── Link modal ───────────────────────────── */
 
 #link-modal {
   position: fixed;
@@ -298,7 +298,7 @@
 .link-modal__field input {
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 6px 8px;
   color: var(--text);
   font-size: var(--text-base);
@@ -324,7 +324,7 @@
   margin-left: auto;
 }
 
-/* ── 17. Tag delete modal ─────────────────────── */
+/* ── Tag delete modal ─────────────────────── */
 
 #tag-delete-modal {
   position: fixed;
@@ -368,20 +368,15 @@
   height: 13px;
   background-color: var(--text-3);
   flex-shrink: 0;
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
 }
 
 .tag-delete-item__icon--note {
-  -webkit-mask-image: var(--icon-note-mask);
   mask-image: var(--icon-note-mask);
 }
 .tag-delete-item__icon--task {
-  -webkit-mask-image: var(--icon-task-mask);
   mask-image: var(--icon-task-mask);
 }
 
@@ -592,7 +587,9 @@
 .date-picker-day-btn.is-active {
   background: var(--zen);
   border-color: var(--zen);
-  color: #fff;
+  /* accent-fg: biały na light, ciemny na dark — zen w dark jest jasny,
+     biały tekst traciłby kontrast */
+  color: var(--accent-fg);
 }
 
 .date-picker-day-btn:not(.is-active):hover {
@@ -641,13 +638,9 @@
   flex-shrink: 0;
   margin: 0 4px 0 8px;
   background-color: var(--text-3);
-  -webkit-mask-image: var(--icon-alarm-mask);
   mask-image: var(--icon-alarm-mask);
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
 }
 
@@ -749,11 +742,8 @@
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  -webkit-mask-size: 55%;
   mask-size: 55%;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
   transition: background-color var(--transition);
 }
@@ -898,11 +888,8 @@
   height: 16px;
   background-color: var(--text-2);
   flex-shrink: 0;
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
 }
 
@@ -910,11 +897,8 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  -webkit-mask-size: contain;
   mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
   mask-position: center;
 }
 

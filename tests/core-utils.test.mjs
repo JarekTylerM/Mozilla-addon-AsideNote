@@ -111,5 +111,39 @@ testAsync('po przerwie można wywołać ponownie', () => new Promise(resolve => 
     setTimeout(()=>{ if(count!==2) throw new Error(`Expected 2, got ${count}`); resolve(); },60);
   },60);
 }));
+test('ma metodę flush', () => {
+  const fn = debounce(()=>{}, 100);
+  if(typeof fn.flush !== 'function') throw new Error('Expected flush method');
+});
+test('flush() wykonuje oczekujące wywołanie natychmiast', () => {
+  let count = 0;
+  const fn = debounce(() => { count++; }, 1000);
+  fn();
+  fn.flush();
+  if(count !== 1) throw new Error(`Expected 1 po flush, got ${count}`);
+});
+test('flush() bez oczekującego wywołania → no-op', () => {
+  let count = 0;
+  const fn = debounce(() => { count++; }, 50);
+  fn.flush();
+  if(count !== 0) throw new Error(`Expected 0, got ${count}`);
+});
+test('flush() przekazuje ostatnie argumenty', () => {
+  let got = null;
+  const fn = debounce((x) => { got = x; }, 1000);
+  fn('a'); fn('b');
+  fn.flush();
+  if(got !== 'b') throw new Error(`Expected 'b', got ${got}`);
+});
+testAsync('po flush() timer nie odpala drugi raz', () => new Promise((resolve, reject) => {
+  let count = 0;
+  const fn = debounce(() => { count++; }, 30);
+  fn();
+  fn.flush();
+  setTimeout(() => {
+    if(count !== 1) { reject(new Error(`Expected 1 (bez podwójnego wywołania), got ${count}`)); return; }
+    resolve();
+  }, 60);
+}));
 
 await results();

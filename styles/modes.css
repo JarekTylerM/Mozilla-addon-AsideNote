@@ -4,7 +4,7 @@
    i body.is-focus-mode.
    ══════════════════════════════════════════════════════════════ */
 
-/* ── 15. Zen mode ─────────────────────────────── */
+/* ── Zen mode ─────────────────────────────── */
 
 .zen-empty {
   display: flex;
@@ -33,7 +33,7 @@
 
 .zen-mode .quick-capture {
   opacity: 0.6;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 .zen-mode .quick-capture:focus-within {
   opacity: 1;
@@ -41,7 +41,7 @@
 
 .zen-mode .search-wrapper {
   opacity: 0.5;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 .zen-mode .search-wrapper:focus-within {
   opacity: 1;
@@ -50,12 +50,12 @@
 
 .zen-mode #active-filters {
   opacity: 0.5;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 
 .zen-mode #filter-bar {
   opacity: 0.6;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 .zen-mode #filter-bar:focus-within {
   opacity: 1;
@@ -63,18 +63,9 @@
 
 .zen-mode #filter-btn {
   opacity: 0.2;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 .zen-mode #filter-btn:hover {
-  opacity: 1;
-  background-color: var(--zen);
-}
-
-.zen-mode #list-expand-btn {
-  opacity: 0.2;
-  transition: opacity 0.2s ease;
-}
-.zen-mode #list-expand-btn:hover {
   opacity: 1;
   background-color: var(--zen);
 }
@@ -83,12 +74,12 @@
   border-color: rgb(107 163 184 / 0.3);
 }
 
-.zen-mode .type-toggle__btn:not(.type-toggle__btn--active) {
+.zen-mode .type-toggle__btn:not(.is-active) {
   color: var(--text-3);
   opacity: 0.5;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
-.zen-mode .type-toggle__btn:not(.type-toggle__btn--active):hover {
+.zen-mode .type-toggle__btn:not(.is-active):hover {
   background: #fff0;
   color: var(--text-3);
   opacity: 0.5;
@@ -105,7 +96,7 @@
 .zen-mode .new-item-inline {
   color: var(--text-3);
   opacity: 0.6;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 
 .zen-mode .tag-pill {
@@ -133,7 +124,7 @@
 /* type-toggle-btn wyciszony w zen mode */
 .zen-mode #type-toggle-btn {
   opacity: 0.2;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 .zen-mode #type-toggle-btn:hover {
   opacity: 1;
@@ -144,7 +135,7 @@
 
 #main-view.zen-mode #toolbar {
   opacity: 0.45;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 #main-view.zen-mode #toolbar:hover,
 #main-view.zen-mode #toolbar:focus-within {
@@ -166,7 +157,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 .zen-mode #title {
   color: var(--text-3);
-  transition: color 0.2s ease;
+  transition: color var(--transition-slow) ease;
 }
 .zen-mode #title:focus {
   color: var(--text);
@@ -174,7 +165,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 .zen-mode .due-bar__trigger {
   color: var(--text-3);
-  transition: color 0.2s ease;
+  transition: color var(--transition-slow) ease;
 }
 .zen-mode .due-bar__trigger:hover,
 .zen-mode .due-bar__trigger:focus {
@@ -191,7 +182,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 .zen-mode #notesList {
   max-height: min(55vh, calc(100vh - 260px));
-  transition: max-height 0.25s ease;
+  transition: max-height var(--transition-slow) ease;
 }
 
 .zen-mode .note-item {
@@ -214,26 +205,26 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 }
 
 /* Aktywna notatka — zen border + pełny tekst */
-.zen-mode .note-item.active-note {
+.zen-mode .note-item.is-active {
   border-left-color: var(--zen);
   color: var(--text);
   opacity: 1 !important;
 }
 
-/* Focus highlights — :has() wysoka specyficzność, po .active-note */
+/* Focus highlights — :has() wysoka specyficzność, po .is-active */
 .zen-mode
   #notesList:has(.note-item--focused)
   .note-item:not(.note-item--focused) {
   opacity: 0.45;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-slow);
 }
 .zen-mode
-  #notesList:has(.active-note)
-  .note-item:not(.active-note):not(.note-item--focused) {
+  #notesList:has(.is-active)
+  .note-item:not(.is-active):not(.note-item--focused) {
   opacity: 0.45;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-slow);
 }
-.zen-mode #notesList:has(.active-note) .note-item--focused:not(.active-note) {
+.zen-mode #notesList:has(.is-active) .note-item--focused:not(.is-active) {
   opacity: 0.6;
 }
 
@@ -241,7 +232,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 .zen-mode .note-header .icon-btn:not(:disabled) {
   opacity: 0.35;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 .zen-mode .note-header .icon-btn:not(:disabled):hover {
   opacity: 1;
@@ -258,7 +249,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 .zen-mode #tag-selector {
   opacity: 0.5;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-slow) ease;
 }
 .zen-mode #tag-selector:hover,
 .zen-mode #tag-selector:focus-within {
@@ -296,7 +287,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
   display: none !important;
 }
 
-/* ── 15b. Focus mode ──────────────────────────── */
+/* ── Focus mode ──────────────────────────── */
 
 /*
    Layout pionowy (flex column od body w dół):
@@ -355,8 +346,8 @@ body.is-focus-mode #due-wrapper {
 #editor-container {
   position: relative;
   transition:
-    border-radius 0.2s ease,
-    margin 0.2s ease;
+    border-radius var(--transition-slow) ease,
+    margin var(--transition-slow) ease;
 }
 body.is-focus-mode #editor-container {
   flex: 1;
@@ -389,8 +380,8 @@ body.is-focus-mode #tag-selector {
   z-index: var(--z-editor-btn);
   opacity: 0.4;
   transition:
-    opacity 0.15s,
-    background-color 0.15s;
+    opacity var(--transition),
+    background-color var(--transition);
 }
 .focusmode-btn:hover {
   opacity: 1 !important;
@@ -406,8 +397,8 @@ body.is-focus-mode .focusmode-btn {
   z-index: var(--z-editor-btn);
   opacity: 0.4;
   transition:
-    opacity 0.15s,
-    background-color 0.15s;
+    opacity var(--transition),
+    background-color var(--transition);
 }
 #collapse-editor-btn:hover {
   opacity: 1 !important;

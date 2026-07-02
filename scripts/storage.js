@@ -59,11 +59,66 @@ export function consumeSelfWrite(key) {
   return own;
 }
 
+/* ── Graceful degradation zapisu ──────────────────
+   browser.storage.local.set może się nie powieść (quota, uszkodzony
+   profil, błąd IO). Dotąd błąd lądował tylko w konsoli — użytkownik
+   tracił zmiany bez żadnego sygnału. Nieudane zapisy trafiają do
+   _pendingWrites: UI (app.js) pokazuje baner z akcją "Ponów" po evencie
+   storage:save-error, a auto-retry ponawia zapis co 5 s. Udany zapis
+   klucza kasuje jego zaległą wersję — świeże dane nigdy nie zostaną
+   nadpisane starszymi z kolejki. */
+
+let _pendingWrites = null; // { klucz: wartość } z nieudanych zapisów
+let _retryTimer = null;
+
+function _notifySaveState(type) {
+  // storage.js jest importowany też w testach node (bez DOM)
+  if (typeof document !== "undefined") {
+    document.dispatchEvent(new CustomEvent(type));
+  }
+}
+
 /** Jedyne wejście zapisu — znakuje klucze przed browser.storage.local.set. */
 async function _set(obj) {
   const keys = Object.keys(obj);
   _markSelfWrites(keys);
-  await browser.storage.local.set(obj);
+  try {
+    await browser.storage.local.set(obj);
+    if (_pendingWrites) {
+      // Nowszy udany zapis klucza unieważnia jego zaległą wersję
+      for (const k of keys) delete _pendingWrites[k];
+      if (Object.keys(_pendingWrites).length === 0) {
+        _pendingWrites = null;
+        _notifySaveState("storage:save-ok");
+      }
+    }
+  } catch (e) {
+    _pendingWrites = { ...(_pendingWrites || {}), ...obj };
+    _notifySaveState("storage:save-error");
+    if (!_retryTimer) {
+      _retryTimer = setTimeout(() => {
+        _retryTimer = null;
+        retryPendingWrites();
+      }, 5000);
+    }
+    throw e;
+  }
+}
+
+/**
+ * Ponawia zaległe zapisy — wołane z banera "Ponów" (app.js) i auto-retry.
+ * @returns {Promise<boolean>} true gdy po próbie nic nie zalega
+ */
+export async function retryPendingWrites() {
+  if (!_pendingWrites) return true;
+  try {
+    await _set({ ..._pendingWrites });
+    return true;
+  } catch {
+    // Klucze wróciły do _pendingWrites (catch w _set), kolejny
+    // auto-retry jest już zaplanowany — baner zostaje widoczny
+    return false;
+  }
 }
 
 /* ── Migracja modelu notatek ──────────────────── */

@@ -388,12 +388,6 @@
   "linkModal_urlLabel": {
     "message": "URL"
   },
-  "listCollapse_title": {
-    "message": "Collapse list  Alt+L"
-  },
-  "listExpand_title": {
-    "message": "Expand list  Alt+L"
-  },
   "list_empty": {
     "message": "No notes or tasks"
   },
@@ -860,6 +854,12 @@
   "recurrence_yearly": {
     "message": "Yearly"
   },
+  "saveError_retry": {
+    "message": "Retry"
+  },
+  "saveError_text": {
+    "message": "Couldn't save your changes"
+  },
   "search_ariaLabel": {
     "message": "Search notes and tasks"
   },
@@ -1287,6 +1287,12 @@
   },
   "title_placeholder": {
     "message": "Title"
+  },
+  "toast_trashed": {
+    "message": "Moved to Trash"
+  },
+  "toast_undo": {
+    "message": "Undo"
   },
   "toolbar_ariaLabel": {
     "message": "Text formatting"

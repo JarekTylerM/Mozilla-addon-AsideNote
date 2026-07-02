@@ -179,7 +179,7 @@
 .onboarding-stage-btn--done .onboarding-stage-btn__num {
   background: var(--success);
   border-color: var(--success);
-  color: #fff;
+  color: var(--accent-fg);
 }
 
 .onboarding-stage-btn__label {
