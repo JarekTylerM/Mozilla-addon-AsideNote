@@ -203,7 +203,7 @@ function _saveLinkModal() {
     a.textContent = finalText;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
-    a.title = t('editor_link_ctrlClickHint');
+    a.title = t('editor_link_openHint');
 
     // Jeśli była selekcja — zastąp ją linkiem
     if (!_savedRange.collapsed) {

@@ -35,6 +35,7 @@ import {
 import { findInlinePattern, MD_LINK_RX } from './editor-pattern.js';
 import { isClickUpHTML, preprocessClickUp } from './editor-paste-clickup.js';
 import { initSlashMenu } from './editor-slash-menu.js';
+import { htmlToMarkdown } from './editor-markdown.js';
 
 const editor = document.getElementById('editor');
 
@@ -227,6 +228,7 @@ export function initEditor() {
   _initKeydown();
   _initPaste();
   _initCopy();
+  _initCopyMarkdown();
   _initCursorResume();
   _initEmptyBlockPlaceholder();
   initLinkClick();
@@ -497,7 +499,7 @@ function _initKeydown() {
     // Po innych handlerach: Enter/Space/Backspace/Ctrl mają priorytet.
     // Jeśli żaden z nich nie zareagował, próbujemy inline konwersję.
     if (!e.defaultPrevented && !e.ctrlKey && !e.metaKey) {
-      if (['*', '_', '~', '~~', '`'].includes(e.key)) _tryInlineMarkdown(e);
+      if (['*', '_', '~', '`'].includes(e.key)) _tryInlineMarkdown(e);
     }
   });
 
@@ -618,6 +620,20 @@ function _handleEnter(e) {
     preIsExiting = /(<br\s*\/?>){2,}\s*$/.test(code.innerHTML);
   }
 
+  // Heading context — pozycja kursora względem treści nagłówka
+  let headingAtStart = false,
+    headingHasTextAfter = false;
+  if (heading) {
+    const probeBefore = document.createRange();
+    probeBefore.selectNodeContents(heading);
+    probeBefore.setEnd(range.startContainer, range.startOffset);
+    headingAtStart = probeBefore.toString().trim() === '';
+    const probeAfter = document.createRange();
+    probeAfter.selectNodeContents(heading);
+    probeAfter.setStart(range.startContainer, range.startOffset);
+    headingHasTextAfter = probeAfter.toString().trim() !== '';
+  }
+
   // Checklist context
   const checklistEmpty = checklistLi
     ? checklistLi.textContent.trim() === ''
@@ -657,6 +673,8 @@ function _handleEnter(e) {
     inPre: !!pre,
     preIsExiting,
     inHeading: !!heading,
+    headingAtStart,
+    headingHasTextAfter,
     inChecklistLi: !!checklistLi,
     checklistEmpty,
     inLi: !!li && !checklistLi,
@@ -701,6 +719,37 @@ function _handleEnter(e) {
       const p = document.createElement('p');
       p.innerHTML = '<br>';
       heading.after(p);
+      const r = document.createRange();
+      r.setStart(p, 0);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return;
+    }
+
+    case 'heading-para-before': {
+      // Enter na początku nagłówka — pusty akapit nad nim, kursor zostaje
+      e.preventDefault();
+      undo.checkpoint();
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      heading.before(p);
+      return;
+    }
+
+    case 'heading-split': {
+      // Enter w środku nagłówka — tekst za kursorem wędruje do akapitu niżej
+      e.preventDefault();
+      undo.checkpoint();
+      const splitRange = document.createRange();
+      splitRange.selectNodeContents(heading);
+      splitRange.setStart(range.startContainer, range.startOffset);
+      const frag = splitRange.extractContents();
+      const p = document.createElement('p');
+      p.appendChild(frag);
+      if (!p.firstChild) p.innerHTML = '<br>';
+      heading.after(p);
+      if (!heading.firstChild) heading.innerHTML = '<br>';
       const r = document.createRange();
       r.setStart(p, 0);
       r.collapse(true);
@@ -929,7 +978,7 @@ function _tryConvertMarkdownLink(e) {
   a.textContent = displayText;
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
-  a.title = t('editor_link_ctrlClickHint');
+  a.title = t('editor_link_openHint');
 
   // Spacja po linku (zamiast oryginalnej, którą blokujemy preventDefault)
   const spaceNode = document.createTextNode(' ');
@@ -976,39 +1025,26 @@ function _tryAutolinkWord(e) {
   e.preventDefault();
   undo.checkpoint();
 
-  const href = normalizeUrl(word);
   const a = document.createElement('a');
-  a.href = href;
+  a.href = normalizeUrl(word);
   a.textContent = word;
 
+  // Podziel węzeł: [before] <a>word</a> [spacja] [after]
+  // Tekst za kursorem (after) musi przetrwać — np. spacja wstawiana
+  // tuż po URL-u w środku zdania.
   const start = range.startOffset - word.length;
-  node.textContent =
-    node.textContent.slice(0, start) +
-    node.textContent.slice(range.startOffset);
-
+  const after = node.textContent.slice(range.startOffset);
   const parent = node.parentNode;
   const nextSib = node.nextSibling;
 
-  if (start === 0 && node.textContent === '') {
-    parent.insertBefore(a, nextSib ?? null);
-    parent.removeChild(node);
-  } else {
-    node.textContent = node.textContent.slice(0, start);
-    parent.insertBefore(a, nextSib ?? null);
-    const space = document.createTextNode(' ');
-    parent.insertBefore(space, a.nextSibling);
-    const r = document.createRange();
-    r.setStart(space, 1);
-    r.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(r);
-    document.dispatchEvent(new Event('forceSave'));
-    return true;
-  }
-
-  // Kursor za linkiem + spacja
+  node.textContent = node.textContent.slice(0, start); // "before"
+  parent.insertBefore(a, nextSib);
   const space = document.createTextNode(' ');
-  parent.insertBefore(space, a.nextSibling);
+  parent.insertBefore(space, nextSib);
+  if (after) parent.insertBefore(document.createTextNode(after), nextSib);
+  if (!node.textContent) node.remove();
+
+  // Kursor za wstawioną spacją
   const r = document.createRange();
   r.setStart(space, 1);
   r.collapse(true);
@@ -1597,7 +1633,11 @@ function _handleBackspace(e) {
   }
 }
 function _handleCtrl(e) {
-  switch (e.key) {
+  // Normalizacja klawisza: Shift i CapsLock dają wielkie litery ('Z', 'B'),
+  // przez co switch na małych literach by ich nie trafił — Ctrl+Shift+Z
+  // (redo) i wszystkie skróty z włączonym CapsLockiem przestawały działać.
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  switch (key) {
     case 'b':
       e.preventDefault();
       document.execCommand('bold');
@@ -1614,7 +1654,7 @@ function _handleCtrl(e) {
       e.preventDefault();
       document.getElementById('code-btn').click();
       break;
-    case 'X':
+    case 'x':
       if (e.shiftKey) {
         e.preventDefault();
         document.execCommand('strikeThrough');
@@ -1656,8 +1696,11 @@ function _initPaste() {
 
     if (html) {
       const processed = isClickUpHTML(html) ? preprocessClickUp(html) : html;
-      const safe = sanitizeHTML(processed ?? html);
-      const trimmed = safe.length > MAX_PASTE ? safe.slice(0, MAX_PASTE) : safe;
+      // Przycinaj PRZED sanityzacją — DOMParser w sanitizeHTML domknie
+      // ucięte w połowie tagi; slice po sanityzacji zostawiał zepsuty HTML
+      const raw = processed ?? html;
+      const clipped = raw.length > MAX_PASTE ? raw.slice(0, MAX_PASTE) : raw;
+      const trimmed = sanitizeHTML(clipped);
       // Limit węzłów DOM — zapobiega paste bomb z zagnieżdżonych tagów
       if (trimmed) {
         const tmp = document.createElement('div');
@@ -1793,7 +1836,12 @@ function _handleCopy(e, isCut) {
   wrap.normalize();
 
   e.clipboardData.setData('text/html', wrap.innerHTML);
-  e.clipboardData.setData('text/plain', wrap.textContent);
+  // text/plain jako Markdown — textContent skleja akapity w jedną linię
+  // i gubi punktory list; markdown zachowuje strukturę w czystym tekście
+  e.clipboardData.setData(
+    'text/plain',
+    htmlToMarkdown(wrap) || wrap.textContent,
+  );
   e.preventDefault();
 
   if (isCut) {
@@ -1806,6 +1854,43 @@ function _handleCopy(e, isCut) {
     }
     debouncedSave();
   }
+}
+
+/* ── Kopiuj jako Markdown (toolbar + Alt+K) ────── */
+
+function _initCopyMarkdown() {
+  const btn = document.getElementById('copy-md-btn');
+  if (!btn) return;
+
+  let _feedbackTimer = null;
+
+  btn.addEventListener('click', async () => {
+    const md = htmlToMarkdown(editor);
+    if (!md) return;
+
+    try {
+      await navigator.clipboard.writeText(md);
+    } catch {
+      // Fallback: starsze konteksty bez clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = md;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+
+    // Feedback — ikona zmienia się na ✓ i wraca
+    clearTimeout(_feedbackTimer);
+    btn.classList.remove('icon--copy');
+    btn.classList.add('icon--check', 'is-copied');
+    _feedbackTimer = setTimeout(() => {
+      btn.classList.remove('icon--check', 'is-copied');
+      btn.classList.add('icon--copy');
+    }, 1200);
+  });
 }
 
 /* ── Context Resume — zapamiętaj/przywróć pozycję kursora ── */

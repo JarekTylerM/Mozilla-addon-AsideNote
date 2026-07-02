@@ -1,9 +1,17 @@
 /* ══════════════════════════════════════════════════════════════
    onboarding.js — prowadzony tour po funkcjach AsideNotes
 
+   6 lekcji, od podstaw do szczegółów — każda buduje na poprzedniej:
+     1. Start                — pierwsza notatka, lista, edytor, notatka vs zadanie
+     2. Formatowanie         — toolbar, slash menu, markdown, kopiuj jako MD
+     3. Zadania i terminy    — parser quick capture, date picker, powtarzanie
+     4. Tryby skupienia      — zen (wł/wył), focus mode (wł/wył)
+     5. Porządek             — szukanie, przełącznik typów, filtry, tagi
+     6. Dane i skróty        — skróty globalne, ustawienia, backup, prywatność
+
    API publiczne:
      initOnboarding(uiSettings)  — wywołaj z boot po renderList()
-     startStage(n)               — uruchom etap 1-4 (z panelu)
+     startStage(n)               — uruchom etap 1-6 (z panelu)
    ══════════════════════════════════════════════════════════════ */
 
 import { t } from './i18n.js';
@@ -11,33 +19,40 @@ import { saveUiSettings } from './storage.js';
 
 /* ── Definicja kroków ────────────────────────────────────────── */
 
+/* Await na dodanie elementu do listy — współdzielony przez kroki capture */
+const AWAIT_NOTE_ADDED = {
+  type: 'mutation',
+  selector: '#notesList',
+  options: { childList: true, subtree: true },
+  check: (muts) =>
+    muts.some((m) =>
+      [...m.addedNodes].some((n) => n.classList?.contains('note-item')),
+    ),
+};
+
+/* Krok "otwórz notatkę z listy" — powtarza się w lekcjach 2 i 4 */
+const noteItemTarget = () =>
+  document.querySelector('#notesList .note-item') ??
+  document.querySelector('.notes-empty');
+const noteListEmpty = () => !document.querySelector('#notesList .note-item');
+
 const STEPS = [
-// ── Etap 1: Start ─────────────────────────────────────────
+  // ── Lekcja 1: Start — pierwsza notatka i podstawowe pojęcia ──
   {
     stage: 1, idx: 0,
     target: '#quick-capture',
     textKey: 'ob_s1_1',
     type: 'try',
     focusTarget: true,
-    await: {
-      type: 'mutation',
-      selector: '#notesList',
-      options: { childList: true, subtree: true },
-      check: (muts) =>
-        muts.some((m) =>
-          [...m.addedNodes].some((n) => n.classList?.contains('note-item')),
-        ),
-    },
+    await: AWAIT_NOTE_ADDED,
     side: 'bottom',
   },
   {
     stage: 1, idx: 1,
-    target: () =>
-      document.querySelector('#notesList .note-item') ??
-      document.querySelector('.notes-empty'),
+    target: noteItemTarget,
     textKey: 'ob_s1_2',
     textKeyFallback: 'ob_s1_2_empty',
-    isFallback: () => !document.querySelector('#notesList .note-item'),
+    isFallback: noteListEmpty,
     type: 'try',
     await: { type: 'click', selector: '#notesList .note-item' },
     side: 'right',
@@ -52,9 +67,44 @@ const STEPS = [
   },
   {
     stage: 1, idx: 3,
-    target: '#editor',
+    target: null,
     textKey: 'ob_s1_4',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 1, idx: 4,
+    target: null,
+    textKey: 'ob_done_s1',
+    type: 'done',
+    side: 'bottom',
+  },
+
+  // ── Lekcja 2: Formatowanie — toolbar, slash menu, markdown ──
+  {
+    stage: 2, idx: 0,
+    target: noteItemTarget,
+    textKey: 'ob_s2_1',
+    textKeyFallback: 'ob_s2_1_empty',
+    isFallback: noteListEmpty,
     type: 'try',
+    await: { type: 'click', selector: '#notesList .note-item' },
+    side: 'right',
+  },
+  {
+    stage: 2, idx: 1,
+    target: '#toolbar',
+    textKey: 'ob_s2_2',
+    type: 'show',
+    side: 'bottom',
+    revealHidden: '#toolbar',
+  },
+  {
+    stage: 2, idx: 2,
+    target: '#editor',
+    textKey: 'ob_s2_3',
+    type: 'try',
+    focusTarget: true,
     await: {
       type: 'mutation',
       selector: '#slash-menu',
@@ -64,80 +114,15 @@ const STEPS = [
     side: 'top',
   },
   {
-    stage: 1, idx: 4,
-    target: null,
-    textKey: 'ob_s1_5',
-    type: 'show',
-    side: 'bottom',
-  },
-  {
-    stage: 1, idx: 5,
-    target: null,
-    textKey: 'ob_s1_6',
-    type: 'show',
-    side: 'bottom',
-  },
-  {
-    stage: 1, idx: 6,
-    target: null,
-    textKey: 'ob_done_s1',
-    type: 'done',
-    side: 'bottom',
-  },
-
-  // ── Etap 2: Zadania i terminy ──────────────────────────────
-  {
-    stage: 2, idx: 0,
-    target: '#quick-capture',
-    textKey: 'ob_s2_1',
-    type: 'try',
-    await: {
-      type: 'mutation',
-      selector: '#notesList',
-      options: { childList: true, subtree: true },
-      check: (muts) =>
-        muts.some((m) =>
-          [...m.addedNodes].some((n) => n.classList?.contains('note-item')),
-        ),
-    },
-    side: 'bottom',
-  },
-  {
-    stage: 2, idx: 1,
-    target: () =>
-      document.querySelector('#notesList .note-item') ??
-      document.querySelector('.notes-empty'),
-    textKey: 'ob_s2_2',
-    textKeyFallback: 'ob_s2_2_empty',
-    isFallback: () => !document.querySelector('#notesList .note-item'),
-    type: 'try',
-    await: { type: 'click', selector: '#notesList .note-item' },
-    side: 'right',
-  },
-  {
-    stage: 2, idx: 2,
-    target: '#due-display-btn',
-    textKey: 'ob_s2_3',
-    type: 'try',
-    await: {
-      type: 'mutation',
-      selector: '#date-picker-popover',
-      options: { attributes: true, attributeFilter: ['hidden'] },
-      check: (muts, el) => !el.hidden,
-    },
-    side: 'bottom',
-    revealHidden: '#due-wrapper',
-  },
-  {
     stage: 2, idx: 3,
-    target: '#date-picker-popover',
-    textKey: 'ob_s2_4_rec',
+    target: '#editor',
+    textKey: 'ob_s2_4',
     type: 'show',
-    side: 'bottom',
+    side: 'top',
   },
   {
     stage: 2, idx: 4,
-    target: '#notesList',
+    target: '#copy-md-btn',
     textKey: 'ob_s2_5',
     type: 'show',
     side: 'bottom',
@@ -150,37 +135,104 @@ const STEPS = [
     side: 'bottom',
   },
 
-  // ── Etap 3: Tryby skupienia ────────────────────────────────
+  // ── Lekcja 3: Zadania i terminy ──────────────────────────────
   {
     stage: 3, idx: 0,
-    target: '#type-toggle',
+    target: '#quick-capture',
     textKey: 'ob_s3_1',
+    type: 'try',
+    focusTarget: true,
+    await: AWAIT_NOTE_ADDED,
+    side: 'bottom',
+  },
+  {
+    stage: 3, idx: 1,
+    target: noteItemTarget,
+    textKey: 'ob_s3_2',
+    textKeyFallback: 'ob_s3_2_empty',
+    isFallback: noteListEmpty,
+    type: 'try',
+    await: { type: 'click', selector: '#notesList .note-item' },
+    side: 'right',
+  },
+  {
+    stage: 3, idx: 2,
+    target: '#due-display-btn',
+    textKey: 'ob_s3_3',
     type: 'try',
     await: {
       type: 'mutation',
-      selector: 'body',
+      selector: '#date-picker-popover',
+      options: { attributes: true, attributeFilter: ['hidden'] },
+      check: (muts, el) => !el.hidden,
+    },
+    side: 'bottom',
+    revealHidden: '#due-wrapper',
+  },
+  {
+    stage: 3, idx: 3,
+    target: '#date-picker-popover',
+    textKey: 'ob_s3_4',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 3, idx: 4,
+    target: '#notesList',
+    textKey: 'ob_s3_5',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 3, idx: 5,
+    target: null,
+    textKey: 'ob_done_s3',
+    type: 'done',
+    side: 'bottom',
+  },
+
+  // ── Lekcja 4: Tryby skupienia — zen i focus mode, tam i z powrotem ──
+  // Klasa zen-mode żyje na #main-view (nie na body) — patrz notes.js renderList
+  {
+    stage: 4, idx: 0,
+    target: '#zen-btn',
+    textKey: 'ob_s4_1',
+    type: 'try',
+    await: {
+      type: 'mutation',
+      selector: '#main-view',
       options: { attributes: true, attributeFilter: ['class'] },
       check: (muts, el) => el.classList.contains('zen-mode'),
     },
     side: 'bottom',
   },
   {
-    stage: 3, idx: 1,
-    target: '#type-toggle',
-    textKey: 'ob_s3_2',
+    stage: 4, idx: 1,
+    target: '#zen-btn',
+    textKey: 'ob_s4_2',
     type: 'try',
     await: {
       type: 'mutation',
-      selector: 'body',
+      selector: '#main-view',
       options: { attributes: true, attributeFilter: ['class'] },
       check: (muts, el) => !el.classList.contains('zen-mode'),
     },
     side: 'bottom',
   },
   {
-    stage: 3, idx: 2,
-    target: '#editor-container',
-    textKey: 'ob_s3_3',
+    stage: 4, idx: 2,
+    target: noteItemTarget,
+    textKey: 'ob_s4_3',
+    textKeyFallback: 'ob_s4_3_empty',
+    isFallback: noteListEmpty,
+    type: 'try',
+    await: { type: 'click', selector: '#notesList .note-item' },
+    side: 'right',
+  },
+  {
+    stage: 4, idx: 3,
+    target: '#focusmode-btn',
+    textKey: 'ob_s4_4',
     type: 'try',
     await: {
       type: 'mutation',
@@ -191,47 +243,110 @@ const STEPS = [
     side: 'top',
   },
   {
-    stage: 3, idx: 3,
+    stage: 4, idx: 4,
+    target: '#focusmode-btn',
+    textKey: 'ob_s4_5',
+    type: 'try',
+    await: {
+      type: 'mutation',
+      selector: 'body',
+      options: { attributes: true, attributeFilter: ['class'] },
+      check: (muts, el) => !el.classList.contains('is-focus-mode'),
+    },
+    side: 'top',
+  },
+  {
+    stage: 4, idx: 5,
     target: null,
-    textKey: 'ob_done_s3',
+    textKey: 'ob_done_s4',
     type: 'done',
     side: 'bottom',
   },
 
-  // ── Etap 4: Zaawansowany ───────────────────────────────────
+  // ── Lekcja 5: Porządek — szukanie, typy, filtry, tagi ────────
   {
-    stage: 4, idx: 0,
-    target: '#tag-selector',
-    textKey: 'ob_s4_1',
+    stage: 5, idx: 0,
+    target: '.search-wrapper',
+    textKey: 'ob_s5_1',
     type: 'show',
-    side: 'top',
+    side: 'bottom',
   },
   {
-    stage: 4, idx: 1,
+    stage: 5, idx: 1,
+    target: '#type-toggle',
+    textKey: 'ob_s5_2',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 5, idx: 2,
+    target: '#filter-btn',
+    textKey: 'ob_s5_3',
+    type: 'try',
+    await: {
+      type: 'mutation',
+      selector: '#filter-bar',
+      options: { attributes: true, attributeFilter: ['hidden'] },
+      check: (muts, el) => !el.hidden,
+    },
+    side: 'bottom',
+  },
+  {
+    stage: 5, idx: 3,
     target: '#filter-bar',
-    textKey: 'ob_s4_2',
+    textKey: 'ob_s5_4',
     type: 'show',
     side: 'bottom',
     revealHidden: '#filter-bar',
   },
   {
-    stage: 4, idx: 2,
-    target: '#panel-tab-shortcuts',
-    textKey: 'ob_s4_3',
+    stage: 5, idx: 4,
+    target: '#tag-selector',
+    textKey: 'ob_s5_5',
     type: 'show',
     side: 'top',
   },
   {
-    stage: 4, idx: 3,
-    target: '#storage-usage',
-    textKey: 'ob_s4_4',
-    type: 'show',
-    side: 'top',
-  },
-  {
-    stage: 4, idx: 4,
+    stage: 5, idx: 5,
     target: null,
-    textKey: 'ob_done_s4',
+    textKey: 'ob_done_s5',
+    type: 'done',
+    side: 'bottom',
+  },
+
+  // ── Lekcja 6: Dane i skróty — praca z przeglądarką, backup, prywatność ──
+  {
+    stage: 6, idx: 0,
+    target: null,
+    textKey: 'ob_s6_1',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 6, idx: 1,
+    target: '#panel-btn',
+    textKey: 'ob_s6_2',
+    type: 'show',
+    side: 'top',
+  },
+  {
+    stage: 6, idx: 2,
+    target: '#panel-btn',
+    textKey: 'ob_s6_3',
+    type: 'show',
+    side: 'top',
+  },
+  {
+    stage: 6, idx: 3,
+    target: '#security-btn',
+    textKey: 'ob_s6_4',
+    type: 'show',
+    side: 'top',
+  },
+  {
+    stage: 6, idx: 4,
+    target: null,
+    textKey: 'ob_done_s6',
     type: 'done',
     side: 'bottom',
   },
@@ -244,6 +359,8 @@ const STAGE_LABELS = {
   2: 'ob_stage2_label',
   3: 'ob_stage3_label',
   4: 'ob_stage4_label',
+  5: 'ob_stage5_label',
+  6: 'ob_stage6_label',
 };
 
 /* ── Stan ────────────────────────────────────────────────────── */

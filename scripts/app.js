@@ -120,7 +120,7 @@ Promise.all([
     rescheduleAll(state.notes);
     initUiSettings(uiSettings);
     renderList();
-    document.getElementById('main-view')?.classList.add('is-ready');
+    document.getElementById("main-view")?.classList.add("is-ready");
     updateStorageUsage();
     renderTagSelector();
 
@@ -692,9 +692,7 @@ document.querySelectorAll(".shortcuts-subtab").forEach((btn) => {
   btn.addEventListener("click", () => {
     document
       .querySelectorAll(".shortcuts-subtab")
-      .forEach((b) =>
-        b.classList.toggle("is-active", b === btn),
-      );
+      .forEach((b) => b.classList.toggle("is-active", b === btn));
     const tab = btn.dataset.shortcutsTab;
     document.getElementById("shortcuts-pane-general").hidden =
       tab !== "general";
@@ -786,9 +784,7 @@ document.addEventListener("noteTrashed", (e) => {
 
 // Hover/fokus wstrzymuje auto-hide — użytkownik klawiatury potrzebuje
 // czasu na dotarcie Tabem do przycisku Cofnij
-_undoToast?.addEventListener("mouseenter", () =>
-  clearTimeout(_undoToastTimer),
-);
+_undoToast?.addEventListener("mouseenter", () => clearTimeout(_undoToastTimer));
 _undoToast?.addEventListener("focusin", () => clearTimeout(_undoToastTimer));
 _undoToast?.addEventListener("mouseleave", () => _armUndoToastTimer(2500));
 _undoToast?.addEventListener("focusout", () => _armUndoToastTimer(2500));
@@ -882,6 +878,13 @@ document.addEventListener("keydown", (e) => {
   if (altKey === "m") {
     e.preventDefault();
     document.getElementById("focusmode-btn")?.click();
+    return;
+  }
+
+  // Alt+K — kopiuj treść notatki jako Markdown
+  if (altKey === "k") {
+    e.preventDefault();
+    document.getElementById("copy-md-btn")?.click();
     return;
   }
 
@@ -1029,7 +1032,7 @@ if (backBtn) {
   });
 }
 
-// clear tag after delete note or task from flist 
-document.addEventListener('noteDeleted', () => {
+// clear tag after delete note or task from flist
+document.addEventListener("noteDeleted", () => {
   renderTagSelector();
 });

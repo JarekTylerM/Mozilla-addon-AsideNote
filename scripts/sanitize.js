@@ -307,6 +307,7 @@ export const ALLOWED_TAGS = new Set([
 // UL: data-list dla checklisty ("checklist").
 // LI: data-checked dla stanu checkbox ("true"/"false").
 // BLOCKQUOTE: data-callout dla typu callouta ("note"|"tip"|"important"|"warning"|"caution").
+// CODE: data-language z triggera ```js — używane przy eksporcie do Markdown.
 export const ALLOWED_ATTRS = {
   A: new Set(['href', 'target', 'rel', 'title']),
   OL: new Set(['start']),
@@ -314,6 +315,7 @@ export const ALLOWED_ATTRS = {
   UL: new Set(['data-list']),
   LI: new Set(['data-checked']),
   BLOCKQUOTE: new Set(['data-callout', 'data-callout-label']),
+  CODE: new Set(['data-language']),
 };
 
 /**

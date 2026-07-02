@@ -281,6 +281,11 @@
 #toolbar button.is-active {
   opacity: 0.8;
 }
+/* Feedback po skopiowaniu jako Markdown — zielony check */
+#copy-md-btn.is-copied {
+  background-color: var(--success);
+  opacity: 1;
+}
 
 #editor {
   flex: 1;

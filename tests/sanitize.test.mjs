@@ -451,6 +451,16 @@ test('style i class usunięte z dozwolonego tagu', () => {
   expect(out.includes('class=')).toBe(false);
 });
 
+test('data-language na <code> zachowany (trigger ```js)', () => {
+  const out = sanitizeHTML('<pre><code data-language="js">const x;</code></pre>');
+  expect(out).toContain('data-language="js"');
+});
+
+test('data-language na innym tagu → usunięty', () => {
+  const out = sanitizeHTML('<p data-language="js">tekst</p>');
+  expect(out.includes('data-language')).toBe(false);
+});
+
 test('link javascript: → zamieniony na tekst', () => {
   const out = sanitizeHTML('<p><a href="javascript:alert(1)">klik</a></p>');
   expect(out.includes('<a')).toBe(false);

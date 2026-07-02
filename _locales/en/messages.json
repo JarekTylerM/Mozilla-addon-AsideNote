@@ -205,7 +205,7 @@
   "editor_empty_placeholder": {
     "message": "Write or type '/' for commands"
   },
-  "editor_link_ctrlClickHint": {
+  "editor_link_openHint": {
     "message": "Click to open link"
   },
   "editor_summary_placeholder": {
@@ -514,91 +514,139 @@
     "message": "Skip all"
   },
   "ob_done_s1": {
-    "message": "Done! You know the basics of AsideNotes. You can restart the guide anytime from the settings panel."
+    "message": "That's enough to start taking notes. Next lesson: formatting text. You'll find all lessons in settings (⚙ at the bottom), in the Guide section."
   },
   "ob_done_s2": {
-    "message": "Great! You now know how to manage tasks with due dates and recurrence. Find more guide stages in settings."
+    "message": "Formatting mastered. Next lesson: tasks with due dates and reminders — find it in settings (⚙), in the Guide section."
   },
   "ob_done_s3": {
-    "message": "Focus modes mastered. Alt+Z and Alt+M are shortcuts worth having in your muscle memory."
+    "message": "Tasks and due dates done. Next lesson: focus modes — fewer distractions when you need to concentrate."
   },
   "ob_done_s4": {
-    "message": "Guide complete. You now know all the key features of AsideNotes. Go get things done!"
+    "message": "Focus modes mastered: Alt+Z quiets the view, Alt+M gives you a full-screen editor. Next lesson: keeping things organized — search, filters and tags."
+  },
+  "ob_done_s5": {
+    "message": "Organization mastered. One lesson left: your data, backups and keyboard shortcuts."
+  },
+  "ob_done_s6": {
+    "message": "Guide complete — you now know all of AsideNotes. You can replay any lesson from settings. Happy note-taking!"
   },
   "ob_panel_title": {
     "message": "Guide"
   },
   "ob_s1_1": {
-    "message": "Type something and press Enter. Start with ! to create a task instead of a note."
+    "message": "This is the quick capture field. Type anything — e.g. buy milk — and press Enter. That's how you create your first note."
   },
   "ob_s1_2": {
-    "message": "Your notes and tasks live here. Click any item to open it."
+    "message": "Every entry lands on this list. Click yours to open it."
   },
   "ob_s1_2_empty": {
-    "message": "No notes yet. Go back to step 1 and add your first one — type something in the field above and press Enter."
+    "message": "The list is still empty. Go back one step (←), type something in the field above and press Enter."
   },
   "ob_s1_3": {
-    "message": "Write here. Markdown works: # heading, - list, --- divider."
+    "message": "This is the editor — expand your thought here, and change the title above. Everything saves itself as you type; there's no Save button."
   },
   "ob_s1_4": {
-    "message": "Type / to see all block types: headings, lists, callouts, code and more."
-  },
-  "ob_s1_5": {
-    "message": "There's also a quick capture mode — a separate popup that opens without having to open the editor. Type a note or task and get back to what you were doing."
-  },
-  "ob_s1_6": {
-    "message": "Alt+Shift+S opens quick capture from any browser tab. You can close and reopen AsideNotes whenever you want — Alt+Shift+Q."
+    "message": "AsideNotes has two kinds of entries. A note is a loose piece of information. A task has a circle to check off — create one by starting with !, e.g. !call a friend. A task can also get a due date with a reminder, but that's covered in the Tasks and due dates lesson."
   },
   "ob_s2_1": {
-    "message": "Type !call mom tomorrow 6pm and Enter — creates a task with a due date and alarm."
+    "message": "Open any note from the list — we'll practice formatting on it."
+  },
+  "ob_s2_1_empty": {
+    "message": "The list is empty. Add a note in the field above (type something and press Enter), then click it on the list."
   },
   "ob_s2_2": {
-    "message": "Click a task in the list to open it in the editor."
-  },
-  "ob_s2_2_empty": {
-    "message": "No tasks yet. Go back to step 1 — type !something in the field above and press Enter."
+    "message": "The toolbar works like a text editor: select some text and click an icon — bold, italic, headings, lists, quotes. Alt+E hides and restores the bar."
   },
   "ob_s2_3": {
-    "message": "Click the due date field to set date, time and reminder in one place."
+    "message": "Type / on an empty line in the editor — a menu opens with every block type: task lists, code blocks, colored callouts and more."
   },
-  "ob_s2_4_rec": {
-    "message": "At the bottom of the picker you can set recurrence — daily, weekly, monthly, yearly, or specific days of the week."
+  "ob_s2_4": {
+    "message": "Prefer keeping your hands on the keyboard? Text shortcuts (Markdown) work too: # and space makes a heading, - and space a list, **text** bold. No need to learn them — the toolbar does the same."
   },
   "ob_s2_5": {
-    "message": "Tasks sort themselves automatically: Overdue, Today, Tomorrow, This week and later."
+    "message": "This icon copies the whole note as Markdown text you can paste anywhere — into an email, a document or a chat. Shortcut: Alt+K."
   },
   "ob_s3_1": {
-    "message": "Press Alt+Z — zen mode shows only what matters today and reduces visual noise."
+    "message": "Type: !call mom tomorrow 6pm and press Enter. The ! creates a task, and the words tomorrow and 6pm turn themselves into a due date with a reminder."
   },
   "ob_s3_2": {
-    "message": "Alt+Z again exits zen mode and returns to the normal view."
+    "message": "A task has a circle to check off and a due date under the title. Click your task to open it."
+  },
+  "ob_s3_2_empty": {
+    "message": "No tasks yet. Go back one step (←) — type !something in the field above and press Enter."
   },
   "ob_s3_3": {
-    "message": "Press Alt+M — the editor takes up the full panel. Great for longer writing."
+    "message": "Click the due date field — set the date, time and reminder in one place."
+  },
+  "ob_s3_4": {
+    "message": "At the bottom you can turn on recurrence: daily, weekly, monthly, yearly or on chosen days — e.g. water the plants every Monday."
+  },
+  "ob_s3_5": {
+    "message": "The list groups tasks by itself: Overdue, Today, Tomorrow, This week… A checked-off task moves to Completed."
   },
   "ob_s4_1": {
-    "message": "Add a tag to a note — click + add tag below the editor. Filter your list by tags."
+    "message": "Zen mode quiets everything except what matters today. Click this icon or press Alt+Z."
   },
   "ob_s4_2": {
-    "message": "Filter notes and tasks by tags, type and due date."
+    "message": "The interface dimmed and the list shows only today's items. The same button (or Alt+Z) returns to the normal view — try it."
   },
   "ob_s4_3": {
-    "message": "Full keyboard shortcut reference — useful once you start using the keyboard more."
+    "message": "The second mode lives in the editor. First, open any note from the list."
+  },
+  "ob_s4_3_empty": {
+    "message": "The list is empty. Add a note in the field above (type something and press Enter), then click it on the list."
   },
   "ob_s4_4": {
-    "message": "Your data is local — zero cloud, zero trackers. Export whenever you want."
+    "message": "Focus mode: the editor fills the whole window — perfect for longer writing. Click the icon in the bottom-right corner of the editor or press Alt+M."
+  },
+  "ob_s4_5": {
+    "message": "You're writing distraction-free. Exiting works the same way: the corner icon or Alt+M — try it now."
+  },
+  "ob_s5_1": {
+    "message": "Search looks through the titles and content of all your notes. Shortcut: Alt+S."
+  },
+  "ob_s5_2": {
+    "message": "This switch narrows the list to just notes or just tasks."
+  },
+  "ob_s5_3": {
+    "message": "Click the funnel icon — the list filters unfold."
+  },
+  "ob_s5_4": {
+    "message": "Filters combine: task status, important, due date, tags. Active filters show above the list and clear with one click."
+  },
+  "ob_s5_5": {
+    "message": "A tag is a colored label, e.g. work or home. Attach them below the editor (+ add tag); rename and recolor them in settings. One note can have several tags."
+  },
+  "ob_s6_1": {
+    "message": "AsideNotes works from any browser tab: Alt+Shift+Q opens and closes this panel, and Alt+Shift+S brings up the quick-add popup — capture thoughts without breaking your flow."
+  },
+  "ob_s6_2": {
+    "message": "Under the ⚙ icon you'll find settings: theme, interface size and the full list of keyboard shortcuts (Shortcuts tab)."
+  },
+  "ob_s6_3": {
+    "message": "Your notes live only on this computer — no cloud, no tracking. In settings you can make a backup (Export data), and deleted notes wait in Recently deleted."
+  },
+  "ob_s6_4": {
+    "message": "One last thing: notes are not encrypted — anyone with access to this browser profile can read them. Don't store passwords or card numbers in them."
   },
   "ob_stage1_label": {
     "message": "Getting started"
   },
   "ob_stage2_label": {
-    "message": "Tasks and due dates"
+    "message": "Formatting"
   },
   "ob_stage3_label": {
-    "message": "Focus modes"
+    "message": "Tasks and due dates"
   },
   "ob_stage4_label": {
-    "message": "Advanced"
+    "message": "Focus modes"
+  },
+  "ob_stage5_label": {
+    "message": "Staying organized"
+  },
+  "ob_stage6_label": {
+    "message": "Your data and shortcuts"
   },
   "panelBtn_ariaLabel": {
     "message": "Open personalization panel"
@@ -1491,6 +1539,9 @@
   },
   "linkTooltip_copy": { "message": "Copy link address" },
   "linkTooltip_copied": { "message": "Copied ✓" },
+  "copyMd_title": { "message": "Copy as Markdown · Alt+K" },
+  "copyMd_ariaLabel": { "message": "Copy note content as Markdown" },
+  "shortcuts_copyMd": { "message": "→ copy note as Markdown" },
   "linkTooltip_edit": { "message": "Edit link" },
   "linkTooltip_delete": { "message": "Remove link" },
   "typeToggle_toggle_ariaLabel": { "message": "Toggle type filter" },

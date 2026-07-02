@@ -205,7 +205,7 @@
   "editor_empty_placeholder": {
     "message": "Pisz lub wpisz '/' aby wybrać typ bloku"
   },
-  "editor_link_ctrlClickHint": {
+  "editor_link_openHint": {
     "message": "Kliknij, aby otworzyć link"
   },
   "editor_summary_placeholder": {
@@ -514,91 +514,139 @@
     "message": "Pomiń wszystko"
   },
   "ob_done_s1": {
-    "message": "Gotowe! Znasz już podstawy AsideNotes. Przewodnik możesz uruchomić ponownie w dowolnym momencie z panelu ustawień."
+    "message": "To wystarczy, żeby zacząć notować. W następnej lekcji: jak formatować tekst. Wszystkie lekcje znajdziesz w ustawieniach (⚙ na dole) w sekcji Przewodnik."
   },
   "ob_done_s2": {
-    "message": "Świetnie! Wiesz już jak zarządzać zadaniami z terminami i powtarzaniem. Kolejne etapy przewodnika znajdziesz w ustawieniach."
+    "message": "Formatowanie opanowane. Następna lekcja: zadania z terminami i przypomnieniami — znajdziesz ją w ustawieniach (⚙) w sekcji Przewodnik."
   },
   "ob_done_s3": {
-    "message": "Tryby skupienia opanowane. Alt+Z i Alt+M to skróty które warto mieć w pamięci mięśniowej."
+    "message": "Zadania i terminy za tobą. Następna lekcja: tryby skupienia — mniej rozpraszaczy, gdy chcesz się skoncentrować."
   },
   "ob_done_s4": {
-    "message": "Przewodnik ukończony. Znasz teraz wszystkie kluczowe funkcje AsideNotes. Do dzieła!"
+    "message": "Tryby skupienia opanowane: Alt+Z wycisza widok, Alt+M daje pełny ekran do pisania. Następna lekcja: porządek w notatkach — szukanie, filtry i tagi."
+  },
+  "ob_done_s5": {
+    "message": "Porządek opanowany. Została ostatnia lekcja: twoje dane, kopie zapasowe i skróty klawiaturowe."
+  },
+  "ob_done_s6": {
+    "message": "Przewodnik ukończony — znasz już całe AsideNotes. Każdą lekcję możesz powtórzyć w ustawieniach. Dobrego notowania!"
   },
   "ob_panel_title": {
     "message": "Przewodnik"
   },
   "ob_s1_1": {
-    "message": "Wpisz coś i wciśnij Enter. Dodaj ! na początku żeby utworzyć zadanie zamiast notatki."
+    "message": "To pole szybkiego dodawania. Wpisz cokolwiek — np. kupić mleko — i wciśnij Enter. Tak powstaje pierwsza notatka."
   },
   "ob_s1_2": {
-    "message": "Tu są twoje notatki i zadania. Kliknij element żeby go otworzyć."
+    "message": "Każdy wpis trafia na tę listę. Kliknij swój, żeby go otworzyć."
   },
   "ob_s1_2_empty": {
-    "message": "Jeszcze nie masz notatek. Wróć do kroku 1 i dodaj pierwszą — wpisz coś w polu wyżej i wciśnij Enter."
+    "message": "Lista jest jeszcze pusta. Wróć do poprzedniego kroku (←), wpisz coś w polu u góry i wciśnij Enter."
   },
   "ob_s1_3": {
-    "message": "Tu piszesz. Markdown działa: # nagłówek, - lista, **bold**, *italic*, ~~strike~~, `kod`, --- separator."
+    "message": "To edytor — tu rozwijasz myśl, a wyżej zmieniasz tytuł. Wszystko zapisuje się samo w trakcie pisania; nie ma przycisku Zapisz."
   },
   "ob_s1_4": {
-    "message": "Wpisz / żeby zobaczyć wszystkie typy bloków: nagłówki, listy, callout, kod i więcej."
-  },
-  "ob_s1_5": {
-    "message": "Jest też tryb szybkiego dodawania — osobne okienko bez konieczności otwierania edytora. Wpisujesz notatkę lub zadanie i wracasz do pracy."
-  },
-  "ob_s1_6": {
-    "message": "Alt+Shift+S otwiera szybkie dodawanie z dowolnej karty przeglądarki. Możesz zamknąć i otworzyć AsideNotes kiedy chcesz — Alt+Shift+Q."
+    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kółko do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !zadzwonić do znajomego. Zadaniu ustawisz też termin z przypomnieniem, ale o tym w lekcji Zadania i terminy."
   },
   "ob_s2_1": {
-    "message": "Wpisz !zadzwonić do mamy jutro 18:00 i Enter — tworzy zadanie z terminem i alarmem."
+    "message": "Otwórz dowolną notatkę z listy — na niej poćwiczymy formatowanie."
+  },
+  "ob_s2_1_empty": {
+    "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
   },
   "ob_s2_2": {
-    "message": "Kliknij zadanie na liście żeby je otworzyć w edytorze."
-  },
-  "ob_s2_2_empty": {
-    "message": "Nie masz jeszcze żadnych zadań. Wróć do kroku 1 — wpisz !coś w polu powyżej i wciśnij Enter."
+    "message": "Pasek narzędzi działa jak w edytorze tekstu: zaznacz fragment i kliknij ikonę — pogrubienie, kursywa, nagłówki, listy, cytaty. Alt+E chowa i przywraca pasek."
   },
   "ob_s2_3": {
-    "message": "Kliknij pole terminu żeby ustawić datę, godzinę i przypomnienie w jednym miejscu."
+    "message": "Wpisz / w pustej linii edytora — otworzy się menu wszystkich bloków: listy zadań, bloki kodu, kolorowe ramki i inne."
   },
-  "ob_s2_4_rec": {
-    "message": "Na dole pickera możesz ustawić powtarzanie — codziennie, co tydzień, co miesiąc, co rok lub wybrane dni tygodnia."
+  "ob_s2_4": {
+    "message": "Wolisz nie odrywać rąk od klawiatury? Działają skróty tekstowe (Markdown): # i spacja daje nagłówek, - i spacja listę, **tekst** pogrubienie. Nie musisz ich znać — pasek robi to samo."
   },
   "ob_s2_5": {
-    "message": "Zadania układają się automatycznie: Zaległe, Dziś, Jutro, Ten tydzień i dalej."
+    "message": "Tą ikoną skopiujesz całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K."
   },
   "ob_s3_1": {
-    "message": "Wciśnij Alt+Z — zen mode pokazuje tylko to co ważne dziś i redukuje bodźce wizualne."
+    "message": "Wpisz: !zadzwonić do mamy jutro 18:00 i wciśnij Enter. Znak ! tworzy zadanie, a słowa jutro i 18:00 same zamieniają się w termin z przypomnieniem."
   },
   "ob_s3_2": {
-    "message": "Alt+Z jeszcze raz wyłącza zen mode i wraca do normalnego widoku."
+    "message": "Zadanie ma kółko do odhaczenia i termin pod tytułem. Kliknij swoje zadanie, żeby je otworzyć."
+  },
+  "ob_s3_2_empty": {
+    "message": "Nie masz jeszcze zadań. Wróć do poprzedniego kroku (←) — wpisz !coś w polu u góry i wciśnij Enter."
   },
   "ob_s3_3": {
-    "message": "Wciśnij Alt+M — edytor zajmuje cały ekran. Idealne do dłuższego pisania."
+    "message": "Kliknij pole terminu — w jednym miejscu ustawisz datę, godzinę i przypomnienie."
+  },
+  "ob_s3_4": {
+    "message": "Na dole włączysz powtarzanie: codziennie, co tydzień, co miesiąc, co rok albo w wybrane dni — np. podlać kwiaty w każdy poniedziałek."
+  },
+  "ob_s3_5": {
+    "message": "Lista sama grupuje zadania: Zaległe, Dziś, Jutro, Ten tydzień… Odhaczone zadanie przenosi się do Ukończonych."
   },
   "ob_s4_1": {
-    "message": "Dodaj tag do notatki — kliknij + dodaj tag pod edytorem. Filtruj listę po tagach."
+    "message": "Tryb zen wycisza wszystko poza tym, co ważne dziś. Kliknij tę ikonę albo wciśnij Alt+Z."
   },
   "ob_s4_2": {
-    "message": "Filtruj notatki i zadania po tagach, typie i terminie."
+    "message": "Interfejs przygasł, a lista pokazuje tylko dzisiejsze sprawy. Ten sam przycisk (albo Alt+Z) wraca do normalnego widoku — wypróbuj."
   },
   "ob_s4_3": {
-    "message": "Pełna lista skrótów w dwóch zakładkach: Ogólne i Edytor — przydaje się gdy zaczniesz używać klawiatury więcej niż myszy."
+    "message": "Drugi tryb działa w edytorze. Najpierw otwórz dowolną notatkę z listy."
+  },
+  "ob_s4_3_empty": {
+    "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
   },
   "ob_s4_4": {
-    "message": "Twoje dane są lokalne — zero chmury, zero trackerów. Eksportuj kiedy chcesz."
+    "message": "Tryb skupienia: edytor wypełnia całe okno — idealny do dłuższego pisania. Kliknij ikonę w prawym dolnym rogu edytora albo wciśnij Alt+M."
+  },
+  "ob_s4_5": {
+    "message": "Piszesz bez rozpraszaczy. Wyjście działa tak samo: ikona w rogu albo Alt+M — wypróbuj teraz."
+  },
+  "ob_s5_1": {
+    "message": "Wyszukiwarka przeszukuje tytuły i treść wszystkich notatek. Skrót: Alt+S."
+  },
+  "ob_s5_2": {
+    "message": "Ten przełącznik zawęża listę do samych notatek albo samych zadań."
+  },
+  "ob_s5_3": {
+    "message": "Kliknij ikonę lejka — rozwiną się filtry listy."
+  },
+  "ob_s5_4": {
+    "message": "Filtry można łączyć: status zadania, ważne, termin, tagi. Aktywne filtry widać nad listą i jednym kliknięciem je wyczyścisz."
+  },
+  "ob_s5_5": {
+    "message": "Tag to kolorowa etykieta, np. praca albo dom. Przypinasz je pod edytorem (+ dodaj tag), a nazwy i kolory zmieniasz w ustawieniach. Jedna notatka może mieć kilka tagów."
+  },
+  "ob_s6_1": {
+    "message": "AsideNotes działa z każdej karty przeglądarki: Alt+Shift+Q otwiera i zamyka ten panel, a Alt+Shift+S wywołuje okienko szybkiego dodawania — notujesz bez przerywania pracy."
+  },
+  "ob_s6_2": {
+    "message": "Pod ikoną ⚙ znajdziesz ustawienia: motyw, rozmiar interfejsu i pełną listę skrótów klawiaturowych (zakładka Skróty)."
+  },
+  "ob_s6_3": {
+    "message": "Twoje notatki są tylko na tym komputerze — bez chmury i bez śledzenia. W ustawieniach zrobisz kopię zapasową (Eksportuj dane), a usunięte notatki poczekają w Niedawno usuniętych."
+  },
+  "ob_s6_4": {
+    "message": "Ważne na koniec: notatki nie są szyfrowane — odczyta je każdy, kto ma dostęp do tego profilu przeglądarki. Nie zapisuj w nich haseł ani numerów kart."
   },
   "ob_stage1_label": {
     "message": "Start"
   },
   "ob_stage2_label": {
-    "message": "Zadania i terminy"
+    "message": "Formatowanie"
   },
   "ob_stage3_label": {
-    "message": "Tryby skupienia"
+    "message": "Zadania i terminy"
   },
   "ob_stage4_label": {
-    "message": "Zaawansowany"
+    "message": "Tryby skupienia"
+  },
+  "ob_stage5_label": {
+    "message": "Porządek w notatkach"
+  },
+  "ob_stage6_label": {
+    "message": "Dane i skróty"
   },
   "panelBtn_ariaLabel": {
     "message": "Otwórz panel personalizacji"
@@ -1491,6 +1539,9 @@
   },
   "linkTooltip_copy": { "message": "Kopiuj adres linku" },
   "linkTooltip_copied": { "message": "Skopiowano ✓" },
+  "copyMd_title": { "message": "Kopiuj jako Markdown · Alt+K" },
+  "copyMd_ariaLabel": { "message": "Kopiuj treść notatki jako Markdown" },
+  "shortcuts_copyMd": { "message": "→ kopiuj notatkę jako Markdown" },
   "linkTooltip_edit": { "message": "Edytuj link" },
   "linkTooltip_delete": { "message": "Usuń link" },
   "typeToggle_toggle_ariaLabel": { "message": "Przełącz widok filtra typów" },

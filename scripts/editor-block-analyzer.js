@@ -72,6 +72,8 @@ export function detectSpaceTrigger(blockText, textBefore) {
  *   inPre            {boolean} kursor w <pre>/<code>
  *   preIsExiting     {boolean} dwa <br> na końcu pre → wyjście
  *   inHeading        {boolean} kursor w <h1>/<h2>/<h3>
+ *   headingAtStart      {boolean} kursor przed całą treścią nagłówka
+ *   headingHasTextAfter {boolean} za kursorem jest jeszcze treść nagłówka
  *   inChecklistLi    {boolean} kursor w <li> checklisty
  *   checklistEmpty   {boolean} li checklisty jest pusty
  *   inLi             {boolean} kursor w zwykłym <li>
@@ -94,6 +96,8 @@ export function decideEnterAction(ctx) {
     inDetailsContent,
     detailsContentEmpty,
     inHeading,
+    headingAtStart,
+    headingHasTextAfter,
     inChecklistLi,
     checklistEmpty,
     inLi,
@@ -117,8 +121,16 @@ export function decideEnterAction(ctx) {
     return { action: 'pre-linebreak' };
   }
 
-  // ── Nagłówek → nowy paragraf ─────────────────────────────────
-  if (inHeading) return { action: 'heading-new-para' };
+  // ── Nagłówek ─────────────────────────────────────────────────
+  // Na początku: pusty akapit nad nagłówkiem (kursor zostaje).
+  // W środku: podział — tekst za kursorem wędruje do akapitu niżej.
+  // Na końcu (lub pusty nagłówek): nowy akapit pod spodem.
+  if (inHeading) {
+    if (headingAtStart && headingHasTextAfter)
+      return { action: 'heading-para-before' };
+    if (headingHasTextAfter) return { action: 'heading-split' };
+    return { action: 'heading-new-para' };
+  }
 
   // ── Checklist ─────────────────────────────────────────────────
   if (inChecklistLi) {

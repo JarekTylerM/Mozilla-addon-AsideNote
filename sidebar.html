@@ -654,6 +654,12 @@
               class="panel-icon icon--redo"
               data-i18n-attr="aria-label:toolbar_redo;title:toolbar_redo_title"
             ></button>
+            <button
+              tabindex="-1"
+              id="copy-md-btn"
+              class="panel-icon icon--copy"
+              data-i18n-attr="aria-label:copyMd_ariaLabel;title:copyMd_title"
+            ></button>
           </div>
         </div>
         <div
@@ -884,7 +890,7 @@
                 <span
                   class="onboarding-stage-btn__label"
                   data-i18n="ob_stage2_label"
-                  >Zadania i terminy</span
+                  >Formatowanie</span
                 >
                 <span class="onboarding-stage-btn__check" hidden>✓</span>
               </button>
@@ -897,7 +903,7 @@
                 <span
                   class="onboarding-stage-btn__label"
                   data-i18n="ob_stage3_label"
-                  >Tryby skupienia</span
+                  >Zadania i terminy</span
                 >
                 <span class="onboarding-stage-btn__check" hidden>✓</span>
               </button>
@@ -910,7 +916,33 @@
                 <span
                   class="onboarding-stage-btn__label"
                   data-i18n="ob_stage4_label"
-                  >Zaawansowany</span
+                  >Tryby skupienia</span
+                >
+                <span class="onboarding-stage-btn__check" hidden>✓</span>
+              </button>
+              <button
+                type="button"
+                class="onboarding-stage-btn"
+                data-ob-stage="5"
+              >
+                <span class="onboarding-stage-btn__num">5</span>
+                <span
+                  class="onboarding-stage-btn__label"
+                  data-i18n="ob_stage5_label"
+                  >Porządek w notatkach</span
+                >
+                <span class="onboarding-stage-btn__check" hidden>✓</span>
+              </button>
+              <button
+                type="button"
+                class="onboarding-stage-btn"
+                data-ob-stage="6"
+              >
+                <span class="onboarding-stage-btn__num">6</span>
+                <span
+                  class="onboarding-stage-btn__label"
+                  data-i18n="ob_stage6_label"
+                  >Dane i skróty</span
                 >
                 <span class="onboarding-stage-btn__check" hidden>✓</span>
               </button>
@@ -1054,6 +1086,12 @@
                 <code>Alt+E</code
                 ><span data-i18n="shortcuts_toolbarToggle"
                   >→ pokaż/ukryj toolbar</span
+                >
+              </li>
+              <li>
+                <code>Alt+K</code
+                ><span data-i18n="shortcuts_copyMd"
+                  >→ kopiuj notatkę jako Markdown</span
                 >
               </li>
               <li>
@@ -1444,7 +1482,11 @@
     <!-- Toast po przeniesieniu do kosza — akcja Cofnij, auto-hide (app.js) -->
     <div id="undo-toast" class="undo-toast" role="status" hidden>
       <span class="undo-toast__text"></span>
-      <button id="undo-toast-btn" class="undo-toast__btn" data-i18n="toast_undo">
+      <button
+        id="undo-toast-btn"
+        class="undo-toast__btn"
+        data-i18n="toast_undo"
+      >
         Cofnij
       </button>
     </div>

@@ -17,7 +17,7 @@
   mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A//www.w3.org/2000/svg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M0%200h24v24H0z'%20fill%3D'none'/%3E%3Cpath%20fill%3D'black'%20d%3D'M13%204a4%204%200%200%201%204%204a4%204%200%200%201-4%204h-2v6H9V4zm0%206a2%202%200%200%200%202-2a2%202%200%200%200-2-2h-2v4z'/%3E%3C%2Fsvg%3E");
 }
 .icon--checklist {
-  mask-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M0%200h24v24H0z%27%20fill%3D%27none%27%2F%3E%3Cpath%20fill%3D%27black%27%20d%3D%27M14%2010H3v2h11zm0-4H3v2h11zM3%2016h7v-2H3zm18.5-4.5L23%2013l-7%207l-4.5-4.5L13%2014l3%203z%27%2F%3E%3C%2Fsvg%3E');
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M0%200h24v24H0z%27%20fill%3D%27none%27%2F%3E%3Cpath%20fill%3D%27black%27%20d%3D%27M14%2010H3v2h11zm0-4H3v2h11zM3%2016h7v-2H3zm18.5-4.5L23%2013l-7%207l-4.5-4.5L13%2014l3%203z%27%2F%3E%3C%2Fsvg%3E");
 }
 
 /* Bullet list */
@@ -314,4 +314,9 @@
 /* mdi:content-copy — przycisk "kopiuj adres" w link tooltip */
 .icon--copy {
   mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M0%200h24v24H0z'%20fill='none'/%3E%3Cpath%20fill='black'%20d='M19%2021H8V7h11m0-2H8a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2V7a2%202%200%200%200-2-2m-3-4H4a2%202%200%200%200-2%202v14h2V3h12z'/%3E%3C/svg%3E");
+}
+
+/* mdi:check — feedback "skopiowano" na copy-md-btn */
+.icon--check {
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M0%200h24v24H0z'%20fill='none'/%3E%3Cpath%20fill='black'%20d='M21%207L9%2019l-5.5-5.5l1.41-1.41L9%2016.17L19.59%205.59z'/%3E%3C/svg%3E");
 }

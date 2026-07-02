@@ -131,7 +131,7 @@ const base = {
   inSummary: false,
   inDetailsContent: false, detailsContentEmpty: false,
   inPre: false, preIsExiting: false,
-  inHeading: false,
+  inHeading: false, headingAtStart: false, headingHasTextAfter: false,
   inChecklistLi: false, checklistEmpty: false,
   inLi: false, liEmpty: false, liIsLast: false, liIsNested: false,
   inBlockquote: false, bqLineEmpty: false, bqIsLastBlock: false, bqPrevEmpty: false,
@@ -148,8 +148,21 @@ test('inPre + exiting → pre-exit', () => {
 
 console.log('\n8. decideEnterAction — nagłówek, checklist');
 
-test('inHeading → heading-new-para', () => {
+test('inHeading (kursor na końcu) → heading-new-para', () => {
   expect(decideEnterAction({ ...base, inHeading: true }).action).toBe('heading-new-para');
+});
+test('inHeading + tekst za kursorem → heading-split', () => {
+  expect(decideEnterAction({ ...base, inHeading: true, headingHasTextAfter: true }).action)
+    .toBe('heading-split');
+});
+test('inHeading + kursor przed treścią → heading-para-before', () => {
+  expect(decideEnterAction({
+    ...base, inHeading: true, headingAtStart: true, headingHasTextAfter: true,
+  }).action).toBe('heading-para-before');
+});
+test('inHeading pusty (atStart, brak treści) → heading-new-para', () => {
+  expect(decideEnterAction({ ...base, inHeading: true, headingAtStart: true }).action)
+    .toBe('heading-new-para');
 });
 test('inChecklistLi pusty → checklist-exit', () => {
   expect(decideEnterAction({ ...base, inChecklistLi: true, checklistEmpty: true }).action)

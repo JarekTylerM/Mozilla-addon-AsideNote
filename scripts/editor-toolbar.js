@@ -36,6 +36,7 @@ function _initToolbar() {
     if (btn.id === 'link-btn') return;
     if (btn.id === 'undo-btn') return;
     if (btn.id === 'redo-btn') return;
+    if (btn.id === 'copy-md-btn') return;
     if (btn.id === 'checklist-btn') return;
     if (btn.id === 'blockquote-btn') return;
     if (btn.id === 'blockquote-arrow') return;
