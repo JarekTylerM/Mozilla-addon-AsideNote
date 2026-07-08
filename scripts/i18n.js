@@ -1,3 +1,4 @@
+// @ts-check
 // scripts/i18n.js
 // Cienki wrapper na browser.i18n.getMessage + Intl.DateTimeFormat.
 // Filozofia: zero magii. Brak klucza = log + fallback do klucza, nie crash.
@@ -33,11 +34,12 @@ export function getUILocale() {
 /**
  * Względne nazwy ("dziś", "jutro", "wczoraj") — używane w sekcjach listy.
  * Daty spoza zakresu zwracają null — caller sam decyduje co wtedy.
+ * @param {number} timestamp
  */
 export function relativeDayLabel(timestamp) {
   const now = new Date();
   const target = new Date(timestamp);
-  const startOfDay = (d) =>
+  const startOfDay = (/** @type {Date} */ d) =>
     new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diffDays = Math.round(
     (startOfDay(target) - startOfDay(now)) / 86400000,
@@ -61,12 +63,13 @@ export function relativeDayLabel(timestamp) {
  */
 export function applyStaticTranslations(root = document) {
   for (const el of root.querySelectorAll('[data-i18n]')) {
-    el.textContent = t(el.dataset.i18n);
+    el.textContent = t(/** @type {HTMLElement} */ (el).dataset.i18n ?? '');
   }
 
   for (const el of root.querySelectorAll('[data-i18n-attr]')) {
     // format: "attr:key;attr:key" — jeden atrybut per para
-    for (const pair of el.dataset.i18nAttr.split(';')) {
+    const spec = /** @type {HTMLElement} */ (el).dataset.i18nAttr ?? '';
+    for (const pair of spec.split(';')) {
       const [attr, key] = pair.split(':').map((s) => s.trim());
       if (attr && key) el.setAttribute(attr, t(key));
     }
@@ -75,7 +78,9 @@ export function applyStaticTranslations(root = document) {
 
 // scripts/i18n.js — dolej na końcu
 
+/** @type {string[] | null} */
 let _shortWeekdaysCache = null;
+/** @type {string | null} */
 let _shortWeekdaysLocaleCache = null;
 
 /**

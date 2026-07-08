@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    editor-markdown.js — serializacja treści edytora do Markdown
 
@@ -51,9 +52,14 @@ export function htmlToMarkdown(root) {
 
 /* ── Bloki ───────────────────────────────────────── */
 
-/** Serializuje listę węzłów jako sekwencję bloków rozdzieloną pustą linią. */
+/**
+ * Serializuje listę węzłów jako sekwencję bloków rozdzieloną pustą linią.
+ * @param {Node[]} nodes
+ * @returns {string}
+ */
 function _serializeBlocks(nodes) {
   const parts = [];
+  /** @type {Node[]} */
   let inlineRun = []; // luźne inline/tekst między blokami → własny akapit
 
   const flushInline = () => {
@@ -66,10 +72,10 @@ function _serializeBlocks(nodes) {
   for (const node of nodes) {
     if (
       node.nodeType === 1 /* ELEMENT_NODE */ &&
-      BLOCK_TAGS.has(node.tagName)
+      BLOCK_TAGS.has(/** @type {Element} */ (node).tagName)
     ) {
       flushInline();
-      const block = _blockToMd(node);
+      const block = _blockToMd(/** @type {Element} */ (node));
       if (block !== null) parts.push(block);
     } else {
       inlineRun.push(node);
@@ -80,7 +86,11 @@ function _serializeBlocks(nodes) {
   return parts.join("\n\n");
 }
 
-/** Konwertuje pojedynczy blok. Zwraca null gdy blok jest pusty. */
+/**
+ * Konwertuje pojedynczy blok. Zwraca null gdy blok jest pusty.
+ * @param {Element} el
+ * @returns {string|null}
+ */
 function _blockToMd(el) {
   switch (el.tagName) {
     case "H1":
@@ -114,7 +124,12 @@ function _blockToMd(el) {
   }
 }
 
-/** UL/OL → linie listy; indent to prefiks wcięcia dla tego poziomu. */
+/**
+ * UL/OL → linie listy; indent to prefiks wcięcia dla tego poziomu.
+ * @param {Element} list
+ * @param {string} indent
+ * @returns {string}
+ */
 function _listToMd(list, indent) {
   const ordered = list.tagName === "OL";
   const checklist = list.getAttribute("data-list") === "checklist";
@@ -138,17 +153,20 @@ function _listToMd(list, indent) {
     }
 
     // Treść li: inline + ewentualne zagnieżdżone listy
+    /** @type {string[]} */
     const inlineParts = [];
+    /** @type {Element[]} */
     const sublists = [];
     for (const child of Array.from(li.childNodes)) {
+      const childEl = /** @type {Element} */ (child);
       if (
         child.nodeType === 1 &&
-        (child.tagName === "UL" || child.tagName === "OL")
+        (childEl.tagName === "UL" || childEl.tagName === "OL")
       ) {
-        sublists.push(child);
-      } else if (child.nodeType === 1 && child.tagName === "P") {
+        sublists.push(childEl);
+      } else if (child.nodeType === 1 && childEl.tagName === "P") {
         // Defensywnie — <p> w li traktuj jak inline
-        inlineParts.push(_inlineChildren(child));
+        inlineParts.push(_inlineChildren(childEl));
       } else {
         inlineParts.push(_inline(child));
       }
@@ -166,7 +184,11 @@ function _listToMd(list, indent) {
   return lines.join("\n");
 }
 
-/** BLOCKQUOTE → "> …"; z data-callout → "> [!TYPE]" w pierwszej linii. */
+/**
+ * BLOCKQUOTE → "> …"; z data-callout → "> [!TYPE]" w pierwszej linii.
+ * @param {Element} bq
+ * @returns {string}
+ */
 function _blockquoteToMd(bq) {
   const inner = _serializeBlocks(Array.from(bq.childNodes));
   const lines = inner.split("\n").map((l) => (l ? "> " + l : ">"));
@@ -181,7 +203,11 @@ function _blockquoteToMd(bq) {
   return lines.join("\n");
 }
 
-/** DETAILS/SUMMARY → blok <details> (poprawny w GFM). */
+/**
+ * DETAILS/SUMMARY → blok <details> (poprawny w GFM).
+ * @param {Element} details
+ * @returns {string}
+ */
 function _detailsToMd(details) {
   const summary = details.querySelector(":scope > summary");
   const summaryText = summary ? _inlineChildren(summary).trim() : "";
@@ -200,47 +226,50 @@ function _detailsToMd(details) {
 
 /* ── Inline ──────────────────────────────────────── */
 
+/** @param {Element} el @returns {string} */
 function _inlineChildren(el) {
   return Array.from(el.childNodes).map(_inline).join("");
 }
 
+/** @param {Node} node @returns {string} */
 function _inline(node) {
   if (node.nodeType === 3 /* TEXT_NODE */) {
     // Newlines wewnątrz tekstu nie mają znaczenia w HTML — spłaszcz
-    return node.textContent.replace(/\s*\n\s*/g, " ");
+    return (node.textContent ?? "").replace(/\s*\n\s*/g, " ");
   }
   if (node.nodeType !== 1) return "";
 
-  switch (node.tagName) {
+  const el = /** @type {Element} */ (node);
+  switch (el.tagName) {
     case "BR":
       // Twarde łamanie linii — dwie spacje przed \n
       return "  \n";
     case "STRONG":
     case "B":
-      return _wrap(node, "**");
+      return _wrap(el, "**");
     case "EM":
     case "I":
-      return _wrap(node, "*");
+      return _wrap(el, "*");
     case "S":
     case "STRIKE":
-      return _wrap(node, "~~");
+      return _wrap(el, "~~");
     case "U": {
-      const inner = _inlineChildren(node);
+      const inner = _inlineChildren(el);
       return inner.trim() ? `<u>${inner}</u>` : inner;
     }
     case "CODE": {
-      const text = node.textContent;
+      const text = el.textContent;
       if (!text) return "";
       // Backtick w treści → podwójny delimiter ze spacjami
       return text.includes("`") ? `\`\` ${text} \`\`` : `\`${text}\``;
     }
     case "A": {
-      const text = _inlineChildren(node) || node.getAttribute("href") || "";
-      const href = node.getAttribute("href") ?? "";
+      const text = _inlineChildren(el) || el.getAttribute("href") || "";
+      const href = el.getAttribute("href") ?? "";
       return `[${text}](${href})`;
     }
     default:
-      return _inlineChildren(node);
+      return _inlineChildren(el);
   }
 }
 
@@ -248,9 +277,10 @@ function _inline(node) {
  * Owija inline treść markerem, przenosząc skrajne spacje na zewnątrz —
  * "**tekst **" jest niepoprawny w CommonMark.
  */
+/** @param {Element} node @param {string} marker @returns {string} */
 function _wrap(node, marker) {
   const inner = _inlineChildren(node);
   const m = inner.match(/^(\s*)([\s\S]*?)(\s*)$/);
-  if (!m[2]) return inner; // sam whitespace — bez markerów
+  if (!m || !m[2]) return inner; // sam whitespace — bez markerów
   return m[1] + marker + m[2] + marker + m[3];
 }

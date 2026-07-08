@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * editor-paste-clickup.js — preprocessor dla HTML z ClickUp (Quill.js)
  *
@@ -9,6 +10,7 @@
 
 /**
  * Czy HTML pochodzi z ClickUp?
+ * @param {string} html
  */
 export function isClickUpHTML(html) {
   return (
@@ -20,9 +22,11 @@ export function isClickUpHTML(html) {
 
 /**
  * Wyciągnij czysty tekst z węzła — strip elementów UI (ql-ui, SVG, placeholdery).
+ * @param {Element} node
+ * @returns {Element}
  */
 function _cleanNode(node) {
-  const clone = node.cloneNode(true);
+  const clone = /** @type {Element} */ (node.cloneNode(true));
   // Usuń wszystkie elementy UI ClickUp
   clone
     .querySelectorAll(
@@ -37,9 +41,11 @@ function _cleanNode(node) {
  * Rekurencyjnie konwertuje listę ClickUp na format AsideNote.
  * data-list="unchecked/checked" → ul[data-list="checklist"] li[data-checked]
  * data-list="toggled" + data-list="none" → details/summary
+ * @param {Element} listNode
+ * @returns {Node}
  */
 function _convertList(listNode) {
-  const items = [...listNode.children];
+  const items = /** @type {HTMLElement[]} */ ([...listNode.children]);
 
   // Sprawdź czy to checklist (pierwszy li ma data-list="unchecked/checked")
   const firstLi = items.find((el) => el.tagName === "LI");
@@ -58,7 +64,7 @@ function _convertList(listNode) {
         const summary = document.createElement("summary");
 
         // Tekst summary — bez zagnieżdżonych list
-        const summaryClone = li.cloneNode(true);
+        const summaryClone = /** @type {HTMLElement} */ (li.cloneNode(true));
         summaryClone.querySelectorAll("ul, ol").forEach((n) => n.remove());
         summary.innerHTML = _cleanNode(summaryClone).innerHTML.trim() || "<br>";
         details.appendChild(summary);
@@ -69,7 +75,9 @@ function _convertList(listNode) {
           [...nestedList.children].forEach((child) => {
             if (child.tagName !== "LI") return;
             const p = document.createElement("p");
-            const childClone = child.cloneNode(true);
+            const childClone = /** @type {HTMLElement} */ (
+              child.cloneNode(true)
+            );
             childClone.querySelectorAll("ul, ol").forEach((n) => n.remove());
             p.innerHTML = _cleanNode(childClone).innerHTML.trim() || "<br>";
             details.appendChild(p);
@@ -94,7 +102,7 @@ function _convertList(listNode) {
         listType === "checked" ? "true" : "false",
       );
 
-      const liClone = li.cloneNode(true);
+      const liClone = /** @type {HTMLElement} */ (li.cloneNode(true));
       const nested = liClone.querySelector("ul, ol");
       if (nested) {
         liClone.removeChild(nested);
@@ -113,7 +121,7 @@ function _convertList(listNode) {
   items.forEach((li) => {
     if (li.tagName !== "LI") return;
     const newLi = document.createElement("li");
-    const liClone = li.cloneNode(true);
+    const liClone = /** @type {HTMLElement} */ (li.cloneNode(true));
     const nested = liClone.querySelector("ul, ol");
     if (nested) {
       liClone.removeChild(nested);
@@ -130,7 +138,7 @@ function _convertList(listNode) {
 /**
  * Główna funkcja konwersji.
  * @param {string} html — surowy HTML ze schowka
- * @returns {string} — HTML gotowy do sanitizeHTML
+ * @returns {string|null} — HTML gotowy do sanitizeHTML (null gdy nie ClickUp)
  */
 export function preprocessClickUp(html) {
   if (!isClickUpHTML(html)) return null;
@@ -144,19 +152,20 @@ export function preprocessClickUp(html) {
   for (const node of root.childNodes) {
     if (node.nodeType !== Node.ELEMENT_NODE) continue;
 
-    const tag = node.tagName;
+    const el = /** @type {Element} */ (node);
+    const tag = el.tagName;
 
     // Nagłówki
     if (tag === "H1" || tag === "H2" || tag === "H3") {
       const h = document.createElement(tag.toLowerCase());
-      h.innerHTML = _cleanNode(node).innerHTML.trim();
+      h.innerHTML = _cleanNode(el).innerHTML.trim();
       result.appendChild(h);
       continue;
     }
 
     // Paragrafy (ql-block)
     if (tag === "DIV") {
-      const clean = _cleanNode(node);
+      const clean = _cleanNode(el);
       const content = clean.innerHTML.trim();
       // Pomiń puste paragrafy z &nbsp; (ClickUp spacery)
       if (!content || content === "<br>" || content === "&nbsp;") continue;
@@ -168,12 +177,12 @@ export function preprocessClickUp(html) {
 
     // Listy — konwertuj data-list na format AsideNote
     if (tag === "OL" || tag === "UL") {
-      result.appendChild(_convertList(node));
+      result.appendChild(_convertList(el));
       continue;
     }
 
     // Reszta — kopiuj jak jest
-    result.appendChild(document.importNode(node, true));
+    result.appendChild(document.importNode(el, true));
   }
 
   return result.innerHTML;
