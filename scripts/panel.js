@@ -793,7 +793,8 @@ function _importData(file) {
       // - id (alfanumeryczny + _-, max 100 zn)
       // - type (note/task)
       // - title (string, control chars wycięte, max 200 zn)
-      // - content (sanitizeHTML, max 100 KB)
+      // - content (sanitizeHTML, przycięty do MAX_CONTENT_LEN = 50 KB;
+      //   przycięcie jest raportowane userowi, patrz truncatedNotes niżej)
       // - created (timestamp w sensownym zakresie)
       // - tags (tablica valid ID)
       // - dla task: completed/focus/important (boolean), due (timestamp),
@@ -802,6 +803,7 @@ function _importData(file) {
       const acceptedNotes = [];
       const seenNoteIds = new Set();
       let rejectedNotes = 0;
+      let truncatedNotes = 0;
       for (const raw of migrated) {
         const result = sanitizeImportedNote(raw);
         if (!result.ok) {
@@ -812,6 +814,7 @@ function _importData(file) {
           rejectedNotes++;
           continue;
         }
+        if (result.truncated) truncatedNotes++;
         seenNoteIds.add(result.note.id);
         acceptedNotes.push(result.note);
       }
@@ -878,16 +881,20 @@ function _importData(file) {
         String(state.notes.length),
         String(tagState.tags.length),
       ]);
+      const warnings = [];
       if (rejectedNotes > 0 || rejectedTags > 0) {
-        _showImportFeedback(
-          successMsg +
-            " " +
-            t("import_warning_rejected", [
-              String(rejectedNotes),
-              String(rejectedTags),
-            ]),
-          "warning",
+        warnings.push(
+          t("import_warning_rejected", [
+            String(rejectedNotes),
+            String(rejectedTags),
+          ]),
         );
+      }
+      if (truncatedNotes > 0) {
+        warnings.push(t("import_warning_truncated", [String(truncatedNotes)]));
+      }
+      if (warnings.length) {
+        _showImportFeedback(successMsg + " " + warnings.join(" "), "warning");
       } else {
         _showImportFeedback(successMsg, "success");
       }

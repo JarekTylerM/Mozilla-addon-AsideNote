@@ -346,6 +346,15 @@
       }
     }
   },
+  "import_warning_truncated": {
+    "message": "Skrócono $NOTES$ notatek przekraczających limit rozmiaru 50 KB.",
+    "placeholders": {
+      "notes": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
   "important_ariaLabel": {
     "message": "Oznacz jako ważne"
   },

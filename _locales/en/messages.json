@@ -346,6 +346,15 @@
       }
     }
   },
+  "import_warning_truncated": {
+    "message": "Shortened $NOTES$ notes that exceeded the 50 KB size limit.",
+    "placeholders": {
+      "notes": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
   "important_ariaLabel": {
     "message": "Mark as important"
   },

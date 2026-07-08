@@ -363,6 +363,27 @@ test('type=task z recurrence=null → recurrenceDays=null', () => {
   expect(r.note.recurrenceDays).toBeNull();
 });
 
+test('content ≤ limitu → truncated=false, treść nietknięta', () => {
+  const r = sanitizeImportedNote({...validNote, content: '<p>krótka</p>'});
+  expect(r.truncated).toBe(false);
+  expect(r.note.content).toContain('krótka');
+});
+
+test('content > MAX_CONTENT_LEN → truncated=true (import raportuje, nie gubi po cichu)', () => {
+  const big = '<p>' + 'a'.repeat(MAX_CONTENT_LEN + 100) + '</p>';
+  const r = sanitizeImportedNote({...validNote, content: big});
+  expect(r.truncated).toBe(true);
+  // Treść realnie skrócona względem oryginału (sanitizeHTML domyka ucięty <p>,
+  // więc wynik bywa o kilka znaków dłuższy niż surowy slice — dlatego < big, nie ≤ limit).
+  expect(r.note.content.length < big.length).toBe(true);
+});
+
+test('content dokładnie MAX_CONTENT_LEN → truncated=false (granica)', () => {
+  const exact = 'a'.repeat(MAX_CONTENT_LEN);
+  const r = sanitizeImportedNote({...validNote, content: exact});
+  expect(r.truncated).toBe(false);
+});
+
 // ── sanitizeImportedTag ───────────────────────────────────────────
 
 console.log('\n5. sanitizeImportedTag');

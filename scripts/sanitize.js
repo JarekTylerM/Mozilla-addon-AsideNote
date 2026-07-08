@@ -39,6 +39,13 @@ export const MAX_TAG_NAME_LEN = 50;
 // Poprzedni limit 100 KB przy MAX_IMPORT_NOTES=10 000 dawał ~1 GB.
 export const MAX_CONTENT_LEN = 50_000;
 
+// Górny limit surowego HTML ze schowka przy WKLEJANIU (przed sanityzacją).
+// Wyższy niż MAX_CONTENT_LEN, bo surowy HTML ze stron jest markup-heavy i
+// sanitizeHTML redukuje go do właściwej treści — to guard na paste-bomb ze
+// schowka, nie limit rozmiaru zapisanej notatki. Trzymany tu (jedno źródło
+// "rozsądnego rozmiaru") zamiast magicznej stałej w editor.js.
+export const MAX_PASTE_LEN = 4 * MAX_CONTENT_LEN; // 200 KB
+
 // Liczba notatek w jednym imporcie. 2 000 to dużo nawet dla power-usera,
 // a przy MAX_CONTENT_LEN=50 KB daje rozsądny górny pułap pamięci.
 export const MAX_IMPORT_NOTES = 2_000;
@@ -159,10 +166,17 @@ export function sanitizeImportedNote(raw) {
   const titleResult = validateText(raw.title, MAX_TITLE_LEN);
   const title = titleResult.truncated;
 
-  // content — sanityzowany HTML (przez sanitizeHTML), przycięty do limitu
+  // content — sanityzowany HTML (przez sanitizeHTML), przycięty do limitu.
+  // Sygnalizujemy przycięcie (truncated), żeby import mógł POINFORMOWAĆ
+  // użytkownika zamiast po cichu gubić dane na round-tripie eksport→import
+  // (notatka >MAX_CONTENT_LEN eksportuje się w całości, ale import ją tnie).
   let content = '';
+  let truncated = false;
   if (typeof raw.content === 'string') {
-    const trimmed = raw.content.slice(0, MAX_CONTENT_LEN);
+    truncated = raw.content.length > MAX_CONTENT_LEN;
+    const trimmed = truncated
+      ? raw.content.slice(0, MAX_CONTENT_LEN)
+      : raw.content;
     content = sanitizeHTML(trimmed);
   }
 
@@ -215,7 +229,8 @@ export function sanitizeImportedNote(raw) {
     }
   }
 
-  return { ok: true, note };
+  // truncated leci w wyniku (nie w note) — caller raportuje, storage zostaje czyste
+  return { ok: true, note, truncated };
 }
 
 /**

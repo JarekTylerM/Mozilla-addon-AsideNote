@@ -6,7 +6,7 @@ import { debouncedSave, state } from './notes.js';
 import { debounce } from './utils.js';
 import * as undo from './undo.js';
 import { t } from './i18n.js';
-import { sanitizeHTML } from './sanitize.js';
+import { sanitizeHTML, MAX_PASTE_LEN } from './sanitize.js';
 import { looksLikeUrl, normalizeUrl, BLOCKED_SCHEMES } from './editor-url.js';
 import { initToolbar } from './editor-toolbar.js';
 import {
@@ -1690,7 +1690,7 @@ function _initPaste() {
     e.preventDefault();
     undo.checkpoint();
 
-    const MAX_PASTE = 200_000;
+    const MAX_PASTE = MAX_PASTE_LEN; // jedno źródło limitu → sanitize.js
     const html = e.clipboardData.getData('text/html');
     const plain = e.clipboardData.getData('text/plain');
 
