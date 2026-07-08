@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    tags.js — stan tagów + CRUD + factory dla pilla
    ──────────────────────────────────────────────────────────────
@@ -9,6 +10,7 @@
 import { saveTags } from './storage.js';
 import { validateText, MAX_TAG_NAME_LEN } from './sanitize.js';
 
+/** @type {TagColor[]} */
 export const PALETTE = [
   { bg: '#e8edf5', fg: '#2d4a7a', darkBg: '#1e2a3a', darkFg: '#8aafd4' }, // dusty blue
   { bg: '#e4ede8', fg: '#2d5a42', darkBg: '#1a2e22', darkFg: '#7aaf8e' }, // dusty sage
@@ -24,15 +26,18 @@ export const PALETTE = [
   { bg: '#e8e3ec', fg: '#3d2d5a', darkBg: '#1e1828', darkFg: '#9888bc' }, // midnight
 ];
 
+/** @type {{ tags: Tag[] }} */
 export const tagState = { tags: [] };
 
+/** @param {string} id @returns {Tag|null} */
 export function getTag(id) {
   return tagState.tags.find((t) => t.id === id) ?? null;
 }
 
 /**
  * Tworzy tag z walidacją nazwy.
- * @returns {{ ok: boolean, tag?: object, error?: string }} klucz i18n błędu
+ * @param {string} name
+ * @returns {{ ok: boolean, tag?: Tag, error?: string }} klucz i18n błędu
  */
 export function createTag(name) {
   const result = validateText(name, MAX_TAG_NAME_LEN);
@@ -57,6 +62,7 @@ export function createTag(name) {
 
 /**
  * Aktualizuje nazwę tagu z walidacją.
+ * @param {string} id @param {string} name
  * @returns {{ ok: boolean, error?: string }}
  */
 export function updateTag(id, name) {
@@ -77,6 +83,7 @@ export function updateTag(id, name) {
   return { ok: true };
 }
 
+/** @param {string} id */
 export function deleteTag(id) {
   tagState.tags = tagState.tags.filter((t) => t.id !== id);
   saveTags(tagState.tags);
@@ -84,10 +91,11 @@ export function deleteTag(id) {
 
 /**
  * Factory dla DOM elementu .tag-pill
- * @param {object} tag
+ * @param {Tag} tag
  * @param {object} [opts]
  * @param {number} [opts.truncate=0]   - skróć nazwę do N znaków, dodaj title
  * @param {boolean} [opts.removable=false] - dodaje klasę --removable
+ * @param {boolean} [opts.interactive=false] - klikalny <button> zamiast <span>
  */
 export function makeTagPill(
   tag,
@@ -99,7 +107,8 @@ export function makeTagPill(
   const pill = document.createElement(clickable ? 'button' : 'span');
 
   if (clickable) {
-    pill.type = 'button'; // żeby <button> w przyszłym <form> nie submitował
+    // <button> w przyszłym <form> nie ma submitować
+    /** @type {HTMLButtonElement} */ (pill).type = 'button';
   }
 
   pill.className = 'tag-pill pill' + (removable ? ' pill--clickable' : '');
@@ -115,6 +124,7 @@ export function makeTagPill(
   return pill;
 }
 
+/** @param {string} id @param {TagColor} color */
 export function updateTagColor(id, color) {
   const tag = tagState.tags.find((t) => t.id === id);
   if (!tag) return;

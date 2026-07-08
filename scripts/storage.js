@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    storage.js — warstwa persystencji
    Jedyne miejsce dotykające browser.storage.local
@@ -30,8 +31,10 @@ export const CURRENT_SCHEMA = 3;
  * nie wygeneruje eventu — przeterminowane znaczniki są ignorowane.
  */
 const SELF_WRITE_TTL_MS = 5000;
+/** @type {Map<string, number[]>} */
 const _selfWrites = new Map(); // klucz → tablica timestampów zapisów
 
+/** @param {string[]} keys */
 function _markSelfWrites(keys) {
   const now = Date.now();
   for (const k of keys) {
@@ -68,9 +71,12 @@ export function consumeSelfWrite(key) {
    klucza kasuje jego zaległą wersję — świeże dane nigdy nie zostaną
    nadpisane starszymi z kolejki. */
 
+/** @type {Record<string, any> | null} */
 let _pendingWrites = null; // { klucz: wartość } z nieudanych zapisów
+/** @type {ReturnType<typeof setTimeout> | null} */
 let _retryTimer = null;
 
+/** @param {string} type */
 function _notifySaveState(type) {
   // storage.js jest importowany też w testach node (bez DOM)
   if (typeof document !== "undefined") {
@@ -78,7 +84,10 @@ function _notifySaveState(type) {
   }
 }
 
-/** Jedyne wejście zapisu — znakuje klucze przed browser.storage.local.set. */
+/**
+ * Jedyne wejście zapisu — znakuje klucze przed browser.storage.local.set.
+ * @param {Record<string, any>} obj
+ */
 async function _set(obj) {
   const keys = Object.keys(obj);
   _markSelfWrites(keys);
@@ -130,9 +139,9 @@ export async function retryPendingWrites() {
  * Zakłada że input jest tablicą obiektów — defensywna normalizacja typów
  * jest osobno w loadNotes() i nie jest tu duplikowana.
  *
- * @param {Array} notes - notatki w dowolnym starszym schemacie
+ * @param {Note[]} notes - notatki w dowolnym starszym schemacie
  * @param {number} fromVersion - schemaVersion danych wejściowych (0 = brak)
- * @returns {Array} notatki w schemacie CURRENT_SCHEMA
+ * @returns {Note[]} notatki w schemacie CURRENT_SCHEMA
  */
 export function migrateNotes(notes, fromVersion = 0) {
   let result = notes;
@@ -213,6 +222,7 @@ export async function loadNotes() {
   return notes;
 }
 
+/** @param {Note[]} notes */
 export async function saveNotes(notes) {
   try {
     await _set({ notes });
@@ -230,6 +240,7 @@ export async function loadTags() {
   return Array.isArray(res.tags) ? res.tags : [];
 }
 
+/** @param {Tag[]} tags */
 export async function saveTags(tags) {
   try {
     await _set({ tags });
@@ -248,6 +259,7 @@ export async function loadCollapsedSections() {
     : ["done", "overdue"];
 }
 
+/** @param {string[]} sections */
 export async function saveCollapsedSections(sections) {
   try {
     await _set({ collapsedSections: sections });
@@ -264,6 +276,7 @@ export async function loadFilterPrefs() {
   return res.filterPrefs || {};
 }
 
+/** @param {Record<string, any>} prefs */
 export async function saveFilterPrefs(prefs) {
   try {
     await _set({ filterPrefs: prefs });
@@ -284,6 +297,7 @@ export async function loadFocusId() {
   return [];
 }
 
+/** @param {string[]} ids */
 export async function saveFocusId(ids) {
   try {
     await _set({ focusId: ids });
@@ -307,6 +321,7 @@ export async function loadUiSettings() {
   };
 }
 
+/** @param {Record<string, any>} patch */
 export async function saveUiSettings(patch) {
   // Merge z istniejącymi — żeby zmiana jednego pola nie kasowała pozostałych
   try {
@@ -324,6 +339,7 @@ export async function saveUiSettings(patch) {
  * Zapisuje migawkę bieżących danych pod osobnym kluczem, żeby import
  * (który nadpisuje wszystko) był odwracalny. Trzyma tylko jedną migawkę
  * — ostatnią sprzed importu.
+ * @param {any} snapshot
  */
 export async function saveLastBackupBeforeImport(snapshot) {
   try {
@@ -388,6 +404,7 @@ export async function loadDeletedNotes() {
   );
 }
 
+/** @param {DeletedNote[]} notes */
 export async function saveDeletedNotes(notes) {
   try {
     await _set({

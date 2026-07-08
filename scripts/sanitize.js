@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    sanitize.js — centralna sanityzacja HTML + walidacja pól
    ──────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ const VALID_DAYS = new Set([0, 1, 2, 3, 4, 5, 6]);
  * - U+202A-U+202E (bidi override)
  * - U+2060-U+206F (invisible operators / formatting)
  * - U+FEFF (BOM)
+ * @param {string} str
  */
 function _stripControlChars(str) {
   return str.replace(
@@ -149,7 +151,7 @@ export function isValidId(id) {
  * w imporcie lepiej stracić jedną notatkę niż wpuścić śmieci do storage.
  *
  * @param {*} raw - obiekt z JSON, dowolnego kształtu
- * @returns {{ ok: boolean, note?: object }}
+ * @returns {{ ok: boolean, note?: Note, truncated?: boolean }}
  */
 export function sanitizeImportedNote(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -193,6 +195,7 @@ export function sanitizeImportedNote(raw) {
     ? raw.tags.filter(isValidId).slice(0, 50)
     : [];
 
+  /** @type {Note} */
   const note = { id: raw.id, type, title, content, created, tags };
 
   // Pola task-only — tylko jeśli type=task
@@ -221,7 +224,11 @@ export function sanitizeImportedNote(raw) {
     // recurrenceDays — tablica 1–7 unikalnych dni (0=nd…6=sb), tylko dla custom
     if (note.recurrence === 'custom' && Array.isArray(raw.recurrenceDays)) {
       const days = [
-        ...new Set(raw.recurrenceDays.filter((d) => VALID_DAYS.has(d))),
+        ...new Set(
+          raw.recurrenceDays.filter((/** @type {number} */ d) =>
+            VALID_DAYS.has(d),
+          ),
+        ),
       ];
       note.recurrenceDays = days.length > 0 ? days : [1, 2, 3, 4, 5];
     } else {
@@ -279,6 +286,7 @@ export function sanitizeImportedTag(raw) {
   };
 }
 
+/** @param {*} t @returns {string|null} */
 function _validateTimeString(t) {
   if (typeof t !== 'string') return null;
   const m = t.match(/^(\d{1,2}):(\d{2})$/);
@@ -323,6 +331,7 @@ export const ALLOWED_TAGS = new Set([
 // LI: data-checked dla stanu checkbox ("true"/"false").
 // BLOCKQUOTE: data-callout dla typu callouta ("note"|"tip"|"important"|"warning"|"caution").
 // CODE: data-language z triggera ```js — używane przy eksporcie do Markdown.
+/** @type {Record<string, Set<string>>} */
 export const ALLOWED_ATTRS = {
   A: new Set(['href', 'target', 'rel', 'title']),
   OL: new Set(['start']),
@@ -344,7 +353,7 @@ export const ALLOWED_ATTRS = {
  * Blokowane schematy: javascript, data, vbscript, file, blob,
  * *-extension (moz-extension:, chrome-extension:).
  *
- * @param {string} href
+ * @param {string|null} href
  * @returns {string|null} href do użycia albo null jeśli niebezpieczny
  */
 export function safeHref(href) {
@@ -395,6 +404,7 @@ export function safeHref(href) {
 // z importu/paste (np. 50 000 zagnieżdżonych <span>).
 const MAX_SANITIZE_DEPTH = 60;
 
+/** @param {string} html @returns {string} */
 export function sanitizeHTML(html) {
   if (!html || typeof html !== 'string') return '';
 
@@ -404,6 +414,7 @@ export function sanitizeHTML(html) {
   return doc.body.innerHTML;
 }
 
+/** @param {Element} node @param {Document} doc @param {number} depth */
 function _cleanNode(node, doc, depth) {
   // Iteruj od końca — modyfikujemy drzewo w trakcie
   const children = Array.from(node.children);
