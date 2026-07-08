@@ -47,7 +47,12 @@ export function _indentListItem(li) {
   if (!prev || prev.tagName !== "LI") return;
 
   const tag = li.parentElement.tagName;
-  let nested = prev.querySelector(`:scope > ${tag}`);
+  // Reużyj istniejącej podlisty w prev: najpierw tego samego typu, a jeśli prev
+  // ma już podlistę innego typu — dołącz do niej. Bez tego drugiego kroku
+  // powstawały dwie równoległe listy (<ol> + <ul>) pod jednym elementem.
+  let nested =
+    prev.querySelector(`:scope > ${tag}`) ||
+    prev.querySelector(":scope > ul, :scope > ol");
   if (!nested) {
     nested = document.createElement(tag);
     prev.appendChild(nested);
@@ -141,15 +146,95 @@ export function _restoreCursorTo(el) {
    selectNote, a import z editor.js tworzył cykl notes.js ↔ editor.js
    (działał dzięki hoistingowi ESM, ale był miną na przyszłość). */
 
+// Bloki, z których każdy jest osobną LINIĄ (dostaje własny indeks linii).
+const LINE_BLOCK_TAGS = new Set([
+  "P", "DIV", "H1", "H2", "H3", "LI", "BLOCKQUOTE", "PRE", "SUMMARY", "HR",
+]);
+// Kontenery grupujące linie — same nie są linią (linie tworzą ich dzieci).
+const LINE_CONTAINER_TAGS = new Set(["UL", "OL", "DETAILS"]);
+
 /**
- * Zwraca pozycję kursora jako liczbę znaków tekstu od początku edytora
- * (offset niezależny od struktury DOM — przeżywa re-render innerHTML).
+ * Buduje uporządkowaną (rosnącą po `linear`) listę pozycji kursora.
+ *
+ * Offset LINIOWY pozycji = (znaki tekstu przed nią) + (indeks jej linii).
+ * Dodanie indeksu linii sprawia, że pusta linia (<p><br></p>, pusty <li>) ma
+ * własny offset i nie zlewa się z końcem poprzedniej linii — to naprawia dryf
+ * resume kursora. Offset dalej przeżywa re-render innerHTML, bo zależy tylko od
+ * tekstu i liczby linii, nie od konkretnych węzłów.
+ *
+ * `pending` + `commitLine`: wejście w blok tylko ZAZNACZA nową linię; indeks
+ * rośnie dopiero gdy pojawi się tekst lub pusta linia. Dzięki temu bloki
+ * opakowujące (blockquote>p, ul>li) nie liczą się podwójnie.
+ *
+ * @returns {Array<{node: Node, offset: number, linear: number}>}
+ */
+function _buildPositions(editorEl) {
+  const positions = [];
+  let globalText = 0; // znaki tekstu wyemitowane dotąd
+  let lineIndex = 0;
+  let started = false; // pierwsza linia już zaksięgowana?
+  let pending = false; // wejście w blok czeka na commit
+
+  const commitLine = () => {
+    if (!started) started = true;
+    else if (pending) lineIndex += 1;
+    pending = false;
+  };
+
+  const visit = (node) => {
+    for (const child of node.childNodes) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const len = child.textContent.length;
+        if (len === 0) continue;
+        commitLine();
+        for (let i = 0; i <= len; i++) {
+          positions.push({ node: child, offset: i, linear: globalText + i + lineIndex });
+        }
+        globalText += len;
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        if (child.tagName === "BR") continue; // soft break — jak dotąd, 0 znaków
+        if (
+          LINE_BLOCK_TAGS.has(child.tagName) ||
+          LINE_CONTAINER_TAGS.has(child.tagName)
+        ) {
+          pending = true;
+          const before = positions.length;
+          visit(child);
+          // Blok bez tekstu = pusta linia → własna pozycja (element, 0)
+          if (positions.length === before && LINE_BLOCK_TAGS.has(child.tagName)) {
+            commitLine();
+            positions.push({ node: child, offset: 0, linear: globalText + lineIndex });
+          }
+        } else {
+          visit(child); // inline (strong/em/a/code/u/span…) — bez łamania
+        }
+      }
+    }
+  };
+
+  visit(editorEl);
+  return positions;
+}
+
+/**
+ * Zwraca pozycję kursora jako offset LINIOWY (patrz _buildPositions).
  * @returns {number|null} null gdy brak selekcji lub kursor poza edytorem
  */
 export function getCursorOffset(editorEl) {
   const sel = window.getSelection();
   if (!sel?.rangeCount || !editorEl) return null;
   const range = sel.getRangeAt(0);
+  if (!editorEl.contains(range.startContainer)) return null;
+
+  const positions = _buildPositions(editorEl);
+  const hit = positions.find(
+    (p) => p.node === range.startContainer && p.offset === range.startOffset,
+  );
+  if (hit) return hit.linear;
+
+  // Fallback dla nietypowego kontenera (np. element-offset między blokami):
+  // czysto tekstowy offset — gorszej rozdzielczości, ale bez wyjątku i nie
+  // gorzej niż poprzednia implementacja.
   try {
     const pre = document.createRange();
     pre.selectNodeContents(editorEl);
@@ -161,32 +246,33 @@ export function getCursorOffset(editorEl) {
 }
 
 /**
- * Ustawia kursor na zadanym offsecie tekstowym (odwrotność getCursorOffset).
+ * Ustawia kursor na zadanym offsecie liniowym (odwrotność getCursorOffset).
  * Offset poza zakresem → kursor na końcu edytora.
  */
 export function setCursorOffset(editorEl, offset) {
-  if (offset == null || offset < 0) return;
-  const walker = document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT);
-  let remaining = offset;
-  let node = walker.nextNode();
-  while (node) {
-    if (remaining <= node.textContent.length) {
-      const range = document.createRange();
-      range.setStart(node, remaining);
-      range.collapse(true);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      node.parentElement?.scrollIntoView?.({ block: "nearest" });
-      return;
-    }
-    remaining -= node.textContent.length;
-    node = walker.nextNode();
+  if (offset == null || offset < 0 || !editorEl) return;
+
+  const positions = _buildPositions(editorEl);
+  // positions rosną po `linear` → bierz dokładne trafienie, inaczej największą
+  // pozycję o linear ≤ offset (klamrowanie w dół).
+  let chosen = null;
+  for (const p of positions) {
+    if (p.linear === offset) { chosen = p; break; }
+    if (p.linear < offset) chosen = p;
+    else break;
   }
-  // Fallback: kursor na końcu
+
   const range = document.createRange();
-  range.selectNodeContents(editorEl);
-  range.collapse(false);
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
+  if (chosen) {
+    range.setStart(chosen.node, chosen.offset);
+    range.collapse(true);
+    chosen.node.parentElement?.scrollIntoView?.({ block: "nearest" });
+  } else {
+    // Offset przed pierwszą pozycją lub pusty edytor → koniec treści
+    range.selectNodeContents(editorEl);
+    range.collapse(false);
+  }
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
 }
