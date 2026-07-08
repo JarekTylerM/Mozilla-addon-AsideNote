@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * editor-block-analyzer.js — czyste funkcje analizy kontekstu edytora
  *
@@ -26,6 +27,7 @@
  *   code-block    ```
  *   blockquote    >
  */
+/** @param {string} blockText @param {string} textBefore */
 export function detectSpaceTrigger(blockText, textBefore) {
   const text = blockText.trim();
 
@@ -88,6 +90,31 @@ export function detectSpaceTrigger(blockText, textBefore) {
  *
  * @returns {{ action: string, ...params }}
  */
+/**
+ * @typedef {object} EnterCtx
+ * @property {boolean} inPre
+ * @property {boolean} preIsExiting
+ * @property {boolean} inSummary
+ * @property {boolean} inDetailsContent
+ * @property {boolean} detailsContentEmpty
+ * @property {boolean} inHeading
+ * @property {boolean} headingAtStart
+ * @property {boolean} headingHasTextAfter
+ * @property {boolean} inChecklistLi
+ * @property {boolean} checklistEmpty
+ * @property {boolean} inLi
+ * @property {boolean} liEmpty
+ * @property {boolean} liIsLast
+ * @property {boolean} liIsNested
+ * @property {boolean} inBlockquote
+ * @property {boolean} bqLineEmpty
+ * @property {boolean} bqIsLastBlock
+ * @property {boolean} bqPrevEmpty
+ * @property {boolean} isHrTrigger
+ * @property {boolean} hasTrailingSpaces
+ */
+
+/** @param {EnterCtx} ctx */
 export function decideEnterAction(ctx) {
   const {
     inPre,
@@ -178,6 +205,23 @@ export function decideEnterAction(ctx) {
  *
  * @returns {{ action: string } | null}  null = brak interceptu (default)
  */
+/**
+ * @typedef {object} BackspaceCtx
+ * @property {boolean} inSummary
+ * @property {boolean} summaryEmpty
+ * @property {boolean} summaryAtStart
+ * @property {boolean} inChecklistLi
+ * @property {boolean} checklistAtStart
+ * @property {boolean} checklistHasPrev
+ * @property {boolean} inBlockquote
+ * @property {boolean} bqAtStart
+ * @property {boolean} inLi
+ * @property {boolean} liAtStart
+ * @property {boolean} liHasPrev
+ * @property {boolean} liIsNested
+ */
+
+/** @param {BackspaceCtx} ctx */
 export function decideBackspaceAction(ctx) {
   const {
     inSummary,
