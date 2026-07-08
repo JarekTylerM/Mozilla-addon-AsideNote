@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    popup.js — logika mikro-okna quick capture
    ══════════════════════════════════════════════════════════════ */
@@ -6,18 +7,20 @@ import { buildItemFromCapture } from './quick-capture-core.js';
 import { scheduleAlarm, isAlarmable } from './alarms.js';
 import { parseCapture } from './parser.js';
 
-const input         = document.getElementById('popup-input');
-const capture       = document.getElementById('popup-capture');
-const feedback      = document.getElementById('popup-feedback');
-const titleEl       = document.getElementById('popup-title');
-const hint          = document.getElementById('popup-hint');
-const helpBtn       = document.getElementById('popup-help-btn');
-const helpPanel     = document.getElementById('popup-help-panel');
-const syntaxBody    = document.getElementById('popup-help-syntax');
-const escHint   = document.getElementById('popup-esc-hint');
-const preview   = document.getElementById('popup-preview');
+// Elementy popupu są zawsze w popup.html — rzutujemy z pominięciem null.
+const input       = /** @type {HTMLInputElement} */ (document.getElementById('popup-input'));
+const capture     = /** @type {HTMLElement} */ (document.getElementById('popup-capture'));
+const feedback    = /** @type {HTMLElement} */ (document.getElementById('popup-feedback'));
+const titleEl     = /** @type {HTMLElement} */ (document.getElementById('popup-title'));
+const hint        = /** @type {HTMLElement} */ (document.getElementById('popup-hint'));
+const helpBtn     = /** @type {HTMLElement} */ (document.getElementById('popup-help-btn'));
+const helpPanel   = /** @type {HTMLElement} */ (document.getElementById('popup-help-panel'));
+const syntaxBody  = /** @type {HTMLElement} */ (document.getElementById('popup-help-syntax'));
+const escHint     = /** @type {HTMLElement} */ (document.getElementById('popup-esc-hint'));
+const preview     = /** @type {HTMLElement} */ (document.getElementById('popup-preview'));
 // ── i18n ────────────────────────────────────────
 
+/** @param {string} key @param {string|string[]} [subs] */
 function t(key, subs) {
   return browser.i18n.getMessage(key, subs) || key;
 }
@@ -37,6 +40,7 @@ function t(key, subs) {
 
 const HINT_ALLOWED_TAGS = new Set(['KBD', 'CODE', 'STRONG', 'EM', 'BR', 'SPAN', 'DIV', 'LI', 'UL', 'P']);
 
+/** @param {HTMLElement} el @param {string} html */
 function _setRichText(el, html) {
   if (!html || typeof html !== 'string') { el.textContent = ''; return; }
   const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -44,19 +48,21 @@ function _setRichText(el, html) {
   _copyNodes(doc.body, el);
 }
 
+/** @param {Node} src @param {Node} dst */
 function _copyNodes(src, dst) {
   for (const child of src.childNodes) {
     if (child.nodeType === Node.TEXT_NODE) {
-      dst.appendChild(document.createTextNode(child.textContent));
+      dst.appendChild(document.createTextNode(child.textContent ?? ''));
     } else if (child.nodeType === Node.ELEMENT_NODE) {
-      if (HINT_ALLOWED_TAGS.has(child.tagName)) {
-        const clone = document.createElement(child.tagName.toLowerCase());
+      const childEl = /** @type {Element} */ (child);
+      if (HINT_ALLOWED_TAGS.has(childEl.tagName)) {
+        const clone = document.createElement(childEl.tagName.toLowerCase());
         // Brak kopiowania atrybutów — popup nie potrzebuje href/class z locale
-        _copyNodes(child, clone);
+        _copyNodes(childEl, clone);
         dst.appendChild(clone);
       } else {
         // Niedozwolony tag — zachowaj tylko tekst
-        dst.appendChild(document.createTextNode(child.textContent));
+        dst.appendChild(document.createTextNode(childEl.textContent ?? ''));
       }
     }
   }
@@ -93,6 +99,7 @@ browser.storage.local.get('uiSettings').then((res) => {
 
 (function _ensureInputFocus() {
   const deadline = Date.now() + 1000;
+  /** @type {ReturnType<typeof setTimeout> | null} */
   let timer = null;
 
   const tryFocus = () => {
@@ -229,7 +236,7 @@ input.addEventListener('keydown', async (e) => {
   const raw = input.value.trim();
   if (!raw) return;
 
-  const item = buildItemFromCapture(raw);
+  const item = /** @type {Note | null} */ (buildItemFromCapture(raw));
   if (!item) return;
 
   const isTask = item.type === 'task';
@@ -286,6 +293,7 @@ input.addEventListener('keydown', async (e) => {
 
 // ── Feedback ────────────────────────────────────
 
+/** @param {string} text @param {string} variant */
 function _showFeedback(text, variant) {
   feedback.textContent = text;
   feedback.className = 'popup-feedback popup-feedback--visible popup-feedback--' + variant;

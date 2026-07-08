@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * editor-selection.js — DOM selection helpers
  *
@@ -9,19 +10,25 @@
  *                _handleTab, _handleAltArrow, _initKeydown)
  */
 
-const getEditor = () => document.getElementById("editor");
+// #editor jest zawsze w DOM w kontekstach używających tych helperów.
+const getEditor = () =>
+  /** @type {HTMLElement} */ (document.getElementById("editor"));
 
 export function _getListItem() {
   const sel = window.getSelection();
-  if (!sel.rangeCount) return null;
+  if (!sel || !sel.rangeCount) return null;
   const node = sel.getRangeAt(0).startContainer;
-  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-  return el.closest("li");
+  const el =
+    node.nodeType === Node.TEXT_NODE
+      ? node.parentElement
+      : /** @type {Element} */ (node);
+  return el?.closest("li") ?? null;
 }
 
+/** @param {Element} li */
 export function _isCursorAtListStart(li) {
   const sel = window.getSelection();
-  if (!sel.rangeCount) return false;
+  if (!sel || !sel.rangeCount) return false;
   const range = sel.getRangeAt(0);
   // Guard: kursor musi być wewnątrz li — inaczej setEnd rzuci (cross-tree),
   // a logicznie kursor poza li z definicji nie jest "na początku listy"
@@ -32,21 +39,25 @@ export function _isCursorAtListStart(li) {
   return check.toString() === "";
 }
 
+/** @param {Element} li */
 export function _focusLi(li) {
   const range = document.createRange();
   range.setStart(li, 0);
   range.collapse(true);
   const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
   getEditor().focus();
 }
 
+/** @param {Element} li */
 export function _indentListItem(li) {
   const prev = li.previousElementSibling;
   if (!prev || prev.tagName !== "LI") return;
 
-  const tag = li.parentElement.tagName;
+  const tag = li.parentElement?.tagName ?? "UL";
   // Reużyj istniejącej podlisty w prev: najpierw tego samego typu, a jeśli prev
   // ma już podlistę innego typu — dołącz do niej. Bez tego drugiego kroku
   // powstawały dwie równoległe listy (<ol> + <ul>) pod jednym elementem.
@@ -62,8 +73,10 @@ export function _indentListItem(li) {
   _focusLi(li);
 }
 
+/** @param {Element} li */
 export function _outdentListItem(li) {
   const parentList = li.parentElement;
+  if (!parentList) return;
   const parentLi = parentList.parentElement;
   if (!parentLi || parentLi.tagName !== "LI") return;
 
@@ -74,15 +87,19 @@ export function _outdentListItem(li) {
 
 export function _getCurrentBlock() {
   const sel = window.getSelection();
-  if (!sel.rangeCount) return null;
+  if (!sel || !sel.rangeCount) return null;
 
   const node = sel.getRangeAt(0).startContainer;
-  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  const el =
+    node.nodeType === Node.TEXT_NODE
+      ? node.parentElement
+      : /** @type {Element} */ (node);
 
   // Block tagi które obsługujemy
   const blockTags = ["P", "H1", "H2", "H3", "BLOCKQUOTE", "LI"];
 
   // DIV traktujemy jako block TYLKO jeśli to nie jest sam #editor
+  /** @type {Element | null} */
   let current = el;
   while (current && current !== getEditor()) {
     if (blockTags.includes(current.tagName)) return current;
@@ -94,6 +111,7 @@ export function _getCurrentBlock() {
   return getEditor();
 }
 
+/** @param {Element | null} block */
 export function _clearBlock(block) {
   if (!block) return;
 
@@ -109,8 +127,10 @@ export function _clearBlock(block) {
     r.setStart(p, 0);
     r.collapse(true);
     const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(r);
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
     return;
   }
 
@@ -120,10 +140,13 @@ export function _clearBlock(block) {
   r.setStart(block, 0);
   r.collapse(true);
   const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(r);
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
 }
 
+/** @param {Element} el */
 export function _restoreCursorTo(el) {
   // Znajdź pierwszy węzeł tekstowy lub fallback na sam element
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -136,8 +159,10 @@ export function _restoreCursorTo(el) {
     range.setStart(el, 0);
   }
   range.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(range);
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
   getEditor().focus();
 }
 
@@ -166,9 +191,11 @@ const LINE_CONTAINER_TAGS = new Set(["UL", "OL", "DETAILS"]);
  * rośnie dopiero gdy pojawi się tekst lub pusta linia. Dzięki temu bloki
  * opakowujące (blockquote>p, ul>li) nie liczą się podwójnie.
  *
+ * @param {HTMLElement} editorEl
  * @returns {Array<{node: Node, offset: number, linear: number}>}
  */
 function _buildPositions(editorEl) {
+  /** @type {Array<{node: Node, offset: number, linear: number}>} */
   const positions = [];
   let globalText = 0; // znaki tekstu wyemitowane dotąd
   let lineIndex = 0;
@@ -181,10 +208,11 @@ function _buildPositions(editorEl) {
     pending = false;
   };
 
+  /** @param {Node} node */
   const visit = (node) => {
     for (const child of node.childNodes) {
       if (child.nodeType === Node.TEXT_NODE) {
-        const len = child.textContent.length;
+        const len = child.textContent?.length ?? 0;
         if (len === 0) continue;
         commitLine();
         for (let i = 0; i <= len; i++) {
@@ -192,16 +220,17 @@ function _buildPositions(editorEl) {
         }
         globalText += len;
       } else if (child.nodeType === Node.ELEMENT_NODE) {
-        if (child.tagName === "BR") continue; // soft break — jak dotąd, 0 znaków
+        const childEl = /** @type {Element} */ (child);
+        if (childEl.tagName === "BR") continue; // soft break — jak dotąd, 0 znaków
         if (
-          LINE_BLOCK_TAGS.has(child.tagName) ||
-          LINE_CONTAINER_TAGS.has(child.tagName)
+          LINE_BLOCK_TAGS.has(childEl.tagName) ||
+          LINE_CONTAINER_TAGS.has(childEl.tagName)
         ) {
           pending = true;
           const before = positions.length;
           visit(child);
           // Blok bez tekstu = pusta linia → własna pozycja (element, 0)
-          if (positions.length === before && LINE_BLOCK_TAGS.has(child.tagName)) {
+          if (positions.length === before && LINE_BLOCK_TAGS.has(childEl.tagName)) {
             commitLine();
             positions.push({ node: child, offset: 0, linear: globalText + lineIndex });
           }
@@ -218,6 +247,7 @@ function _buildPositions(editorEl) {
 
 /**
  * Zwraca pozycję kursora jako offset LINIOWY (patrz _buildPositions).
+ * @param {HTMLElement} editorEl
  * @returns {number|null} null gdy brak selekcji lub kursor poza edytorem
  */
 export function getCursorOffset(editorEl) {
@@ -248,6 +278,8 @@ export function getCursorOffset(editorEl) {
 /**
  * Ustawia kursor na zadanym offsecie liniowym (odwrotność getCursorOffset).
  * Offset poza zakresem → kursor na końcu edytora.
+ * @param {HTMLElement} editorEl
+ * @param {number} offset
  */
 export function setCursorOffset(editorEl, offset) {
   if (offset == null || offset < 0 || !editorEl) return;
@@ -273,6 +305,8 @@ export function setCursorOffset(editorEl, offset) {
     range.collapse(false);
   }
   const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
 }
