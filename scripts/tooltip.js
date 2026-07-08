@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    tooltip.js — globalny manager custom tooltipów
    ──────────────────────────────────────────────────────────────
@@ -28,11 +29,17 @@ const TOOLTIP_SELECTOR = 'button[title], a[title], select[title], input[title], 
 const SHOW_DELAY = 380; // ms — eliminuje flash przy szybkim przejeździe
 const HIDE_DELAY = 80;
 
+/** @type {HTMLElement | null} */
 let _el        = null; // #app-tooltip element
+/** @type {HTMLElement | null} */
 let _labelEl   = null;
+/** @type {HTMLElement | null} */
 let _hintEl    = null;
+/** @type {ReturnType<typeof setTimeout> | null} */
 let _showTimer = null;
+/** @type {ReturnType<typeof setTimeout> | null} */
 let _hideTimer = null;
+/** @type {HTMLElement | null} */
 let _anchor    = null; // aktualnie hoverowany element
 
 /* ── Init ──────────────────────────────────────── */
@@ -50,8 +57,8 @@ export function initTooltips({ enabled = true } = {}) {
     console.warn('[tooltip] Brak elementu #app-tooltip w DOM');
     return;
   }
-  _labelEl = _el.querySelector('.app-tooltip__label');
-  _hintEl  = _el.querySelector('.app-tooltip__hint');
+  _labelEl = /** @type {HTMLElement|null} */ (_el.querySelector('.app-tooltip__label'));
+  _hintEl  = /** @type {HTMLElement|null} */ (_el.querySelector('.app-tooltip__hint'));
 
   // Statyczne elementy (data-i18n-attr z title:klucz) — przenieś title →
   // data-tooltip-content i WYCZYŚĆ title (pusty string, nie remove).
@@ -59,10 +66,11 @@ export function initTooltips({ enabled = true } = {}) {
   // data-tooltip-content. Pusty title="" blokuje natywny tooltip przeglądarki
   // i nie wchodzi w gałąź else-if obserwatora (która czeka na null, nie "").
   document.querySelectorAll('[data-i18n-attr*="title:"]').forEach(el => {
-    const t = el.getAttribute('title');
+    const he = /** @type {HTMLElement} */ (el);
+    const t = he.getAttribute('title');
     if (t) {
-      el.dataset.tooltipContent = t;
-      el.setAttribute('title', ''); // "" blokuje natywny tooltip
+      he.dataset.tooltipContent = t;
+      he.setAttribute('title', ''); // "" blokuje natywny tooltip
     }
   });
 
@@ -78,15 +86,18 @@ export function initTooltips({ enabled = true } = {}) {
   // Pętla self-triggering wyeliminowana: ustawiamy title="" zamiast removeAttribute,
   // więc kolejny callback widzi title==="" → żadna gałąź nie odpala.
 
+  /** @param {Element} root */
   function _stripTitles(root) {
     // Przetwarza element i całe jego potomstwo — używane przy insert do DOM
+    /** @type {Element[]} */
     const candidates = root.hasAttribute?.('title') ? [root] : [];
     root.querySelectorAll?.('[title]').forEach(el => candidates.push(el));
     candidates.forEach(el => {
-      const t = el.getAttribute('title');
+      const he = /** @type {HTMLElement} */ (el);
+      const t = he.getAttribute('title');
       if (t) {
-        el.dataset.tooltipContent = t;
-        el.setAttribute('title', ''); // "" = brak natywnego tooltipa, nie triggeruje else-if
+        he.dataset.tooltipContent = t;
+        he.setAttribute('title', ''); // "" = brak natywnego tooltipa, nie triggeruje else-if
       }
     });
   }
@@ -96,11 +107,12 @@ export function initTooltips({ enabled = true } = {}) {
       if (m.type === 'childList') {
         // Nowe węzły w DOM — sprawdź czy mają title ustawiony przed insertem
         for (const node of m.addedNodes) {
-          if (node.nodeType === Node.ELEMENT_NODE) _stripTitles(node);
+          if (node.nodeType === Node.ELEMENT_NODE)
+            _stripTitles(/** @type {Element} */ (node));
         }
       } else {
         // m.type === 'attributes' — title zmieniony na istniejącym elemencie
-        const el = m.target;
+        const el = /** @type {HTMLElement} */ (m.target);
         const title = el.getAttribute('title');
         if (title) {
           el.dataset.tooltipContent = title;
@@ -143,9 +155,11 @@ export function setTooltipsEnabled(enabled) {
 
 /* ── Event handlers ────────────────────────────── */
 
+/** @param {Event} e */
 function _onEnter(e) {
-  if (!e.target?.closest) return; // focus/mouseenter może odpalić na document/window
-  const target = e.target.closest(TOOLTIP_SELECTOR);
+  const src = /** @type {Element|null} */ (e.target);
+  if (!src?.closest) return; // focus/mouseenter może odpalić na document/window
+  const target = /** @type {HTMLElement|null} */ (src.closest(TOOLTIP_SELECTOR));
   if (!target || target === _anchor) return;
 
   _anchor = target;
@@ -157,19 +171,22 @@ function _onEnter(e) {
   }, SHOW_DELAY);
 }
 
+/** @param {MouseEvent} e */
 function _onLeave(e) {
   // Sprawdź czy mysz nie przechodzi na sam tooltip
   const to = e.relatedTarget;
-  if (to && _el?.contains(to)) return;
+  if (to && _el?.contains(/** @type {Node} */ (to))) return;
 
   _cancelShow();
   _anchor = null;
   _hideTimer = setTimeout(_hide, HIDE_DELAY);
 }
 
+/** @param {Event} e */
 function _onFocus(e) {
-  if (!e.target?.closest) return; // focus może odpalić na document/window/text node
-  const target = e.target.closest(TOOLTIP_SELECTOR);
+  const src = /** @type {Element|null} */ (e.target);
+  if (!src?.closest) return; // focus może odpalić na document/window/text node
+  const target = /** @type {HTMLElement|null} */ (src.closest(TOOLTIP_SELECTOR));
   if (!target) return;
   _anchor = target;
   _cancelHide();
@@ -192,14 +209,16 @@ function _onHide() {
 
 /* ── Logika show/hide ──────────────────────────── */
 
+/** @param {HTMLElement} el @returns {string|null} */
 function _getText(el) {
   if (document.documentElement.dataset.tooltipsOff === '1') return null;
-  if (el.disabled) return null;
+  if (/** @type {HTMLButtonElement} */ (el).disabled) return null;
   return el.dataset.tooltipContent || el.getAttribute('title') || null;
 }
 
+/** @param {Element} anchor @param {string} text */
 function _show(anchor, text) {
-  if (!_el) return;
+  if (!_el || !_labelEl || !_hintEl) return;
 
   // Podziel "Label · Skrót" na dwie części
   const sep = ' · ';
@@ -234,18 +253,20 @@ function _hide() {
 }
 
 function _cancelShow() {
-  clearTimeout(_showTimer);
+  clearTimeout(_showTimer ?? undefined);
   _showTimer = null;
 }
 
 function _cancelHide() {
-  clearTimeout(_hideTimer);
+  clearTimeout(_hideTimer ?? undefined);
   _hideTimer = null;
 }
 
 /* ── Pozycjonowanie ────────────────────────────── */
 
+/** @param {Element} anchor */
 function _position(anchor) {
+  if (!_el) return;
   const rect = anchor.getBoundingClientRect();
   const tw   = _el.offsetWidth;
   const th   = _el.offsetHeight;

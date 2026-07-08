@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    undo.js — undo/redo manager dla edytora rich-text
    ──────────────────────────────────────────────────────────────
@@ -18,10 +19,20 @@ const MAX_STACK = 50;
 const MAX_STACK_CHARS = 500_000;
 const TYPING_PAUSE_MS = 500;
 
+/**
+ * @typedef {{ startPath: number[]|null, startOffset: number, endPath: number[]|null, endOffset: number, collapsed: boolean } | null} SelData
+ * @typedef {{ html: string, selection: SelData }} Snapshot
+ */
+
+/** @type {HTMLElement | null} */
 let editor = null;
+/** @type {Snapshot[]} */
 let undoStack = [];
+/** @type {Snapshot[]} */
 let redoStack = [];
+/** @type {ReturnType<typeof setTimeout> | null} */
 let typingTimer = null;
+/** @type {string | null} */
 let lastSnapshotHTML = null;
 
 /**
@@ -38,9 +49,9 @@ function _captureSnapshot() {
 
 function _captureSelection() {
   const sel = window.getSelection();
-  if (!sel.rangeCount) return null;
+  if (!sel || !sel.rangeCount) return null;
   const range = sel.getRangeAt(0);
-  if (!editor.contains(range.startContainer)) return null;
+  if (!editor || !editor.contains(range.startContainer)) return null;
 
   return {
     startPath: _nodePath(range.startContainer),
@@ -54,8 +65,11 @@ function _captureSelection() {
 /**
  * Ścieżka indeksów od editora do node — żeby po innerHTML replace odnaleźć
  * "ten sam" węzeł w nowym drzewie.
+ * @param {Node} node
+ * @returns {number[]|null}
  */
 function _nodePath(node) {
+  /** @type {number[]} */
   const path = [];
   let current = node;
   while (current && current !== editor) {
@@ -67,6 +81,7 @@ function _nodePath(node) {
   return path;
 }
 
+/** @param {SelData} selData */
 function _restoreSelection(selData) {
   if (!selData) return;
   const startNode = _resolvePath(selData.startPath);
@@ -78,15 +93,19 @@ function _restoreSelection(selData) {
     range.setStart(startNode, Math.min(selData.startOffset, _maxOffset(startNode)));
     range.setEnd(endNode, Math.min(selData.endOffset, _maxOffset(endNode)));
     const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
   } catch {
     // Path zdezaktualizowany, ignore — kursor wyląduje "gdzieś"
   }
 }
 
+/** @param {number[]|null} path @returns {Node|null} */
 function _resolvePath(path) {
-  if (!path) return null;
+  if (!path || !editor) return null;
+  /** @type {Node} */
   let current = editor;
   for (const idx of path) {
     if (!current.childNodes[idx]) return current;
@@ -95,9 +114,10 @@ function _resolvePath(path) {
   return current;
 }
 
+/** @param {Node} node @returns {number} */
 function _maxOffset(node) {
   return node.nodeType === Node.TEXT_NODE
-    ? node.textContent.length
+    ? (node.textContent?.length ?? 0)
     : node.childNodes.length;
 }
 
@@ -117,7 +137,7 @@ function _pushSnapshot() {
   // (min. 2 wpisy: stan inicjalny + bieżący, żeby undo dalej działało)
   let total = undoStack.reduce((sum, s) => sum + s.html.length, 0);
   while (total > MAX_STACK_CHARS && undoStack.length > 2) {
-    total -= undoStack.shift().html.length;
+    total -= undoStack.shift()?.html.length ?? 0;
   }
 
   redoStack = [];
@@ -126,6 +146,7 @@ function _pushSnapshot() {
 
 /**
  * Restore — zastępuje innerHTML i przywraca selekcję.
+ * @param {Snapshot|null|undefined} snapshot
  */
 function _restoreSnapshot(snapshot) {
   if (!snapshot || !editor) return;
@@ -136,6 +157,7 @@ function _restoreSnapshot(snapshot) {
 
 /* ── Public API ──────────────────────────────────────── */
 
+/** @param {HTMLElement} editorEl */
 export function init(editorEl) {
   editor = editorEl;
   reset();
@@ -150,6 +172,7 @@ export function init(editorEl) {
   });
 }
 
+/** @param {string} [initialContent] */
 export function reset(initialContent) {
   undoStack = [];
   redoStack = [];
@@ -190,6 +213,7 @@ export function undo() {
   if (undoStack.length <= 1) return false; // Pierwszy snapshot to stan inicjalny — nie cofamy
 
   const current = undoStack.pop();
+  if (!current) return false;
   redoStack.push(current);
   const previous = undoStack[undoStack.length - 1];
   _restoreSnapshot(previous);
@@ -199,6 +223,7 @@ export function undo() {
 export function redo() {
   if (redoStack.length === 0) return false;
   const next = redoStack.pop();
+  if (!next) return false;
   undoStack.push(next);
   _restoreSnapshot(next);
   return true;
