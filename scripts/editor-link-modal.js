@@ -14,18 +14,25 @@
  *   openLinkModal()   — wywołaj z _initKeydown (Ctrl+K)
  */
 
+// @ts-check
 import { t } from './i18n.js';
 import * as undo from './undo.js';
 import { looksLikeUrl, normalizeUrl } from './editor-url.js';
 import { debouncedSave } from './notes.js';
 
-const editor = document.getElementById('editor');
+// Elementy modala/edytora są zawsze w DOM — rzutujemy z pominięciem null.
+const editor = /** @type {HTMLElement} */ (document.getElementById('editor'));
+/** @param {string} id @returns {HTMLElement} */
+const _byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+/** @param {string} id @returns {HTMLInputElement} */
+const _byInput = (id) =>
+  /** @type {HTMLInputElement} */ (document.getElementById(id));
 
 /* ── Klik na linku → otwórz w nowej karcie ────── */
 
 export function initLinkClick() {
   editor.addEventListener('click', (e) => {
-    const link = e.target.closest('a');
+    const link = /** @type {Element|null} */ (e.target)?.closest('a');
     if (!link) return;
 
     // Lewy klik (także z Ctrl/Cmd) otwiera link — link jest jednostką
@@ -38,32 +45,37 @@ export function initLinkClick() {
 }
 
 export function initLinkButton() {
-  document.getElementById('link-btn').onclick = () => {
+  _byId('link-btn').onclick = () => {
     openLinkModal();
   };
 }
 
 // Cache: który <a> aktualnie edytujemy (null = wstawiamy nowy link)
+/** @type {HTMLAnchorElement | null} */
 let _editingLink = null;
 // Cache: zaznaczenie sprzed otwarcia modala (range traci się gdy modal dostaje fokus)
+/** @type {Range | null} */
 let _savedRange = null;
 
 /**
  * Otwiera modal edycji dla konkretnego elementu <a>.
  * Wywoływane z link tooltip.
+ * @param {Element} el
  */
 export function openLinkModalForElement(el) {
   const range = document.createRange();
   range.selectNodeContents(el);
   const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
   openLinkModal();
 }
 
 export function openLinkModal() {
   const sel = window.getSelection();
-  if (!sel.rangeCount) {
+  if (!sel || !sel.rangeCount) {
     // Brak kursora w edytorze — open empty modal, link wstawi się gdzieś (na końcu?)
     // Nie wspierane — bez fokusu w edytorze nie wiadomo gdzie wstawiać
     editor.focus();
@@ -75,23 +87,28 @@ export function openLinkModal() {
 
   // Detekcja: czy kursor/selekcja jest w istniejącym <a>?
   const node = range.startContainer;
-  const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-  const existingLink = element.closest('a');
+  const element =
+    node.nodeType === Node.TEXT_NODE
+      ? node.parentElement
+      : /** @type {Element} */ (node);
+  const existingLink = /** @type {HTMLAnchorElement|null} */ (
+    element?.closest('a') ?? null
+  );
 
-  const urlInput = document.getElementById('link-modal-url');
-  const textInput = document.getElementById('link-modal-text');
-  const removeBtn = document.getElementById('link-modal-remove');
-  const errorEl = document.getElementById('link-modal-error');
+  const urlInput = _byInput('link-modal-url');
+  const textInput = _byInput('link-modal-text');
+  const removeBtn = _byId('link-modal-remove');
+  const errorEl = _byId('link-modal-error');
 
   if (errorEl) errorEl.hidden = true;
 
-  const modalTitle = document.getElementById('link-modal-title');
+  const modalTitle = _byId('link-modal-title');
 
   if (existingLink) {
     // Edycja
     _editingLink = existingLink;
     urlInput.value = existingLink.getAttribute('href') || '';
-    textInput.value = existingLink.textContent;
+    textInput.value = existingLink.textContent ?? '';
     removeBtn.hidden = false;
     if (modalTitle) modalTitle.textContent = t('linkModal_title_edit');
   } else {
@@ -104,30 +121,32 @@ export function openLinkModal() {
     if (modalTitle) modalTitle.textContent = t('linkModal_title_new');
   }
 
-  document.getElementById('link-modal').hidden = false;
+  _byId('link-modal').hidden = false;
 
   // Focus na URL input zawsze — to najczęstszy obszar do uzupełnienia
   setTimeout(() => urlInput.focus(), 0);
 }
 
 function _closeLinkModal() {
-  document.getElementById('link-modal').hidden = true;
+  _byId('link-modal').hidden = true;
   _editingLink = null;
   _savedRange = null;
   editor.focus();
 }
 
 export function initLinkModal() {
-  const modal = document.getElementById('link-modal');
-  const urlInput = document.getElementById('link-modal-url');
-  const textInput = document.getElementById('link-modal-text');
-  const errorEl = document.getElementById('link-modal-error');
+  const modal = _byId('link-modal');
+  const urlInput = _byInput('link-modal-url');
+  const textInput = _byInput('link-modal-text');
 
-  document.getElementById('link-modal-close').onclick = _closeLinkModal;
-  document.getElementById('link-modal-cancel').onclick = _closeLinkModal;
+  _byId('link-modal-close').onclick = _closeLinkModal;
+  _byId('link-modal-cancel').onclick = _closeLinkModal;
 
   // Klik na backdrop (tło) zamyka modal
-  modal.querySelector('.link-modal__backdrop').onclick = _closeLinkModal;
+  const backdrop = /** @type {HTMLElement|null} */ (
+    modal.querySelector('.link-modal__backdrop')
+  );
+  if (backdrop) backdrop.onclick = _closeLinkModal;
 
   // Esc zamyka modal (gdy modal otwarty)
   document.addEventListener('keydown', (e) => {
@@ -148,14 +167,14 @@ export function initLinkModal() {
     });
   });
 
-  document.getElementById('link-modal-save').onclick = _saveLinkModal;
-  document.getElementById('link-modal-remove').onclick = _removeLinkModal;
+  _byId('link-modal-save').onclick = _saveLinkModal;
+  _byId('link-modal-remove').onclick = _removeLinkModal;
 }
 
 function _saveLinkModal() {
-  const urlInput = document.getElementById('link-modal-url');
-  const textInput = document.getElementById('link-modal-text');
-  const errorEl = document.getElementById('link-modal-error');
+  const urlInput = _byInput('link-modal-url');
+  const textInput = _byInput('link-modal-text');
+  const errorEl = _byId('link-modal-error');
 
   const rawUrl = urlInput.value.trim();
   const text = textInput.value.trim();
@@ -195,6 +214,10 @@ function _saveLinkModal() {
     }
 
     const sel = window.getSelection();
+    if (!sel) {
+      _closeLinkModal();
+      return;
+    }
     sel.removeAllRanges();
     sel.addRange(_savedRange);
 
@@ -232,16 +255,18 @@ function _removeLinkModal() {
   undo.checkpoint();
 
   // Zastąp <a> tekstem
-  const text = document.createTextNode(_editingLink.textContent);
+  const text = document.createTextNode(_editingLink.textContent ?? '');
   _editingLink.replaceWith(text);
 
   // Postaw kursor na końcu odzyskanego tekstu
   const r = document.createRange();
-  r.setStart(text, text.textContent.length);
+  r.setStart(text, (text.textContent ?? '').length);
   r.collapse(true);
   const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(r);
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
 
   debouncedSave();
   _closeLinkModal();
