@@ -18,14 +18,22 @@
  *   updateDueDisplay()            — odśwież #due-display-btn (wywoływane z notes.js)
  */
 
+// @ts-check
 import { getUILocale, getShortWeekdays, t } from "./i18n.js";
 
-let _popover = null;
-let _dateInput = null; // #due-date (hidden)
-let _timeInput = null; // #due-time (hidden)
-let _viewYear = null;
-let _viewMonth = null;
+// Elementy pickera są zawsze w sidebar.html — typ zakłada obecność, a guard
+// w initDatePicker nadal łapie ewentualny brak w runtime.
+/** @type {HTMLElement} */
+let _popover;
+/** @type {HTMLInputElement} */
+let _dateInput; // #due-date (hidden)
+/** @type {HTMLInputElement} */
+let _timeInput; // #due-time (hidden)
+let _viewYear = 0;
+let _viewMonth = 0;
+/** @type {string | null} */
 let _selected = null; // "YYYY-MM-DD" | null
+/** @type {string | null} */
 let _recurrence = null; // "daily"|"weekly"|"monthly"|"yearly"|null
 let _recurrenceDays = [1, 2, 3, 4, 5]; // domyślnie pn-pt
 let _currentReminder = 0;
@@ -33,9 +41,9 @@ let _currentReminder = 0;
 /* ── Public API ────────────────────────────────── */
 
 export function initDatePicker() {
-  _popover = document.getElementById("date-picker-popover");
-  _dateInput = document.getElementById("due-date");
-  _timeInput = document.getElementById("due-time");
+  _popover = /** @type {HTMLElement} */ (document.getElementById("date-picker-popover"));
+  _dateInput = /** @type {HTMLInputElement} */ (document.getElementById("due-date"));
+  _timeInput = /** @type {HTMLInputElement} */ (document.getElementById("due-time"));
   if (!_popover || !_dateInput) return;
 
   // Display button otwiera picker
@@ -81,7 +89,7 @@ export function initDatePicker() {
   // Preset: Dziś / Jutro
   _popover.querySelectorAll("[data-preset]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const date = _presetDate(btn.dataset.preset);
+      const date = _presetDate(/** @type {HTMLElement} */ (btn).dataset.preset);
       if (date) _selectDate(date);
     });
   });
@@ -93,7 +101,7 @@ export function initDatePicker() {
       _selected = null;
       _dateInput.value = "";
       if (_timeInput) _timeInput.value = "";
-      const tpi = document.getElementById("date-picker-time-input");
+      const tpi = /** @type {HTMLInputElement|null} */ (document.getElementById("date-picker-time-input"));
       if (tpi) tpi.value = "";
       _dateInput.dispatchEvent(new Event("change", { bubbles: true }));
       updateDueDisplay();
@@ -103,7 +111,7 @@ export function initDatePicker() {
     });
 
   // Time input w pickerze
-  const timePickerInput = document.getElementById("date-picker-time-input");
+  const timePickerInput = /** @type {HTMLInputElement|null} */ (document.getElementById("date-picker-time-input"));
   if (timePickerInput) {
     timePickerInput.addEventListener("change", () => {
       if (_timeInput) {
@@ -116,7 +124,7 @@ export function initDatePicker() {
   }
 
   // Reminder select
-  const reminderSelect = document.getElementById("date-picker-reminder-select");
+  const reminderSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById("date-picker-reminder-select"));
   if (reminderSelect) {
     reminderSelect.addEventListener("change", () => {
       const val = Number(reminderSelect.value);
@@ -132,14 +140,14 @@ export function initDatePicker() {
   // Recurrence buttons
   _popover.querySelectorAll("[data-recurrence]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      _selectRecurrence(btn.dataset.recurrence || null);
+      _selectRecurrence(/** @type {HTMLElement} */ (btn).dataset.recurrence || null);
     });
   });
 
   // Day-of-week buttons (custom recurrence)
   _popover.querySelectorAll("[data-day]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const day = Number(btn.dataset.day);
+      const day = Number(/** @type {HTMLElement} */ (btn).dataset.day);
       const idx = _recurrenceDays.indexOf(day);
       if (idx !== -1 && _recurrenceDays.length > 1) {
         _recurrenceDays = _recurrenceDays.filter((d) => d !== day);
@@ -159,25 +167,29 @@ export function initDatePicker() {
   document
     .getElementById("date-picker-grid")
     ?.addEventListener("click", (e) => {
-      const day = e.target.closest("[data-date]");
+      const day = /** @type {HTMLButtonElement|null} */ (
+        (/** @type {Element|null} */ (e.target))?.closest("[data-date]") ?? null
+      );
       if (!day || day.disabled) return;
-      _selectDate(day.dataset.date);
+      _selectDate(day.dataset.date ?? null);
     });
 
   // Sync przy zmianie notatki
   document.addEventListener("dueDateChanged", (e) => {
-    syncDatePicker(e.detail.dateStr);
+    syncDatePicker(/** @type {CustomEvent} */ (e).detail.dateStr);
   });
   document.addEventListener("recurrenceChanged", (e) => {
-    syncRecurrence(e.detail.value);
+    syncRecurrence(/** @type {CustomEvent} */ (e).detail.value);
   });
 
   // Zamknij poza
   document.addEventListener("click", (e) => {
+    const target = /** @type {Element|null} */ (e.target);
     if (
-      !e.target.closest("#date-picker-popover") &&
-      !e.target.closest("#due-display-btn") &&
-      !e.target.closest(".due-wrapper")
+      target &&
+      !target.closest("#date-picker-popover") &&
+      !target.closest("#due-display-btn") &&
+      !target.closest(".due-wrapper")
     )
       _close();
   });
@@ -190,14 +202,17 @@ export function initDatePicker() {
   });
 }
 
+/** @param {string|null} dateStr */
 export function syncDatePicker(dateStr) {
   _selected = dateStr || null;
 }
 
+/** @param {string|null} value */
 export function syncRecurrence(value) {
   _recurrence = value || null;
 }
 
+/** @param {number|string} value */
 export function syncReminder(value) {
   _currentReminder = Number(value) || 0;
 }
@@ -252,11 +267,11 @@ function _open() {
   }
 
   // Sync time picker z aktualną wartością
-  const tpi = document.getElementById("date-picker-time-input");
+  const tpi = /** @type {HTMLInputElement|null} */ (document.getElementById("date-picker-time-input"));
   if (tpi && _timeInput) tpi.value = _timeInput.value || "";
 
   _syncReminderRow(_currentReminder);
-  const reminderSel = document.getElementById("date-picker-reminder-select");
+  const reminderSel = /** @type {HTMLSelectElement|null} */ (document.getElementById("date-picker-reminder-select"));
   if (reminderSel) reminderSel.value = String(_currentReminder);
   _updateReminderHint(_currentReminder);
   _renderCalendar();
@@ -292,7 +307,9 @@ function _close() {
   if (hint) hint.hidden = true;
 }
 
+/** @param {string|null} dateStr */
 function _selectDate(dateStr) {
+  if (!dateStr) return;
   _selected = dateStr;
   _dateInput.value = dateStr;
   _renderCalendar();
@@ -303,6 +320,7 @@ function _selectDate(dateStr) {
   if (tpi) tpi.focus();
 }
 
+/** @param {string|null} value */
 function _selectRecurrence(value) {
   _recurrence = value || null;
 
@@ -327,6 +345,7 @@ function _selectRecurrence(value) {
   );
 }
 
+/** @param {Date} date */
 function _toDateStr(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -340,6 +359,7 @@ function _today() {
   return d;
 }
 
+/** @param {string|undefined} preset @returns {string|null} */
 function _presetDate(preset) {
   const d = _today();
   if (preset === "today") return _toDateStr(d);
@@ -350,12 +370,14 @@ function _presetDate(preset) {
   return null;
 }
 
+/** @param {number|string} value */
 function _syncReminderRow(value) {
   _currentReminder = Number(value) || 0;
-  const sel = document.getElementById("date-picker-reminder-select");
+  const sel = /** @type {HTMLSelectElement|null} */ (document.getElementById("date-picker-reminder-select"));
   if (sel) sel.value = String(_currentReminder);
 }
 
+/** @param {number} reminder */
 function _updateAlarmPill(reminder) {
   const pill = document.getElementById("due-alarm-pill");
   const label = document.getElementById("alarm-label");
@@ -373,6 +395,7 @@ function _updateAlarmPill(reminder) {
   }
 }
 
+/** @param {number} reminder */
 function _updateReminderHint(reminder) {
   let hint = document.getElementById("date-picker-reminder-hint");
   if (reminder > 0 && !_timeInput?.value) {
@@ -433,7 +456,7 @@ function _renderCalendar() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "date-picker-calendar__day";
-    btn.textContent = d;
+    btn.textContent = String(d);
     btn.dataset.date = dateStr;
     if (dateStr === todayStr)
       btn.classList.add("date-picker-calendar__day--today");
@@ -445,12 +468,12 @@ function _renderCalendar() {
 
 function _renderFooter() {
   _popover.querySelectorAll("[data-preset]").forEach((btn) => {
-    const date = _presetDate(btn.dataset.preset);
+    const date = _presetDate(/** @type {HTMLElement} */ (btn).dataset.preset);
     btn.classList.toggle("is-active", !!date && date === _selected);
   });
 
   _popover.querySelectorAll("[data-recurrence]").forEach((btn) => {
-    const val = btn.dataset.recurrence || null;
+    const val = /** @type {HTMLElement} */ (btn).dataset.recurrence || null;
     btn.classList.toggle("is-active", val === _recurrence);
   });
 
@@ -463,7 +486,7 @@ function _renderDaysRow() {
   row.hidden = _recurrence !== "custom";
   if (_recurrence !== "custom") return;
   row.querySelectorAll("[data-day]").forEach((btn) => {
-    const day = Number(btn.dataset.day);
+    const day = Number(/** @type {HTMLElement} */ (btn).dataset.day);
     btn.classList.toggle("is-active", _recurrenceDays.includes(day));
   });
 }
