@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    quick-capture-core.js — współdzielona logika quick capture
    ──────────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ export function newNoteId() {
 /**
  * Buduje obiekt notatki/zadania z surowego inputu quick capture.
  * @param {string} raw — tekst z pola capture
- * @param {string|null} [locale] — przekazywany do parseCapture (testy)
+ * @param {string|null} [locale] przekazywany do parseCapture (testy)
  * @returns {object|null} obiekt notatki gotowy do zapisania, albo null
  *   gdy input nie daje sensownego tytułu
  */

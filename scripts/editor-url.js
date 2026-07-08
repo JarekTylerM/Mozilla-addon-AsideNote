@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * editor-url.js — walidacja URL dla edytora
  *

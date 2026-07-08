@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * editor-pattern.js — detekcja wzorców inline markdown
  *
@@ -30,19 +31,19 @@ export function findInlinePattern(textBefore, key) {
   if (key === '*') {
     // ***bold italic*** — trigger: 3. '*', textBefore = "***treść**"
     m = textBefore.match(/\*\*\*([^*\n]{1,300})\*\*$/);
-    if (m && textBefore[m.index - 1] !== '*') {
-      return { content: m[1], openIdx: m.index, markerLen: 3, tag: 'strong-em' };
+    if (m && textBefore[(m.index ?? 0) - 1] !== '*') {
+      return { content: m[1], openIdx: m.index ?? 0, markerLen: 3, tag: 'strong-em' };
     }
     // **bold** — trigger: 2. '*', textBefore = "**treść*"
     // Otwierający ** nie może być poprzedzony przez * (unikamy ***)
     m = textBefore.match(/\*\*([^*\n]{1,300})\*$/);
-    if (m && textBefore[m.index - 1] !== '*') {
-      return { content: m[1], openIdx: m.index, markerLen: 2, tag: 'strong' };
+    if (m && textBefore[(m.index ?? 0) - 1] !== '*') {
+      return { content: m[1], openIdx: m.index ?? 0, markerLen: 2, tag: 'strong' };
     }
     // *italic* — trigger: '*', textBefore = "*treść" (brak ** w treści)
     m = textBefore.match(/(?:^|[^*])\*([^*\n]{1,300})$/);
     if (m) {
-      const openIdx = m.index + m[0].length - m[1].length - 1;
+      const openIdx = (m.index ?? 0) + m[0].length - m[1].length - 1;
       return { content: m[1], openIdx, markerLen: 1, tag: 'em' };
     }
   }
@@ -50,19 +51,19 @@ export function findInlinePattern(textBefore, key) {
   if (key === '_') {
     // ___bold italic___ — trigger: 3. '_', textBefore = "___treść__"
     m = textBefore.match(/___([^_\n]{1,300})__$/);
-    if (m && textBefore[m.index - 1] !== '_') {
-      return { content: m[1], openIdx: m.index, markerLen: 3, tag: 'strong-em' };
+    if (m && textBefore[(m.index ?? 0) - 1] !== '_') {
+      return { content: m[1], openIdx: m.index ?? 0, markerLen: 3, tag: 'strong-em' };
     }
     // __bold__ — trigger: 2. '_', textBefore = "__treść_"
     m = textBefore.match(/__([^_\n]{1,300})_$/);
-    if (m && textBefore[m.index - 1] !== '_') {
-      return { content: m[1], openIdx: m.index, markerLen: 2, tag: 'strong' };
+    if (m && textBefore[(m.index ?? 0) - 1] !== '_') {
+      return { content: m[1], openIdx: m.index ?? 0, markerLen: 2, tag: 'strong' };
     }
     // _italic_ — trigger: '_', textBefore = "_treść"
     // Nie triggeruj wewnątrz słowa (my_var, snake_case)
     m = textBefore.match(/(?:^|[^_\w])_([^_\n]{1,300})$/);
     if (m) {
-      const openIdx = m.index + m[0].length - m[1].length - 1;
+      const openIdx = (m.index ?? 0) + m[0].length - m[1].length - 1;
       return { content: m[1], openIdx, markerLen: 1, tag: 'em' };
     }
   }
@@ -77,7 +78,7 @@ if (key === '~' || key === '~~') {
       m = textBefore.match(/~~([^~\n]{1,300})~$/);
     }
     if (m) {
-      return { content: m[1], openIdx: m.index, markerLen: 2, tag: 's' };
+      return { content: m[1], openIdx: m.index ?? 0, markerLen: 2, tag: 's' };
     }
   }
 
@@ -85,7 +86,7 @@ if (key === '~' || key === '~~') {
     // `code` — trigger: '`', textBefore = "`treść"
     m = textBefore.match(/`([^`\n]{1,300})$/);
     if (m) {
-      return { content: m[1], openIdx: m.index, markerLen: 1, tag: 'code' };
+      return { content: m[1], openIdx: m.index ?? 0, markerLen: 1, tag: 'code' };
     }
   }
 

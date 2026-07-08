@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    parser.js — parser quick capture (shared: sidebar + popup)
    ──────────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ function _isMonthFirstLocale(explicitLocale = null) {
   return locale === 'en' || locale.startsWith('en-us');
 }
 
+/** @param {string|null} [explicitLocale] */
 function _captureKeywords(explicitLocale) {
   return _isMonthFirstLocale(explicitLocale)
     ? CAPTURE_KEYWORDS_EN
@@ -70,6 +72,8 @@ function _captureKeywords(explicitLocale) {
 /**
  * Ile dni do przodu to następne wystąpienie dnia tygodnia.
  * Liczymy od jutra — ten sam dzień co dziś = za 7 dni.
+ * @param {number} targetDay
+ * @param {number} todayDay
  */
 function _daysUntilWeekday(targetDay, todayDay) {
   const diff = (targetDay - todayDay + 7) % 7;
@@ -77,15 +81,34 @@ function _daysUntilWeekday(targetDay, todayDay) {
 }
 
 /**
+ * @typedef {object} Capture
+ * @property {boolean} isTask
+ * @property {boolean} isUrgent
+ * @property {boolean} isInProgress
+ * @property {string} title
+ * @property {number|null} due
+ * @property {string|null} time
+ * @property {string|null} [recurrence]
+ */
+
+/**
  * Parsuje input quick capture.
  * @param {string} input — raw text z pola capture
- * @param {string|null} [locale] — jawny locale ("en-US", "pl"); null = autodetekcja.
+ * @param {string|null} [locale] jawny locale ("en-US", "pl"); null = autodetekcja.
  *   Jawny locale przydatny w testach (bez mockowania globalnego `browser`).
- * @returns {{ isTask: boolean, title: string, due: number|null, time: string|null }}
+ * @returns {Capture}
  */
 export function parseCapture(input, locale = null) {
   if (!input || typeof input !== 'string') {
-    return { isTask: false, title: '', due: null, time: null };
+    return {
+      isTask: false,
+      isUrgent: false,
+      isInProgress: false,
+      title: '',
+      due: null,
+      time: null,
+      recurrence: null,
+    };
   }
   const isUrgentInProgress = input.startsWith('!!>');
   const isUrgent = !isUrgentInProgress && input.startsWith('!!');
@@ -100,7 +123,16 @@ export function parseCapture(input, locale = null) {
   let due = null;
   let time = null;
 
-  if (!isTask) return { isTask, title, due, time };
+  if (!isTask)
+    return {
+      isTask,
+      isUrgent: false,
+      isInProgress: false,
+      title,
+      due,
+      time,
+      recurrence: null,
+    };
 
   const kw = _captureKeywords(locale);
   const today = new Date();

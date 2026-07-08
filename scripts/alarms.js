@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════
    alarms.js — planowanie przypomnień
    ──────────────────────────────────────────────
@@ -13,8 +14,18 @@
    ══════════════════════════════════════════════ */
 
 /**
+ * @typedef {object} AlarmableNote
+ * @property {string} id
+ * @property {string} [type]
+ * @property {boolean} [completed]
+ * @property {number|null} [due]
+ * @property {string|null} [time]
+ * @property {number} [reminder]
+ */
+
+/**
  * Czy task kwalifikuje się do zaplanowania alarmu.
- * @param {object} note
+ * @param {AlarmableNote} note
  * @returns {boolean}
  */
 export function isAlarmable(note) {
@@ -26,14 +37,17 @@ export function isAlarmable(note) {
   );
 }
 
+/** @param {AlarmableNote} note */
 export function scheduleAlarm(note) {
   if (!isAlarmable(note)) {
     browser.alarms.clear(note.id);
     return;
   }
 
-  const [h, m] = note.time.split(":").map(Number);
-  const dt = new Date(note.due);
+  // isAlarmable gwarantuje time/due w runtime; ?? zachowuje istniejący guard
+  // (niepoprawne dane → NaN → odfiltrowane przez Number.isFinite niżej).
+  const [h, m] = (note.time ?? "").split(":").map(Number);
+  const dt = new Date(note.due ?? NaN);
   dt.setHours(h, m, 0, 0);
 
   const offsetMs = (note.reminder ?? 0) * 60000;
@@ -49,10 +63,12 @@ export function scheduleAlarm(note) {
   browser.alarms.create(note.id, { when });
 }
 
+/** @param {string} id */
 export function clearAlarm(id) {
   browser.alarms.clear(id);
 }
 
+/** @param {AlarmableNote[]} notes */
 export async function rescheduleAll(notes) {
   await browser.alarms.clearAll();
   notes.filter(isAlarmable).forEach(scheduleAlarm);
