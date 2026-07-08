@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * editor-slash-menu.js — menu komend / (slash commands)
  *
@@ -16,6 +17,8 @@ import { openLinkModal } from "./editor-link-modal.js";
 
 /* ── Definicje komend ────────────────────────── */
 
+/** @typedef {{ id: string, group: string, icon: string, labelKey: string }} Command */
+/** @type {Command[]} */
 const COMMANDS = [
   {
     id: "paragraph",
@@ -100,6 +103,7 @@ const COMMANDS = [
   },
 ];
 
+/** @type {Record<string, string>} */
 const GROUP_LABELS = {
   text: "slash_group_text",
   lists: "slash_group_lists",
@@ -112,17 +116,27 @@ const GROUP_LABELS = {
 let _open = false;
 let _activeIdx = 0;
 let _filtered = [...COMMANDS];
+/** @type {HTMLElement | null} */
 let _savedBlock = null;
 
 /* ── DOM helpers ─────────────────────────────── */
 
-const _getMenu = () => document.getElementById("slash-menu");
-const _getInput = () => document.getElementById("slash-menu-input");
-const _getList = () => document.getElementById("slash-menu-list");
-const _getEditor = () => document.getElementById("editor");
+const _getMenu = () => /** @type {HTMLElement} */ (document.getElementById("slash-menu"));
+const _getInput = () => /** @type {HTMLInputElement} */ (document.getElementById("slash-menu-input"));
+const _getList = () => /** @type {HTMLElement} */ (document.getElementById("slash-menu-list"));
+const _getEditor = () => /** @type {HTMLElement} */ (document.getElementById("editor"));
+
+/** @param {Range} r */
+function _selectRange(r) {
+  const s = window.getSelection();
+  if (!s) return;
+  s.removeAllRanges();
+  s.addRange(r);
+}
 
 /* ── Filtrowanie ─────────────────────────────── */
 
+/** @param {string} query @returns {Command[]} */
 function _filter(query) {
   if (!query) return [...COMMANDS];
   const q = query.toLowerCase();
@@ -144,6 +158,7 @@ function _render() {
     return;
   }
 
+  /** @type {Record<string, Command[]>} */
   const groups = {};
   _filtered.forEach((cmd) => (groups[cmd.group] ||= []).push(cmd));
 
@@ -193,6 +208,7 @@ function _render() {
 
 /* ── Nawigacja ───────────────────────────────── */
 
+/** @param {number} idx */
 function _setActive(idx) {
   _activeIdx = Math.max(0, Math.min(idx, _filtered.length - 1));
   _render();
@@ -214,6 +230,7 @@ function _cleanupSlashBlock() {
 
 /* ── Otwieranie / zamykanie ──────────────────── */
 
+/** @param {HTMLElement | null} block */
 export function openSlashMenu(block) {
   if (_open) return;
 
@@ -291,6 +308,7 @@ export function closeSlashMenu(restoreFocus = true) {
 
 /* ── Wykonanie komendy ───────────────────────── */
 
+/** @param {string} id */
 function _execute(id) {
   const editor = _getEditor();
   const block = _savedBlock ?? _getCurrentBlock();
@@ -304,9 +322,7 @@ function _execute(id) {
     const r = document.createRange();
     r.setStart(block, 0);
     r.collapse(true);
-    const s = window.getSelection();
-    s.removeAllRanges();
-    s.addRange(r);
+    _selectRange(r);
   }
 
   switch (id) {
@@ -328,9 +344,7 @@ function _execute(id) {
       const r = document.createRange();
       r.setStart(newEl, 0);
       r.collapse(true);
-      const s = window.getSelection();
-      s.removeAllRanges();
-      s.addRange(r);
+      _selectRange(r);
       break;
     }
 
@@ -365,9 +379,7 @@ function _execute(id) {
       const r = document.createRange();
       r.setStart(li, 0);
       r.collapse(true);
-      const s = window.getSelection();
-      s.removeAllRanges();
-      s.addRange(r);
+      _selectRange(r);
       break;
     }
 
@@ -387,9 +399,7 @@ function _execute(id) {
       const r = document.createRange();
       r.setStart(summary, 0);
       r.collapse(true);
-      const s = window.getSelection();
-      s.removeAllRanges();
-      s.addRange(r);
+      _selectRange(r);
       break;
     }
 
@@ -405,9 +415,7 @@ function _execute(id) {
       const r = document.createRange();
       r.setStart(code, 0);
       r.collapse(true);
-      const s = window.getSelection();
-      s.removeAllRanges();
-      s.addRange(r);
+      _selectRange(r);
       break;
     }
 
@@ -431,13 +439,13 @@ function _execute(id) {
           const node = sel?.rangeCount
             ? sel.getRangeAt(0).startContainer
             : null;
-          const bq = node
-            ? (node.nodeType === Node.TEXT_NODE
-                ? node.parentElement
-                : node
-              ).closest("blockquote")
+          const bqEl = node
+            ? node.nodeType === Node.TEXT_NODE
+              ? node.parentElement
+              : /** @type {Element} */ (node)
             : null;
-          if (bq) bq.dataset.callout = type;
+          const bq = bqEl?.closest("blockquote") ?? null;
+          if (bq) /** @type {HTMLElement} */ (bq).dataset.callout = type;
           debouncedSave();
         });
         return;
@@ -460,14 +468,18 @@ export function initSlashMenu() {
     if (_open) return;
 
     const sel = window.getSelection();
-    if (!sel.rangeCount) return;
+    if (!sel || !sel.rangeCount) return;
     const node = sel.getRangeAt(0).startContainer;
-    const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    const el =
+      node.nodeType === Node.TEXT_NODE
+        ? node.parentElement
+        : /** @type {HTMLElement} */ (node);
 
     // Nie otwieraj gdy kursor jest w li, summary ani ich dzieciach
     if (el?.closest("li, summary")) return;
 
     // Znajdź direct child editora
+    /** @type {HTMLElement | null} */
     let block = el;
     while (block && block.parentElement !== editor) {
       block = block.parentElement;
@@ -483,7 +495,7 @@ export function initSlashMenu() {
         editor.appendChild(p);
         // Przywróć kursor
         const r = document.createRange();
-        r.setStart(p.firstChild, 1);
+        r.setStart(/** @type {Node} */ (p.firstChild), 1);
         r.collapse(true);
         sel.removeAllRanges();
         sel.addRange(r);
@@ -527,9 +539,7 @@ export function initSlashMenu() {
           const r = document.createRange();
           r.setStart(textNode, 2);
           r.collapse(true);
-          const s = window.getSelection();
-          s.removeAllRanges();
-          s.addRange(r);
+          _selectRange(r);
         }
         closeSlashMenu(true);
         break;
@@ -574,7 +584,7 @@ export function initSlashMenu() {
   document.addEventListener("mousedown", (e) => {
     if (!_open) return;
     const panel = document.querySelector(".slash-menu__panel");
-    if (panel && !panel.contains(e.target)) {
+    if (panel && !panel.contains(/** @type {Node} */ (e.target))) {
       if (_savedBlock) _savedBlock.innerHTML = "<br>";
       closeSlashMenu(true);
     }
