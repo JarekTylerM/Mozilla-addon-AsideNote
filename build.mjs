@@ -247,17 +247,26 @@ function processFile(srcPath, relPath) {
   write(destPath, minified);
 }
 
-// Pomijamy: node_modules, dist, tests, .git, build pliki, features.css (zastąpiony)
+// Pomijamy: node_modules, dist, tests, .git, build pliki, features.css (zastąpiony),
+// pliki deweloperskie (README, tsconfig, sync.bat) — nie należą do rozszerzenia.
+// LICENSE świadomie NIE jest tu wymieniony: MPL-2.0 §3.1 wymaga, żeby tekst
+// licencji towarzyszył dystrybuowanym źródłom.
 const IGNORE = new Set([
   'node_modules', 'dist', 'tests', '.git',
   'build.mjs', 'build.js',
   'package.json', 'package-lock.json',
   'features.css',   // zastąpiony przez 7 plików tematycznych
+  'README.md', 'tsconfig.json', 'sync.bat',
 ]);
 
 function buildDir(dir) {
   readdirSync(dir).forEach(f => {
     if (IGNORE.has(f) || f.startsWith('.')) return;
+    // Archiwa nigdy nie należą do paczki. Krytyczne: zip wyjściowy powstaje
+    // w ROOT (patrz zipPath niżej) i jest kasowany dopiero PO buildDir(ROOT),
+    // więc bez tego filtra każdy build wpakowywał do dist/ paczkę poprzedniego
+    // — a ta zawierała jeszcze wcześniejszą. Stąd 7,6 MB zamiast ~700 KB.
+    if (f.toLowerCase().endsWith('.zip')) return;
     const full = join(dir, f);
     const rel  = relative(ROOT, full);
     const stat = statSync(full);
