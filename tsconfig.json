@@ -7,7 +7,7 @@
     "types": ["firefox-webext-browser"],
 
     "allowJs": true,
-    "checkJs": false,
+    "checkJs": true,
     "noEmit": true,
 
     "strict": true,

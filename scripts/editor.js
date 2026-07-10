@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    editor.js — toolbar + skróty + markdown + paste + listy
    ══════════════════════════════════════════════════════════════ */
@@ -37,7 +38,23 @@ import { isClickUpHTML, preprocessClickUp } from './editor-paste-clickup.js';
 import { initSlashMenu } from './editor-slash-menu.js';
 import { htmlToMarkdown } from './editor-markdown.js';
 
-const editor = document.getElementById('editor');
+// #editor jest zawsze w sidebar.html — rzutujemy z pominięciem null.
+const editor = /** @type {HTMLElement} */ (document.getElementById('editor'));
+/** @param {Event} e @returns {Element|null} */
+const _target = (e) => /** @type {Element|null} */ (e.target);
+/**
+ * Element dla kontenera kursora: text node → parentElement, inaczej sam węzeł.
+ * @param {Node} node @returns {Element|null}
+ */
+const _elOf = (node) =>
+  node.nodeType === Node.TEXT_NODE
+    ? node.parentElement
+    : /** @type {Element} */ (node);
+/** @param {string} id @returns {HTMLElement} */
+const _byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+/** @param {string} id @returns {HTMLButtonElement} */
+const _byBtn = (id) =>
+  /** @type {HTMLButtonElement} */ (document.getElementById(id));
 
 function _initEmptyBlockPlaceholder() {
   document.addEventListener('selectionchange', _updateEmptyBlockPlaceholder);
@@ -52,11 +69,11 @@ function _updateEmptyBlockPlaceholder() {
     editor.classList.remove('is-empty-focused');
     return;
   }
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel?.rangeCount) return;
   const node = sel.getRangeAt(0).startContainer;
-  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-  const block = el.closest('#editor > p');
+  const el = _elOf(node);
+  const block = /** @type {HTMLElement|null} */ (el?.closest('#editor > p') ?? null);
 
   editor
     .querySelectorAll('p.is-empty-focused')
@@ -78,17 +95,21 @@ function _updateEmptyBlockPlaceholder() {
 }
 
 function _initLinkTooltip() {
-  const tooltip = document.getElementById('link-tooltip');
-  const urlLabel = document.getElementById('link-tooltip-url');
-  const copyBtn = document.getElementById('link-tooltip-copy');
-  const editBtn = document.getElementById('link-tooltip-edit');
-  const delBtn = document.getElementById('link-tooltip-delete');
+  const tooltip = _byId('link-tooltip');
+  const urlLabel = _byId('link-tooltip-url');
+  const copyBtn = _byId('link-tooltip-copy');
+  const editBtn = _byId('link-tooltip-edit');
+  const delBtn = _byId('link-tooltip-delete');
   if (!tooltip || !urlLabel || !editBtn || !delBtn) return;
 
+  /** @type {HTMLAnchorElement|null} */
   let _currentLink = null;
-  let _hideTimer = null;
-  let _copiedTimer = null; // feedback "Skopiowano" — patrz copyBtn niżej
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let _hideTimer;
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let _copiedTimer; // feedback "Skopiowano" — patrz copyBtn niżej
 
+  /** @param {HTMLAnchorElement} el */
   function _show(el) {
     clearTimeout(_hideTimer);
     // Anuluj pending przywracanie tekstu po kopiowaniu — _show ustawia
@@ -113,15 +134,16 @@ function _initLinkTooltip() {
   }
 
   editor.addEventListener('mouseover', (e) => {
-    const a = e.target.closest('a');
+    const a = /** @type {HTMLAnchorElement|null} */ (_target(e)?.closest('a') ?? null);
     if (!a) return;
     _show(a);
   });
 
   editor.addEventListener('mouseout', (e) => {
-    const a = e.target.closest('a');
+    const a = _target(e)?.closest('a');
     if (!a) return;
-    if (!e.relatedTarget?.closest?.('#link-tooltip')) _hide();
+    const rel = /** @type {Element|null} */ (e.relatedTarget);
+    if (!rel?.closest?.('#link-tooltip')) _hide();
   });
 
   tooltip.addEventListener('mouseenter', () => clearTimeout(_hideTimer));
@@ -164,6 +186,7 @@ function _initLinkTooltip() {
   delBtn.addEventListener('click', () => {
     if (!_currentLink) return;
     const parent = _currentLink.parentNode;
+    if (!parent) return;
     while (_currentLink.firstChild) {
       parent.insertBefore(_currentLink.firstChild, _currentLink);
     }
@@ -177,10 +200,11 @@ function _initLinkTooltip() {
 
 // ── Callout label inline edit ─────────────────────────────────────
 editor.addEventListener('dblclick', (e) => {
-  const bq = e.target.closest('blockquote[data-callout]');
+  const bq = _target(e)?.closest('blockquote[data-callout]');
   if (!bq) return;
+  const bqEl = /** @type {HTMLElement} */ (bq);
 
-  const rect = bq.getBoundingClientRect();
+  const rect = bqEl.getBoundingClientRect();
   if (e.clientY > rect.top + 24) return;
   if (bq.classList.contains('is-editing-label')) return;
 
@@ -190,7 +214,7 @@ editor.addEventListener('dblclick', (e) => {
 
   const input = document.createElement('input');
   input.type = 'text';
-  input.value = bq.dataset.calloutLabel ?? '';
+  input.value = bqEl.dataset.calloutLabel ?? '';
   input.className = 'callout-label-input';
   bq.insertBefore(input, bq.firstChild);
   input.focus();
@@ -198,9 +222,9 @@ editor.addEventListener('dblclick', (e) => {
 
   function _commit() {
     const val = input.value.trim();
-    if (val) bq.dataset.calloutLabel = val;
+    if (val) bqEl.dataset.calloutLabel = val;
     input.remove();
-    bq.classList.remove('is-editing-label');
+    bqEl.classList.remove('is-editing-label');
     undo.checkpoint();
     document.dispatchEvent(new Event('forceSave'));
   }
@@ -239,18 +263,19 @@ export function initEditor() {
 
   // Wyłącz spellcheck w istniejących blokach kodu, i linkach
   editor.querySelectorAll('pre, code, a').forEach((el) => {
-    el.spellcheck = false;
+    /** @type {HTMLElement} */ (el).spellcheck = false;
   });
 
   // Wyłącz spellcheck w nowo dodanych blokach kodu
   new MutationObserver((mutations) => {
     mutations.forEach((m) =>
-      m.addedNodes.forEach((node) => {
-        if (node.nodeType !== Node.ELEMENT_NODE) return;
+      m.addedNodes.forEach((raw) => {
+        if (raw.nodeType !== Node.ELEMENT_NODE) return;
+        const node = /** @type {HTMLElement} */ (raw);
         if (node.matches('pre, code, a')) node.spellcheck = false;
         node
           .querySelectorAll?.('pre, code, a')
-          .forEach((el) => (el.spellcheck = false));
+          .forEach((el) => (/** @type {HTMLElement} */ (el).spellcheck = false));
       }),
     );
   }).observe(editor, { childList: true, subtree: true });
@@ -258,8 +283,8 @@ export function initEditor() {
 }
 
 function _initUndoRedoBtns() {
-  const undoBtn = document.getElementById('undo-btn');
-  const redoBtn = document.getElementById('redo-btn');
+  const undoBtn = _byBtn('undo-btn');
+  const redoBtn = _byBtn('redo-btn');
 
   function _updateUndoRedoState() {
     if (undoBtn) undoBtn.disabled = !undo.canUndo();
@@ -402,8 +427,9 @@ const CALLOUT_TYPES = ['note', 'tip', 'important', 'warning', 'caution'];
  *
  * @returns {boolean} true gdy konwersja się udała
  */
+/** @param {KeyboardEvent} e */
 function _tryInlineMarkdown(e) {
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel.rangeCount || !sel.getRangeAt(0).collapsed) return false;
 
   const range = sel.getRangeAt(0);
@@ -414,7 +440,7 @@ function _tryInlineMarkdown(e) {
   if (node.parentElement?.closest('code, pre')) return false;
 
   const offset = range.startOffset;
-  const textBefore = node.textContent.slice(0, offset);
+  const textBefore = (node.textContent ?? "").slice(0, offset);
 
   const pattern = findInlinePattern(textBefore, e.key);
   if (!pattern) return false;
@@ -424,7 +450,7 @@ function _tryInlineMarkdown(e) {
   e.preventDefault();
   undo.checkpoint();
 
-  const fullText = node.textContent;
+  const fullText = node.textContent ?? "";
   const before = fullText.slice(0, openIdx); // tekst przed otwierającym markerem
   const after = fullText.slice(offset); // tekst za kursorem
 
@@ -444,6 +470,7 @@ function _tryInlineMarkdown(e) {
   //   [przed] [**treść*|po] → [przed] <tag>treść</tag> [po]
   // Modyfikujemy istniejący węzeł (nie usuwamy) — zachowuje referencje
   const parent = node.parentNode;
+  if (!parent) return false;
   const nextSib = node.nextSibling;
 
   node.textContent = before; // "przed"
@@ -519,10 +546,11 @@ function _initKeydown() {
 }
 /* ── Exit to list (Ctrl+↑/↓) ──────────────────── */
 
+/** @param {'prev'|'next'} direction */
 function _exitToList(direction) {
   // Znajdź obecnie aktywny element listy (is-active) lub pierwszy
   const activeId = state.activeId;
-  const list = document.getElementById('notesList');
+  const list = _byId('notesList');
   if (!list) return;
 
   let target = null;
@@ -551,7 +579,7 @@ function _exitToList(direction) {
     target = direction === 'prev' ? items[items.length - 1] : items[0];
   }
 
-  target.focus();
+  /** @type {HTMLElement} */ (target).focus();
 }
 
 /* ── Force save (Ctrl+S) ──────────────────────── */
@@ -567,14 +595,16 @@ function _flushSave() {
 
 // _updateToolbarState → editor-toolbar.js
 
+/** @param {KeyboardEvent} e */
 function _handleEnter(e) {
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel.rangeCount) return;
 
   // Shift+Enter w liście — soft break wewnątrz <li>
   if (e.shiftKey) {
     const _node = sel.getRangeAt(0).startContainer;
-    const _el = _node.nodeType === Node.TEXT_NODE ? _node.parentElement : _node;
+    const _el = _elOf(_node);
+    if (!_el) return;
     if (_el.closest('li')) {
       e.preventDefault();
       document.execCommand('insertLineBreak');
@@ -584,7 +614,8 @@ function _handleEnter(e) {
 
   const range = sel.getRangeAt(0);
   const node = range.startContainer;
-  const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  const element = _elOf(node);
+  if (!element) return;
 
   // ── Zbierz kontekst (DOM queries) ────────────────────────────
   const pre = element.closest('pre');
@@ -608,7 +639,7 @@ function _handleEnter(e) {
   // Hard line break: dwie spacje na końcu tekstu przed kursorem
   const textBeforeCursor =
     range.startContainer.nodeType === Node.TEXT_NODE
-      ? range.startContainer.textContent.slice(0, range.startOffset)
+      ? (range.startContainer.textContent ?? "").slice(0, range.startOffset)
       : '';
   const hasTrailingSpaces =
     !pre && !li && !blockquote && / {2,}$/.test(textBeforeCursor);
@@ -645,7 +676,7 @@ function _handleEnter(e) {
     liIsNested = false;
   if (li) {
     liEmpty = li.textContent.trim() === '';
-    liIsLast = li === li.parentElement.lastElementChild;
+    liIsLast = li === li.parentElement?.lastElementChild;
     liIsNested = li.parentElement?.parentElement?.tagName === 'LI';
   }
 
@@ -685,13 +716,14 @@ function _handleEnter(e) {
     bqLineEmpty,
     bqIsLastBlock,
     bqPrevEmpty,
-    isHrTrigger,
+    isHrTrigger: !!isHrTrigger,
     hasTrailingSpaces,
   });
 
   // ── Wykonaj akcję ─────────────────────────────────────────────
   switch (decision.action) {
     case 'pre-exit': {
+      if (!pre) break;
       e.preventDefault();
       const code2 = pre.querySelector('code') ?? pre;
       code2.innerHTML = code2.innerHTML.replace(/(<br\s*\/?>){2,}\s*$/, '');
@@ -714,6 +746,7 @@ function _handleEnter(e) {
     }
 
     case 'heading-new-para': {
+      if (!heading) break;
       e.preventDefault();
       undo.checkpoint();
       const p = document.createElement('p');
@@ -728,6 +761,7 @@ function _handleEnter(e) {
     }
 
     case 'heading-para-before': {
+      if (!heading) break;
       // Enter na początku nagłówka — pusty akapit nad nim, kursor zostaje
       e.preventDefault();
       undo.checkpoint();
@@ -738,6 +772,7 @@ function _handleEnter(e) {
     }
 
     case 'heading-split': {
+      if (!heading) break;
       // Enter w środku nagłówka — tekst za kursorem wędruje do akapitu niżej
       e.preventDefault();
       undo.checkpoint();
@@ -759,9 +794,11 @@ function _handleEnter(e) {
     }
 
     case 'checklist-exit': {
+      if (!checklistLi) break;
       e.preventDefault();
       undo.checkpoint();
       const ul = checklistLi.closest('ul');
+      if (!ul) break;
       const p = document.createElement('p');
       p.innerHTML = '<br>';
       ul.after(p);
@@ -776,6 +813,7 @@ function _handleEnter(e) {
     }
 
     case 'checklist-new-item': {
+      if (!checklistLi) break;
       e.preventDefault();
       undo.checkpoint();
       const newLi = document.createElement('li');
@@ -791,6 +829,7 @@ function _handleEnter(e) {
     }
 
     case 'li-outdent': {
+      if (!li) break;
       e.preventDefault();
       undo.checkpoint();
       _outdentListItem(li);
@@ -798,9 +837,11 @@ function _handleEnter(e) {
     }
 
     case 'li-exit': {
+      if (!li) break;
       e.preventDefault();
       undo.checkpoint();
       const list = li.parentElement;
+      if (!list) break;
       const p = document.createElement('p');
       p.innerHTML = '<br>';
       list.after(p);
@@ -815,6 +856,7 @@ function _handleEnter(e) {
     }
 
     case 'li-split': {
+      if (!li) break;
       e.preventDefault();
       undo.checkpoint();
       const newLi = document.createElement('li');
@@ -829,6 +871,7 @@ function _handleEnter(e) {
     }
 
     case 'blockquote-exit': {
+      if (!blockquote) break;
       e.preventDefault();
       undo.checkpoint();
       const curBlock2 =
@@ -850,6 +893,7 @@ function _handleEnter(e) {
     }
 
     case 'blockquote-new-para': {
+      if (!blockquote) break;
       e.preventDefault();
       undo.checkpoint();
       const curBlock3 =
@@ -876,8 +920,10 @@ function _handleEnter(e) {
     }
 
     case 'summary-to-content': {
+      if (!summary) break;
       e.preventDefault();
       const details = summary.closest('details');
+      if (!details) break;
       let content = details.querySelector(':scope > :not(summary)');
       if (!content) {
         content = document.createElement('p');
@@ -893,9 +939,11 @@ function _handleEnter(e) {
     }
 
     case 'details-exit': {
+      if (!detailsBlock) break;
       e.preventDefault();
       undo.checkpoint();
       const details = detailsBlock.closest('details');
+      if (!details) break;
       const p = document.createElement('p');
       p.innerHTML = '<br>';
       details.after(p);
@@ -922,9 +970,9 @@ function _handleEnter(e) {
       // Usuń trailing spacje z węzła tekstowego
       const tn = range.startContainer;
       if (tn.nodeType === Node.TEXT_NODE) {
+        const _t = tn.textContent ?? '';
         tn.textContent =
-          tn.textContent.slice(0, range.startOffset).trimEnd() +
-          tn.textContent.slice(range.startOffset);
+          _t.slice(0, range.startOffset).trimEnd() + _t.slice(range.startOffset);
       }
       // Wstaw <br> w miejscu kursora
       document.execCommand('insertLineBreak');
@@ -938,8 +986,9 @@ function _handleEnter(e) {
 
 // MD_LINK_RX → editor-pattern.js
 
+/** @param {KeyboardEvent} e */
 function _tryConvertMarkdownLink(e) {
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel.rangeCount) return false;
 
   const range = sel.getRangeAt(0);
@@ -949,7 +998,7 @@ function _tryConvertMarkdownLink(e) {
   if (node.nodeType !== Node.TEXT_NODE) return false;
 
   const offset = range.startOffset;
-  const textBeforeCursor = node.textContent.slice(0, offset);
+  const textBeforeCursor = (node.textContent ?? "").slice(0, offset);
 
   const match = textBeforeCursor.match(MD_LINK_RX);
   if (!match) return false;
@@ -967,8 +1016,8 @@ function _tryConvertMarkdownLink(e) {
 
   // Usuń [tekst](url) z text node
   const matchStart = offset - fullMatch.length;
-  const before = node.textContent.slice(0, matchStart);
-  const after = node.textContent.slice(offset);
+  const before = (node.textContent ?? "").slice(0, matchStart);
+  const after = (node.textContent ?? "").slice(offset);
 
   // Stwórz <a>
   const finalUrl = normalizeUrl(linkUrl);
@@ -985,6 +1034,7 @@ function _tryConvertMarkdownLink(e) {
 
   // Zastąp content text node-a: before + <a> + " " + after
   const parent = node.parentNode;
+  if (!parent) return false;
   const beforeNode = document.createTextNode(before);
   const afterNode = document.createTextNode(after);
 
@@ -1004,15 +1054,16 @@ function _tryConvertMarkdownLink(e) {
   return true;
 }
 
+/** @param {KeyboardEvent} e */
 function _tryAutolinkWord(e) {
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel?.rangeCount || !sel.getRangeAt(0).collapsed) return false;
   const range = sel.getRangeAt(0);
   const node = range.startContainer;
   if (node.nodeType !== Node.TEXT_NODE) return false;
   if (node.parentElement?.closest('a, code, pre')) return false;
 
-  const textBefore = node.textContent.slice(0, range.startOffset);
+  const textBefore = (node.textContent ?? "").slice(0, range.startOffset);
   // Ostatnie słowo (bez spacji)
   const wordMatch = textBefore.match(/(\S+)$/);
   if (!wordMatch) return false;
@@ -1033,16 +1084,17 @@ function _tryAutolinkWord(e) {
   // Tekst za kursorem (after) musi przetrwać — np. spacja wstawiana
   // tuż po URL-u w środku zdania.
   const start = range.startOffset - word.length;
-  const after = node.textContent.slice(range.startOffset);
+  const after = (node.textContent ?? "").slice(range.startOffset);
   const parent = node.parentNode;
+  if (!parent) return false;
   const nextSib = node.nextSibling;
 
-  node.textContent = node.textContent.slice(0, start); // "before"
+  node.textContent = (node.textContent ?? "").slice(0, start); // "before"
   parent.insertBefore(a, nextSib);
   const space = document.createTextNode(' ');
   parent.insertBefore(space, nextSib);
   if (after) parent.insertBefore(document.createTextNode(after), nextSib);
-  if (!node.textContent) node.remove();
+  if (!node.textContent) /** @type {ChildNode} */ (node).remove();
 
   // Kursor za wstawioną spacją
   const r = document.createRange();
@@ -1055,6 +1107,7 @@ function _tryAutolinkWord(e) {
 }
 // BLOCKED_SCHEMES, looksLikeUrl → editor-url.js
 
+/** @param {KeyboardEvent} e */
 function _handleSpace(e) {
   const block = _getCurrentBlock();
   const blockText = block ? block.textContent : '';
@@ -1068,7 +1121,7 @@ function _handleSpace(e) {
       const _tn = _range.startContainer;
       textBefore =
         _tn.nodeType === Node.TEXT_NODE
-          ? _tn.textContent.slice(0, _range.startOffset)
+          ? (_tn.textContent ?? "").slice(0, _range.startOffset)
           : blockText;
     }
   }
@@ -1097,7 +1150,7 @@ function _handleSpace(e) {
         const r = document.createRange();
         r.setStart(li, 0);
         r.collapse(true);
-        const s = window.getSelection();
+        const s = /** @type {Selection} */ (window.getSelection());
         s.removeAllRanges();
         s.addRange(r);
         return;
@@ -1130,7 +1183,7 @@ function _handleSpace(e) {
         const r = document.createRange();
         r.setStart(li, 0);
         r.collapse(true);
-        const s = window.getSelection();
+        const s = /** @type {Selection} */ (window.getSelection());
         s.removeAllRanges();
         s.addRange(r);
         return;
@@ -1153,7 +1206,7 @@ function _handleSpace(e) {
         const rb = document.createRange();
         rb.setStart(lib, 0);
         rb.collapse(true);
-        const sb = window.getSelection();
+        const sb = /** @type {Selection} */ (window.getSelection());
         sb.removeAllRanges();
         sb.addRange(rb);
         return;
@@ -1165,15 +1218,14 @@ function _handleSpace(e) {
         _clearBlock(block);
         document.execCommand('formatBlock', false, 'blockquote');
         requestAnimationFrame(() => {
-          const s = window.getSelection();
+          const s = /** @type {Selection} */ (window.getSelection());
           const n = s?.rangeCount ? s.getRangeAt(0).startContainer : null;
-          const bq = n
-            ? (n.nodeType === Node.TEXT_NODE ? n.parentElement : n).closest(
-                'blockquote',
-              )
-            : null;
+          const bq = /** @type {HTMLElement|null} */ (
+            (n ? _elOf(n) : null)?.closest('blockquote') ?? null
+          );
           if (bq) {
             bq.dataset.callout = trigger.type;
+            /** @type {Record<string, string>} */
             const _defaultLabels = {
               note: 'Note',
               tip: 'Tip',
@@ -1182,7 +1234,7 @@ function _handleSpace(e) {
               caution: 'Caution',
             };
             bq.dataset.calloutLabel =
-              _defaultLabels[trigger.type] ?? trigger.type;
+              _defaultLabels[trigger.type ?? ''] ?? trigger.type;
             undo.checkpoint();
             document.dispatchEvent(new Event('forceSave'));
           }
@@ -1210,7 +1262,7 @@ function _handleSpace(e) {
         const r = document.createRange();
         r.setStart(code, 0);
         r.collapse(true);
-        const s = window.getSelection();
+        const s = /** @type {Selection} */ (window.getSelection());
         s.removeAllRanges();
         s.addRange(r);
         return;
@@ -1246,7 +1298,7 @@ function _handleSpace(e) {
         const r = document.createRange();
         r.setStart(summary, 0);
         r.collapse(true);
-        const s = window.getSelection();
+        const s = /** @type {Selection} */ (window.getSelection());
         s.removeAllRanges();
         s.addRange(r);
         return;
@@ -1272,28 +1324,31 @@ function _handleSpace(e) {
    na textContent i tak by nie pasował (^#{1,3}$). */
 // _clearBlock → editor-selection.js
 
+/** @param {KeyboardEvent} e */
 function _handleAltArrow(e) {
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel.rangeCount) return;
 
   const node = sel.getRangeAt(0).startContainer;
-  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  const el = _elOf(node);
   const dir = e.key === 'ArrowUp' ? 'up' : 'down';
 
   // ── Element listy — ale nie gdy jesteśmy wewnątrz details
   // (Alt+↑/↓ w details przesuwa cały blok, nie element listy wewnątrz)
-  const li = el.closest('li');
-  const inDetails = !!el.closest('details');
+  const li = el?.closest('li');
+  const inDetails = !!el?.closest('details');
   if (li && !inDetails) {
     e.preventDefault();
     const sibling =
       dir === 'up' ? li.previousElementSibling : li.nextElementSibling;
     if (!sibling) return;
     undo.checkpoint();
+    const liParent = li.parentNode;
+    if (!liParent) return;
     if (dir === 'up') {
-      li.parentNode.insertBefore(li, sibling);
+      liParent.insertBefore(li, sibling);
     } else {
-      li.parentNode.insertBefore(sibling, li);
+      liParent.insertBefore(sibling, li);
     }
     _restoreCursorTo(li);
     return;
@@ -1323,14 +1378,15 @@ function _handleAltArrow(e) {
 
 // _restoreCursorTo → editor-selection.js
 
+/** @param {KeyboardEvent} e */
 function _handleTab(e) {
   // ── Tab w details — nawigacja summary ↔ treść ─
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (sel?.rangeCount) {
     const node = sel.getRangeAt(0).startContainer;
-    const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-    const summary = el.closest('summary');
-    const details = el.closest('details');
+    const el = _elOf(node);
+    const summary = el?.closest('summary');
+    const details = el?.closest('details');
 
     if (summary && !e.shiftKey) {
       // Tab w summary → przejdź do pierwszego bloku treści
@@ -1339,7 +1395,7 @@ function _handleTab(e) {
       if (!content) {
         content = document.createElement('p');
         content.innerHTML = '<br>';
-        summary.parentElement.appendChild(content);
+        summary.parentElement?.appendChild(content);
       }
       const r = document.createRange();
       r.setStart(content, 0);
@@ -1382,10 +1438,11 @@ function _handleTab(e) {
  * - kursor na samym początku linku → null (znak przed kursorem leży
  *   POZA linkiem — standardowy Backspace)
  */
+/** @param {Range} range @returns {Element|null} */
 function _linkToDeleteOnBackspace(range) {
   const node = range.startContainer;
   const offset = range.startOffset;
-  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  const el = _elOf(node);
 
   const inside = el?.closest('a');
   if (inside && editor.contains(inside)) {
@@ -1409,19 +1466,21 @@ function _linkToDeleteOnBackspace(range) {
   while (prev && prev.nodeType === Node.TEXT_NODE && !prev.textContent) {
     prev = prev.previousSibling;
   }
-  return prev?.nodeType === Node.ELEMENT_NODE && prev.tagName === 'A'
-    ? prev
+  const prevEl = prev && prev.nodeType === Node.ELEMENT_NODE
+    ? /** @type {Element} */ (prev)
     : null;
+  return prevEl && prevEl.tagName === 'A' ? prevEl : null;
 }
 
+/** @param {KeyboardEvent} e */
 function _handleBackspace(e) {
-  const bkSel = window.getSelection();
+  const bkSel = /** @type {Selection} */ (window.getSelection());
   if (!bkSel.rangeCount) return;
 
   const bkRange = bkSel.getRangeAt(0);
   const bkNode = bkRange.startContainer;
-  const bkEl =
-    bkNode.nodeType === Node.TEXT_NODE ? bkNode.parentElement : bkNode;
+  const bkEl = _elOf(bkNode);
+  if (!bkEl) return;
 
   // ── Link jako jednostka atomowa — usuń cały <a> ───────────────
   // Tylko przy zwiniętej selekcji; zaznaczenie kasuje się standardowo.
@@ -1500,12 +1559,14 @@ function _handleBackspace(e) {
   // ── Wykonaj akcję ─────────────────────────────────────────────
   switch (decision.action) {
     case 'checklist-merge': {
+      if (!checklistLi) break;
       const prev = checklistLi.previousElementSibling;
+      if (!prev) break;
       while (prev.lastChild?.nodeName === 'BR') prev.lastChild.remove();
       const cursorTarget = prev.lastChild;
       const cursorOffset =
         cursorTarget?.nodeType === Node.TEXT_NODE
-          ? cursorTarget.textContent.length
+          ? (cursorTarget.textContent ?? '').length
           : prev.childNodes.length;
       while (checklistLi.firstChild) prev.appendChild(checklistLi.firstChild);
       if (!prev.firstChild) prev.appendChild(document.createElement('br'));
@@ -1522,7 +1583,9 @@ function _handleBackspace(e) {
     }
 
     case 'checklist-exit-to-p': {
+      if (!checklistLi) break;
       const ul = checklistLi.closest('ul');
+      if (!ul) break;
       const p = document.createElement('p');
       while (checklistLi.firstChild) p.appendChild(checklistLi.firstChild);
       if (!p.firstChild) p.innerHTML = '<br>';
@@ -1541,8 +1604,10 @@ function _handleBackspace(e) {
     }
 
     case 'blockquote-unwrap': {
+      if (!blockquote) break;
       const children = [...blockquote.childNodes];
       const frag = document.createDocumentFragment();
+      /** @type {HTMLParagraphElement|null} */
       let firstP = null;
       if (!children.length) {
         const p = document.createElement('p');
@@ -1551,10 +1616,11 @@ function _handleBackspace(e) {
         firstP = p;
       } else {
         children.forEach((child) => {
-          if (child.nodeType === Node.ELEMENT_NODE && child.tagName === 'P') {
-            if (!child.firstChild) child.innerHTML = '<br>';
-            frag.appendChild(child);
-            if (!firstP) firstP = child;
+          const childEl = /** @type {HTMLParagraphElement} */ (child);
+          if (child.nodeType === Node.ELEMENT_NODE && childEl.tagName === 'P') {
+            if (!childEl.firstChild) childEl.innerHTML = '<br>';
+            frag.appendChild(childEl);
+            if (!firstP) firstP = childEl;
           } else {
             const p = document.createElement('p');
             p.appendChild(child.cloneNode(true));
@@ -1564,6 +1630,7 @@ function _handleBackspace(e) {
         });
       }
       blockquote.replaceWith(frag);
+      if (!firstP) return;
       const r = document.createRange();
       r.setStart(firstP, 0);
       r.collapse(true);
@@ -1573,12 +1640,14 @@ function _handleBackspace(e) {
     }
 
     case 'li-merge': {
+      if (!li) break;
       const prev = li.previousElementSibling;
+      if (!prev) break;
       while (prev.lastChild?.nodeName === 'BR') prev.lastChild.remove();
       const cursorTarget = prev.lastChild;
       const cursorOffset =
         cursorTarget?.nodeType === Node.TEXT_NODE
-          ? cursorTarget.textContent.length
+          ? (cursorTarget.textContent ?? '').length
           : prev.childNodes.length;
       while (li.firstChild) prev.appendChild(li.firstChild);
       if (!prev.firstChild) prev.appendChild(document.createElement('br'));
@@ -1595,12 +1664,15 @@ function _handleBackspace(e) {
     }
 
     case 'li-outdent': {
+      if (!li) break;
       _outdentListItem(li);
       return;
     }
 
     case 'li-exit-to-p': {
+      if (!li) break;
       const list = li.parentElement;
+      if (!list) break;
       const isOnly = li === list.lastElementChild;
       const p = document.createElement('p');
       while (li.firstChild) p.appendChild(li.firstChild);
@@ -1619,7 +1691,9 @@ function _handleBackspace(e) {
       return;
     }
     case 'summary-unwrap': {
+      if (!summary) break;
       const details = summary.closest('details');
+      if (!details) break;
       const p = document.createElement('p');
       p.innerHTML = '<br>';
       details.replaceWith(p);
@@ -1632,6 +1706,7 @@ function _handleBackspace(e) {
     }
   }
 }
+/** @param {KeyboardEvent} e */
 function _handleCtrl(e) {
   // Normalizacja klawisza: Shift i CapsLock dają wielkie litery ('Z', 'B'),
   // przez co switch na małych literach by ich nie trafił — Ctrl+Shift+Z
@@ -1652,7 +1727,7 @@ function _handleCtrl(e) {
       break;
     case '`':
       e.preventDefault();
-      document.getElementById('code-btn').click();
+      _byBtn('code-btn').click();
       break;
     case 'x':
       if (e.shiftKey) {
@@ -1691,8 +1766,10 @@ function _initPaste() {
     undo.checkpoint();
 
     const MAX_PASTE = MAX_PASTE_LEN; // jedno źródło limitu → sanitize.js
-    const html = e.clipboardData.getData('text/html');
-    const plain = e.clipboardData.getData('text/plain');
+    const cd = e.clipboardData;
+    if (!cd) return;
+    const html = cd.getData('text/html');
+    const plain = cd.getData('text/plain');
 
     if (html) {
       const processed = isClickUpHTML(html) ? preprocessClickUp(html) : html;
@@ -1729,8 +1806,9 @@ function _initPaste() {
  * żeby uniknąć wstawiania bloków wewnątrz <p> (Firefox to odrzuca).
  * @returns {boolean} true gdy wstawiono
  */
+/** @param {string} html @returns {boolean} */
 function _insertRichContent(html) {
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel.rangeCount) return false;
 
   // Strip clipboard metadata comments (<!--StartFragment--> etc.)
@@ -1757,27 +1835,32 @@ function _insertRichContent(html) {
     'HR',
   ]);
   const hasBlock = Array.from(tmp.childNodes).some(
-    (n) => n.nodeType === Node.ELEMENT_NODE && BLOCK.has(n.tagName),
+    (n) =>
+      n.nodeType === Node.ELEMENT_NODE &&
+      BLOCK.has(/** @type {Element} */ (n).tagName),
   );
 
   if (hasBlock) {
     // Znajdź bezpośrednie dziecko editora gdzie jest kursor
+    /** @type {Node|null} */
     let anchor = range.startContainer;
     while (anchor && anchor.parentNode !== editor) anchor = anchor.parentNode;
 
     const nodes = Array.from(tmp.childNodes)
-      .filter((n) => n.nodeType === Node.ELEMENT_NODE || n.textContent.trim())
+      .filter((n) => n.nodeType === Node.ELEMENT_NODE || (n.textContent ?? '').trim())
       .map((n) => n.cloneNode(true));
 
     if (anchor && anchor !== editor) {
-      let ref = anchor;
+      let ref = /** @type {ChildNode} */ (anchor);
       nodes.forEach((node) => {
         ref.after(node);
-        ref = node;
+        ref = /** @type {ChildNode} */ (node);
       });
 
       // Usuń pusty blok-kontener jeśli cursor był w pustym <p>
-      if (!anchor.textContent.trim() && anchor.tagName === 'P') anchor.remove();
+      const anchorEl = /** @type {HTMLElement} */ (anchor);
+      if (!(anchorEl.textContent ?? '').trim() && anchorEl.tagName === 'P')
+        anchorEl.remove();
 
       const r = document.createRange();
       r.setStartAfter(ref);
@@ -1822,8 +1905,9 @@ function _initCopy() {
   editor.addEventListener('cut', (e) => _handleCopy(e, true));
 }
 
+/** @param {ClipboardEvent} e @param {boolean} isCut */
 function _handleCopy(e, isCut) {
-  const sel = window.getSelection();
+  const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel.rangeCount || sel.isCollapsed) return;
 
   const range = sel.getRangeAt(0);
@@ -1835,13 +1919,12 @@ function _handleCopy(e, isCut) {
   wrap.querySelectorAll('[class]').forEach((el) => el.removeAttribute('class'));
   wrap.normalize();
 
-  e.clipboardData.setData('text/html', wrap.innerHTML);
+  const cd = e.clipboardData;
+  if (!cd) return;
+  cd.setData('text/html', wrap.innerHTML);
   // text/plain jako Markdown — textContent skleja akapity w jedną linię
   // i gubi punktory list; markdown zachowuje strukturę w czystym tekście
-  e.clipboardData.setData(
-    'text/plain',
-    htmlToMarkdown(wrap) || wrap.textContent,
-  );
+  cd.setData('text/plain', htmlToMarkdown(wrap) || (wrap.textContent ?? ''));
   e.preventDefault();
 
   if (isCut) {
@@ -1859,10 +1942,11 @@ function _handleCopy(e, isCut) {
 /* ── Kopiuj jako Markdown (toolbar + Alt+K) ────── */
 
 function _initCopyMarkdown() {
-  const btn = document.getElementById('copy-md-btn');
+  const btn = _byBtn('copy-md-btn');
   if (!btn) return;
 
-  let _feedbackTimer = null;
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let _feedbackTimer;
 
   btn.addEventListener('click', async () => {
     const md = htmlToMarkdown(editor);

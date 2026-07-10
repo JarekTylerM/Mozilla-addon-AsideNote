@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    background.js — alarmy, powiadomienia, toggle sidebara
    UWAGA: brak importu z i18n.js / alarms.js (background nie jest
@@ -17,7 +18,7 @@ async function rescheduleOnBoot() {
   const notes = res.notes || [];
   await browser.alarms.clearAll();
   const now = Date.now();
-  notes.forEach((note) => {
+  notes.forEach((/** @type {Note} */ note) => {
     // inwariant isAlarmable (kopia z alarms.js)
     if (note.type !== "task" || !note.due || note.completed) return;
     // type guard — time musi być stringiem "HH:MM"
@@ -40,7 +41,9 @@ browser.runtime.onInstalled.addListener(rescheduleOnBoot);
 // Powiadomienie gdy alarm odpali
 browser.alarms.onAlarm.addListener(async (alarm) => {
   const res = await browser.storage.local.get("notes");
-  const note = (res.notes || []).find((n) => n.id === alarm.name);
+  const note = /** @type {Note[]} */ (res.notes || []).find(
+    (n) => n.id === alarm.name,
+  );
   const reminder = note?.reminder ?? 0;
 
   // Body powiadomienia — trzy warianty
