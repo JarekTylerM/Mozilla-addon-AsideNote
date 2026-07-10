@@ -164,23 +164,44 @@ function _formatDueRelative(timestamp) {
   }).format(new Date(timestamp));
 }
 
-/* Wyciąga plain text z HTML content (podgląd przy przycisku 👁).
+/* Podglądy tekstowe notatki (etykieta listy, tooltip, title przycisku 👁).
    DOMParser zamiast detached div z innerHTML — nie tworzy żywych węzłów
-   i nie zapala flag audytu na innerHTML bez sanityzacji. */
-/** @param {string} html */
-function _stripHtml(html) {
-  if (!html) return "";
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
-}
+   i nie zapala flag audytu na innerHTML bez sanityzacji.
 
-/** @param {string} content @param {number} [maxLen] */
-function _contentPreview(content, maxLen = 60) {
-  if (!content) return "";
-  const doc = new DOMParser().parseFromString(content, "text/html");
-  const text = doc.body.textContent.replace(/\s+/g, " ").trim();
-  if (!text) return "";
-  return text.length > maxLen ? text.slice(0, maxLen) + "…" : text;
+   Jedno parsowanie, trzy przycięcia: wszystkie trzy podglądy to ten sam
+   znormalizowany tekst, różnią się tylko długością. Wynik jest memoizowany
+   po (id, content), bo renderList() przebudowuje listę przy każdym filtrze,
+   toggle'u i zapisie, a treść zmienia się tylko dla notatki edytowanej.
+   Cache trzyma przycięte stringi (≤160 znaków), nie pełny tekst notatki. */
+
+/** @typedef {{ src: string, short: string, full: string, title: string }} PreviewParts */
+
+/** @type {Map<string, PreviewParts>} */
+const _previewCache = new Map();
+
+/** @param {string} text @param {number} max */
+const _clip = (text, max) =>
+  text.length > max ? text.slice(0, max) + "…" : text;
+
+/** @param {Note} note @returns {PreviewParts} */
+function _previewParts(note) {
+  const src = note.content || "";
+  const cached = _previewCache.get(note.id);
+  if (cached && cached.src === src) return cached;
+
+  let text = "";
+  if (src) {
+    const doc = new DOMParser().parseFromString(src, "text/html");
+    text = (doc.body.textContent || "").replace(/\s+/g, " ").trim();
+  }
+  const parts = {
+    src,
+    short: _clip(text, 30),
+    full: _clip(text, 120),
+    title: _clip(text, 160),
+  };
+  _previewCache.set(note.id, parts);
+  return parts;
 }
 
 export function isNoteEmpty() {
@@ -795,6 +816,11 @@ function _sameDay(tsA, tsB) {
 export function renderList() {
   notesList.innerHTML = "";
 
+  // Notatki usunięte w tej sesji zostawiają martwe wpisy w _previewCache.
+  // Zamiast sprzątać przy każdej ścieżce usuwania — kasuj cache, gdy urośnie
+  // ponad rozmiar zbioru. Najbliższy render odbuduje go leniwie.
+  if (_previewCache.size > state.notes.length + 128) _previewCache.clear();
+
   // Klasy zen / main-view — ustawiaj zawsze, niezależnie od zawartości listy
   notesList.classList.toggle("zen-active", state.zenMode);
   document
@@ -1065,8 +1091,9 @@ function _applyItemLabel(item, note) {
   if (!titleEl) return;
 
   const titleText = note.title?.trim();
-  const previewFull = !titleText ? _contentPreview(note.content, 120) : null;
-  const previewShort = !titleText ? _contentPreview(note.content, 30) : null;
+  const parts = _previewParts(note);
+  const previewFull = !titleText ? parts.full : null;
+  const previewShort = !titleText ? parts.short : null;
 
   titleEl.textContent = titleText || previewShort || t("note_untitled");
 
@@ -1079,12 +1106,7 @@ function _applyItemLabel(item, note) {
 
   const previewBtn = /** @type {HTMLElement|null} */ (item.querySelector(".note-item__preview"));
   if (previewBtn) {
-    const previewText = _stripHtml(note.content);
-    previewBtn.title = previewText
-      ? previewText.length > 160
-        ? previewText.slice(0, 160) + "…"
-        : previewText
-      : t("note_preview_empty");
+    previewBtn.title = parts.title || t("note_preview_empty");
   }
 }
 
