@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    panel.js — panel personalizacji + tag selector + filter bar
    ══════════════════════════════════════════════════════════════ */
@@ -42,12 +43,23 @@ import {
   MAX_IMPORT_NOTES,
   MAX_IMPORT_TAGS,
 } from "./sanitize.js";
-const mainView = document.getElementById("main-view");
-const panelEl = document.getElementById("panel");
-const tagsList = document.getElementById("tags-list");
-const tagDropdown = document.getElementById("tag-dropdown");
-const tagOptions = document.getElementById("tag-options");
-const selectorPills = document.getElementById("tag-selector-pills");
+/** @param {string} id @returns {HTMLElement} */
+const _byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+/** @param {Event} e @returns {Element|null} */
+const _target = (e) => /** @type {Element|null} */ (e.target);
+/** @param {Event} e @returns {HTMLInputElement} — input, ktory wywolal zdarzenie */
+const _inp = (e) => /** @type {HTMLInputElement} */ (e.target);
+/** @param {string} id @returns {HTMLInputElement} */
+const _byInput = (id) =>
+  /** @type {HTMLInputElement} */ (document.getElementById(id));
+
+// Elementy panelu są zawsze w sidebar.html — rzutujemy z pominięciem null.
+const mainView = _byId("main-view");
+const panelEl = _byId("panel");
+const tagsList = _byId("tags-list");
+const tagDropdown = _byId("tag-dropdown");
+const tagOptions = _byId("tag-options");
+const selectorPills = _byId("tag-selector-pills");
 
 /* ══ Panel personalizacji ═══════════════════════ */
 
@@ -79,6 +91,7 @@ function _renderTagsPanel() {
   tagState.tags.forEach(_renderTagRow);
 }
 
+/** @param {Tag} tag */
 function _renderTagRow(tag) {
   const row = document.createElement("div");
   row.className = "tag-manage-row";
@@ -92,7 +105,7 @@ function _renderTagRow(tag) {
   ).length;
   const countEl = document.createElement("span");
   countEl.className = "tag-manage-count";
-  countEl.textContent = count;
+  countEl.textContent = String(count);
   if (tag.color?.bg && tag.color?.fg) {
     countEl.style.backgroundColor = _hexAlpha(tag.color.bg, 0.35);
     countEl.style.color = tag.color.fg;
@@ -142,7 +155,7 @@ function _renderTagRow(tag) {
       }
       const result = updateTag(tag.id, name);
       if (!result.ok) {
-        editError.textContent = t(result.error);
+        editError.textContent = t(result.error ?? "");
         editError.hidden = false;
         return;
       }
@@ -232,14 +245,15 @@ function _renderTagRow(tag) {
   tagsList.appendChild(row);
 }
 
+/** @param {Tag} tag */
 function _openTagDeleteModal(tag) {
-  const modal = document.getElementById("tag-delete-modal");
-  const desc = document.getElementById("tag-delete-desc");
-  const list = document.getElementById("tag-delete-list");
-  const btnConfirm = document.getElementById("tag-delete-confirm");
-  const btnCancel = document.getElementById("tag-delete-cancel");
-  const btnClose = document.getElementById("tag-delete-close");
-  const backdrop = document.getElementById("tag-delete-backdrop");
+  const modal = _byId("tag-delete-modal");
+  const desc = _byId("tag-delete-desc");
+  const list = _byId("tag-delete-list");
+  const btnConfirm = _byId("tag-delete-confirm");
+  const btnCancel = _byId("tag-delete-cancel");
+  const btnClose = _byId("tag-delete-close");
+  const backdrop = _byId("tag-delete-backdrop");
 
   // Znajdź powiązane elementy
   const affected = state.notes.filter(
@@ -301,6 +315,7 @@ function _openTagDeleteModal(tag) {
   };
 }
 
+/** @param {string} hex @param {number} alpha */
 function _hexAlpha(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -309,11 +324,11 @@ function _hexAlpha(hex, alpha) {
 }
 
 export function initAddTagForm() {
-  const input = document.getElementById("new-tag-input");
-  const btn = document.getElementById("add-tag-btn");
-  const errorEl = document.getElementById("new-tag-error");
+  const input = _byInput("new-tag-input");
+  const btn = _byId("add-tag-btn");
+  const errorEl = _byId("new-tag-error");
 
-  const showError = (key) => {
+  const showError = (/** @type {string} */ key) => {
     if (errorEl) {
       errorEl.textContent = t(key);
       errorEl.hidden = false;
@@ -331,7 +346,7 @@ export function initAddTagForm() {
     }
     const result = createTag(name);
     if (!result.ok) {
-      showError(result.error);
+      showError(result.error ?? "");
       return;
     }
     hideError();
@@ -359,8 +374,8 @@ export function initAddTagForm() {
 
 export function initTagSelector() {
   document.addEventListener("click", (e) => {
-    const sel = document.getElementById("tag-selector");
-    if (!sel?.contains(e.target)) tagDropdown.hidden = true;
+    const sel = _byId("tag-selector");
+    if (!sel?.contains(/** @type {Node} */ (e.target))) tagDropdown.hidden = true;
   });
 
   // Esc zamyka dropdown gdy fokus jest w środku
@@ -372,11 +387,11 @@ export function initTagSelector() {
     e.stopPropagation();
     tagDropdown.hidden = true;
     // Wróć fokus na addBtn (tam skąd dropdown został otwarty)
-    const addBtn = document.querySelector("#tag-selector-pills .tag-add-btn");
+    const addBtn = /** @type {HTMLElement|null} */ (document.querySelector("#tag-selector-pills .tag-add-btn"));
     if (addBtn) addBtn.focus();
   });
 
-  document.getElementById("goto-panel").onclick = () => {
+  _byId("goto-panel").onclick = () => {
     tagDropdown.hidden = true;
     openPanel();
     switchPanelTab("tags");
@@ -391,9 +406,7 @@ export function renderTagSelector() {
     : null;
   const activeTags = note?.tags ?? [];
 
-  [...activeTags]
-    .map((id) => getTag(id))
-    .filter(Boolean)
+  /** @type {Tag[]} */ ([...activeTags].map((id) => getTag(id)).filter(Boolean))
     .sort((a, b) => a.name.localeCompare(b.name))
     .forEach((tag) => {
       const pill = makeTagPill(tag, { removable: true });
@@ -430,6 +443,7 @@ export function renderTagSelector() {
   selectorPills.appendChild(addBtn);
 }
 
+/** @param {string[]} activeTags */
 function _renderTagOptions(activeTags) {
   tagOptions.innerHTML = "";
 
@@ -466,10 +480,11 @@ function _renderTagOptions(activeTags) {
   });
 }
 
+/** @param {string} msg */
 function _showTagHint(msg) {
-  const pills = document.getElementById("tag-selector-pills");
+  const pills = _byId("tag-selector-pills");
   if (!pills) return;
-  let hint = document.getElementById("tag-selector-hint");
+  let hint = _byId("tag-selector-hint");
   if (!hint) {
     hint = document.createElement("span");
     hint.id = "tag-selector-hint";
@@ -478,12 +493,14 @@ function _showTagHint(msg) {
   }
   hint.textContent = msg;
   hint.hidden = false;
-  clearTimeout(hint._timer);
-  hint._timer = setTimeout(() => {
+  const _h = /** @type {any} */ (hint);
+  clearTimeout(_h._timer);
+  _h._timer = setTimeout(() => {
     hint.hidden = true;
   }, 2500);
 }
 
+/** @param {string} tagId */
 function _toggleTag(tagId) {
   if (!state.activeId) {
     saveActiveNote();
@@ -509,9 +526,9 @@ function _toggleTag(tagId) {
 /* ══ Filter bar ═════════════════════════════════ */
 
 export function initFilter() {
-  const filterBtn = document.getElementById("filter-btn");
-  const filterBar = document.getElementById("filter-bar");
-  const filterOpts = document.getElementById("filter-options");
+  const filterBtn = _byId("filter-btn");
+  const filterBar = _byId("filter-bar");
+  const filterOpts = _byId("filter-options");
 
   filterBtn.onclick = () => {
     const willOpen = filterBar.hidden;
@@ -521,6 +538,7 @@ export function initFilter() {
   };
 }
 
+/** @param {HTMLElement} container */
 function _renderFilterOptions(container) {
   container.innerHTML = "";
 
@@ -535,7 +553,7 @@ function _renderFilterOptions(container) {
   toggleRow.appendChild(checkbox);
   toggleRow.appendChild(labelText);
   checkbox.onchange = (e) => {
-    state.filterHideCompleted = e.target.checked;
+    state.filterHideCompleted = _inp(e).checked;
     saveFilterPrefs({ hideCompleted: state.filterHideCompleted });
     renderList();
     document.dispatchEvent(new CustomEvent("filterChanged"));
@@ -553,7 +571,7 @@ function _renderFilterOptions(container) {
   inProgressRow.appendChild(inProgressCb);
   inProgressRow.appendChild(inProgressText);
   inProgressCb.onchange = (e) => {
-    state.filterInProgress = e.target.checked;
+    state.filterInProgress = _inp(e).checked;
     renderList();
     document.dispatchEvent(new CustomEvent("filterChanged"));
   };
@@ -583,7 +601,7 @@ function _renderFilterOptions(container) {
     pill.dataset.tagId = tag.id;
     const badge = document.createElement("span");
     badge.className = "tag-pill__count";
-    badge.textContent = count;
+    badge.textContent = String(count);
     pill.appendChild(badge);
     pill.onclick = () => {
       const idx = state.filterTags.indexOf(tag.id);
@@ -599,10 +617,11 @@ function _renderFilterOptions(container) {
 
 /* ── Cofnij ostatni import ─────────────────────── */
 
+/** @param {any} [backupOverride] */
 export async function initUndoImport(backupOverride = null) {
-  const btn = document.getElementById("undo-import-btn");
-  const wrapper = document.getElementById("undo-import-wrapper");
-  const info = document.getElementById("undo-import-info");
+  const btn = _byId("undo-import-btn");
+  const wrapper = _byId("undo-import-wrapper");
+  const info = _byId("undo-import-info");
   if (!btn || !wrapper) return;
 
   const backup = backupOverride ?? (await loadLastBackupBeforeImport());
@@ -640,11 +659,11 @@ export async function initUndoImport(backupOverride = null) {
 }
 
 export function initDataActions() {
-  document.getElementById("export-btn").onclick = _exportData;
-  document.getElementById("import-input").addEventListener("change", (e) => {
-    const file = e.target.files[0];
+  _byId("export-btn").onclick = _exportData;
+  _byId("import-input").addEventListener("change", (e) => {
+    const file = _inp(e).files?.[0];
     if (file) _importData(file);
-    e.target.value = "";
+    /** @type {HTMLInputElement} */ (e.target).value = "";
   });
   document
     .getElementById("deleted-empty-btn")
@@ -655,6 +674,7 @@ export function initDataActions() {
 
 const STORAGE_QUOTA = 5 * 1024 * 1024; // 5 MB — standardowy limit MV2
 
+/** @param {number} bytes */
 function _fmtBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -680,8 +700,8 @@ async function _getStorageBytes() {
 }
 
 export async function updateStorageUsage() {
-  const bar = document.getElementById("storage-bar");
-  const label = document.getElementById("storage-label");
+  const bar = _byId("storage-bar");
+  const label = _byId("storage-label");
   if (!bar || !label) return;
 
   try {
@@ -734,6 +754,7 @@ function _exportData() {
   URL.revokeObjectURL(url);
 }
 
+/** @param {File} file */
 function _importData(file) {
   const confirmed = window.confirm(t("import_confirm"));
   if (!confirmed) return;
@@ -751,7 +772,7 @@ function _importData(file) {
   };
   reader.onload = async (e) => {
     try {
-      const data = JSON.parse(e.target.result);
+      const data = JSON.parse(/** @type {string} */ (/** @type {FileReader} */ (e.target).result));
 
       if (!Array.isArray(data.notes))
         throw new Error(t("import_error_missingNotes"));
@@ -800,13 +821,14 @@ function _importData(file) {
       // - dla task: completed/focus/important (boolean), due (timestamp),
       //   time (HH:MM 00:00-23:59), reminder (jeden z [0,5,15,30,60])
       // Notatki bez wymaganych pól lub z niepoprawnym ID są ODRZUCANE.
+      /** @type {Note[]} */
       const acceptedNotes = [];
       const seenNoteIds = new Set();
       let rejectedNotes = 0;
       let truncatedNotes = 0;
       for (const raw of migrated) {
         const result = sanitizeImportedNote(raw);
-        if (!result.ok) {
+        if (!result.ok || !result.note) {
           rejectedNotes++;
           continue;
         }
@@ -820,6 +842,7 @@ function _importData(file) {
       }
 
       // Walidacja tagów — odrzuca tagi bez id/name/color lub z niepoprawnym schematem.
+      /** @type {Tag[]} */
       const acceptedTags = [];
       const seenTagIds = new Set();
       let rejectedTags = 0;
@@ -843,6 +866,7 @@ function _importData(file) {
       // Flagi focus z eksportu zasilają focusIds i są zdejmowane z notatek —
       // jedynym źródłem prawdy stanu "w trakcie" w runtime jest focusIds.
       const validTagIds = new Set(acceptedTags.map((t) => t.id));
+      /** @type {string[]} */
       const importedFocusIds = [];
       const cleanedNotes = acceptedNotes.map((note) => {
         if (note.type === "task" && note.focus === true && !note.completed) {
@@ -868,8 +892,8 @@ function _importData(file) {
 
       // reset aktywnej notatki
       state.activeId = null;
-      document.getElementById("title").value = "";
-      document.getElementById("editor").innerHTML = "";
+      _byInput("title").value = "";
+      _byId("editor").innerHTML = "";
 
       renderList();
       renderTagSelector();
@@ -899,7 +923,10 @@ function _importData(file) {
         _showImportFeedback(successMsg, "success");
       }
     } catch (err) {
-      _showImportFeedback(t("import_error_prefix") + err.message, "error");
+      _showImportFeedback(
+        t("import_error_prefix") + (err instanceof Error ? err.message : String(err)),
+        "error",
+      );
     }
   };
   reader.readAsText(file);
@@ -910,8 +937,9 @@ function _importData(file) {
  * #import-feedback musi istnieć w panelu (sekcja "Dane" w sidebar.html).
  * Gdyby go nie było — graceful fallback do console.
  */
+/** @param {string} text @param {string} variant */
 function _showImportFeedback(text, variant) {
-  const el = document.getElementById("import-feedback");
+  const el = _byId("import-feedback");
   if (!el) {
     if (variant === "error") console.error(text);
     else console.info(text);
@@ -930,9 +958,10 @@ export function togglePanel() {
   else closePanel();
 }
 
+/** @param {Record<string, any>} settings */
 export function initUiSettings(settings) {
   // Toolbar toggle
-  const toggle = document.getElementById("toolbar-toggle");
+  const toggle = _byInput("toolbar-toggle");
   if (toggle) {
     toggle.checked = settings.showToolbar ?? true;
     _applyToolbar(toggle.checked);
@@ -943,7 +972,7 @@ export function initUiSettings(settings) {
   }
 
   // Toolbar tooltips toggle
-  const tooltipsToggle = document.getElementById("toolbar-tooltips-toggle");
+  const tooltipsToggle = _byInput("toolbar-tooltips-toggle");
   if (tooltipsToggle) {
     tooltipsToggle.checked = settings.showToolbarTooltips ?? true;
     _applyToolbarTooltips(tooltipsToggle.checked);
@@ -954,9 +983,7 @@ export function initUiSettings(settings) {
   }
 
   // Editor placeholder toggle
-  const placeholderToggle = document.getElementById(
-    "editor-placeholder-toggle",
-  );
+  const placeholderToggle = _byInput("editor-placeholder-toggle");
   if (placeholderToggle) {
     placeholderToggle.checked = settings.showEditorPlaceholder ?? true;
     document.documentElement.dataset.editorPlaceholder =
@@ -969,7 +996,7 @@ export function initUiSettings(settings) {
   }
 
   // Zoom
-  const zoomSelect = document.getElementById("ui-zoom-select");
+  const zoomSelect = _byInput("ui-zoom-select");
   if (zoomSelect) {
     zoomSelect.value = String(settings.uiZoom ?? 100);
     _applyZoom(settings.uiZoom ?? 100);
@@ -985,10 +1012,12 @@ export function initUiSettings(settings) {
   _initSchemeToggle(settings.colorScheme ?? "auto");
 }
 
+/** @param {boolean} show */
 function _applyToolbar(show) {
-  document.getElementById("toolbar").hidden = !show;
+  _byId("toolbar").hidden = !show;
 }
 
+/** @param {number} value */
 function _applyZoom(value) {
   // Bazowy font-size to 81.25% (z base.css). Skalujemy proporcjonalnie.
   const base = 81.25;
@@ -1002,6 +1031,7 @@ function _applyZoom(value) {
  * 'light' → data-theme="light"
  * 'dark'  → data-theme="dark"
  */
+/** @param {string} scheme */
 function _applyColorScheme(scheme) {
   const html = document.documentElement;
   if (scheme === "auto") {
@@ -1011,8 +1041,11 @@ function _applyColorScheme(scheme) {
   }
 }
 
+/** @param {string} activeScheme */
 function _initSchemeToggle(activeScheme) {
-  const btns = document.querySelectorAll(".scheme-btn");
+  const btns = /** @type {NodeListOf<HTMLElement>} */ (
+    document.querySelectorAll(".scheme-btn")
+  );
   if (!btns.length) return;
 
   // Zaznacz aktywny przycisk
@@ -1026,7 +1059,7 @@ function _initSchemeToggle(activeScheme) {
   // Handler kliku
   btns.forEach((btn) => {
     btn.onclick = () => {
-      const scheme = btn.dataset.scheme;
+      const scheme = btn.dataset.scheme ?? "auto";
       _applyColorScheme(scheme);
       saveUiSettings({ colorScheme: scheme });
       btns.forEach((b) => b.classList.toggle("is-active", b === btn));
@@ -1038,6 +1071,7 @@ function _initSchemeToggle(activeScheme) {
 /**
  * Włącza/wyłącza custom tooltips globalnie przez tooltip.js.
  */
+/** @param {boolean} show */
 function _applyToolbarTooltips(show) {
   setTooltipsEnabled(show);
 }
@@ -1048,8 +1082,10 @@ function _applyToolbarTooltips(show) {
 // → przeniesiona do sanitize.js (importowane wyżej jako sanitizeHTML)
 /* ══ Color picker ═══════════════════════════════ */
 
+/** @type {HTMLElement|null} */
 let _colorPickerEl = null;
 
+/** @param {Tag} tag @param {HTMLElement} anchor */
 function _openColorPicker(tag, anchor) {
   if (_colorPickerEl) {
     _colorPickerEl.remove();
@@ -1142,10 +1178,10 @@ function _openColorPicker(tag, anchor) {
 /* ── Niedawno usunięte ─────────────────────────── */
 
 export function renderDeletedNotes() {
-  const container = document.getElementById("deleted-notes-list");
-  const countEl = document.getElementById("deleted-notes-count");
-  const emptyEl = document.getElementById("deleted-notes-empty");
-  const emptyBtn = document.getElementById("deleted-empty-btn");
+  const container = _byId("deleted-notes-list");
+  const countEl = _byId("deleted-notes-count");
+  const emptyEl = _byId("deleted-notes-empty");
+  const emptyBtn = _byId("deleted-empty-btn");
   if (!container) return;
 
   const items = state.deletedNotes ?? [];
@@ -1228,6 +1264,7 @@ export function renderDeletedNotes() {
   });
 }
 
+/** @param {string} id */
 function _restoreNote(id) {
   // Rdzeń przywracania (stan + zapis + alarm + renderList) współdzielony
   // z akcją Cofnij w toaście — patrz notes.js::restoreDeletedNote
@@ -1235,6 +1272,7 @@ function _restoreNote(id) {
   renderDeletedNotes();
 }
 
+/** @param {string} id */
 function _permanentDelete(id) {
   state.deletedNotes = state.deletedNotes.filter((n) => n.id !== id);
   saveDeletedNotes(state.deletedNotes);
@@ -1251,6 +1289,7 @@ function _emptyDeletedNotes() {
   updateStorageUsage();
 }
 
+/** @param {number} ts */
 function _timeAgo(ts) {
   const sec = Math.floor((Date.now() - ts) / 1000);
   if (sec < 60) return t("timeAgo_justNow");
@@ -1261,6 +1300,7 @@ function _timeAgo(ts) {
   return new Date(ts).toLocaleDateString();
 }
 
+/** @param {string} s */
 function _esc(s) {
   return String(s)
     .replace(/&/g, "&amp;")
@@ -1270,6 +1310,7 @@ function _esc(s) {
     .replace(/'/g, "&#39;");
 }
 
+/** @param {string} html */
 function _contentPreview(html) {
   if (!html) return "";
   const text = html

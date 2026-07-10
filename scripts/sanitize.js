@@ -245,7 +245,7 @@ export function sanitizeImportedNote(raw) {
  * Tagi bez wymaganych pól są odrzucane (zwraca null).
  *
  * @param {*} raw
- * @returns {object|null}
+ * @returns {Tag|null}
  */
 export function sanitizeImportedTag(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
