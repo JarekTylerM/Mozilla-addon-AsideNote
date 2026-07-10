@@ -22,6 +22,24 @@ import { setCursorOffset } from "./editor-selection.js";
 import { updateDueDisplay } from "./date-picker.js";
 /* ── State ────────────────────────────────────── */
 
+/**
+ * @typedef {object} AppState
+ * @property {Note[]} notes
+ * @property {string|null} activeId
+ * @property {string} searchQuery
+ * @property {string[]} filterTags
+ * @property {'all'|'note'|'task'} filterType
+ * @property {boolean} filterHideCompleted
+ * @property {boolean} filterInProgress
+ * @property {number|null} filterDate
+ * @property {'note'|'task'|null} pendingType
+ * @property {string[]} collapsedSections
+ * @property {boolean} zenMode
+ * @property {string[]} focusIds
+ * @property {DeletedNote[]} deletedNotes
+ */
+
+/** @type {AppState} */
 export const state = {
   notes: [],
   activeId: null,

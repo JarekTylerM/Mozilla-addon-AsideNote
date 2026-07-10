@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    app.js — entry point, boot, top-level event listeners
    ══════════════════════════════════════════════════════════════ */
@@ -77,10 +78,17 @@ import { initOnboarding, initOnboardingPanel } from "./onboarding.js";
 
 /* ── DOM refs ────────────────────────────────── */
 
-const titleInput = document.getElementById("title");
-const searchInput = document.getElementById("search");
-const editor = document.getElementById("editor");
-const quickCaptureInput = document.getElementById("quick-capture");
+// Elementy sidebara są zawsze w sidebar.html — rzutujemy z pominięciem null.
+const titleInput = /** @type {HTMLInputElement} */ (document.getElementById("title"));
+const searchInput = /** @type {HTMLInputElement} */ (document.getElementById("search"));
+const editor = /** @type {HTMLElement} */ (document.getElementById("editor"));
+const quickCaptureInput = /** @type {HTMLInputElement} */ (document.getElementById("quick-capture"));
+/** @param {string} id @returns {HTMLElement} */
+const _byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+/** @param {Event} e — wartość inputu który wywołał zdarzenie */
+const _val = (e) => /** @type {HTMLInputElement} */ (e.target).value;
+/** @param {Event} e @returns {any} — detail z CustomEvent */
+const _detail = (e) => /** @type {CustomEvent} */ (e).detail;
 
 /* ── Boot ────────────────────────────────────── */
 
@@ -126,7 +134,7 @@ Promise.all([
 
     // Security button — pokaż/ukryj zależnie od uiSettings
     const secWrapper = document.getElementById("security-btn-wrapper");
-    const secToggle = document.getElementById("security-acknowledge-toggle");
+    const secToggle = /** @type {HTMLInputElement|null} */ (document.getElementById("security-acknowledge-toggle"));
     if (secWrapper)
       secWrapper.hidden = uiSettings.securityAcknowledged ?? false;
     if (secToggle) secToggle.checked = uiSettings.securityAcknowledged ?? false;
@@ -232,20 +240,21 @@ initDataActions();
 initDatePicker();
 
 document.addEventListener("recurrenceFromPicker", (e) => {
-  setRecurrence(e.detail.value || null, e.detail.days ?? null);
+  setRecurrence(_detail(e).value || null, _detail(e).days ?? null);
 });
 document.addEventListener("reminderChanged", (e) => {
-  syncReminder(e.detail.value);
+  syncReminder(_detail(e).value);
 });
 
 document.addEventListener("reminderFromPicker", (e) => {
-  setReminder(e.detail.value);
+  setReminder(_detail(e).value);
   _rescheduleActive();
   updateDeleteState();
 });
 
 /* ── + Notatka / + Zadanie (puste formularze) ──── */
 
+/** @param {'note'|'task'} type */
 function _resetForm(type) {
   const mainView = document.getElementById("main-view");
   if (mainView?.classList.contains("list-expanded")) {
@@ -264,8 +273,8 @@ function _resetForm(type) {
   _updateTitleHint();
 }
 
-document.getElementById("new-note").onclick = () => _resetForm("note");
-document.getElementById("new-task").onclick = () => _resetForm("task");
+_byId("new-note").onclick = () => _resetForm("note");
+_byId("new-task").onclick = () => _resetForm("task");
 
 function _collapseEditor() {
   const prevId = state.activeId;
@@ -294,7 +303,7 @@ function _collapseEditor() {
     const el = document.querySelector(
       `#notesList .note-item[data-id="${prevId}"]`,
     );
-    if (el) el.focus();
+    if (el) /** @type {HTMLElement} */ (el).focus();
   }
 }
 
@@ -306,8 +315,8 @@ document
 
 // Element komunikatu walidacji pod polem tytułu — musi istnieć w sidebar.html
 // (#title-error). Pojawia się gdy user przekroczy MAX_TITLE_LEN znaków.
-const titleError = document.getElementById("title-error");
-const titleHint = document.getElementById("title-hint");
+const titleError = /** @type {HTMLElement} */ (document.getElementById("title-error"));
+const titleHint = /** @type {HTMLElement} */ (document.getElementById("title-hint"));
 
 function _updateTitleHint() {
   updateNoteStatus();
@@ -335,21 +344,21 @@ titleInput.addEventListener("input", () => {
 
 /* ── Edytor: convert / important / focus / delete  */
 
-document.getElementById("convert-type").onclick = () =>
+_byId("convert-type").onclick = () =>
   convertType(state.activeId);
 
-document.getElementById("important-btn").onclick = () => {
+_byId("important-btn").onclick = () => {
   if (state.activeId) toggleImportant(state.activeId);
 };
 
-document.getElementById("focus-btn").onclick = () => {
+_byId("focus-btn").onclick = () => {
   if (!state.activeId) saveActiveNote();
   if (state.activeId) toggleFocus(state.activeId);
 };
 
 document.addEventListener("focusChanged", () => updateDeleteState());
 
-document.getElementById("delete").onclick = () => {
+_byId("delete").onclick = () => {
   if (state.activeId) clearAlarm(state.activeId);
   deleteActiveNote();
   renderTagSelector();
@@ -365,19 +374,19 @@ function _rescheduleActive() {
   scheduleAlarm(note);
 }
 
-document.getElementById("due-date").addEventListener("change", (e) => {
-  syncDatePicker(e.target.value || null);
-  setDueDate(e.target.value);
+_byId("due-date").addEventListener("change", (e) => {
+  syncDatePicker(_val(e) || null);
+  setDueDate(_val(e));
   _rescheduleActive();
 });
 
-document.getElementById("due-time").addEventListener("change", (e) => {
-  setDueTime(e.target.value);
+_byId("due-time").addEventListener("change", (e) => {
+  setDueTime(_val(e));
   _rescheduleActive();
   updateDeleteState();
 });
 
-document.getElementById("due-clear").onclick = () => {
+_byId("due-clear").onclick = () => {
   if (!state.activeId) return;
   const note = state.notes.find((n) => n.id === state.activeId);
   if (!note) return;
@@ -386,8 +395,8 @@ document.getElementById("due-clear").onclick = () => {
   note.time = null;
   note.reminder = 0;
 
-  document.getElementById("due-date").value = "";
-  document.getElementById("due-time").value = "";
+  /** @type {HTMLInputElement} */ (document.getElementById("due-date")).value = "";
+  /** @type {HTMLInputElement} */ (document.getElementById("due-time")).value = "";
   syncDatePicker(null);
   syncRecurrence(null);
   setReminder(0);
@@ -399,7 +408,7 @@ document.getElementById("due-clear").onclick = () => {
 
 /* ── Wyszukiwanie + type toggle ────────────────── */
 
-const searchClear = document.getElementById("search-clear");
+const searchClear = /** @type {HTMLElement} */ (document.getElementById("search-clear"));
 
 // Debounce renderu — renderList() przebudowuje całą listę; przy szybkim
 // pisaniu w wyszukiwarce nie ma sensu renderować każdego znaku.
@@ -407,8 +416,8 @@ const searchClear = document.getElementById("search-clear");
 const _debouncedSearchRender = debounce(renderList, 150);
 
 searchInput.addEventListener("input", (e) => {
-  state.searchQuery = e.target.value;
-  if (searchClear) searchClear.hidden = !e.target.value;
+  state.searchQuery = _val(e);
+  if (searchClear) searchClear.hidden = !_val(e);
   _debouncedSearchRender();
 });
 
@@ -420,6 +429,7 @@ searchClear?.addEventListener("click", () => {
   searchInput.focus();
 });
 
+/** @type {boolean|null} */
 let _preZenToolbarState = null;
 
 // ── Type filter buttons (all / note / task) ───────────────────────
@@ -428,8 +438,8 @@ const TYPE_ICONS = {
   note: "icon--type-note",
   task: "icon--type-task",
 };
-const typeToggleBtn = document.getElementById("type-toggle-btn");
-const typeToggleRow = document.getElementById("type-toggle");
+const typeToggleBtn = /** @type {HTMLElement} */ (document.getElementById("type-toggle-btn"));
+const typeToggleRow = /** @type {HTMLElement} */ (document.getElementById("type-toggle"));
 
 function _updateTypeToggleBtn() {
   if (!typeToggleBtn) return;
@@ -443,10 +453,11 @@ typeToggleBtn?.addEventListener("click", () => {
   typeToggleBtn.setAttribute("aria-expanded", String(!isVisible));
 });
 
-document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((btn) => {
+document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((el) => {
+  const btn = /** @type {HTMLElement} */ (el);
   btn.onclick = () => {
     state.zenMode = false;
-    state.filterType = btn.dataset.type;
+    state.filterType = /** @type {'all'|'note'|'task'} */ (btn.dataset.type ?? 'all');
 
     document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((b) => {
       b.classList.toggle("is-active", b === btn);
@@ -461,7 +472,7 @@ document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((btn) => {
 document.getElementById("zen-btn")?.addEventListener("click", () => {
   state.zenMode = !state.zenMode;
   saveUiSettings({ zenMode: state.zenMode });
-  const toolbarToggle = document.getElementById("toolbar-toggle");
+  const toolbarToggle = /** @type {HTMLInputElement|null} */ (document.getElementById("toolbar-toggle"));
   if (state.zenMode) {
     _preZenToolbarState = toolbarToggle?.checked ?? true;
     if (toolbarToggle?.checked) {
@@ -472,7 +483,7 @@ document.getElementById("zen-btn")?.addEventListener("click", () => {
     if (toolbarToggle && _preZenToolbarState !== null) {
       toolbarToggle.checked = _preZenToolbarState;
       toolbarToggle.dispatchEvent(new Event("change"));
-      document.getElementById("toolbar").hidden = !_preZenToolbarState;
+      _byId("toolbar").hidden = !_preZenToolbarState;
     }
     _preZenToolbarState = null;
   }
@@ -484,8 +495,8 @@ document.getElementById("zen-btn")?.addEventListener("click", () => {
 
 /* ── Filter date ───────────────────────────────── */
 
-const filterDateInput = document.getElementById("filter-date");
-const filterDateClear = document.getElementById("filter-date-clear");
+const filterDateInput = /** @type {HTMLInputElement} */ (document.getElementById("filter-date"));
+const filterDateClear = /** @type {HTMLElement} */ (document.getElementById("filter-date-clear"));
 function _updateFilterClearBtn() {
   const btn = document.getElementById("filter-clear-btn");
   if (!btn) return;
@@ -505,7 +516,7 @@ document.getElementById("filter-clear-btn")?.addEventListener("click", () => {
 });
 
 filterDateInput?.addEventListener("change", (e) => {
-  const val = e.target.value;
+  const val = _val(e);
   if (val) {
     const [y, m, d] = val.split("-").map(Number);
     state.filterDate = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
@@ -535,8 +546,9 @@ document.addEventListener("filterChanged", () => {
 
 /* ── Quick capture preview ─────────────────────── */
 
-const _qcPreview = document.getElementById("quick-capture-preview");
+const _qcPreview = /** @type {HTMLElement} */ (document.getElementById("quick-capture-preview"));
 
+/** @param {string} raw */
 function _updateQcPreview(raw) {
   if (!raw.trim()) {
     _qcPreview.hidden = true;
@@ -585,7 +597,7 @@ function _updateQcPreview(raw) {
 }
 
 quickCaptureInput.addEventListener("input", (e) => {
-  _updateQcPreview(e.target.value);
+  _updateQcPreview(_val(e));
 });
 
 quickCaptureInput.addEventListener("keydown", (e) => {
@@ -599,10 +611,10 @@ quickCaptureInput.addEventListener("keydown", (e) => {
 quickCaptureInput.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   e.preventDefault();
-  const val = e.target.value.trim();
+  const val = _val(e).trim();
   if (!val) return;
-  const item = quickCapture(val);
-  e.target.value = "";
+  const item = /** @type {Note|null} */ (quickCapture(val));
+  quickCaptureInput.value = "";
   if (e.shiftKey && item) {
     selectNote(item.id);
     titleInput.focus();
@@ -611,20 +623,20 @@ quickCaptureInput.addEventListener("keydown", (e) => {
 
 /* ── Panel personalizacji ──────────────────────── */
 
-document.getElementById("panel-btn").onclick = () => {
+_byId("panel-btn").onclick = () => {
   shortcutTooltip.classList.remove("show");
   toggleShortcutsBtn.setAttribute("aria-expanded", "false");
   togglePanel();
-  if (!document.getElementById("panel").hidden) {
+  if (!_byId("panel").hidden) {
     switchPanelTab("general");
   }
 };
-document.getElementById("close-panel").onclick = closePanel;
+_byId("close-panel").onclick = closePanel;
 
 /* ── Tooltip skrótów ───────────────────────────── */
 
-const toggleShortcutsBtn = document.getElementById("toggle-shortcuts");
-const shortcutTooltip = document.getElementById("shortcut-tooltip");
+const toggleShortcutsBtn = /** @type {HTMLElement} */ (document.getElementById("toggle-shortcuts"));
+const shortcutTooltip = /** @type {HTMLElement} */ (document.getElementById("shortcut-tooltip"));
 
 toggleShortcutsBtn?.addEventListener("click", () => {
   const panel = document.getElementById("panel");
@@ -657,6 +669,7 @@ const _PANEL_TABS = [
   },
 ];
 
+/** @param {string} id */
 export function switchPanelTab(id) {
   _PANEL_TABS.forEach(({ id: tid, tab, pane }) => {
     if (!tab || !pane) return;
@@ -688,15 +701,15 @@ document
   });
 
 // Sub-taby w zakładce skrótów
-document.querySelectorAll(".shortcuts-subtab").forEach((btn) => {
+document.querySelectorAll(".shortcuts-subtab").forEach((el) => {
+  const btn = /** @type {HTMLElement} */ (el);
   btn.addEventListener("click", () => {
     document
       .querySelectorAll(".shortcuts-subtab")
       .forEach((b) => b.classList.toggle("is-active", b === btn));
     const tab = btn.dataset.shortcutsTab;
-    document.getElementById("shortcuts-pane-general").hidden =
-      tab !== "general";
-    document.getElementById("shortcuts-pane-editor").hidden = tab !== "editor";
+    _byId("shortcuts-pane-general").hidden = tab !== "general";
+    _byId("shortcuts-pane-editor").hidden = tab !== "editor";
   });
 });
 
@@ -727,7 +740,7 @@ document.addEventListener("forceSave", () => {
    użytkownik traciłby zmiany bez żadnego sygnału. save-ok (udany zapis
    lub retry) chowa baner. */
 
-const _saveErrorBanner = document.getElementById("save-error-banner");
+const _saveErrorBanner = /** @type {HTMLElement} */ (document.getElementById("save-error-banner"));
 
 document.addEventListener("storage:save-error", () => {
   if (_saveErrorBanner) _saveErrorBanner.hidden = false;
@@ -753,27 +766,30 @@ document.addEventListener("visibilitychange", () => {
    potwierdzenia — kosz istnieje, ale jest schowany w panelu. Toast daje
    widoczną ścieżkę odwrotu bez modalnego "czy na pewno?". */
 
-const _undoToast = document.getElementById("undo-toast");
+const _undoToast = /** @type {HTMLElement} */ (document.getElementById("undo-toast"));
 const _undoToastText = _undoToast?.querySelector(".undo-toast__text");
+/** @type {ReturnType<typeof setTimeout>|null} */
 let _undoToastTimer = null;
+/** @type {string|null} */
 let _undoToastNoteId = null;
 
 function _hideUndoToast() {
-  clearTimeout(_undoToastTimer);
+  clearTimeout(_undoToastTimer ?? undefined);
   _undoToastTimer = null;
   _undoToastNoteId = null;
   if (_undoToast) _undoToast.hidden = true;
 }
 
+/** @param {number} ms */
 function _armUndoToastTimer(ms) {
-  clearTimeout(_undoToastTimer);
+  clearTimeout(_undoToastTimer ?? undefined);
   _undoToastTimer = setTimeout(_hideUndoToast, ms);
 }
 
 document.addEventListener("noteTrashed", (e) => {
   if (!_undoToast || !_undoToastText) return;
-  _undoToastNoteId = e.detail.id;
-  const title = (e.detail.title || "").trim();
+  _undoToastNoteId = _detail(e).id;
+  const title = (_detail(e).title || "").trim();
   const short = title.length > 24 ? title.slice(0, 24) + "…" : title;
   _undoToastText.textContent = short
     ? `${t("toast_trashed")} «${short}»`
@@ -784,8 +800,8 @@ document.addEventListener("noteTrashed", (e) => {
 
 // Hover/fokus wstrzymuje auto-hide — użytkownik klawiatury potrzebuje
 // czasu na dotarcie Tabem do przycisku Cofnij
-_undoToast?.addEventListener("mouseenter", () => clearTimeout(_undoToastTimer));
-_undoToast?.addEventListener("focusin", () => clearTimeout(_undoToastTimer));
+_undoToast?.addEventListener("mouseenter", () => clearTimeout(_undoToastTimer ?? undefined));
+_undoToast?.addEventListener("focusin", () => clearTimeout(_undoToastTimer ?? undefined));
 _undoToast?.addEventListener("mouseleave", () => _armUndoToastTimer(2500));
 _undoToast?.addEventListener("focusout", () => _armUndoToastTimer(2500));
 
@@ -793,12 +809,12 @@ document.getElementById("undo-toast-btn")?.addEventListener("click", () => {
   const id = _undoToastNoteId;
   _hideUndoToast();
   if (!id) return;
-  const note = restoreDeletedNote(id);
+  const note = /** @type {Note|null} */ (restoreDeletedNote(id));
   // Fokus na przywrócony element — kontynuacja nawigacji z miejsca akcji
   if (note) {
-    document
-      .querySelector(`#notesList .note-item[data-id="${note.id}"]`)
-      ?.focus();
+    /** @type {HTMLElement|null} */ (
+      document.querySelector(`#notesList .note-item[data-id="${note.id}"]`)
+    )?.focus();
   }
 });
 
@@ -844,12 +860,12 @@ document.addEventListener("keydown", (e) => {
   // Alt+F — toggle filter bar + fokus na pierwszy element
   if (altKey === "f") {
     e.preventDefault();
-    document.getElementById("filter-btn").click();
-    const filterBar = document.getElementById("filter-bar");
+    _byId("filter-btn").click();
+    const filterBar = _byId("filter-bar");
     if (!filterBar.hidden) {
       // Fokus na pierwszy interaktywny element w filter bar
       setTimeout(() => {
-        const first = filterBar.querySelector('input, button, [tabindex="0"]');
+        const first = /** @type {HTMLElement|null} */ (filterBar.querySelector('input, button, [tabindex="0"]'));
         if (first) first.focus();
       }, 0);
     }
@@ -860,9 +876,10 @@ document.addEventListener("keydown", (e) => {
   // domyka pętlę capture → lista → edytor bez myszy
   if (altKey === "l") {
     e.preventDefault();
-    const target =
+    const target = /** @type {HTMLElement|null} */ (
       document.querySelector("#notesList .note-item.is-active") ||
-      document.querySelector("#notesList .note-item");
+      document.querySelector("#notesList .note-item")
+    );
     target?.focus();
     return;
   }
@@ -910,7 +927,7 @@ document.addEventListener("keydown", (e) => {
   // Alt+E — toggle toolbar edytora (działa też w zen mode)
   if (altKey === "e") {
     e.preventDefault();
-    const toggle = document.getElementById("toolbar-toggle");
+    const toggle = /** @type {HTMLInputElement|null} */ (document.getElementById("toolbar-toggle"));
     const toolbar = document.getElementById("toolbar");
     if (toggle && toolbar) {
       toggle.checked = !toggle.checked;
@@ -949,7 +966,7 @@ function _initSecurityBtn() {
   const btn = document.getElementById("security-btn");
   const tip = document.getElementById("security-tooltip");
   const gotoBtn = document.getElementById("security-tooltip-goto");
-  const ackToggle = document.getElementById("security-acknowledge-toggle");
+  const ackToggle = /** @type {HTMLInputElement|null} */ (document.getElementById("security-acknowledge-toggle"));
   const wrapper = document.getElementById("security-btn-wrapper");
 
   if (!btn || !tip) return;
@@ -1002,26 +1019,30 @@ function _initFocusModeBtn(initialFocusMode = false) {
   });
 }
 
+/** @param {boolean} active @param {HTMLElement|null} btn */
 function _setFocusMode(active, btn) {
   document.body.classList.toggle("is-focus-mode", active);
-  btn.classList.toggle("icon--focusmode-enter", !active);
-  btn.classList.toggle("icon--focusmode-exit", active);
-  btn.title = t(active ? "focusMode_exit_title" : "focusMode_enter_title");
-  btn.setAttribute(
-    "aria-label",
-    t(active ? "focusMode_exit_ariaLabel" : "focusMode_enter_ariaLabel"),
-  );
+  if (btn) {
+    btn.classList.toggle("icon--focusmode-enter", !active);
+    btn.classList.toggle("icon--focusmode-exit", active);
+    btn.title = t(active ? "focusMode_exit_title" : "focusMode_enter_title");
+    btn.setAttribute(
+      "aria-label",
+      t(active ? "focusMode_exit_ariaLabel" : "focusMode_enter_ariaLabel"),
+    );
+  }
   const backBtn = document.getElementById("back-btn");
   if (backBtn) backBtn.hidden = !active;
 }
 
+/** @param {boolean} active */
 function _setListExpanded(active) {
   document
     .getElementById("main-view")
     ?.classList.toggle("list-expanded", active);
 }
 
-const backBtn = document.getElementById("back-btn");
+const backBtn = /** @type {HTMLElement} */ (document.getElementById("back-btn"));
 if (backBtn) {
   backBtn.addEventListener("click", () => {
     const focusModeBtn = document.getElementById("focusmode-btn");
