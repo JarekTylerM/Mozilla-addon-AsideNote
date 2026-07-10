@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    onboarding.js — prowadzony tour po funkcjach AsideNotes
 
@@ -17,16 +18,44 @@
 import { t } from './i18n.js';
 import { saveUiSettings } from './storage.js';
 
+/**
+ * @typedef {object} StepAwait
+ * @property {string} type
+ * @property {string} [selector]
+ * @property {MutationObserverInit} [options]
+ * @property {(muts: MutationRecord[], el: Element) => any} [check]
+ */
+/**
+ * @typedef {object} Step
+ * @property {number} stage
+ * @property {number} idx
+ * @property {string | (() => Element|null) | null} [target]
+ * @property {string} [textKey]
+ * @property {string} [textKeyFallback]
+ * @property {() => boolean} [isFallback]
+ * @property {string} [type]
+ * @property {boolean} [focusTarget]
+ * @property {StepAwait} [await]
+ * @property {string} [side]
+ * @property {string} [revealHidden]
+ */
+
+/** @param {string} id @returns {HTMLElement} */
+const _byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+
 /* ── Definicja kroków ────────────────────────────────────────── */
 
 /* Await na dodanie elementu do listy — współdzielony przez kroki capture */
+/** @type {StepAwait} */
 const AWAIT_NOTE_ADDED = {
   type: 'mutation',
   selector: '#notesList',
   options: { childList: true, subtree: true },
   check: (muts) =>
     muts.some((m) =>
-      [...m.addedNodes].some((n) => n.classList?.contains('note-item')),
+      [...m.addedNodes].some((n) =>
+        /** @type {Element} */ (n).classList?.contains('note-item'),
+      ),
     ),
 };
 
@@ -36,6 +65,7 @@ const noteItemTarget = () =>
   document.querySelector('.notes-empty');
 const noteListEmpty = () => !document.querySelector('#notesList .note-item');
 
+/** @type {Step[]} */
 const STEPS = [
   // ── Lekcja 1: Start — pierwsza notatka i podstawowe pojęcia ──
   {
@@ -109,7 +139,7 @@ const STEPS = [
       type: 'mutation',
       selector: '#slash-menu',
       options: { attributes: true, attributeFilter: ['hidden'] },
-      check: (muts, el) => !el.hidden,
+      check: (muts, el) => !(/** @type {HTMLElement} */ (el)).hidden,
     },
     side: 'top',
   },
@@ -164,7 +194,7 @@ const STEPS = [
       type: 'mutation',
       selector: '#date-picker-popover',
       options: { attributes: true, attributeFilter: ['hidden'] },
-      check: (muts, el) => !el.hidden,
+      check: (muts, el) => !(/** @type {HTMLElement} */ (el)).hidden,
     },
     side: 'bottom',
     revealHidden: '#due-wrapper',
@@ -287,7 +317,7 @@ const STEPS = [
       type: 'mutation',
       selector: '#filter-bar',
       options: { attributes: true, attributeFilter: ['hidden'] },
-      check: (muts, el) => !el.hidden,
+      check: (muts, el) => !(/** @type {HTMLElement} */ (el)).hidden,
     },
     side: 'bottom',
   },
@@ -354,6 +384,7 @@ const STEPS = [
 
 /* ── Stałe ───────────────────────────────────────────────────── */
 
+/** @type {Record<number, string>} */
 const STAGE_LABELS = {
   1: 'ob_stage1_label',
   2: 'ob_stage2_label',
@@ -365,16 +396,19 @@ const STAGE_LABELS = {
 
 /* ── Stan ────────────────────────────────────────────────────── */
 
-let _overlay      = null;
-let _tooltip      = null;
-let _backdrop     = null;
-let _currentStep  = null;   // indeks w STEPS
-let _stagesDone   = {};     // { 1: bool, … }
-let _cleanupAwait = null;   // fn do sprzątania aktywnego awaita
-let _prevTarget   = null;   // poprzednio podświetlony element
+// Elementy overlay są w sidebar.html — asercja obecności; guard w _buildOverlay
+// nadal łapie ewentualny brak w runtime.
+/** @type {HTMLElement} */ let _overlay;
+/** @type {HTMLElement} */ let _tooltip;
+/** @type {HTMLElement} */ let _backdrop;
+/** @type {number | null} */ let _currentStep  = null;   // indeks w STEPS
+/** @type {Record<number, boolean>} */ let _stagesDone = {}; // { 1: bool, … }
+/** @type {(() => void) | null} */ let _cleanupAwait = null; // sprzątanie awaita
+/** @type {Element | null} */ let _prevTarget = null;   // poprzednio podświetlony
 
 /* ── Publiczne API ───────────────────────────────────────────── */
 
+/** @param {{ onboardingStages?: Record<number, boolean> }} uiSettings */
 export function initOnboarding(uiSettings) {
   _stagesDone = uiSettings.onboardingStages ?? {};
   _buildOverlay();
@@ -385,11 +419,12 @@ export function initOnboarding(uiSettings) {
   }
 }
 
+/** @param {number} stageNum */
 export function startStage(stageNum) {
   const firstIdx = STEPS.findIndex(s => s.stage === stageNum);
   if (firstIdx === -1) return;
   // Zamknij panel jeśli otwarty
-  const panelEl = document.getElementById('panel');
+  const panelEl = /** @type {HTMLElement|null} */ (document.getElementById('panel'));
   if (panelEl && !panelEl.hidden) {
     document.getElementById('panel-btn')?.click();
   }
@@ -399,9 +434,9 @@ export function startStage(stageNum) {
 /* ── Budowanie overlay ───────────────────────────────────────── */
 
 function _buildOverlay() {
-  _overlay  = document.getElementById('onboarding-overlay');
-  _backdrop = document.getElementById('onboarding-backdrop');
-  _tooltip  = document.getElementById('onboarding-tooltip');
+  _overlay  = /** @type {HTMLElement} */ (document.getElementById('onboarding-overlay'));
+  _backdrop = /** @type {HTMLElement} */ (document.getElementById('onboarding-backdrop'));
+  _tooltip  = /** @type {HTMLElement} */ (document.getElementById('onboarding-tooltip'));
   if (!_overlay || !_tooltip) return;
 
   document.getElementById('onboarding-next')
@@ -426,6 +461,7 @@ function _buildOverlay() {
 
 /* ── Silnik kroków ───────────────────────────────────────────── */
 
+/** @param {number} stepIdx */
 function _show(stepIdx) {
   if (stepIdx < 0 || stepIdx >= STEPS.length) {
     _finishStage();
@@ -449,13 +485,16 @@ function _show(stepIdx) {
   const total        = stepsInStage.length;
 
   // Resolve target
-  const targetEl = typeof step.target === 'function'
-    ? step.target()
-    : document.querySelector(step.target);
+  const targetEl =
+    typeof step.target === 'function'
+      ? step.target()
+      : step.target
+        ? document.querySelector(step.target)
+        : null;
 
   // Odkryj hidden element jeśli krok tego wymaga
   if (step.revealHidden) {
-    const revealEl = document.querySelector(step.revealHidden);
+    const revealEl = /** @type {HTMLElement|null} */ (document.querySelector(step.revealHidden));
     if (revealEl) revealEl.hidden = false;
   }
 
@@ -464,17 +503,15 @@ function _show(stepIdx) {
 
   // Fokus na element jeśli krok tego wymaga
   if (step.focusTarget && targetEl) {
-    setTimeout(() => targetEl.focus(), 50);
+    setTimeout(() => /** @type {HTMLElement} */ (targetEl).focus(), 50);
   }
 
   // Tooltip — treść
-  document.getElementById('onboarding-stage-label').textContent =
-    t(STAGE_LABELS[step.stage]);
-  document.getElementById('onboarding-progress').textContent =
-    `${idxInStage + 1} / ${total}`;
+  _byId('onboarding-stage-label').textContent = t(STAGE_LABELS[step.stage]);
+  _byId('onboarding-progress').textContent = `${idxInStage + 1} / ${total}`;
   const useFallback = step.isFallback?.() && step.textKeyFallback;
-  document.getElementById('onboarding-text').textContent =
-    t(useFallback ? step.textKeyFallback : step.textKey);
+  _byId('onboarding-text').textContent =
+    t((useFallback ? step.textKeyFallback : step.textKey) ?? '');
 
   // Przyciski
   const prevBtn     = document.getElementById('onboarding-prev');
@@ -519,9 +556,11 @@ function _show(stepIdx) {
   }
 }
 
+/** @param {number} dir */
 function _advance(dir) {
   _cleanupAwait?.();
   _cleanupAwait = null;
+  if (_currentStep === null) return;
 
   const next = _currentStep + dir;
   const cur  = STEPS[_currentStep];
@@ -537,6 +576,7 @@ function _advance(dir) {
   _show(next);
 }
 
+/** @param {number} [stageNum] */
 function _finishStage(stageNum) {
   if (stageNum) {
     _stagesDone[stageNum] = true;
@@ -556,6 +596,7 @@ function _close() {
 
 /* ── Highlight ───────────────────────────────────────────────── */
 
+/** @param {Element|null} el */
 function _highlight(el) {
   _unhighlight();
   if (!el) return;
@@ -570,6 +611,7 @@ function _unhighlight() {
 
 /* ── Pozycjonowanie tooltipa ─────────────────────────────────── */
 
+/** @param {Element} targetEl @param {string} [side] */
 function _positionTooltip(targetEl, side = 'bottom') {
   _tooltip.style.transform = '';
 
@@ -616,10 +658,13 @@ function _positionCenter() {
 
 /* ── Oczekiwanie na akcję użytkownika ────────────────────────── */
 
+/** @param {StepAwait} spec @param {() => void} onMatch */
 function _listenFor({ type, selector, options, check }, onMatch) {
   if (type === 'click') {
+    /** @param {Event} e */
     const handler = (e) => {
-      if (e.target.closest(selector)) {
+      const tgt = /** @type {Element|null} */ (e.target);
+      if (selector && tgt?.closest(selector)) {
         document.removeEventListener('click', handler, true);
         onMatch();
       }
@@ -631,10 +676,10 @@ function _listenFor({ type, selector, options, check }, onMatch) {
   if (type === 'mutation') {
     const target = selector === 'body'
       ? document.body
-      : document.querySelector(selector);
+      : selector ? document.querySelector(selector) : null;
     if (!target) return () => {};
     const obs = new MutationObserver((muts) => {
-      if (check(muts, target)) {
+      if (check?.(muts, target)) {
         obs.disconnect();
         onMatch();
       }
@@ -652,9 +697,9 @@ function _refreshPanelButtons() {
   const container = document.getElementById('onboarding-panel-stages');
   if (!container) return;
   container.querySelectorAll('[data-ob-stage]').forEach((btn) => {
-    const n    = Number(btn.dataset.obStage);
+    const n    = Number(/** @type {HTMLElement} */ (btn).dataset.obStage);
     btn.classList.toggle('onboarding-stage-btn--done', !!_stagesDone[n]);
-    const mark = btn.querySelector('.onboarding-stage-btn__check');
+    const mark = /** @type {HTMLElement|null} */ (btn.querySelector('.onboarding-stage-btn__check'));
     if (mark) mark.hidden = !_stagesDone[n];
   });
 }
@@ -664,7 +709,9 @@ export function initOnboardingPanel() {
   if (!container) return;
   _refreshPanelButtons();
   container.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-ob-stage]');
+    const btn = /** @type {HTMLElement|null} */ (
+      (/** @type {Element|null} */ (e.target))?.closest('[data-ob-stage]') ?? null
+    );
     if (!btn) return;
     startStage(Number(btn.dataset.obStage));
   });
