@@ -40,6 +40,10 @@ interface Note {
   reminder?: number;
   recurrence?: string | null;
   recurrenceDays?: number[] | null;
+  /** id notatki-następcy zrodzonej z powtarzalnego zadania */
+  spawnedNextId?: string;
+  /** timestamp ukończenia zadania */
+  completedAt?: number | null;
 }
 
 /** Notatka w koszu — Note + znacznik czasu usunięcia. */

@@ -1,3 +1,4 @@
+// @ts-check
 /* ══════════════════════════════════════════════════════════════
    notes.js — stan notatek + CRUD + render listy z sekcjami
    ══════════════════════════════════════════════════════════════ */
@@ -58,11 +59,15 @@ export const state = {
 
 /* ── DOM refs ─────────────────────────────────── */
 
-const notesList = document.getElementById("notesList");
-const titleInput = document.getElementById("title");
-const editor = document.getElementById("editor");
-const dueInput = document.getElementById("due-date");
-const dueWrapper = document.getElementById("due-wrapper");
+const notesList = /** @type {HTMLElement} */ (document.getElementById("notesList"));
+const titleInput = /** @type {HTMLInputElement} */ (document.getElementById("title"));
+const editor = /** @type {HTMLElement} */ (document.getElementById("editor"));
+const dueInput = /** @type {HTMLInputElement} */ (document.getElementById("due-date"));
+const dueWrapper = /** @type {HTMLElement} */ (document.getElementById("due-wrapper"));
+/** @param {string} id @returns {HTMLElement} */
+const _byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+/** @param {Event} e @returns {Element|null} */
+const _target = (e) => /** @type {Element|null} */ (e.target);
 
 /* ── Sekcje (buckety) ─────────────────────────── */
 
@@ -78,10 +83,12 @@ const SECTION_ORDER = [
   "done",
 ];
 
+/** @param {string} key */
 function _sectionLabel(key) {
   return t(`section_${key}`);
 }
 
+/** @param {Note} note */
 function _bucketFor(note) {
   if (note.type === "note") return "notes";
   if (note.completed) return "done";
@@ -118,6 +125,7 @@ function _bucketFor(note) {
 
 /* ── Helpers ──────────────────────────────────── */
 
+/** @param {number|null|undefined} ts */
 function _toDateInputValue(ts) {
   if (!ts) return "";
   const d = new Date(ts);
@@ -127,12 +135,14 @@ function _toDateInputValue(ts) {
   return `${y}-${m}-${day}`;
 }
 
+/** @param {string} v @returns {number|null} */
 function _fromDateInputValue(v) {
   if (!v) return null;
   const [y, m, d] = v.split("-").map(Number);
   return new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
 }
 
+/** @param {number} timestamp */
 function _formatDueRelative(timestamp) {
   const now = new Date();
   const startOfToday = new Date(
@@ -157,12 +167,14 @@ function _formatDueRelative(timestamp) {
 /* Wyciąga plain text z HTML content (podgląd przy przycisku 👁).
    DOMParser zamiast detached div z innerHTML — nie tworzy żywych węzłów
    i nie zapala flag audytu na innerHTML bez sanityzacji. */
+/** @param {string} html */
 function _stripHtml(html) {
   if (!html) return "";
   const doc = new DOMParser().parseFromString(html, "text/html");
   return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
 }
 
+/** @param {string} content @param {number} [maxLen] */
 function _contentPreview(content, maxLen = 60) {
   if (!content) return "";
   const doc = new DOMParser().parseFromString(content, "text/html");
@@ -177,6 +189,7 @@ export function isNoteEmpty() {
 
 /* ── State ops ────────────────────────────────── */
 
+/** @param {string} value */
 export function setDueDate(value) {
   if (!state.activeId) return;
   const note = state.notes.find((n) => n.id === state.activeId);
@@ -186,6 +199,7 @@ export function setDueDate(value) {
   renderList();
 }
 
+/** @param {string} id */
 export function postponeToTomorrow(id) {
   const note = state.notes.find((n) => n.id === id);
   if (!note || note.type !== "task") return;
@@ -198,6 +212,7 @@ export function postponeToTomorrow(id) {
   renderList();
 }
 
+/** @param {string} value */
 export function setDueTime(value) {
   if (!state.activeId) return;
   const note = state.notes.find((n) => n.id === state.activeId);
@@ -206,6 +221,7 @@ export function setDueTime(value) {
   saveNotes(state.notes);
   renderList();
 }
+/** @param {number|string} value */
 export function setReminder(value) {
   if (!state.activeId) return;
   const note = state.notes.find((n) => n.id === state.activeId);
@@ -214,6 +230,7 @@ export function setReminder(value) {
   saveNotes(state.notes);
 }
 
+/** @param {string|null} value @param {number[]|null} [days] */
 export function setRecurrence(value, days = null) {
   if (!state.activeId) return;
   const note = state.notes.find((n) => n.id === state.activeId);
@@ -225,6 +242,7 @@ export function setRecurrence(value, days = null) {
   updateDeleteState();
 }
 
+/** @param {string} id */
 export function selectNote(id) {
   const note = state.notes.find((n) => n.id === id);
   if (!note) return;
@@ -257,7 +275,7 @@ export function selectNote(id) {
   import("./date-picker.js").then(({ syncDatePicker }) => {
     syncDatePicker(_toDateInputValue(note.due) || null);
   });
-  const timeInput = document.getElementById("due-time");
+  const timeInput = /** @type {HTMLInputElement|null} */ (document.getElementById("due-time"));
   if (timeInput) timeInput.value = note.time ?? "";
   // stan alarm-btn i recurrence-btn aktualizuje updateDeleteState()
   // const reminderSelect = document.getElementById('due-reminder');
@@ -284,9 +302,10 @@ export function saveActiveNote() {
   const cleanTitle = titleResult.truncated;
 
   if (!state.activeId) {
+    /** @type {Note} */
     const newNote = {
       id: newNoteId(),
-      type: state.pendingType,
+      type: state.pendingType ?? "note",
       title: cleanTitle,
       content: cleanContent,
       created: Date.now(),
@@ -384,8 +403,7 @@ export function restoreDeletedNote(id) {
   const idx = state.deletedNotes.findIndex((n) => n.id === id);
   if (idx === -1) return null;
 
-  const note = { ...state.deletedNotes[idx] };
-  delete note.deletedAt;
+  const { deletedAt, ...note } = state.deletedNotes[idx];
 
   state.notes.unshift(note);
   state.deletedNotes.splice(idx, 1);
@@ -402,6 +420,7 @@ export function restoreDeletedNote(id) {
   return note;
 }
 
+/** @param {string|null} id */
 export function convertType(id) {
   // brak aktywnej notatki — toggle pending type
   if (!id) {
@@ -426,6 +445,7 @@ export function convertType(id) {
   document.dispatchEvent(new CustomEvent("noteSelected"));
 }
 
+/** @param {string} id */
 export function toggleCompleted(id) {
   const note = state.notes.find((n) => n.id === id);
   if (!note || note.type !== "task") return;
@@ -439,6 +459,7 @@ export function toggleCompleted(id) {
 
     // Spawn kolejnej instancji dla zadań cyklicznych
     if (note.recurrence && note.due) {
+      /** @type {Note} */
       const spawn = {
         id: newNoteId(),
         type: "task",
@@ -480,6 +501,7 @@ export function toggleCompleted(id) {
   renderList();
 }
 
+/** @param {string} id */
 export function toggleFocus(id) {
   if (!id) return;
   const note = state.notes.find((n) => n.id === id);
@@ -525,7 +547,7 @@ export function updateNoteStatus() {
   const title = titleInput.value.trim();
   const kindKey = isTask ? "noteStatus_kind_task" : "noteStatus_kind_note";
   const kindStr = t(kindKey);
-  const _esc = (s) =>
+  const _esc = (/** @type {string} */ s) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   if (title) {
@@ -544,6 +566,7 @@ export function updateNoteStatus() {
  * Jedno źródło etykiety dla badge w edytorze i ikony ↺ na liście —
  * wcześniej ta sama logika była zduplikowana w dwóch miejscach.
  */
+/** @param {Note|null} note */
 function _recurrenceLabel(note) {
   if (!note?.recurrence) return "";
   const DAY_NAMES = [0, 1, 2, 3, 4, 5, 6].map((d) => t(`day_short_${d}`));
@@ -555,13 +578,13 @@ function _recurrenceLabel(note) {
     return `${t("recurrence_weekly")} (${DAY_NAMES[new Date(note.due).getDay()]})`;
   }
   return (
-    {
+    /** @type {Record<string, string>} */ ({
       daily: t("recurrence_daily"),
       weekly: t("recurrence_weekly"),
       monthly: t("recurrence_monthly"),
       yearly: t("recurrence_yearly"),
       custom: t("recurrence_custom"),
-    }[note.recurrence] ?? ""
+    })[note.recurrence] ?? ""
   );
 }
 
@@ -580,11 +603,12 @@ export function updateDeleteState() {
 }
 
 /* Przyciski akcji edytora: delete / convert / focus / important / collapse */
+/** @param {Note|null} note */
 function _syncEditorActionButtons(note) {
-  const deleteBtn = document.getElementById("delete");
+  const deleteBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("delete"));
   if (deleteBtn) deleteBtn.disabled = !state.activeId || isNoteEmpty();
 
-  const convertBtn = document.getElementById("convert-type");
+  const convertBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("convert-type"));
   if (convertBtn) {
     convertBtn.disabled = false;
     const type = state.activeId
@@ -601,7 +625,7 @@ function _syncEditorActionButtons(note) {
     const isFocusable =
       !!state.activeId && !(note?.type === "task" && note?.completed);
     focusBtn.hidden = !isFocusable;
-    const inFocus = state.focusIds.includes(state.activeId);
+    const inFocus = state.focusIds.includes(state.activeId ?? "");
     focusBtn.classList.toggle(
       "is-active",
       state.activeId !== null && inFocus,
@@ -628,6 +652,7 @@ function _syncEditorActionButtons(note) {
 }
 
 /* Metadane zadania: widoczność due-bar, pill alarmu, przycisk daty */
+/** @param {Note|null} note */
 function _syncTaskMeta(note) {
   const isTask = state.activeId
     ? note?.type === "task"
@@ -639,7 +664,7 @@ function _syncTaskMeta(note) {
   if (dueInput && !state.activeId) dueInput.value = "";
   updateDueDisplay();
 
-  const timeInput = document.getElementById("due-time");
+  const timeInput = /** @type {HTMLInputElement|null} */ (document.getElementById("due-time"));
   const alarmPill = document.getElementById("due-alarm-pill");
   const alarmLabel = document.getElementById("alarm-label");
   if (alarmPill) {
@@ -667,6 +692,7 @@ function _syncTaskMeta(note) {
 }
 
 /* Badge cykliczności przy dacie + event dla date-pickera */
+/** @param {Note|null} note */
 function _syncRecurrenceBadge(note) {
   const badge = document.getElementById("due-recurrence-badge");
   if (badge) {
@@ -689,15 +715,15 @@ export function clearFilters() {
   state.filterHideCompleted = false;
   state.filterInProgress = false;
   state.filterDate = null;
-  const dateInput = document.getElementById("filter-date");
+  const dateInput = /** @type {HTMLInputElement|null} */ (document.getElementById("filter-date"));
   if (dateInput) dateInput.value = "";
 
   // Sync DOM — input wartości i klasy
-  const searchInput = document.getElementById("search");
+  const searchInput = /** @type {HTMLInputElement|null} */ (document.getElementById("search"));
   if (searchInput) searchInput.value = "";
 
   document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((b) => {
-    b.classList.toggle("is-active", b.dataset.type === "all");
+    b.classList.toggle("is-active", /** @type {HTMLElement} */ (b).dataset.type === "all");
   });
 
   // Filter bar zostaje otwarty/zamknięty jak był; tylko jego stan checkboxa się
@@ -722,6 +748,7 @@ function _updateNewItemHint() {
   taskBtn.classList.toggle("is-active", activeType === "task");
 }
 
+/** @param {number} due @param {string} recurrence @param {number[]|null} [recurrenceDays] @returns {number} */
 function _nextDueDate(due, recurrence, recurrenceDays = null) {
   const d = new Date(due);
   switch (recurrence) {
@@ -754,6 +781,7 @@ function _nextDueDate(due, recurrence, recurrenceDays = null) {
   return d.getTime();
 }
 
+/** @param {number} tsA @param {number} tsB */
 function _sameDay(tsA, tsB) {
   const a = new Date(tsA);
   const b = new Date(tsB);
@@ -859,7 +887,7 @@ export function renderList() {
     clearBtn.textContent = t("list_empty_filtered_clearBtn");
     clearBtn.onclick = () => {
       clearFilters();
-      const filterDateInput = document.getElementById("filter-date");
+      const filterDateInput = /** @type {HTMLInputElement|null} */ (document.getElementById("filter-date"));
       if (filterDateInput) filterDateInput.value = "";
       const filterDateClear = document.getElementById("filter-date-clear");
       if (filterDateClear) filterDateClear.hidden = true;
@@ -875,6 +903,7 @@ export function renderList() {
   }
 
   // Grupowanie w buckety
+  /** @type {Record<string, Note[]>} */
   const buckets = {};
   filtered.forEach((note) => {
     const key = _bucketFor(note);
@@ -961,6 +990,7 @@ export function renderList() {
   _updateNewItemHint();
 }
 
+/** @param {string} key @param {Note[]} items */
 function _renderSection(key, items) {
   const isCollapsed = state.collapsedSections.includes(key);
 
@@ -975,7 +1005,7 @@ function _renderSection(key, items) {
     ).getTime();
     const todayEnd = todayStart + 86400000;
     const allToday = state.notes.filter(
-      (n) => n.type === "task" && n.due >= todayStart && n.due < todayEnd,
+      (n) => n.type === "task" && n.due != null && n.due >= todayStart && n.due < todayEnd,
     );
     const done = allToday.filter((n) => n.completed).length;
     const total = allToday.length;
@@ -1017,6 +1047,7 @@ function _renderSection(key, items) {
   if (!isCollapsed) items.forEach(_renderNoteItem);
 }
 
+/** @param {string} key */
 function _toggleSection(key) {
   const idx = state.collapsedSections.indexOf(key);
   if (idx === -1) state.collapsedSections.push(key);
@@ -1028,8 +1059,9 @@ function _toggleSection(key) {
 /* Etykieta elementu listy: tytuł (fallback: fragment treści), tooltip
    pełnego podglądu i title przycisku 👁. Jedno źródło prawdy dla renderu
    (_renderNoteItem) i aktualizacji in-place przy autosave. */
+/** @param {HTMLElement} item @param {Note} note */
 function _applyItemLabel(item, note) {
-  const titleEl = item.querySelector(".note-item__title");
+  const titleEl = /** @type {HTMLElement|null} */ (item.querySelector(".note-item__title"));
   if (!titleEl) return;
 
   const titleText = note.title?.trim();
@@ -1045,7 +1077,7 @@ function _applyItemLabel(item, note) {
     delete titleEl.dataset.tooltipContent;
   }
 
-  const previewBtn = item.querySelector(".note-item__preview");
+  const previewBtn = /** @type {HTMLElement|null} */ (item.querySelector(".note-item__preview"));
   if (previewBtn) {
     const previewText = _stripHtml(note.content);
     previewBtn.title = previewText
@@ -1058,15 +1090,17 @@ function _applyItemLabel(item, note) {
 
 /* Aktualizacja etykiety aktywnej notatki w miejscu (bez renderList).
    false → elementu nie ma w DOM, caller musi zrobić pełny render. */
+/** @param {Note} note */
 function _syncActiveItemLabel(note) {
   const item = notesList.querySelector(
     `.note-item[data-id="${CSS.escape(note.id)}"]`,
   );
   if (!item) return false;
-  _applyItemLabel(item, note);
+  _applyItemLabel(/** @type {HTMLElement} */ (item), note);
   return true;
 }
 
+/** @param {Note} note */
 function _renderNoteItem(note) {
   const div = document.createElement("div");
   div.className = "note-item";
@@ -1160,9 +1194,7 @@ function _renderNoteItem(note) {
   if (tags.length > 0) {
     const row = document.createElement("div");
     row.className = "note-tags-row";
-    [...tags]
-      .map((id) => getTag(id))
-      .filter(Boolean)
+    /** @type {Tag[]} */ ([...tags].map((id) => getTag(id)).filter(Boolean))
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 2)
       .forEach((tag) => {
@@ -1180,6 +1212,7 @@ function _renderNoteItem(note) {
   notesList.appendChild(div);
 }
 
+/** @param {string} id @param {HTMLElement} el */
 function _deleteAndMoveFocus(id, el) {
   // zapamiętaj sąsiada przed usunięciem
   let nextEl = el.nextElementSibling;
@@ -1191,7 +1224,7 @@ function _deleteAndMoveFocus(id, el) {
       prevEl = prevEl.previousElementSibling;
     nextEl = prevEl;
   }
-  const nextId = nextEl?.dataset?.id;
+  const nextId = /** @type {HTMLElement|null} */ (nextEl)?.dataset?.id;
 
   _deleteNoteCore(id);
   renderList();
@@ -1202,7 +1235,7 @@ function _deleteAndMoveFocus(id, el) {
     const target = document.querySelector(
       `#notesList .note-item[data-id="${nextId}"]`,
     );
-    if (target) target.focus();
+    if (target) /** @type {HTMLElement} */ (target).focus();
   }
 }
 
@@ -1212,32 +1245,32 @@ function _deleteAndMoveFocus(id, el) {
    eliminują koszt ponownego podpinania i churn GC przy każdym renderze. */
 
 notesList.addEventListener("click", (e) => {
-  const header = e.target.closest(".section-header");
+  const header = /** @type {HTMLElement|null} */ (_target(e)?.closest(".section-header"));
   if (header?.dataset.section) {
     _toggleSection(header.dataset.section);
     return;
   }
 
-  const item = e.target.closest(".note-item");
+  const item = /** @type {HTMLElement|null} */ (_target(e)?.closest(".note-item"));
   if (!item?.dataset.id) return;
   const id = item.dataset.id;
 
-  if (e.target.closest(".note-checkbox")) {
+  if (_target(e)?.closest(".note-checkbox")) {
     toggleCompleted(id);
-  } else if (e.target.closest(".note-item__postpone")) {
+  } else if (_target(e)?.closest(".note-item__postpone")) {
     postponeToTomorrow(id);
-  } else if (e.target.closest(".note-item__delete")) {
+  } else if (_target(e)?.closest(".note-item__delete")) {
     _deleteAndMoveFocus(id, item);
-  } else if (e.target.closest(".note-item__preview")) {
+  } else if (_target(e)?.closest(".note-item__preview")) {
     // tylko hover tooltip — klik nie robi nic
-  } else if (e.target.closest(".note-item__title")) {
+  } else if (_target(e)?.closest(".note-item__title")) {
     selectNote(id);
   }
 });
 
 // Nawigacja klawiaturowa po liście (elementy mają tabindex=0)
 notesList.addEventListener("keydown", (e) => {
-  const div = e.target.closest(".note-item");
+  const div = /** @type {HTMLElement|null} */ (_target(e)?.closest(".note-item"));
   if (!div?.dataset.id) return;
   const id = div.dataset.id;
 
@@ -1267,7 +1300,7 @@ notesList.addEventListener("keydown", (e) => {
       let next = div.nextElementSibling;
       while (next && !next.classList.contains("note-item"))
         next = next.nextElementSibling;
-      if (next) next.focus();
+      if (next) /** @type {HTMLElement} */ (next).focus();
       break;
     }
 
@@ -1276,7 +1309,7 @@ notesList.addEventListener("keydown", (e) => {
       let prev = div.previousElementSibling;
       while (prev && !prev.classList.contains("note-item"))
         prev = prev.previousElementSibling;
-      if (prev) prev.focus();
+      if (prev) /** @type {HTMLElement} */ (prev).focus();
       break;
     }
 
@@ -1286,14 +1319,15 @@ notesList.addEventListener("keydown", (e) => {
       e.preventDefault();
       const items = notesList.querySelectorAll(".note-item");
       const target = e.key === "Home" ? items[0] : items[items.length - 1];
-      target?.focus();
+      /** @type {HTMLElement|null} */ (target)?.focus();
       break;
     }
   }
 });
 
+/** @param {string} raw */
 export function quickCapture(raw) {
-  const item = buildItemFromCapture(raw);
+  const item = /** @type {Note|null} */ (buildItemFromCapture(raw));
   if (!item) return null;
 
   state.notes.unshift(item);
@@ -1326,6 +1360,7 @@ export function quickCapture(raw) {
   return item;
 }
 
+/** @param {string} id */
 export function toggleImportant(id) {
   const note = state.notes.find((n) => n.id === id);
   if (!note) return;
@@ -1354,7 +1389,7 @@ export function updateActiveFilters() {
       label,
       onRemove: () => {
         state.filterDate = null;
-        const inp = document.getElementById("filter-date");
+        const inp = /** @type {HTMLInputElement|null} */ (document.getElementById("filter-date"));
         if (inp) inp.value = "";
         const clr = document.getElementById("filter-date-clear");
         if (clr) clr.hidden = true;
@@ -1389,7 +1424,7 @@ export function updateActiveFilters() {
         const cb = document.querySelector(
           '#filter-options input[type="checkbox"]',
         );
-        if (cb) cb.checked = false;
+        if (cb) /** @type {HTMLInputElement} */ (cb).checked = false;
       },
     });
   }
@@ -1406,7 +1441,7 @@ export function updateActiveFilters() {
 
   bar.hidden = pills.length === 0;
 
-  pills.forEach(({ label, color, onRemove }) => {
+  pills.forEach((/** @type {{label:string,color?:any,onRemove:()=>void}} */ { label, color, onRemove }) => {
     const pill = document.createElement("span");
     pill.className = "active-filter-pill";
     if (color) {
