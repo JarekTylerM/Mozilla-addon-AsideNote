@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * editor-toolbar.js — inicjalizacja toolbara i synchronizacja stanów
  *
@@ -20,18 +21,29 @@ import {
   _outdentListItem,
 } from './editor-selection.js';
 
-const editor = document.getElementById('editor');
+const editor = /** @type {HTMLElement} */ (document.getElementById('editor'));
+
+/** @param {Range} r — ustaw zaznaczenie na zwinięty/rozwinięty range */
+function _selectRange(r) {
+  const s = window.getSelection();
+  if (!s) return;
+  s.removeAllRanges();
+  s.addRange(r);
+}
 
 // Zapamiętaj ostatni fokus spoza toolbara — guard dla przycisków wstawiania
+/** @type {Element | null} */
 let _lastFocusBeforeToolbar = null;
 document.addEventListener('focusin', (e) => {
-  if (!e.target.closest('.toolbar')) {
-    _lastFocusBeforeToolbar = e.target;
+  const target = /** @type {Element|null} */ (e.target);
+  if (target && !target.closest('.toolbar')) {
+    _lastFocusBeforeToolbar = target;
   }
 });
 
 function _initToolbar() {
-  document.querySelectorAll('#toolbar button').forEach((btn) => {
+  document.querySelectorAll('#toolbar button').forEach((el) => {
+    const btn = /** @type {HTMLButtonElement} */ (el);
     if (btn.id === 'code-btn') return;
     if (btn.id === 'link-btn') return;
     if (btn.id === 'undo-btn') return;
@@ -46,7 +58,7 @@ function _initToolbar() {
     if (btn.closest('.callout-dropdown')) return;
     btn.onclick = () => {
       undo.checkpoint();
-      document.execCommand(btn.dataset.cmd, false, btn.dataset.value ?? null);
+      document.execCommand(btn.dataset.cmd ?? '', false, btn.dataset.value ?? undefined);
       editor.focus();
     };
   });
@@ -114,13 +126,15 @@ function _initFormatBlockBtn() {
       dropdown.style.left = `${left}px`;
       dropdown.classList.add('is-open');
       arrowBtn.setAttribute('aria-expanded', 'true');
-      dropdown.querySelector('.callout-dropdown__item')?.focus();
+      /** @type {HTMLElement|null} */ (dropdown.querySelector('.callout-dropdown__item'))?.focus();
     }
   };
 
   // Kliknięcie na item
   dropdown.addEventListener('click', (e) => {
-    const item = e.target.closest('.callout-dropdown__item');
+    const item = /** @type {HTMLElement|null} */ (
+      (/** @type {Element|null} */ (e.target))?.closest('.callout-dropdown__item') ?? null
+    );
     if (!item) return;
     _closeFormatBlockDropdown();
     const fmt = item.dataset.format;
@@ -131,8 +145,8 @@ function _initFormatBlockBtn() {
 
   // Klawiatura
   dropdown.addEventListener('keydown', (e) => {
-    const items = [...dropdown.querySelectorAll('.callout-dropdown__item')];
-    const idx = items.indexOf(document.activeElement);
+    const items = /** @type {HTMLElement[]} */ ([...dropdown.querySelectorAll('.callout-dropdown__item')]);
+    const idx = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       items[(idx + 1) % items.length]?.focus();
@@ -147,14 +161,16 @@ function _initFormatBlockBtn() {
     }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      document.activeElement.click();
+      /** @type {HTMLElement|null} */ (document.activeElement)?.click();
     }
   });
 
   document.addEventListener('click', (e) => {
+    const target = /** @type {Element|null} */ (e.target);
     if (
-      !e.target.closest('#format-block-split') &&
-      !e.target.closest('#format-block-dropdown')
+      target &&
+      !target.closest('#format-block-split') &&
+      !target.closest('#format-block-dropdown')
     )
       _closeFormatBlockDropdown();
   });
@@ -168,21 +184,23 @@ function _closeFormatBlockDropdown() {
 }
 
 function _initCodeBtn() {
-  document.getElementById('code-btn').onclick = () => {
+  /** @type {HTMLElement} */ (document.getElementById('code-btn')).onclick = () => {
     const sel = window.getSelection();
-    if (!sel.rangeCount) return;
+    if (!sel || !sel.rangeCount) return;
 
     undo.checkpoint();
 
     const range = sel.getRangeAt(0);
     const node = range.startContainer;
     const element =
-      node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-    const existingCode = element.closest('code');
+      node.nodeType === Node.TEXT_NODE
+        ? node.parentElement
+        : /** @type {Element} */ (node);
+    const existingCode = element?.closest('code');
 
     // Toggle off — kursor jest w <code>, rozwijamy
     if (existingCode) {
-      const text = existingCode.textContent;
+      const text = existingCode.textContent ?? '';
       const textNode = document.createTextNode(text);
       existingCode.replaceWith(textNode);
 
@@ -223,14 +241,15 @@ function _initCodeBlockBtn() {
         ? null
         : selNode.nodeType === Node.TEXT_NODE
           ? selNode.parentElement
-          : selNode;
+          : /** @type {Element} */ (selNode);
     const pre = selEl?.closest('pre') ?? null;
     const block = _getCurrentBlock();
     undo.checkpoint();
     if (pre) {
       // Toggle off — konwertuj pre z powrotem do paragrafów
       const fragment = document.createDocumentFragment();
-      const lines = pre.textContent.split('\n');
+      const lines = (pre.textContent ?? '').split('\n');
+      /** @type {HTMLElement|null} */
       let firstP = null;
       lines.forEach((line) => {
         const p = document.createElement('p');
@@ -245,9 +264,7 @@ function _initCodeBlockBtn() {
         const r = document.createRange();
         r.setStart(firstP, 0);
         r.collapse(true);
-        const s = window.getSelection();
-        s.removeAllRanges();
-        s.addRange(r);
+        _selectRange(r);
       }
     } else {
       // Toggle on
@@ -267,9 +284,7 @@ function _initCodeBlockBtn() {
       const r = document.createRange();
       r.setStart(codeEl, 0);
       r.collapse(true);
-      const s = window.getSelection();
-      s.removeAllRanges();
-      s.addRange(r);
+      _selectRange(r);
     }
     editor.focus();
   });
@@ -284,7 +299,7 @@ function _initChecklistBtn() {
 
   // Toggle checkbox po kliknięciu w obszar ::before (lewe ~22 px elementu)
   editor.addEventListener('mousedown', (e) => {
-    const li = e.target.closest('ul[data-list="checklist"] li');
+    const li = /** @type {Element|null} */ (e.target)?.closest('ul[data-list="checklist"] li');
     if (!li) return;
     const rect = li.getBoundingClientRect();
     if (e.clientX - rect.left < 22 && e.clientY - rect.top < 20) {
@@ -302,14 +317,17 @@ function _initChecklistBtn() {
 function _toggleChecklist() {
   undo.checkpoint();
   const sel = window.getSelection();
-  if (!sel.rangeCount) return;
+  if (!sel || !sel.rangeCount) return;
 
   const range = sel.getRangeAt(0);
   const node = range.startContainer;
-  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  const el =
+    node.nodeType === Node.TEXT_NODE
+      ? node.parentElement
+      : /** @type {Element} */ (node);
 
   // Toggle off — jesteśmy w checkliście
-  const existingUl = el.closest('ul[data-list="checklist"]');
+  const existingUl = el?.closest('ul[data-list="checklist"]');
   if (existingUl) {
     const fragment = document.createDocumentFragment();
     Array.from(existingUl.children).forEach((li) => {
@@ -346,15 +364,14 @@ function _toggleChecklist() {
   const r = document.createRange();
   r.setStart(li, 0);
   r.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(r);
+  _selectRange(r);
 
   undo.checkpoint();
   document.dispatchEvent(new Event('forceSave'));
 }
 
 function _createToggleList() {
-  const editorEl = document.getElementById('editor');
+  const editorEl = /** @type {HTMLElement} */ (document.getElementById('editor'));
   undo.checkpoint();
   const details = document.createElement('details');
   details.open = true;
@@ -369,16 +386,14 @@ function _createToggleList() {
   const block = _getCurrentBlock();
   if (block && block !== editorEl) {
     block.after(details);
-    if (!block.textContent.trim()) block.remove();
+    if (!(block.textContent ?? '').trim()) block.remove();
   } else {
     editorEl.appendChild(details);
   }
   const r = document.createRange();
   r.setStart(summary, 0);
   r.collapse(true);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(r);
+  _selectRange(r);
   editorEl.focus();
   debouncedSave();
 }
@@ -420,13 +435,15 @@ function _initCalloutBtn() {
       dropdown.style.left = `${left}px`;
       dropdown.classList.add('is-open');
       arrowBtn.setAttribute('aria-expanded', 'true');
-      dropdown.querySelector('.callout-dropdown__item')?.focus();
+      /** @type {HTMLElement|null} */ (dropdown.querySelector('.callout-dropdown__item'))?.focus();
     }
   };
 
   // Kliknięcie na item dropdownu
   dropdown.addEventListener('click', (e) => {
-    const item = e.target.closest('.callout-dropdown__item');
+    const item = /** @type {HTMLElement|null} */ (
+      (/** @type {Element|null} */ (e.target))?.closest('.callout-dropdown__item') ?? null
+    );
     if (!item) return;
     _closeCalloutDropdown();
     _applyCallout(item.dataset.callout ?? '');
@@ -435,8 +452,8 @@ function _initCalloutBtn() {
 
   // Klawiatura w dropdownie — strzałki + Escape
   dropdown.addEventListener('keydown', (e) => {
-    const items = [...dropdown.querySelectorAll('.callout-dropdown__item')];
-    const idx = items.indexOf(document.activeElement);
+    const items = /** @type {HTMLElement[]} */ ([...dropdown.querySelectorAll('.callout-dropdown__item')]);
+    const idx = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       items[(idx + 1) % items.length]?.focus();
@@ -451,15 +468,17 @@ function _initCalloutBtn() {
     }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      document.activeElement.click();
+      /** @type {HTMLElement|null} */ (document.activeElement)?.click();
     }
   });
 
   // Kliknięcie poza — zamknij dropdown
   document.addEventListener('click', (e) => {
+    const target = /** @type {Element|null} */ (e.target);
     if (
-      !e.target.closest('#blockquote-split') &&
-      !e.target.closest('#callout-dropdown')
+      target &&
+      !target.closest('#blockquote-split') &&
+      !target.closest('#callout-dropdown')
     ) {
       _closeCalloutDropdown();
     }
@@ -526,12 +545,14 @@ function _initListBtn() {
       dropdown.style.left = `${left}px`;
       dropdown.classList.add('is-open');
       arrowBtn.setAttribute('aria-expanded', 'true');
-      dropdown.querySelector('.callout-dropdown__item')?.focus();
+      /** @type {HTMLElement|null} */ (dropdown.querySelector('.callout-dropdown__item'))?.focus();
     }
   };
 
   dropdown.addEventListener('click', (e) => {
-    const item = e.target.closest('.callout-dropdown__item');
+    const item = /** @type {HTMLElement|null} */ (
+      (/** @type {Element|null} */ (e.target))?.closest('.callout-dropdown__item') ?? null
+    );
     if (!item) return;
     _closeListDropdown();
     const type = item.dataset.listType;
@@ -550,8 +571,8 @@ function _initListBtn() {
   });
 
   dropdown.addEventListener('keydown', (e) => {
-    const items = [...dropdown.querySelectorAll('.callout-dropdown__item')];
-    const idx = items.indexOf(document.activeElement);
+    const items = /** @type {HTMLElement[]} */ ([...dropdown.querySelectorAll('.callout-dropdown__item')]);
+    const idx = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       items[(idx + 1) % items.length]?.focus();
@@ -566,12 +587,13 @@ function _initListBtn() {
     }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      document.activeElement.click();
+      /** @type {HTMLElement|null} */ (document.activeElement)?.click();
     }
   });
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('#list-split') && !e.target.closest('#list-dropdown'))
+    const target = /** @type {Element|null} */ (e.target);
+    if (target && !target.closest('#list-split') && !target.closest('#list-dropdown'))
       _closeListDropdown();
   });
 }
@@ -583,11 +605,13 @@ function _closeListDropdown() {
   if (arrowBtn) arrowBtn.setAttribute('aria-expanded', 'false');
 }
 
+/** @param {string} type */
 function _applyCallout(type) {
   undo.checkpoint();
 
   const sel = window.getSelection();
-  if (!sel.rangeCount) return;
+  if (!sel || !sel.rangeCount) return;
+  /** @type {Node|undefined} */
   let node;
   try {
     node = sel.getRangeAt(0).startContainer;
@@ -595,8 +619,11 @@ function _applyCallout(type) {
     return;
   }
   if (!node) return;
-  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-  const existing = el.closest('blockquote');
+  const el =
+    node.nodeType === Node.TEXT_NODE
+      ? node.parentElement
+      : /** @type {Element} */ (node);
+  const existing = /** @type {HTMLElement|null} */ (el?.closest('blockquote') ?? null);
 
   if (existing) {
     const current = existing.dataset.callout ?? '';
@@ -628,13 +655,14 @@ function _applyCallout(type) {
     requestAnimationFrame(() => {
       const s = window.getSelection();
       const n = s?.rangeCount ? s.getRangeAt(0).startContainer : null;
-      const bq = n
-        ? (n.nodeType === Node.TEXT_NODE ? n.parentElement : n).closest(
-            'blockquote',
-          )
+      const bqEl = n
+        ? n.nodeType === Node.TEXT_NODE
+          ? n.parentElement
+          : /** @type {Element} */ (n)
         : null;
+      const bq = bqEl?.closest('blockquote') ?? null;
       if (bq) {
-        bq.dataset.callout = type;
+        /** @type {HTMLElement} */ (bq).dataset.callout = type;
         undo.checkpoint();
         document.dispatchEvent(new Event('forceSave'));
       }
@@ -645,6 +673,7 @@ function _applyCallout(type) {
   }
 }
 
+/** @type {number|null} */
 let _toolbarStateRaf = null;
 function _updateToolbarState() {
   // Throttle przez requestAnimationFrame — selectionchange leci 60×/s
@@ -680,7 +709,7 @@ function _updateToolbarState() {
     const el = node
       ? node.nodeType === Node.TEXT_NODE
         ? node.parentElement
-        : node
+        : /** @type {Element} */ (node)
       : null;
 
     // Sprawdź czy kursor jest w checkliście (ul[data-list="checklist"])
@@ -727,6 +756,7 @@ function _updateToolbarState() {
         const tag = block.tagName.toLowerCase();
         if (['h1', 'h2', 'h3', 'p'].includes(tag)) fmt = tag;
       }
+      /** @type {Record<string, string>} */
       const ICONS = {
         p: 'icon--paragraph',
         h1: 'icon--h1',
@@ -757,6 +787,7 @@ function _updateToolbarState() {
       if (listMainBtn.dataset.current !== listType) {
         listMainBtn.dataset.current = listType;
         if (!listMainBtn.matches(':hover')) {
+          /** @type {Record<string, string>} */
           const LIST_ICONS = {
             bullet: 'icon--list-bullet',
             ordered: 'icon--list-number',
@@ -777,7 +808,7 @@ function _updateToolbarState() {
     // Blockquote / callout active state
     const bqBtn = document.getElementById('blockquote-btn');
     if (bqBtn) {
-      const bq = el?.closest('blockquote');
+      const bq = /** @type {HTMLElement|null} */ (el?.closest('blockquote') ?? null);
       bqBtn.classList.toggle('is-active', !!bq);
       const calloutType = bq?.dataset.callout ?? '';
       bqBtn.dataset.activeCallout = calloutType;
