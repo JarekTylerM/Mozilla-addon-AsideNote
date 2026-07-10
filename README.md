@@ -154,9 +154,7 @@ Keep the three gates green. `editor.js`, `notes.js`, `panel.js` and `app.js` hav
 
 ## License
 
-Licensed under the **Mozilla Public License 2.0**.
-
-> **Note:** the `LICENSE` file has not been added to this repository yet. Until it is, this section states an intent, not an effective grant.
+Licensed under the **Mozilla Public License 2.0** — see [LICENSE](LICENSE).
 
 ---
 
@@ -257,8 +255,6 @@ Trzymaj trzy bramki zielone. `editor.js`, `notes.js`, `panel.js` i `app.js` **ni
 
 ## Licencja
 
-Na licencji **Mozilla Public License 2.0**.
-
-> **Uwaga:** plik `LICENSE` nie został jeszcze dodany do repozytorium. Dopóki go nie ma, ta sekcja jest deklaracją zamiaru, a nie skutecznym udzieleniem licencji.
+Na licencji **Mozilla Public License 2.0** — zobacz [LICENSE](LICENSE).
 
 </details>
