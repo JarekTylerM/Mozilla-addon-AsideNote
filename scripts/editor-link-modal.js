@@ -19,6 +19,7 @@ import { t } from './i18n.js';
 import * as undo from './undo.js';
 import { looksLikeUrl, normalizeUrl } from './editor-url.js';
 import { debouncedSave } from './notes.js';
+import { createFocusTrap } from './focus-trap.js';
 
 // Elementy modala/edytora są zawsze w DOM — rzutujemy z pominięciem null.
 const editor = /** @type {HTMLElement} */ (document.getElementById('editor'));
@@ -49,6 +50,10 @@ export function initLinkButton() {
     openLinkModal();
   };
 }
+
+// Pułapka fokusu modala — inicjalizowana w initLinkModal (kontener stały)
+/** @type {ReturnType<typeof createFocusTrap> | null} */
+let _linkTrap = null;
 
 // Cache: który <a> aktualnie edytujemy (null = wstawiamy nowy link)
 /** @type {HTMLAnchorElement | null} */
@@ -123,11 +128,17 @@ export function openLinkModal() {
 
   _byId('link-modal').hidden = false;
 
+  // Pułapka fokusu — Tab nie ucieka do treści pod modalem. restoreFocus:false,
+  // bo _closeLinkModal celowo wraca do edytora (kontynuacja pisania), a nie do
+  // przycisku, który modal otworzył. Fokus początkowy ustawia setTimeout niżej.
+  _linkTrap?.activate({ restoreFocus: false });
+
   // Focus na URL input zawsze — to najczęstszy obszar do uzupełnienia
   setTimeout(() => urlInput.focus(), 0);
 }
 
 function _closeLinkModal() {
+  _linkTrap?.release();
   _byId('link-modal').hidden = true;
   _editingLink = null;
   _savedRange = null;
@@ -136,6 +147,7 @@ function _closeLinkModal() {
 
 export function initLinkModal() {
   const modal = _byId('link-modal');
+  _linkTrap = createFocusTrap(modal);
   const urlInput = _byInput('link-modal-url');
   const textInput = _byInput('link-modal-text');
 

@@ -249,10 +249,13 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 /* ── List expanded mode ──────────────────────────── */
 
-/* Wrapper listy (dodany przy full-width edytora) musi przekazać wysokość
-   w łańcuchu flex — inaczej flex:1 na .notes-list-wrapper nie działa
-   i lista rozrasta się do treści, wychodząc poza ekran. */
-#main-view.list-expanded .main-view-padded:first-of-type {
+/* Sekcja listy musi przekazać wysokość w łańcuchu flex — inaczej flex:1 na
+   .notes-list-wrapper nie działa i lista rozrasta się do treści, wychodząc
+   poza ekran (i nie da się jej scrollować).
+   Celujemy jawną klasą, NIE :first-of-type — pierwszym dzieckiem #main-view
+   jest #save-error-banner (też <div>), więc .main-view-padded:first-of-type
+   nie łapał niczego i tryb list-expanded gubił scroll. */
+#main-view.list-expanded .main-view-padded--list {
   display: flex;
   flex-direction: column;
   flex: 1;

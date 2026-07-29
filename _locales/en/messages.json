@@ -529,22 +529,25 @@
     "message": "Formatting mastered. Next lesson: tasks with due dates and reminders — find it in settings (⚙), in the Guide section."
   },
   "ob_done_s3": {
-    "message": "Tasks and due dates done. Next lesson: focus modes — fewer distractions when you need to concentrate."
+    "message": "Tasks and due dates are behind you. Next lesson: quick capture — all of that handling in a single line of text."
   },
   "ob_done_s4": {
-    "message": "Focus modes mastered: Alt+Z quiets the view, Alt+M gives you a full-screen editor. Next lesson: keeping things organized — search, filters and tags."
+    "message": "You know the whole quick capture syntax. Next lesson: focus modes — fewer distractions when you want to concentrate."
   },
   "ob_done_s5": {
-    "message": "Organization mastered. One lesson left: your data, backups and keyboard shortcuts."
+    "message": "Focus modes mastered: Alt+Z quiets the view, Alt+M gives you a full-screen editor. Next lesson: keeping things organized — search, filters and tags."
   },
   "ob_done_s6": {
+    "message": "Organization mastered. One lesson left: your data, backups and keyboard shortcuts."
+  },
+  "ob_done_s7": {
     "message": "Guide complete — you now know all of AsideNotes. You can replay any lesson from settings. Happy note-taking!"
   },
   "ob_panel_title": {
     "message": "Guide"
   },
   "ob_s1_1": {
-    "message": "This is the quick capture field. Type anything — e.g. buy milk — and press Enter. That's how you create your first note."
+    "message": "This is the quick capture field. Type anything — say buy milk. Right below the field you can see what you are about to create. Enter adds it."
   },
   "ob_s1_2": {
     "message": "Every entry lands on this list. Click yours to open it."
@@ -553,10 +556,13 @@
     "message": "The list is still empty. Go back one step (←), type something in the field above and press Enter."
   },
   "ob_s1_3": {
-    "message": "This is the editor — expand your thought here, and change the title above. Everything saves itself as you type; there's no Save button."
+    "message": "This is the editor — where you expand the thought; the title is above. Everything saves itself as you type; there is no Save button. Undo a slip with Ctrl+Z."
   },
   "ob_s1_4": {
     "message": "AsideNotes has two kinds of entries. A note is a loose piece of information. A task has a circle to check off — create one by starting with !, e.g. !call a friend. A task can also get a due date with a reminder, but that's covered in the Tasks and due dates lesson."
+  },
+  "ob_s1_convert": {
+    "message": "This button turns the open note into a task and back — nothing is lost, the checkbox state returns if you switch again. Handy when a loose thought turns out to be something to do."
   },
   "ob_s2_1": {
     "message": "Open any note from the list — we'll practice formatting on it."
@@ -576,6 +582,9 @@
   "ob_s2_5": {
     "message": "This icon copies the whole note as Markdown text you can paste anywhere — into an email, a document or a chat. Shortcut: Alt+K."
   },
+  "ob_s2_link": {
+    "message": "Select some text and click this icon (or press Ctrl+K) to insert a link. Clicking a finished link in a note opens it in a new tab."
+  },
   "ob_s3_1": {
     "message": "Type: !call mom tomorrow 6pm and press Enter. The ! creates a task, and the words tomorrow and 6pm turn themselves into a due date with a reminder."
   },
@@ -594,49 +603,70 @@
   "ob_s3_5": {
     "message": "The list groups tasks by itself: Overdue, Today, Tomorrow, This week… A checked-off task moves to Completed."
   },
+  "ob_s3_focus": {
+    "message": "This icon marks a task as in progress — what you are on right now. An important task is in progress automatically."
+  },
+  "ob_s3_important": {
+    "message": "The star marks a task as important — it jumps to the top of the list and you can filter by it."
+  },
   "ob_s4_1": {
-    "message": "Zen mode quiets everything except what matters today. Click this icon or press Alt+Z."
+    "message": "This whole lesson happens in one field. Type: !!report on friday 9:00 and press Enter. Before you do, look below the field — the preview tells you exactly what you are about to get."
   },
-  "ob_s4_2": {
-    "message": "The interface dimmed and the list shows only today's items. The same button (or Alt+Z) returns to the normal view — try it."
+  "ob_s4_dates": {
+    "message": "You write the due date in plain words: today, tomorrow, a weekday name (it takes the next one), or a date like 06/15 — with a year if you want: 06/15/2030. A time is 14:30 and sets a reminder right away."
   },
-  "ob_s4_3": {
-    "message": "The second mode lives in the editor. First, open any note from the list."
+  "ob_s4_priority": {
+    "message": "Marks at the start set the rank: ! makes a task, !! an important task, !> a task in progress. These are the very same states you just clicked with the star and the icon next to the title."
   },
-  "ob_s4_3_empty": {
-    "message": "The list is empty. Add a note in the field above (type something and press Enter), then click it on the list."
+  "ob_s4_recurrence": {
+    "message": "Repetition works as text too: daily, weekly, monthly, yearly. Whatever the parser does not understand it leaves in the title — so if you see your text in the preview instead of a due date, it was not recognised."
   },
-  "ob_s4_4": {
-    "message": "Focus mode: the editor fills the whole window — perfect for longer writing. Click the icon in the bottom-right corner of the editor or press Alt+M."
-  },
-  "ob_s4_5": {
-    "message": "You're writing distraction-free. Exiting works the same way: the corner icon or Alt+M — try it now."
+  "ob_s4_shortcuts": {
+    "message": "You can reach the field without the mouse: Alt+C puts the cursor in it, Alt+T does it with the task prefix. And Alt+Shift+S opens the same field in a small window over any page — same syntax, and the ? button shows all of it."
   },
   "ob_s5_1": {
-    "message": "Search looks through the titles and content of all your notes. Shortcut: Alt+S."
+    "message": "Zen mode quiets everything except what matters today. Click this icon or press Alt+Z."
   },
   "ob_s5_2": {
-    "message": "This switch narrows the list to just notes or just tasks."
+    "message": "The interface dimmed and the list shows only today's items. The same button (or Alt+Z) returns to the normal view — try it."
   },
   "ob_s5_3": {
-    "message": "Click the funnel icon — the list filters unfold."
+    "message": "The second mode lives in the editor. First, open any note from the list."
+  },
+  "ob_s5_3_empty": {
+    "message": "The list is empty. Add a note in the field above (type something and press Enter), then click it on the list."
   },
   "ob_s5_4": {
-    "message": "Filters combine: task status, important, due date, tags. Active filters show above the list and clear with one click."
+    "message": "Focus mode: the editor fills the whole window — perfect for longer writing. Click the icon in the bottom-right corner of the editor or press Alt+M."
   },
   "ob_s5_5": {
-    "message": "A tag is a colored label, e.g. work or home. Attach them below the editor (+ add tag); rename and recolor them in settings. One note can have several tags."
+    "message": "You're writing distraction-free. Exiting works the same way: the corner icon or Alt+M — try it now."
   },
   "ob_s6_1": {
-    "message": "AsideNotes works from any browser tab: Alt+Shift+Q opens and closes this panel, and Alt+Shift+S brings up the quick-add popup — capture thoughts without breaking your flow."
+    "message": "Search looks through the titles and content of all your notes. Shortcut: Alt+S."
   },
   "ob_s6_2": {
-    "message": "Under the ⚙ icon you'll find settings: theme, interface size and the full list of keyboard shortcuts (Shortcuts tab)."
+    "message": "This switch narrows the list to just notes or just tasks."
   },
   "ob_s6_3": {
-    "message": "Your notes live only on this computer — no cloud, no tracking. In settings you can make a backup (Export data), and deleted notes wait in Recently deleted."
+    "message": "Click the funnel icon — the list filters unfold."
   },
   "ob_s6_4": {
+    "message": "Filters combine: task status, important, due date, tags. Active filters show above the list and clear with one click."
+  },
+  "ob_s6_5": {
+    "message": "A tag is a colored label, e.g. work or home. Attach them below the editor (+ add tag); rename and recolor them in settings. One note can have several tags."
+  },
+  "ob_s7_1": {
+    "message": "AsideNotes works from any browser tab: Alt+Shift+Q opens and closes this panel, and Alt+Shift+S brings up the quick add window — you jot things down without interrupting your work."
+  },
+  "ob_s7_2": {
+    "message": "Under the ⚙ icon you'll find settings: theme, interface size and the full list of keyboard shortcuts (Shortcuts tab)."
+  },
+  "ob_s7_3": {
+    "message": "Your notes live only on this computer — no cloud, no tracking. In settings you can make a backup (Export data), and deleted notes wait in Recently deleted."
+  },
+  "ob_s7_4": {
     "message": "One last thing: notes are not encrypted — anyone with access to this browser profile can read them. Don't store passwords or card numbers in them."
   },
   "ob_stage1_label": {
@@ -649,12 +679,15 @@
     "message": "Tasks and due dates"
   },
   "ob_stage4_label": {
-    "message": "Focus modes"
+    "message": "Quick capture"
   },
   "ob_stage5_label": {
-    "message": "Staying organized"
+    "message": "Focus modes"
   },
   "ob_stage6_label": {
+    "message": "Staying organized"
+  },
+  "ob_stage7_label": {
     "message": "Your data and shortcuts"
   },
   "panelBtn_ariaLabel": {
@@ -672,7 +705,9 @@
   "panel_appearance_light": {
     "message": "Light"
   },
-  "panel_zoom_label": { "message": "Interface zoom" },
+  "panel_zoom_label": {
+    "message": "Interface zoom"
+  },
   "panel_appearance_title": {
     "message": "Appearance"
   },
@@ -814,9 +849,6 @@
   "popup_esc_hint": {
     "message": "<kbd>Esc</kbd> close"
   },
-  "popup_help_syntax_body": {
-    "message": "<div class='popup-help-panel__heading'>Notes and tasks</div><div class='popup-help-row'><kbd>project idea</kbd> <span class='popup-help-row__desc'>note</span></div><div class='popup-help-row'><kbd>!check email</kbd> <span class='popup-help-row__desc'>task without date</span></div><div class='popup-help-row'><kbd>!call mom tomorrow</kbd> <span class='popup-help-row__desc'>task for tomorrow</span></div><div class='popup-help-row'><kbd>!package 06/15 2:30pm</kbd> <span class='popup-help-row__desc'>task with date and time</span></div><div class='popup-help-panel__heading'>Priorities</div><div class='popup-help-row'><kbd>!!exam</kbd> <span class='popup-help-row__desc'>important task (★)</span></div><div class='popup-help-row'><kbd>!>project</kbd> <span class='popup-help-row__desc'>task in progress (▶)</span></div><div class='popup-help-row'><kbd>!!>deadline</kbd> <span class='popup-help-row__desc'>important and in progress</span></div>"
-  },
   "popup_help_title": {
     "message": "Show syntax examples"
   },
@@ -842,6 +874,23 @@
         "content": "$1"
       },
       "time": {
+        "content": "$2"
+      }
+    }
+  },
+  "quickCapture_preview_flag_important": {
+    "message": "Important"
+  },
+  "quickCapture_preview_flag_inProgress": {
+    "message": "In progress"
+  },
+  "quickCapture_preview_flags": {
+    "message": "$BASE$ · $FLAGS$",
+    "placeholders": {
+      "base": {
+        "content": "$1"
+      },
+      "flags": {
         "content": "$2"
       }
     }
@@ -919,6 +968,9 @@
   },
   "search_ariaLabel": {
     "message": "Search notes and tasks"
+  },
+  "searchRegion_ariaLabel": {
+    "message": "Search and filters"
   },
   "search_clear_ariaLabel": {
     "message": "Clear search"
@@ -1151,26 +1203,68 @@
   "shortcuts_markdown_toggle": {
     "message": "→ Toggle list"
   },
+  "shortcuts_qc_capture": {
+    "message": "→ add and clear the field"
+  },
   "shortcuts_qc_captureOpen": {
-    "message": "→ capture and open editor"
+    "message": "→ add and open in the editor"
   },
   "shortcuts_qc_date": {
-    "message": "→ specific date"
+    "message": "→ specific date, year optional"
   },
   "shortcuts_qc_dayKeywords": {
-    "message": "→ due: today or tomorrow"
+    "message": "→ due today or tomorrow"
+  },
+  "shortcuts_qc_ex_daily": {
+    "message": "daily"
+  },
+  "shortcuts_qc_ex_date": {
+    "message": "06/15"
+  },
+  "shortcuts_qc_ex_dateYear": {
+    "message": "06/15/2030"
+  },
+  "shortcuts_qc_ex_plain": {
+    "message": "buy milk"
+  },
+  "shortcuts_qc_ex_today": {
+    "message": "today"
+  },
+  "shortcuts_qc_ex_tomorrow": {
+    "message": "tomorrow"
+  },
+  "shortcuts_qc_ex_weekday": {
+    "message": "monday"
+  },
+  "shortcuts_qc_ex_weekly": {
+    "message": "weekly"
+  },
+  "shortcuts_qc_intro": {
+    "message": "The field above the list (Alt+C). The preview under it shows what you'll get before you press Enter."
+  },
+  "shortcuts_qc_plain": {
+    "message": "→ a plain note"
+  },
+  "shortcuts_qc_recurrence": {
+    "message": "→ repeats (also: monthly, yearly)"
   },
   "shortcuts_qc_task": {
-    "message": "→ creates a task"
+    "message": "→ task instead of a note"
+  },
+  "shortcuts_qc_taskImportant": {
+    "message": "→ important: due today, also in progress"
+  },
+  "shortcuts_qc_taskImportantInProgress": {
+    "message": "→ same as !! — important is already in progress"
   },
   "shortcuts_qc_taskInProgress": {
-    "message": "→ task in progress (!>)"
+    "message": "→ task in progress, due today"
   },
   "shortcuts_qc_time": {
-    "message": "→ time and alarm"
+    "message": "→ time, and a reminder then"
   },
   "shortcuts_qc_weekdays": {
-    "message": "→ next weekday"
+    "message": "→ next such day"
   },
   "shortcuts_quickCapture": {
     "message": "Quick capture"
@@ -1277,9 +1371,15 @@
   "storage_usage_label": {
     "message": "$1 of $2 — free: $3",
     "placeholders": {
-      "used": { "content": "$1" },
-      "quota": { "content": "$2" },
-      "free": { "content": "$3" }
+      "used": {
+        "content": "$1"
+      },
+      "quota": {
+        "content": "$2"
+      },
+      "free": {
+        "content": "$3"
+      }
     }
   },
   "storage_usage_unavailable": {
@@ -1546,14 +1646,34 @@
   "zen_allClear_title": {
     "message": "All caught up"
   },
-  "linkTooltip_copy": { "message": "Copy link address" },
-  "linkTooltip_copied": { "message": "Copied ✓" },
-  "copyMd_title": { "message": "Copy as Markdown · Alt+K" },
-  "copyMd_ariaLabel": { "message": "Copy note content as Markdown" },
-  "shortcuts_copyMd": { "message": "→ copy note as Markdown" },
-  "linkTooltip_edit": { "message": "Edit link" },
-  "linkTooltip_delete": { "message": "Remove link" },
-  "typeToggle_toggle_ariaLabel": { "message": "Toggle type filter" },
-  "typeToggle_toggle_title": { "message": "Show / hide type filters" },
-  "note_postponeToTomorrow": { "message": "Postpone to tomorrow" }
+  "linkTooltip_copy": {
+    "message": "Copy link address"
+  },
+  "linkTooltip_copied": {
+    "message": "Copied ✓"
+  },
+  "copyMd_title": {
+    "message": "Copy as Markdown · Alt+K"
+  },
+  "copyMd_ariaLabel": {
+    "message": "Copy note content as Markdown"
+  },
+  "shortcuts_copyMd": {
+    "message": "→ copy note as Markdown"
+  },
+  "linkTooltip_edit": {
+    "message": "Edit link"
+  },
+  "linkTooltip_delete": {
+    "message": "Remove link"
+  },
+  "typeToggle_toggle_ariaLabel": {
+    "message": "Toggle type filter"
+  },
+  "typeToggle_toggle_title": {
+    "message": "Show / hide type filters"
+  },
+  "note_postponeToTomorrow": {
+    "message": "Postpone to tomorrow"
+  }
 }

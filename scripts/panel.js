@@ -35,6 +35,7 @@ import {
 import { rescheduleAll } from "./alarms.js";
 import { t } from "./i18n.js";
 import { setTooltipsEnabled } from "./tooltip.js";
+import { createFocusTrap } from "./focus-trap.js";
 import {
   sanitizeHTML,
   sanitizeImportedNote,
@@ -293,13 +294,31 @@ function _openTagDeleteModal(tag) {
 
   modal.hidden = false;
 
+  // Pułapka fokusu + Escape. aria-modal="true" bez trapu pozwalał Tabowi uciec
+  // do treści pod modalem; trap bez Escape byłby keyboard trapem (WCAG 2.1.2) —
+  // dlatego oba naraz. Fokus startuje na Anuluj (bezpieczna opcja w dialogu
+  // niszczącym) i wraca do przycisku usuwania tagu po zamknięciu.
+  const trap = createFocusTrap(modal);
+  /** @param {KeyboardEvent} e */
+  const onKeydown = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
+  };
+
   // Zamknij
   const close = () => {
     modal.hidden = true;
+    document.removeEventListener("keydown", onKeydown);
+    trap.release();
   };
   btnClose.onclick = close;
   btnCancel.onclick = close;
   backdrop.onclick = close;
+
+  document.addEventListener("keydown", onKeydown);
+  trap.activate({ initialFocus: btnCancel });
 
   // Potwierdź usunięcie
   btnConfirm.onclick = () => {

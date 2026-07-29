@@ -31,11 +31,15 @@ const MIRRORED = [
   'alarms',
   'storage',
   'quick-capture-core',
+  'quick-capture-preview',
+  'quick-capture-help',
   'utils',
   'editor-url',
   'editor-pattern',
   'editor-block-analyzer',
   'editor-selection',
+  'notes-trash',
+  'focus-trap',
 ];
 
 function syncMirrors() {

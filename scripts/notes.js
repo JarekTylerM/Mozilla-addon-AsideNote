@@ -17,9 +17,14 @@ import { debounce } from "./utils.js";
 import { getTag, makeTagPill } from "./tags.js";
 import { clearAlarm, scheduleAlarm, isAlarmable } from "./alarms.js";
 import { t, getUILocale, getShortWeekdays } from "./i18n.js";
-import { buildItemFromCapture, newNoteId } from "./quick-capture-core.js";
+import {
+  buildItemFromCapture,
+  newNoteId,
+  wantsFocusSeed,
+} from "./quick-capture-core.js";
 import { sanitizeHTML, validateText, MAX_TITLE_LEN } from "./sanitize.js";
 import { setCursorOffset } from "./editor-selection.js";
+import { moveToTrash, restoreFromTrash, flippedType } from "./notes-trash.js";
 import { updateDueDisplay } from "./date-picker.js";
 /* ── State ────────────────────────────────────── */
 
@@ -381,22 +386,26 @@ export const debouncedSave = debounce(saveActiveNote, 600);
 function _deleteNoteCore(id, { resetUndo = false } = {}) {
   clearAlarm(id);
 
-  // Przenieś do kosza zamiast permanentnie usuwać
-  const note = state.notes.find((n) => n.id === id);
-  if (note) {
-    const deleted = { ...note, deletedAt: Date.now() };
-    state.deletedNotes = [deleted, ...state.deletedNotes].slice(0, MAX_DELETED);
+  // Przenieś do kosza zamiast permanentnie usuwać — czysty rdzeń w notes-trash.js
+  const { notes, deletedNotes, trashed } = moveToTrash(
+    state.notes,
+    state.deletedNotes,
+    id,
+    MAX_DELETED,
+  );
+  state.notes = notes;
+  if (trashed) {
+    state.deletedNotes = deletedNotes;
     saveDeletedNotes(state.deletedNotes);
     // Sygnał dla toastu "Cofnij" (app.js) — usunięcie z listy i z edytora
     // przechodzi przez ten rdzeń, więc jeden punkt emisji wystarcza
     document.dispatchEvent(
       new CustomEvent("noteTrashed", {
-        detail: { id, title: note.title || "" },
+        detail: { id, title: trashed.title || "" },
       }),
     );
   }
 
-  state.notes = state.notes.filter((n) => n.id !== id);
   if (state.activeId === id) {
     state.activeId = null;
     titleInput.value = "";
@@ -421,13 +430,16 @@ export function deleteActiveNote() {
  * @returns {object|null} przywrócona notatka lub null gdy nie ma jej w koszu
  */
 export function restoreDeletedNote(id) {
-  const idx = state.deletedNotes.findIndex((n) => n.id === id);
-  if (idx === -1) return null;
+  const { notes, deletedNotes, restored } = restoreFromTrash(
+    state.notes,
+    state.deletedNotes,
+    id,
+  );
+  if (!restored) return null;
 
-  const { deletedAt, ...note } = state.deletedNotes[idx];
-
-  state.notes.unshift(note);
-  state.deletedNotes.splice(idx, 1);
+  state.notes = notes;
+  state.deletedNotes = deletedNotes;
+  const note = restored;
 
   saveNotes(state.notes);
   saveDeletedNotes(state.deletedNotes);
@@ -453,12 +465,9 @@ export function convertType(id) {
   const note = state.notes.find((n) => n.id === id);
   if (!note) return;
 
-  if (note.type === "note") {
-    note.type = "task";
-    if (note.completed === undefined) note.completed = false;
-  } else {
-    note.type = "note";
-  }
+  // Object.assign na notatce w stanie — zachowuje referencję, na której
+  // polega renderList; flippedType (notes-trash.js) liczy tylko zmiany pól.
+  Object.assign(note, flippedType(note));
 
   saveNotes(state.notes);
   renderList();
@@ -1353,7 +1362,7 @@ export function quickCapture(raw) {
   if (!item) return null;
 
   state.notes.unshift(item);
-  if ((item.important || item.focus) && item.type === "task") {
+  if (wantsFocusSeed(item)) {
     if (!state.focusIds.includes(item.id)) {
       state.focusIds.push(item.id);
     }

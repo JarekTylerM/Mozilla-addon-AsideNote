@@ -28,6 +28,10 @@ import {
   _focusLi,
   _indentListItem,
   _outdentListItem,
+  _splitListItemKeepingNested,
+  _splitBlockAtCaret,
+  _mergeListItemBack,
+  _continuableList,
   _getCurrentBlock,
   _clearBlock,
   _restoreCursorTo,
@@ -595,6 +599,24 @@ function _flushSave() {
 
 // _updateToolbarState → editor-toolbar.js
 
+/**
+ * Stawia kursor w styku po scaleniu punktów listy — tam, gdzie kończyła się
+ * treść poprzednika, żeby kolejny znak dopisał się w miejsce usuniętej granicy.
+ *
+ * @param {Element} prev punkt, do którego scalono
+ * @param {{ node: Node|null, offset: number }} seam wynik _mergeListItemBack
+ * @param {Selection} selection
+ */
+function _placeCaretAtMergeSeam(prev, seam, selection) {
+  const r = document.createRange();
+  if (seam.node?.nodeType === Node.TEXT_NODE) r.setStart(seam.node, seam.offset);
+  else if (seam.node) r.setStartAfter(seam.node);
+  else r.setStart(prev, 0);
+  r.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(r);
+}
+
 /** @param {KeyboardEvent} e */
 function _handleEnter(e) {
   const sel = /** @type {Selection} */ (window.getSelection());
@@ -669,21 +691,37 @@ function _handleEnter(e) {
   const checklistEmpty = checklistLi
     ? checklistLi.textContent.trim() === ''
     : false;
+  // Sonda kończy się PRZED podlistą — tekst zagnieżdżonych punktów nie jest
+  // "treścią za kursorem" w tym punkcie. Odwrócony zakres DOM zwija do
+  // pustego, więc kursor za podlistą po prostu daje false.
+  let checklistHasTextAfter = false;
+  if (checklistLi) {
+    const clNested = checklistLi.querySelector(':scope > ul, :scope > ol');
+    const probe = document.createRange();
+    probe.setStart(range.startContainer, range.startOffset);
+    if (clNested) probe.setEndBefore(clNested);
+    else probe.setEnd(checklistLi, checklistLi.childNodes.length);
+    checklistHasTextAfter = probe.toString().trim() !== '';
+  }
 
   // Li context
   let liEmpty = false,
     liIsLast = false,
-    liIsNested = false;
+    liIsNested = false,
+    liHasNestedList = false;
   if (li) {
     liEmpty = li.textContent.trim() === '';
     liIsLast = li === li.parentElement?.lastElementChild;
     liIsNested = li.parentElement?.parentElement?.tagName === 'LI';
+    // :scope — liczy się WŁASNA podlista, nie dowolna w głąb drzewa
+    liHasNestedList = !!li.querySelector(':scope > ul, :scope > ol');
   }
 
   // Blockquote context
   let bqLineEmpty = false,
     bqIsLastBlock = false,
-    bqPrevEmpty = false;
+    bqPrevEmpty = false,
+    bqHasTextAfter = false;
   if (blockquote) {
     const curBlock =
       block !== editor && block?.parentNode === blockquote ? block : null;
@@ -694,6 +732,12 @@ function _handleEnter(e) {
     bqPrevEmpty = curBlock?.previousElementSibling
       ? curBlock.previousElementSibling.textContent.trim() === ''
       : false;
+    // Sonda po bieżącej linii; gdy cytat nie ma jeszcze bloków, po całym
+    // cytacie — handler owinie treść w <p> przed podziałem.
+    const probe = document.createRange();
+    probe.selectNodeContents(curBlock ?? blockquote);
+    probe.setStart(range.startContainer, range.startOffset);
+    bqHasTextAfter = probe.toString().trim() !== '';
   }
 
   // ── Decyzja (czysta funkcja) ──────────────────────────────────
@@ -708,13 +752,16 @@ function _handleEnter(e) {
     headingHasTextAfter,
     inChecklistLi: !!checklistLi,
     checklistEmpty,
+    checklistHasTextAfter,
     inLi: !!li && !checklistLi,
     liEmpty,
     liIsLast,
     liIsNested,
+    liHasNestedList,
     inBlockquote: !!blockquote,
     bqLineEmpty,
     bqIsLastBlock,
+    bqHasTextAfter,
     bqPrevEmpty,
     isHrTrigger: !!isHrTrigger,
     hasTrailingSpaces,
@@ -812,6 +859,46 @@ function _handleEnter(e) {
       return;
     }
 
+    case 'checklist-split': {
+      if (!checklistLi) break;
+      e.preventDefault();
+      undo.checkpoint();
+      // Ten sam podział co w zwykłej liście — punkt checklisty to też <li>,
+      // który może mieć podlistę. Nowy punkt zawsze niezaznaczony: przenosi
+      // ogon zdania, a nie stan wykonania oryginału.
+      const splitLi = _splitListItemKeepingNested(checklistLi, range);
+      splitLi.setAttribute('data-checked', 'false');
+      const r = document.createRange();
+      r.setStart(splitLi, 0);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return;
+    }
+
+    case 'blockquote-split': {
+      if (!blockquote) break;
+      e.preventDefault();
+      undo.checkpoint();
+      let curBlockSplit =
+        block !== editor && block?.parentNode === blockquote ? block : null;
+      if (!curBlockSplit) {
+        // Cytat bez bloków — owijamy treść w <p>. Range trzyma się węzłów,
+        // więc kursor przeżywa przeniesienie ich do wrappera.
+        const wrapper = document.createElement('p');
+        while (blockquote.firstChild) wrapper.appendChild(blockquote.firstChild);
+        blockquote.appendChild(wrapper);
+        curBlockSplit = wrapper;
+      }
+      const newP = _splitBlockAtCaret(curBlockSplit, range, 'p');
+      const r = document.createRange();
+      r.setStart(newP, 0);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return;
+    }
+
     case 'checklist-new-item': {
       if (!checklistLi) break;
       e.preventDefault();
@@ -862,6 +949,19 @@ function _handleEnter(e) {
       const newLi = document.createElement('li');
       newLi.appendChild(document.createElement('br'));
       li.after(newLi);
+      const r = document.createRange();
+      r.setStart(newLi, 0);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return;
+    }
+
+    case 'li-split-nested': {
+      if (!li) break;
+      e.preventDefault();
+      undo.checkpoint();
+      const newLi = _splitListItemKeepingNested(li, range);
       const r = document.createRange();
       r.setStart(newLi, 0);
       r.collapse(true);
@@ -1129,6 +1229,42 @@ function _handleSpace(e) {
   // ── Markdown trigger detection (czysta funkcja) ───────────────
   const trigger = detectSpaceTrigger(blockText, textBefore);
 
+  /**
+   * Wstawia gotowy <li>: dopisuje do listy nad blokiem, jeśli jest
+   * bezpośrednio nad nim, a w przeciwnym razie zakłada nową listę.
+   * Zwraca true, gdy punkt trafił do istniejącej listy.
+   *
+   * @param {"ordered"|"bullet"|"checklist"} kind
+   * @param {HTMLElement} li
+   * @param {HTMLElement} freshList lista używana, gdy nie ma czego kontynuować
+   */
+  const _placeListItem = (kind, li, freshList) => {
+    const inBlock = block && block !== editor;
+    const cont = inBlock ? _continuableList(block, kind) : null;
+
+    if (cont) {
+      cont.appendChild(li);
+      /** @type {Element} */ (block).remove();
+    } else {
+      freshList.appendChild(li);
+      if (inBlock) {
+        _clearBlock(block);
+        /** @type {Element} */ (block).replaceWith(freshList);
+      } else {
+        editor.innerHTML = '';
+        editor.appendChild(freshList);
+      }
+    }
+
+    const r = document.createRange();
+    r.setStart(li, 0);
+    r.collapse(true);
+    const s = /** @type {Selection} */ (window.getSelection());
+    s.removeAllRanges();
+    s.addRange(r);
+    return !!cont;
+  };
+
   if (trigger) {
     switch (trigger.trigger) {
       case 'checklist': {
@@ -1139,20 +1275,7 @@ function _handleSpace(e) {
         const li = document.createElement('li');
         li.setAttribute('data-checked', trigger.checked ? 'true' : 'false');
         li.innerHTML = '<br>';
-        ul.appendChild(li);
-        if (block && block !== editor) {
-          _clearBlock(block);
-          block.replaceWith(ul);
-        } else {
-          editor.innerHTML = '';
-          editor.appendChild(ul);
-        }
-        const r = document.createRange();
-        r.setStart(li, 0);
-        r.collapse(true);
-        const s = /** @type {Selection} */ (window.getSelection());
-        s.removeAllRanges();
-        s.addRange(r);
+        _placeListItem('checklist', li, ul);
         return;
       }
 
@@ -1169,23 +1292,13 @@ function _handleSpace(e) {
         undo.checkpoint();
         const startNum = trigger.start ?? 1;
         const ol = document.createElement('ol');
+        // start= tylko dla NOWEJ listy. Przy kontynuacji numer wpisany
+        // przez użytkownika jest ignorowany — punkt dostaje kolejny numer
+        // z listy, do której dołącza. Pozycja wygrywa z liczbą.
         if (startNum !== 1) ol.setAttribute('start', String(startNum));
         const li = document.createElement('li');
         li.innerHTML = '<br>';
-        ol.appendChild(li);
-        if (block && block !== editor) {
-          _clearBlock(block);
-          block.replaceWith(ol);
-        } else {
-          editor.innerHTML = '';
-          editor.appendChild(ol);
-        }
-        const r = document.createRange();
-        r.setStart(li, 0);
-        r.collapse(true);
-        const s = /** @type {Selection} */ (window.getSelection());
-        s.removeAllRanges();
-        s.addRange(r);
+        _placeListItem('ordered', li, ol);
         return;
       }
 
@@ -1195,20 +1308,7 @@ function _handleSpace(e) {
         const ulb = document.createElement('ul');
         const lib = document.createElement('li');
         lib.innerHTML = '<br>';
-        ulb.appendChild(lib);
-        if (block && block !== editor) {
-          _clearBlock(block);
-          block.replaceWith(ulb);
-        } else {
-          editor.innerHTML = '';
-          editor.appendChild(ulb);
-        }
-        const rb = document.createRange();
-        rb.setStart(lib, 0);
-        rb.collapse(true);
-        const sb = /** @type {Selection} */ (window.getSelection());
-        sb.removeAllRanges();
-        sb.addRange(rb);
+        _placeListItem('bullet', lib, ulb);
         return;
       }
 
@@ -1562,23 +1662,7 @@ function _handleBackspace(e) {
       if (!checklistLi) break;
       const prev = checklistLi.previousElementSibling;
       if (!prev) break;
-      while (prev.lastChild?.nodeName === 'BR') prev.lastChild.remove();
-      const cursorTarget = prev.lastChild;
-      const cursorOffset =
-        cursorTarget?.nodeType === Node.TEXT_NODE
-          ? (cursorTarget.textContent ?? '').length
-          : prev.childNodes.length;
-      while (checklistLi.firstChild) prev.appendChild(checklistLi.firstChild);
-      if (!prev.firstChild) prev.appendChild(document.createElement('br'));
-      checklistLi.remove();
-      const r = document.createRange();
-      if (cursorTarget?.nodeType === Node.TEXT_NODE)
-        r.setStart(cursorTarget, cursorOffset);
-      else if (cursorTarget) r.setStartAfter(cursorTarget);
-      else r.setStart(prev, 0);
-      r.collapse(true);
-      bkSel.removeAllRanges();
-      bkSel.addRange(r);
+      _placeCaretAtMergeSeam(prev, _mergeListItemBack(checklistLi, prev), bkSel);
       return;
     }
 
@@ -1643,23 +1727,7 @@ function _handleBackspace(e) {
       if (!li) break;
       const prev = li.previousElementSibling;
       if (!prev) break;
-      while (prev.lastChild?.nodeName === 'BR') prev.lastChild.remove();
-      const cursorTarget = prev.lastChild;
-      const cursorOffset =
-        cursorTarget?.nodeType === Node.TEXT_NODE
-          ? (cursorTarget.textContent ?? '').length
-          : prev.childNodes.length;
-      while (li.firstChild) prev.appendChild(li.firstChild);
-      if (!prev.firstChild) prev.appendChild(document.createElement('br'));
-      li.remove();
-      const r = document.createRange();
-      if (cursorTarget?.nodeType === Node.TEXT_NODE)
-        r.setStart(cursorTarget, cursorOffset);
-      else if (cursorTarget) r.setStartAfter(cursorTarget);
-      else r.setStart(prev, 0);
-      r.collapse(true);
-      bkSel.removeAllRanges();
-      bkSel.addRange(r);
+      _placeCaretAtMergeSeam(prev, _mergeListItemBack(li, prev), bkSel);
       return;
     }
 

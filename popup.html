@@ -35,11 +35,22 @@
       </button>
     </div>
 
+    <!-- Wiersze wypełnia popup.js z quick-capture-help.js — ta sama lista,
+         co w panelu skrótów sidebara. -->
     <div class="popup-help-panel" id="popup-help-panel" hidden>
-      <div id="popup-help-syntax"></div>
+      <ul id="popup-help-syntax"></ul>
     </div>
 
-    <div id="popup-preview" class="popup-preview" hidden></div>
+    <!-- aria-live: podgląd zmienia się w trakcie pisania — czytnik ogłasza
+         go w przerwie (polite), w całości (atomic). Patrz sidebar.html. -->
+    <div
+      id="popup-preview"
+      class="popup-preview"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    ></div>
     <div class="popup-feedback" id="popup-feedback"></div>
 
     <script src="scripts/popup.js" type="module"></script>

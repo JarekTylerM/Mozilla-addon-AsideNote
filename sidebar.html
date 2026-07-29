@@ -6,7 +6,7 @@
   </head>
 
   <body>
-    <div id="main-view">
+    <div id="main-view" role="main">
       <!-- Baner błędu zapisu — pokazywany przez app.js po storage:save-error -->
       <div id="save-error-banner" class="save-error-banner" role="alert" hidden>
         <span class="save-error-banner__text" data-i18n="saveError_text"
@@ -20,7 +20,7 @@
           Ponów
         </button>
       </div>
-      <div class="main-view-padded">
+      <div class="main-view-padded main-view-padded--list">
         <div class="quick-capture">
           <input
             id="quick-capture"
@@ -33,12 +33,21 @@
             >↵</span
           >
         </div>
+        <!-- aria-live: podgląd zmienia się w trakcie pisania, więc czytnik
+             ogłasza go dopiero w przerwie (polite), w całości (atomic). -->
         <div
           id="quick-capture-preview"
           class="quick-capture-preview"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
           hidden
         ></div>
-        <div class="search-row">
+        <div
+          class="search-row"
+          role="search"
+          data-i18n-attr="aria-label:searchRegion_ariaLabel"
+        >
           <div class="search-wrapper">
             <input
               id="search"
@@ -916,7 +925,7 @@
                 <span
                   class="onboarding-stage-btn__label"
                   data-i18n="ob_stage4_label"
-                  >Tryby skupienia</span
+                  >Szybkie dodawanie</span
                 >
                 <span class="onboarding-stage-btn__check" hidden>✓</span>
               </button>
@@ -929,7 +938,7 @@
                 <span
                   class="onboarding-stage-btn__label"
                   data-i18n="ob_stage5_label"
-                  >Porządek w notatkach</span
+                  >Tryby skupienia</span
                 >
                 <span class="onboarding-stage-btn__check" hidden>✓</span>
               </button>
@@ -942,6 +951,19 @@
                 <span
                   class="onboarding-stage-btn__label"
                   data-i18n="ob_stage6_label"
+                  >Porządek w notatkach</span
+                >
+                <span class="onboarding-stage-btn__check" hidden>✓</span>
+              </button>
+              <button
+                type="button"
+                class="onboarding-stage-btn"
+                data-ob-stage="7"
+              >
+                <span class="onboarding-stage-btn__num">7</span>
+                <span
+                  class="onboarding-stage-btn__label"
+                  data-i18n="ob_stage7_label"
                   >Dane i skróty</span
                 >
                 <span class="onboarding-stage-btn__check" hidden>✓</span>
@@ -1161,39 +1183,28 @@
 
           <div class="panel-shortcuts__section">
             <b data-i18n="shortcuts_quickCapture">Quick capture</b>
+            <p class="panel-shortcuts__note" data-i18n="shortcuts_qc_intro">
+              Pole nad listą (Alt+C). Podgląd pod polem pokazuje, co powstanie,
+              zanim wciśniesz Enter.
+            </p>
+            <!-- Wiersze składni wypełnia app.js z quick-capture-help.js —
+                 ta sama lista, co w pomocy popupu. Nie wpisuj ich tutaj
+                 ręcznie: rozjazd między panelem a popupem to dokładnie ten
+                 bug, który wspólna lista usuwa. -->
+            <ul id="qc-help-syntax"></ul>
+            <!-- Enter/Shift+Enter zostają lokalne: w popupie Shift+Enter
+                 otwiera panel boczny, tutaj otwiera edytor. -->
             <ul>
               <li>
-                <code>!</code
-                ><span data-i18n="shortcuts_qc_task">→ zadanie</span>
-              </li>
-              <li>
-                <code>!&gt;</code
-                ><span data-i18n="shortcuts_qc_taskInProgress"
-                  >→ zadanie w trakcie</span
+                <code>Enter</code
+                ><span data-i18n="shortcuts_qc_capture"
+                  >→ dodaj i wyczyść pole</span
                 >
-              </li>
-              <li>
-                <code>jutro</code><code>dziś</code
-                ><span data-i18n="shortcuts_qc_dayKeywords">→ termin</span>
-              </li>
-              <li>
-                <code>poniedziałek</code
-                ><span data-i18n="shortcuts_qc_weekdays"
-                  >→ dzień tygodnia (następny)</span
-                >
-              </li>
-              <li>
-                <code>HH:MM</code
-                ><span data-i18n="shortcuts_qc_time">→ godzina + alarm</span>
-              </li>
-              <li>
-                <code>DD.MM</code
-                ><span data-i18n="shortcuts_qc_date">→ konkretna data</span>
               </li>
               <li>
                 <code>Shift+Enter</code
                 ><span data-i18n="shortcuts_qc_captureOpen"
-                  >→ capture i otwórz edytor</span
+                  >→ dodaj i otwórz w edytorze</span
                 >
               </li>
             </ul>

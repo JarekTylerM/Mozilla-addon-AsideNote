@@ -2,17 +2,32 @@
 /* ══════════════════════════════════════════════════════════════
    onboarding.js — prowadzony tour po funkcjach AsideNotes
 
-   6 lekcji, od podstaw do szczegółów — każda buduje na poprzedniej:
+   7 lekcji, od podstaw do szczegółów — każda buduje na poprzedniej:
      1. Start                — pierwsza notatka, lista, edytor, notatka vs zadanie
-     2. Formatowanie         — toolbar, slash menu, markdown, kopiuj jako MD
-     3. Zadania i terminy    — parser quick capture, date picker, powtarzanie
-     4. Tryby skupienia      — zen (wł/wył), focus mode (wł/wył)
-     5. Porządek             — szukanie, przełącznik typów, filtry, tagi
-     6. Dane i skróty        — skróty globalne, ustawienia, backup, prywatność
+                               (+ konwersja typu w obie strony)
+     2. Formatowanie         — toolbar, slash menu, markdown, linki, kopiuj jako MD
+     3. Zadania i terminy    — ważne i "w trakcie", date picker, powtarzanie
+     4. Szybkie dodawanie    — pełna składnia capture, podgląd, skróty, popup
+     5. Tryby skupienia      — zen (wł/wył), focus mode (wł/wył)
+     6. Porządek             — szukanie, przełącznik typów, filtry, tagi
+     7. Dane i skróty        — skróty globalne, ustawienia, backup, prywatność
+
+   Zasada doboru kroków: tour ma pokrywać każdy stan, po którym da się
+   potem filtrować. Lekcja 6 uczy filtrów "ważne" i "tylko w trakcie",
+   więc lekcja 3 musi pokazać, czym się te stany nadaje — inaczej
+   użytkownik uczy się filtrować po czymś, czego nie umie ustawić.
+
+   Dlaczego składnia capture jest OSOBNĄ lekcją, i to po "Zadaniach":
+   to jeden ekran gęstej wiedzy (priorytety, daty, godziny, cykliczność),
+   który wcześniej rozłaziłby się po opisach przycisków. Idzie po lekcji 3,
+   bo "!!raport w piątek 9:00" ma sens dopiero, gdy użytkownik wie, co to
+   termin i co robi gwiazdka — inaczej uczyłby się skrótu do pojęć,
+   których jeszcze nie zna. Lekcja 3 pokazuje te stany myszą, lekcja 4
+   to samo z klawiatury.
 
    API publiczne:
      initOnboarding(uiSettings)  — wywołaj z boot po renderList()
-     startStage(n)               — uruchom etap 1-6 (z panelu)
+     startStage(n)               — uruchom etap 1-7 (z panelu)
    ══════════════════════════════════════════════════════════════ */
 
 import { t } from './i18n.js';
@@ -103,7 +118,17 @@ const STEPS = [
     side: 'bottom',
   },
   {
+    // Konwersja typu tuż po wyjaśnieniu "notatka vs zadanie" — pojęcie
+    // i przycisk, który je odwraca, w jednym miejscu. Przycisk jest
+    // widoczny zawsze (tylko disabled), więc nie potrzebuje revealHidden.
     stage: 1, idx: 4,
+    target: '#convert-type',
+    textKey: 'ob_s1_convert',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 1, idx: 5,
     target: null,
     textKey: 'ob_done_s1',
     type: 'done',
@@ -151,14 +176,23 @@ const STEPS = [
     side: 'top',
   },
   {
+    // revealHidden jak przy kroku toolbara — Alt+E mógł go schować
     stage: 2, idx: 4,
+    target: '#link-btn',
+    textKey: 'ob_s2_link',
+    type: 'show',
+    side: 'bottom',
+    revealHidden: '#toolbar',
+  },
+  {
+    stage: 2, idx: 5,
     target: '#copy-md-btn',
     textKey: 'ob_s2_5',
     type: 'show',
     side: 'bottom',
   },
   {
-    stage: 2, idx: 5,
+    stage: 2, idx: 6,
     target: null,
     textKey: 'ob_done_s2',
     type: 'done',
@@ -185,8 +219,26 @@ const STEPS = [
     await: { type: 'click', selector: '#notesList .note-item' },
     side: 'right',
   },
+  // Oba przyciski są odsłaniane przez notes.js, gdy notatka jest otwarta
+  // (importantBtn.hidden = !state.activeId) — poprzedni krok właśnie ją
+  // otworzył, więc nie trzeba revealHidden. Typ 'show', nie 'try':
+  // wymuszanie kliknięcia zmieniałoby stan notatki użytkownika.
   {
     stage: 3, idx: 2,
+    target: '#important-btn',
+    textKey: 'ob_s3_important',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 3, idx: 3,
+    target: '#focus-btn',
+    textKey: 'ob_s3_focus',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 3, idx: 4,
     target: '#due-display-btn',
     textKey: 'ob_s3_3',
     type: 'try',
@@ -200,33 +252,83 @@ const STEPS = [
     revealHidden: '#due-wrapper',
   },
   {
-    stage: 3, idx: 3,
+    stage: 3, idx: 5,
     target: '#date-picker-popover',
     textKey: 'ob_s3_4',
     type: 'show',
     side: 'bottom',
   },
   {
-    stage: 3, idx: 4,
+    stage: 3, idx: 6,
     target: '#notesList',
     textKey: 'ob_s3_5',
     type: 'show',
     side: 'bottom',
   },
   {
-    stage: 3, idx: 5,
+    stage: 3, idx: 7,
     target: null,
     textKey: 'ob_done_s3',
     type: 'done',
     side: 'bottom',
   },
 
-  // ── Lekcja 4: Tryby skupienia — zen i focus mode, tam i z powrotem ──
-  // Klasa zen-mode żyje na #main-view (nie na body) — patrz notes.js renderList
+  // ── Lekcja 4: Szybkie dodawanie — cała składnia capture ─────
+  // Krok 0 jest interaktywny i celowo pokazuje cztery rzeczy naraz
+  // (podgląd, !!, dzień tygodnia, godzina) — dalsze kroki tylko je
+  // rozwijają. Reszta to 'show' na tym samym polu: nie ma sensu kazać
+  // użytkownikowi dodawać pięciu zadań, żeby przeczytać składnię.
   {
     stage: 4, idx: 0,
-    target: '#zen-btn',
+    target: '#quick-capture',
     textKey: 'ob_s4_1',
+    type: 'try',
+    focusTarget: true,
+    await: AWAIT_NOTE_ADDED,
+    side: 'bottom',
+  },
+  {
+    stage: 4, idx: 1,
+    target: '#quick-capture',
+    textKey: 'ob_s4_priority',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 4, idx: 2,
+    target: '#quick-capture',
+    textKey: 'ob_s4_dates',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 4, idx: 3,
+    target: '#quick-capture',
+    textKey: 'ob_s4_recurrence',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 4, idx: 4,
+    target: null,
+    textKey: 'ob_s4_shortcuts',
+    type: 'show',
+    side: 'bottom',
+  },
+  {
+    stage: 4, idx: 5,
+    target: null,
+    textKey: 'ob_done_s4',
+    type: 'done',
+    side: 'bottom',
+  },
+
+  // ── Lekcja 5: Tryby skupienia — zen i focus mode, tam i z powrotem ──
+  // Klasa zen-mode żyje na #main-view (nie na body) — patrz notes.js renderList
+  {
+    stage: 5, idx: 0,
+    target: '#zen-btn',
+    textKey: 'ob_s5_1',
     type: 'try',
     await: {
       type: 'mutation',
@@ -237,9 +339,9 @@ const STEPS = [
     side: 'bottom',
   },
   {
-    stage: 4, idx: 1,
+    stage: 5, idx: 1,
     target: '#zen-btn',
-    textKey: 'ob_s4_2',
+    textKey: 'ob_s5_2',
     type: 'try',
     await: {
       type: 'mutation',
@@ -250,19 +352,19 @@ const STEPS = [
     side: 'bottom',
   },
   {
-    stage: 4, idx: 2,
+    stage: 5, idx: 2,
     target: noteItemTarget,
-    textKey: 'ob_s4_3',
-    textKeyFallback: 'ob_s4_3_empty',
+    textKey: 'ob_s5_3',
+    textKeyFallback: 'ob_s5_3_empty',
     isFallback: noteListEmpty,
     type: 'try',
     await: { type: 'click', selector: '#notesList .note-item' },
     side: 'right',
   },
   {
-    stage: 4, idx: 3,
+    stage: 5, idx: 3,
     target: '#focusmode-btn',
-    textKey: 'ob_s4_4',
+    textKey: 'ob_s5_4',
     type: 'try',
     await: {
       type: 'mutation',
@@ -273,9 +375,9 @@ const STEPS = [
     side: 'top',
   },
   {
-    stage: 4, idx: 4,
+    stage: 5, idx: 4,
     target: '#focusmode-btn',
-    textKey: 'ob_s4_5',
+    textKey: 'ob_s5_5',
     type: 'try',
     await: {
       type: 'mutation',
@@ -286,32 +388,32 @@ const STEPS = [
     side: 'top',
   },
   {
-    stage: 4, idx: 5,
+    stage: 5, idx: 5,
     target: null,
-    textKey: 'ob_done_s4',
+    textKey: 'ob_done_s5',
     type: 'done',
     side: 'bottom',
   },
 
   // ── Lekcja 5: Porządek — szukanie, typy, filtry, tagi ────────
   {
-    stage: 5, idx: 0,
+    stage: 6, idx: 0,
     target: '.search-wrapper',
-    textKey: 'ob_s5_1',
+    textKey: 'ob_s6_1',
     type: 'show',
     side: 'bottom',
   },
   {
-    stage: 5, idx: 1,
+    stage: 6, idx: 1,
     target: '#type-toggle',
-    textKey: 'ob_s5_2',
+    textKey: 'ob_s6_2',
     type: 'show',
     side: 'bottom',
   },
   {
-    stage: 5, idx: 2,
+    stage: 6, idx: 2,
     target: '#filter-btn',
-    textKey: 'ob_s5_3',
+    textKey: 'ob_s6_3',
     type: 'try',
     await: {
       type: 'mutation',
@@ -322,61 +424,61 @@ const STEPS = [
     side: 'bottom',
   },
   {
-    stage: 5, idx: 3,
+    stage: 6, idx: 3,
     target: '#filter-bar',
-    textKey: 'ob_s5_4',
+    textKey: 'ob_s6_4',
     type: 'show',
     side: 'bottom',
     revealHidden: '#filter-bar',
   },
   {
-    stage: 5, idx: 4,
+    stage: 6, idx: 4,
     target: '#tag-selector',
-    textKey: 'ob_s5_5',
+    textKey: 'ob_s6_5',
     type: 'show',
     side: 'top',
   },
   {
-    stage: 5, idx: 5,
+    stage: 6, idx: 5,
     target: null,
-    textKey: 'ob_done_s5',
+    textKey: 'ob_done_s6',
     type: 'done',
     side: 'bottom',
   },
 
   // ── Lekcja 6: Dane i skróty — praca z przeglądarką, backup, prywatność ──
   {
-    stage: 6, idx: 0,
+    stage: 7, idx: 0,
     target: null,
-    textKey: 'ob_s6_1',
+    textKey: 'ob_s7_1',
     type: 'show',
     side: 'bottom',
   },
   {
-    stage: 6, idx: 1,
+    stage: 7, idx: 1,
     target: '#panel-btn',
-    textKey: 'ob_s6_2',
+    textKey: 'ob_s7_2',
     type: 'show',
     side: 'top',
   },
   {
-    stage: 6, idx: 2,
+    stage: 7, idx: 2,
     target: '#panel-btn',
-    textKey: 'ob_s6_3',
+    textKey: 'ob_s7_3',
     type: 'show',
     side: 'top',
   },
   {
-    stage: 6, idx: 3,
+    stage: 7, idx: 3,
     target: '#security-btn',
-    textKey: 'ob_s6_4',
+    textKey: 'ob_s7_4',
     type: 'show',
     side: 'top',
   },
   {
-    stage: 6, idx: 4,
+    stage: 7, idx: 4,
     target: null,
-    textKey: 'ob_done_s6',
+    textKey: 'ob_done_s7',
     type: 'done',
     side: 'bottom',
   },
@@ -392,6 +494,7 @@ const STAGE_LABELS = {
   4: 'ob_stage4_label',
   5: 'ob_stage5_label',
   6: 'ob_stage6_label',
+  7: 'ob_stage7_label',
 };
 
 /* ── Stan ────────────────────────────────────────────────────── */
@@ -408,9 +511,51 @@ const STAGE_LABELS = {
 
 /* ── Publiczne API ───────────────────────────────────────────── */
 
-/** @param {{ onboardingStages?: Record<number, boolean> }} uiSettings */
+/**
+ * Wersja numeracji lekcji zapisanej w uiSettings.onboardingStages.
+ *   1 → 6 lekcji (przed wydzieleniem "Szybkiego dodawania")
+ *   2 → 7 lekcji, capture jako osobna lekcja 4
+ */
+const STAGES_VERSION = 2;
+
+/**
+ * Przenosi znaczniki ukończenia na aktualną numerację lekcji.
+ *
+ * Wydzielenie capture na lekcję 4 przesunęło stare lekcje 4-6 na 5-7.
+ * Bez tego użytkownik z ukończonym przewodnikiem zobaczyłby nową lekcję
+ * jako zrobioną (bo pod numerem 4 leżał ptaszek po "Trybach skupienia"),
+ * a ostatnią jako niezrobioną. Znaczniki to nie są dane użytkownika, ale
+ * kłamią o tym, co przeczytał — a od tego zależy, czy wróci do lekcji.
+ *
+ * @param {{ onboardingStages?: Record<number, boolean>, onboardingStagesVersion?: number }} uiSettings
+ * @returns {Record<number, boolean>}
+ */
+function _migrateStages(uiSettings) {
+  const stages = uiSettings.onboardingStages ?? {};
+  if (uiSettings.onboardingStagesVersion === STAGES_VERSION) return stages;
+
+  /** @type {Record<number, boolean>} */
+  const migrated = {};
+  for (const [key, done] of Object.entries(stages)) {
+    const n = Number(key);
+    // Klucze z JSON są stringami; nierozpoznany klucz odpada, zamiast
+    // wylądować pod NaN i zniknąć z panelu w niekontrolowany sposób.
+    if (!Number.isInteger(n)) continue;
+    migrated[n >= 4 ? n + 1 : n] = done;
+  }
+
+  // Zapisujemy też przy pustym zestawie — znacznik wersji ma powstać raz,
+  // na pierwszym boocie, żeby migracja nie chodziła w kółko.
+  saveUiSettings({
+    onboardingStages: migrated,
+    onboardingStagesVersion: STAGES_VERSION,
+  });
+  return migrated;
+}
+
+/** @param {{ onboardingStages?: Record<number, boolean>, onboardingStagesVersion?: number }} uiSettings */
 export function initOnboarding(uiSettings) {
-  _stagesDone = uiSettings.onboardingStages ?? {};
+  _stagesDone = _migrateStages(uiSettings);
   _buildOverlay();
 
   // Pierwsze uruchomienie — etap 1 auto-start po krótkim delay

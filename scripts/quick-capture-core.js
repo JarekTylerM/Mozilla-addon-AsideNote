@@ -28,6 +28,51 @@ export function newNoteId() {
 }
 
 /**
+ * Termin zadania wynikający z capture.
+ *
+ * Reguła: `!!` (ważne) i `!>` (w trakcie) bez jawnej daty dostają termin
+ * na dziś — oznaczenie priorytetu bez terminu nie miałoby gdzie wylądować
+ * na liście. Jawna data zawsze wygrywa.
+ *
+ * Wydzielone, bo tę samą regułę musi znać podgląd (quick-capture-preview.js);
+ * gdy siedziała inline w buildItemFromCapture, podgląd pokazywał zadanie
+ * bez terminu, a powstawało zadanie na dziś.
+ *
+ * @param {{ isUrgent: boolean, isInProgress: boolean, due: number|null }} capture
+ * @param {number} [now] znacznik czasu (wstrzykiwalny dla testów)
+ * @returns {number|null}
+ */
+export function captureDue({ isUrgent, isInProgress, due }, now = Date.now()) {
+  if (due) return due;
+  if (!isUrgent && !isInProgress) return due ?? null;
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+/**
+ * Czy element z capture ma zostać zasiany do focusIds ("w trakcie").
+ *
+ * Reguła: ważne LUB w trakcie. `!!` celowo oznacza też "w trakcie" —
+ * priorytet bez miejsca na liście byłby bezużyteczny. Konsekwencja:
+ * `!!>` daje dokładnie to samo, co `!!`, bo `>` nie dokłada już nic.
+ *
+ * Wydzielone z notes.js::quickCapture i popup.js, gdzie warunek istniał
+ * w dwóch kopiach o odwróconej kolejności składników. Podgląd
+ * (quick-capture-preview.js) trzyma się tej samej reguły, żeby nie
+ * obiecywać elementu innego niż powstanie.
+ *
+ * Wołaj PRZED `delete item.focus` — flaga focus to jednorazowy seed
+ * z parsera, źródłem prawdy jest tablica focusId w storage.
+ *
+ * @param {{ type?: string, important?: boolean, focus?: boolean }} item
+ * @returns {boolean}
+ */
+export function wantsFocusSeed(item) {
+  return item.type === 'task' && !!(item.important || item.focus);
+}
+
+/**
  * Buduje obiekt notatki/zadania z surowego inputu quick capture.
  * @param {string} raw — tekst z pola capture
  * @param {string|null} [locale] przekazywany do parseCapture (testy)
@@ -48,14 +93,7 @@ export function buildItemFromCapture(raw, locale = null) {
     tags: [],
     ...(isTask && {
       completed: false,
-      due:
-        (isUrgent || isInProgress) && !due
-          ? (() => {
-              const d = new Date();
-              d.setHours(0, 0, 0, 0);
-              return d.getTime();
-            })()
-          : due,
+      due: captureDue({ isUrgent, isInProgress, due }),
       time: time,
       reminder: 0,
       recurrence: recurrence ?? null,

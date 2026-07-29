@@ -187,8 +187,47 @@ test('li pusty środkowy → li-split', () => {
   expect(decideEnterAction({ ...base, inLi: true, liEmpty: true, liIsLast: false }).action)
     .toBe('li-split');
 });
-test('li niepusty → default (browser)', () => {
+test('checklista: kursor w środku treści → checklist-split', () => {
+  expect(decideEnterAction({ ...base, inChecklistLi: true, checklistHasTextAfter: true }).action)
+    .toBe('checklist-split');
+});
+test('checklista: kursor na końcu → nowy punkt, nie podział', () => {
+  expect(decideEnterAction({ ...base, inChecklistLi: true }).action)
+    .toBe('checklist-new-item');
+});
+test('checklista pusta wygrywa nad podziałem', () => {
+  expect(decideEnterAction({ ...base, inChecklistLi: true, checklistEmpty: true, checklistHasTextAfter: true }).action)
+    .toBe('checklist-exit');
+});
+test('cytat: kursor w środku linii → blockquote-split', () => {
+  expect(decideEnterAction({ ...base, inBlockquote: true, bqHasTextAfter: true }).action)
+    .toBe('blockquote-split');
+});
+test('cytat: kursor na końcu → nowy akapit, nie podział', () => {
+  expect(decideEnterAction({ ...base, inBlockquote: true }).action)
+    .toBe('blockquote-new-para');
+});
+test('wyjście z cytatu wygrywa nad podziałem', () => {
+  expect(decideEnterAction({ ...base, inBlockquote: true, bqLineEmpty: true, bqIsLastBlock: true, bqPrevEmpty: true, bqHasTextAfter: true }).action)
+    .toBe('blockquote-exit');
+});
+
+test('li niepusty bez podlisty → default (browser)', () => {
   expect(decideEnterAction({ ...base, inLi: true, liEmpty: false }).action)
+    .toBe('default');
+});
+test('li niepusty z podlistą → li-split-nested (natywny podział psuje DOM)', () => {
+  expect(decideEnterAction({ ...base, inLi: true, liEmpty: false, liHasNestedList: true }).action)
+    .toBe('li-split-nested');
+});
+test('li pusty z podlistą → nadal ścieżka pustego li, nie split', () => {
+  // liEmpty liczy też tekst podlisty, więc "pusty z podlistą" to li bez
+  // własnego tekstu ORAZ bez tekstu w podliście — wtedy wychodzimy z listy
+  expect(decideEnterAction({ ...base, inLi: true, liEmpty: true, liIsLast: true, liHasNestedList: true }).action)
+    .toBe('li-exit');
+});
+test('podlista poza li nie włącza split (flaga dotyczy własnej podlisty)', () => {
+  expect(decideEnterAction({ ...base, inLi: false, liHasNestedList: true }).action)
     .toBe('default');
 });
 
