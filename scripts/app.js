@@ -57,13 +57,9 @@ import {
   updateStorageUsage,
 } from "./panel.js";
 import { scheduleAlarm, clearAlarm, rescheduleAll } from "./alarms.js";
-import {
-  applyStaticTranslations,
-  t,
-  relativeDayLabel,
-  getUILocale,
-} from "./i18n.js";
-import { parseCapture } from "./parser.js";
+import { applyStaticTranslations, t, getUILocale } from "./i18n.js";
+import { describeCapture } from "./quick-capture-preview.js";
+import { renderQuickCaptureHelp } from "./quick-capture-help.js";
 import { initTooltips } from "./tooltip.js";
 import {
   initDatePicker,
@@ -93,6 +89,13 @@ const _detail = (e) => /** @type {CustomEvent} */ (e).detail;
 /* ── Boot ────────────────────────────────────── */
 
 applyStaticTranslations();
+// Wiersze składni quick capture nie mają data-i18n (są generowane), więc
+// renderujemy je z własnym t() — kolejność względem applyStaticTranslations
+// jest bez znaczenia.
+renderQuickCaptureHelp(
+  /** @type {HTMLElement} */ (document.getElementById("qc-help-syntax")),
+  t,
+);
 // initTooltips musi być po applyStaticTranslations — i18n ustawia title,
 // a tooltip.js przenosi je do data-tooltip-content i usuwa natywne title.
 initTooltips();
@@ -550,50 +553,24 @@ const _qcPreview = /** @type {HTMLElement} */ (document.getElementById("quick-ca
 
 /** @param {string} raw */
 function _updateQcPreview(raw) {
-  if (!raw.trim()) {
-    _qcPreview.hidden = true;
+  const description = describeCapture(raw, { t, locale: getUILocale() });
+
+  if (!description) {
+    _hideQcPreview();
     return;
   }
 
-  const { isTask, title, due, time } = parseCapture(raw);
-
-  let text = "";
-
-  if (!isTask) {
-    // Notatka
-    text = title
-      ? t("quickCapture_preview_note_titled", [title])
-      : t("quickCapture_preview_note_empty");
-  } else {
-    // Zadanie — zbuduj kontekst daty
-    let dateCtx = "";
-    if (due) {
-      const rel = relativeDayLabel(due);
-      const dateStr =
-        rel ??
-        new Intl.DateTimeFormat(getUILocale(), {
-          day: "numeric",
-          month: "short",
-        }).format(new Date(due));
-      dateCtx = time
-        ? t("quickCapture_preview_date_time", [dateStr, time])
-        : dateStr;
-    }
-
-    if (dateCtx && title) {
-      text = t("quickCapture_preview_task_dated_titled", [dateCtx, title]);
-    } else if (dateCtx) {
-      text = t("quickCapture_preview_task_dated", [dateCtx]);
-    } else if (title) {
-      text = t("quickCapture_preview_task_titled", [title]);
-    } else {
-      text = t("quickCapture_preview_task_empty");
-    }
-  }
-
-  _qcPreview.textContent = text;
+  _qcPreview.textContent = description.text;
   _qcPreview.hidden = false;
-  _qcPreview.dataset.type = isTask ? "task" : "note";
+  _qcPreview.dataset.type = description.type;
+}
+
+// Czyścimy tekst, nie tylko chowamy — kontener jest aria-live, a sam
+// atrybut hidden nie gwarantuje, że czytnik nie odczyta starej treści
+// przy kolejnym pokazaniu.
+function _hideQcPreview() {
+  _qcPreview.hidden = true;
+  _qcPreview.textContent = "";
 }
 
 quickCaptureInput.addEventListener("input", (e) => {
@@ -602,7 +579,7 @@ quickCaptureInput.addEventListener("input", (e) => {
 
 quickCaptureInput.addEventListener("keydown", (e) => {
   if (e.key === "Escape" || e.key === "Enter") {
-    _qcPreview.hidden = true;
+    _hideQcPreview();
   }
 });
 

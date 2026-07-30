@@ -85,6 +85,178 @@ export function _outdentListItem(li) {
   _focusLi(li);
 }
 
+/**
+ * Dzieli <li> zawierający podlistę, zostawiając podlistę przy oryginale.
+ *
+ * Powód istnienia: natywny insertParagraph Firefoksa przenosi zagnieżdżoną
+ * <ol>/<ul> do nowo powstałego <li>, który nie dostaje własnego kontenera
+ * tekstu — powstaje <li><ol>…</ol></li>, do którego nie da się wejść
+ * kursorem. Element listy bez miejsca na tekst jest nieedytowalny i nie
+ * ma jak go naprawić z poziomu UI.
+ *
+ * Zakres cięcia to WŁASNA treść <li> — od kursora do pierwszej podlisty,
+ * nie do końca elementu. Dzięki temu podlista zostaje pod punktem, do
+ * którego należy, a nowy punkt pojawia się pod nią, na tym samym poziomie.
+ *
+ * Oba <li> dostają <br>, jeśli zostałyby bez własnej treści — to jedyne,
+ * co trzyma je edytowalnymi.
+ *
+ * @param {Element} li dzielony element listy
+ * @param {Range} range kursor (collapsed) wewnątrz li
+ * @returns {Element} nowo utworzony <li>
+ */
+export function _splitListItemKeepingNested(li, range) {
+  const nested = li.querySelector(":scope > ul, :scope > ol");
+  return _splitBlockAtCaret(li, range, "li", nested);
+}
+
+/**
+ * Dzieli blok w miejscu kursora: treść za kursorem wędruje do nowego
+ * elementu wstawionego zaraz za oryginałem.
+ *
+ * `stopBefore` ogranicza cięcie do WŁASNEJ treści bloku — podajemy tam
+ * zagnieżdżoną listę, żeby została przy oryginale zamiast wywędrować do
+ * nowego punktu (patrz _splitListItemKeepingNested).
+ *
+ * Oba bloki dostają <br>, jeśli zostałyby bez treści. Element bez
+ * kontenera tekstu jest nieedytowalny i nie da się go naprawić z UI —
+ * to jest właśnie ten strażnik, którego brak psuł listy.
+ *
+ * @param {Element} block dzielony blok
+ * @param {Range} range kursor (collapsed) wewnątrz bloku
+ * @param {string} tag nazwa tagu nowego bloku ("li", "p", …)
+ * @param {Element|null} [stopBefore] granica własnej treści bloku
+ * @returns {Element} nowo utworzony blok
+ */
+export function _splitBlockAtCaret(block, range, tag, stopBefore = null) {
+  const tail = document.createRange();
+  tail.setStart(range.startContainer, range.startOffset);
+  if (stopBefore) tail.setEndBefore(stopBefore);
+  else tail.setEnd(block, block.childNodes.length);
+
+  const newBlock = document.createElement(tag);
+  // Kursor za granicą stopBefore — zakres wychodzi odwrócony i DOM zwija go
+  // do pustego. Traktujemy to jak brak treści do przeniesienia.
+  if (!tail.collapsed) {
+    try {
+      newBlock.appendChild(tail.extractContents());
+    } catch {
+      /* zakres nie do wyciągnięcia — nowy blok zostaje pusty */
+    }
+  }
+
+  // extractContents zostawia po sobie węzły tekstowe zerowej długości.
+  // Bez ich sprzątnięcia blok wygląda na niepusty, nie dostaje <br>
+  // i wraca dokładnie ten bug, który ta funkcja naprawia.
+  _dropEmptyTextNodes(newBlock);
+  _dropEmptyTextNodes(block);
+
+  if (!newBlock.childNodes.length) {
+    newBlock.appendChild(document.createElement("br"));
+  }
+  // Oryginał został bez własnej treści (kursor stał na jej początku).
+  // insertBefore(…, null) dokłada na koniec, więc jedno wyrażenie
+  // obsługuje i wariant z podlistą, i blok pusty do końca.
+  if (block.firstChild === stopBefore) {
+    block.insertBefore(document.createElement("br"), stopBefore);
+  }
+
+  block.after(newBlock);
+  return newBlock;
+}
+
+/**
+ * Scala <li> z poprzednim punktem (Backspace na początku punktu).
+ *
+ * Dwie rzeczy, których nie robiło doklejanie wszystkiego na koniec:
+ *  - własna treść scalanego punktu ląduje PRZED podlistą poprzednika,
+ *    inaczej tekst renderuje się pod zagnieżdżoną listą,
+ *  - podlisty obu punktów łączą się w jedną. Dwie równoległe podlisty
+ *    pod jednym <li> to ten sam bug, przed którym broni się
+ *    _indentListItem.
+ *
+ * @param {Element} li scalany punkt (zniknie)
+ * @param {Element} prev punkt, do którego scalamy
+ * @returns {{ node: Node|null, offset: number }} styk treści — miejsce na kursor
+ */
+export function _mergeListItemBack(li, prev) {
+  const prevNested = prev.querySelector(":scope > ul, :scope > ol");
+  const liNested = li.querySelector(":scope > ul, :scope > ol");
+
+  // Domykające <br> własnej treści prev tylko przeszkadzają w styku
+  let anchor = prevNested ? prevNested.previousSibling : prev.lastChild;
+  while (anchor && anchor.nodeName === "BR") {
+    const before = anchor.previousSibling;
+    anchor.remove();
+    anchor = before;
+  }
+  const offset =
+    anchor?.nodeType === Node.TEXT_NODE ? (anchor.textContent ?? "").length : 0;
+
+  for (const node of [...li.childNodes]) {
+    if (node === liNested) continue;
+    prev.insertBefore(node, prevNested);
+  }
+
+  if (liNested) {
+    if (prevNested) {
+      while (liNested.firstChild) prevNested.appendChild(liNested.firstChild);
+      liNested.remove();
+    } else {
+      prev.appendChild(liNested);
+    }
+  }
+
+  li.remove();
+  if (!prev.firstChild) prev.appendChild(document.createElement("br"));
+
+  return { node: anchor, offset };
+}
+
+/**
+ * Lista bezpośrednio nad blokiem, do której markdown-trigger ma dopisać
+ * punkt zamiast zakładać nową listę.
+ *
+ * Reguła jest pozycyjna, nie liczbowa: liczy się to, że blok sąsiaduje
+ * z listą, a nie jaki numer wpisano. Po wyjściu z listy (Enter, Enter)
+ * kursor stoi w akapicie, którego previousElementSibling to ta lista —
+ * wtedy "4." kontynuuje. Żeby zacząć nową listę, trzeba mieć między nimi
+ * cokolwiek, co listą nie jest (choćby pustą linię).
+ *
+ * Typ musi się zgadzać: <ol> kontynuuje tylko trigger numerowany, zwykły
+ * <ul> tylko punktowany, a checklista tylko checklistę — inaczej
+ * dopisalibyśmy punkt do listy innego rodzaju niż wpisany znak.
+ *
+ * @param {Element|null} block akapit zamieniany na punkt listy
+ * @param {"ordered"|"bullet"|"checklist"} kind rodzaj wykrytego triggera
+ * @returns {Element|null} lista do kontynuowania albo null
+ */
+export function _continuableList(block, kind) {
+  const prev = block?.previousElementSibling;
+  if (!prev) return null;
+
+  const isChecklist =
+    prev.tagName === "UL" && prev.getAttribute("data-list") === "checklist";
+
+  if (kind === "ordered") return prev.tagName === "OL" ? prev : null;
+  if (kind === "checklist") return isChecklist ? prev : null;
+  if (kind === "bullet") return prev.tagName === "UL" && !isChecklist ? prev : null;
+  return null;
+}
+
+/**
+ * Usuwa bezpośrednie dzieci będące pustymi węzłami tekstowymi.
+ * Tylko zerowej długości — spacja bywa znacząca i zostaje.
+ * @param {Element} el
+ */
+function _dropEmptyTextNodes(el) {
+  for (const node of [...el.childNodes]) {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent === "") {
+      node.remove();
+    }
+  }
+}
+
 export function _getCurrentBlock() {
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return null;

@@ -17,16 +17,17 @@ AsideNotes lives in the Firefox sidebar. Everything you write stays in `browser.
 
 **Rich-text editor** with a slash menu (`/`), inline markdown shortcuts, and 16 block commands: headings, bullet/numbered/checklist lists, toggle lists, code blocks, quotes, links, and five callout styles (Note, Tip, Important, Warning, Caution).
 
-**Quick capture** from the toolbar popup — a single input that parses natural language:
+**Quick capture** from the toolbar popup or the sidebar — a single input that parses natural language, with a live preview of what you are about to create:
 
 | You type | You get |
 |---|---|
 | `Buy milk` | a note |
 | `!Buy milk` | a task |
 | `!Call Ann tomorrow 15:00` | a task, due tomorrow at 15:00 |
-| `!!Ship the release` | an **important** task |
-| `!>Refactor parser` | a task marked **in progress** |
-| `!!>Hotfix` | important **and** in progress |
+| `!Standup daily` | a task that repeats daily |
+| `!!Ship the release` | an **important** task — due today, and marked in progress |
+| `!>Refactor parser` | a task marked **in progress**, due today |
+| `!!>Hotfix` | the same as `!!` — important already implies in progress |
 
 Dates are locale-aware: English recognises `tomorrow`, `today`, weekday names and `MM/DD`; Polish recognises `jutro`, `dziś`/`dzisiaj`, weekday names and `DD.MM`. An invalid date (`30.02`) or time (`25:99`) is deliberately *not* matched — the text stays in the title so you can see it wasn't understood, rather than being silently misread.
 
@@ -40,7 +41,7 @@ Dates are locale-aware: English recognises `tomorrow`, `today`, weekday names an
 
 **Import / export** to JSON, with a backup snapshot taken automatically before any import so the operation is reversible.
 
-**Bilingual UI** — English and Polish, 481 translated strings each.
+**Bilingual UI** — English and Polish, 509 translated strings each.
 
 ---
 
@@ -92,7 +93,7 @@ Vanilla ES modules, zero frameworks, no bundler. TypeScript is used as a *type c
 Three gates must be green before any change lands:
 
 ```bash
-npm test           # 487 tests, plain Node — no test framework
+npm test           # 631 tests, plain Node — no test framework
 npm run typecheck  # tsc --noEmit, strict, checkJs
 node build.mjs     # minify + package
 ```
@@ -110,6 +111,7 @@ scripts/
   app.js         ← sidebar bootstrap and shared state
   panel.js       ← settings, tags, trash, import/export
   parser.js      ← quick-capture natural-language parser (shared)
+  quick-capture-*.js ← capture item factory, typing preview, syntax help (shared)
 background.js    ← event page: alarms, notifications, commands
 ```
 
@@ -173,16 +175,17 @@ Wszystko, co napiszesz, zostaje w `browser.storage.local` na Twoim komputerze. R
 
 **Edytor rich-text** z menu ukośnika (`/`), skrótami markdown w locie i 16 komendami blokowymi: nagłówki, listy punktowane/numerowane/checklisty, listy zwijane, bloki kodu, cytaty, linki i pięć rodzajów callout (Notatka, Wskazówka, Ważne, Ostrzeżenie, Uwaga).
 
-**Szybkie dodawanie** z popupu na pasku narzędzi — jedno pole, które rozumie język naturalny:
+**Szybkie dodawanie** z popupu na pasku narzędzi albo z panelu bocznego — jedno pole, które rozumie język naturalny, z podglądem tego, co zaraz powstanie:
 
 | Wpisujesz | Dostajesz |
 |---|---|
 | `Kup mleko` | notatkę |
 | `!Kup mleko` | zadanie |
 | `!Zadzwoń do Ani jutro 15:00` | zadanie na jutro, 15:00 |
-| `!!Wypuść wydanie` | zadanie **ważne** |
-| `!>Refaktor parsera` | zadanie **w trakcie** |
-| `!!>Hotfix` | ważne **i** w trakcie |
+| `!Standup codziennie` | zadanie powtarzane codziennie |
+| `!!Wypuść wydanie` | zadanie **ważne** — termin dziś, oznaczone też jako w trakcie |
+| `!>Refaktor parsera` | zadanie **w trakcie**, termin dziś |
+| `!!>Hotfix` | to samo co `!!` — ważne już oznacza w trakcie |
 
 Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, nazwy dni tygodnia i `DD.MM`; angielski — `tomorrow`, `today`, nazwy dni i `MM/DD`. Niepoprawna data (`30.02`) lub godzina (`25:99`) **celowo nie jest dopasowywana** — fragment zostaje w tytule, żebyś zobaczył, że nie został zrozumiany. To lepsze niż ciche zrozumienie źle.
 
@@ -196,7 +199,7 @@ Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, nazwy dn
 
 **Import / eksport** do JSON. Przed każdym importem automatycznie zapisywana jest migawka danych, więc operacja jest odwracalna.
 
-**Dwujęzyczny interfejs** — polski i angielski, po 481 przetłumaczonych ciągów.
+**Dwujęzyczny interfejs** — polski i angielski, po 509 przetłumaczonych ciągów.
 
 ## Instalacja ze źródeł
 
@@ -232,7 +235,7 @@ Czyste moduły ES, zero frameworków, bez bundlera. TypeScript służy jako *spr
 Trzy bramki muszą być zielone przed każdą zmianą:
 
 ```bash
-npm test           # 487 testów, czysty Node — bez frameworka testowego
+npm test           # 631 testów, czysty Node — bez frameworka testowego
 npm run typecheck  # tsc --noEmit, strict, checkJs
 node build.mjs     # minifikacja + paczka
 ```

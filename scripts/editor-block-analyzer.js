@@ -78,13 +78,16 @@ export function detectSpaceTrigger(blockText, textBefore) {
  *   headingHasTextAfter {boolean} za kursorem jest jeszcze treść nagłówka
  *   inChecklistLi    {boolean} kursor w <li> checklisty
  *   checklistEmpty   {boolean} li checklisty jest pusty
+ *   checklistHasTextAfter {boolean} za kursorem jest treść punktu
  *   inLi             {boolean} kursor w zwykłym <li>
  *   liEmpty          {boolean} li jest pusty
  *   liIsLast         {boolean} li jest ostatnim dzieckiem listy
  *   liIsNested       {boolean} lista jest zagnieżdżona w innym li
+ *   liHasNestedList  {boolean} li zawiera własną podlistę (<ul>/<ol>)
  *   inBlockquote     {boolean} kursor w <blockquote>
  *   bqLineEmpty      {boolean} bieżąca linia w blockquote pusta
  *   bqIsLastBlock    {boolean} jest ostatnim blokiem w blockquote
+ *   bqHasTextAfter   {boolean} za kursorem jest treść linii cytatu
  *   bqPrevEmpty      {boolean} poprzedni blok w blockquote pusty
  *   isHrTrigger      {boolean} blok zawiera dokładnie "---"
  *
@@ -102,13 +105,16 @@ export function detectSpaceTrigger(blockText, textBefore) {
  * @property {boolean} headingHasTextAfter
  * @property {boolean} inChecklistLi
  * @property {boolean} checklistEmpty
+ * @property {boolean} [checklistHasTextAfter]
  * @property {boolean} inLi
  * @property {boolean} liEmpty
  * @property {boolean} liIsLast
  * @property {boolean} liIsNested
+ * @property {boolean} [liHasNestedList]
  * @property {boolean} inBlockquote
  * @property {boolean} bqLineEmpty
  * @property {boolean} bqIsLastBlock
+ * @property {boolean} [bqHasTextAfter]
  * @property {boolean} bqPrevEmpty
  * @property {boolean} isHrTrigger
  * @property {boolean} hasTrailingSpaces
@@ -127,13 +133,16 @@ export function decideEnterAction(ctx) {
     headingHasTextAfter,
     inChecklistLi,
     checklistEmpty,
+    checklistHasTextAfter,
     inLi,
     liEmpty,
     liIsLast,
     liIsNested,
+    liHasNestedList,
     inBlockquote,
     bqLineEmpty,
     bqIsLastBlock,
+    bqHasTextAfter,
     bqPrevEmpty,
     isHrTrigger,
     hasTrailingSpaces,
@@ -162,6 +171,10 @@ export function decideEnterAction(ctx) {
   // ── Checklist ─────────────────────────────────────────────────
   if (inChecklistLi) {
     if (checklistEmpty) return { action: 'checklist-exit' };
+    // Enter w środku treści musi dzielić punkt, nie tylko dokładać pusty
+    // niżej — inaczej ogon zostaje w starym punkcie, a kursor ląduje
+    // w nowym, pustym. Tak samo jak nagłówek (headingHasTextAfter).
+    if (checklistHasTextAfter) return { action: 'checklist-split' };
     return { action: 'checklist-new-item' };
   }
 
@@ -172,10 +185,20 @@ export function decideEnterAction(ctx) {
     return { action: 'li-split' };
   }
 
+  // Niepusty <li> normalnie zostawiamy przeglądarce — natywny
+  // insertParagraph dzieli go poprawnie. Wyjątkiem jest <li> z podlistą:
+  // Firefox przenosi wtedy całą zagnieżdżoną <ol>/<ul> do NOWEGO <li>,
+  // który nie dostaje własnego kontenera tekstu. Powstaje
+  //   <li>aaaa</li><li><ol><li>…</li></ol></li>
+  // i w drugi punkt nie da się wejść kursorem — nie ma tam czego edytować.
+  // Dlatego ten jeden przypadek przejmujemy i dzielimy sami.
+  if (inLi && liHasNestedList) return { action: 'li-split-nested' };
+
   // ── Blockquote ────────────────────────────────────────────────
   if (inBlockquote) {
     if (bqLineEmpty && bqIsLastBlock && bqPrevEmpty)
       return { action: 'blockquote-exit' };
+    if (bqHasTextAfter) return { action: 'blockquote-split' };
     return { action: 'blockquote-new-para' };
   }
 

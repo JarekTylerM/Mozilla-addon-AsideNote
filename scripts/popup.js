@@ -3,9 +3,17 @@
    popup.js — logika mikro-okna quick capture
    ══════════════════════════════════════════════════════════════ */
 
-import { buildItemFromCapture } from './quick-capture-core.js';
+import { buildItemFromCapture, wantsFocusSeed } from './quick-capture-core.js';
 import { scheduleAlarm, isAlarmable } from './alarms.js';
-import { parseCapture } from './parser.js';
+import { describeCapture } from './quick-capture-preview.js';
+import { renderQuickCaptureHelp } from './quick-capture-help.js';
+import {
+  loadNotes,
+  saveNotes,
+  loadFocusId,
+  saveFocusId,
+  loadUiSettings,
+} from './storage.js';
 
 // Elementy popupu są zawsze w popup.html — rzutujemy z pominięciem null.
 const input       = /** @type {HTMLInputElement} */ (document.getElementById('popup-input'));
@@ -73,8 +81,8 @@ function _copyNodes(src, dst) {
 // stosujemy data-theme zanim DOM zostanie wyrenderowany
 // przez ukrycie body do czasu załadowania schematu.
 
-browser.storage.local.get('uiSettings').then((res) => {
-  const scheme = res.uiSettings?.colorScheme ?? 'auto';
+loadUiSettings().then((settings) => {
+  const scheme = settings.colorScheme ?? 'auto';
   if (scheme === 'auto') {
     document.documentElement.removeAttribute('data-theme');
   } else {
@@ -140,7 +148,11 @@ input.placeholder = t('popup_placeholder');
 _setRichText(hint, t('popup_hint_main'));
 helpBtn.title = t('popup_help_title');
 _setRichText(escHint, t('popup_esc_hint'));
-_setRichText(syntaxBody, t('popup_help_syntax_body'));
+// Składnia idzie z quick-capture-help.js, nie z HTML-a w locale — panel
+// pomocy nie jest już powierzchnią, przez którą podmieniony messages.json
+// mógłby coś wstrzyknąć. Enter/Shift+Enter zostają w popup_hint_main:
+// w popupie Shift+Enter otwiera panel boczny, w sidebarze edytor.
+renderQuickCaptureHelp(syntaxBody, t);
 
 input.addEventListener('input', () => {
   _updateTypeIndicator();
@@ -161,57 +173,28 @@ helpBtn.addEventListener('click', () => {
 
 function _updatePreview() {
   if (!preview) return;
-  const raw = input.value.trim();
 
-  if (!raw) {
-    preview.hidden = true;
-    preview.textContent = '';
+  const description = describeCapture(input.value, {
+    t,
+    locale: browser.i18n.getUILanguage(),
+  });
+
+  if (!description) {
+    _hidePreview();
     return;
   }
 
-  const { isTask, title, due, time } = parseCapture(raw);
-
-  let text = '';
-
-  if (!isTask) {
-    text = title
-      ? t('quickCapture_preview_note_titled', [title])
-      : t('quickCapture_preview_note_empty');
-  } else {
-    let dateCtx = '';
-    if (due) {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-      const dayMs = 86400000;
-      let dateStr;
-      if (due >= today && due < today + dayMs) {
-        dateStr = t('due_today');
-      } else if (due >= today + dayMs && due < today + 2 * dayMs) {
-        dateStr = t('due_tomorrow');
-      } else {
-        dateStr = new Intl.DateTimeFormat(browser.i18n.getUILanguage(), {
-          day: 'numeric', month: 'short'
-        }).format(new Date(due));
-      }
-      dateCtx = time
-        ? t('quickCapture_preview_date_time', [dateStr, time])
-        : dateStr;
-    }
-
-    if (dateCtx && title) {
-      text = t('quickCapture_preview_task_dated_titled', [dateCtx, title]);
-    } else if (dateCtx) {
-      text = t('quickCapture_preview_task_dated', [dateCtx]);
-    } else if (title) {
-      text = t('quickCapture_preview_task_titled', [title]);
-    } else {
-      text = t('quickCapture_preview_task_empty');
-    }
-  }
-
-  preview.textContent = text;
+  preview.textContent = description.text;
   preview.hidden = false;
-  preview.dataset.type = isTask ? 'task' : 'note';
+  preview.dataset.type = description.type;
+}
+
+// Tekst czyszczony razem z ukryciem — kontener jest aria-live i sam
+// atrybut hidden nie chroni przed odczytaniem nieaktualnej treści.
+function _hidePreview() {
+  if (!preview) return;
+  preview.hidden = true;
+  preview.textContent = '';
 }
 
 // ── Type indicator (ikona w inpucie) ───────────
@@ -231,7 +214,7 @@ input.addEventListener('keydown', async (e) => {
 
   if (e.key !== 'Enter') return;
   e.preventDefault();
-  preview.hidden = true;
+  _hidePreview();
 
   const raw = input.value.trim();
   if (!raw) return;
@@ -239,11 +222,9 @@ input.addEventListener('keydown', async (e) => {
   const item = /** @type {Note | null} */ (buildItemFromCapture(raw));
   if (!item) return;
 
-  const isTask = item.type === 'task';
-
   // Flaga focus z parsera to jednorazowy seed — źródłem prawdy stanu
   // "w trakcie" jest tablica focusId w storage, nie pole na notatce.
-  const wantsFocus = (item.focus || item.important) && isTask;
+  const wantsFocus = wantsFocusSeed(item);
   delete item.focus;
 
   // sidebarAction.open() musi zostać wywołane synchronicznie w handlerze
@@ -255,16 +236,21 @@ input.addEventListener('keydown', async (e) => {
     : null;
 
   try {
-    const res = await browser.storage.local.get(['notes', 'focusId']);
-    const notes = res.notes || [];
+    // Persystencja WYŁĄCZNIE przez storage.js — ten sam chokepoint co sidebar.
+    // Bezpośredni browser.storage.local.set omijał _set(): brak kolejki
+    // ponowień, znaczników self-write i sygnalizacji błędu zapisu. loadNotes()
+    // dokłada normalizację/migrację, więc popup nie zapisuje z powrotem
+    // niezmigrowanych ani zatrutych danych. saveNotes() rzuca przy błędzie →
+    // catch niżej pokazuje komunikat i NIE zamyka popupu (tekst zostaje w polu).
+    const notes = await loadNotes();
     notes.unshift(item);
-    await browser.storage.local.set({ notes });
+    await saveNotes(notes);
 
     if (wantsFocus) {
-      const focusIds = Array.isArray(res.focusId) ? res.focusId : [];
+      const focusIds = await loadFocusId();
       if (!focusIds.includes(item.id)) {
         focusIds.push(item.id);
-        await browser.storage.local.set({ focusId: focusIds });
+        await saveFocusId(focusIds);
       }
     }
 

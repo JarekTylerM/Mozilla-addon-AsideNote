@@ -16,6 +16,10 @@ tests/editor-url.mjs
 tests/editor-pattern.mjs
 tests/editor-block-analyzer.mjs
 tests/editor-selection.mjs
+tests/notes-trash.mjs
+tests/focus-trap.mjs
+tests/quick-capture-preview.mjs
+tests/quick-capture-help.mjs
 
 # System
 .DS_Store

@@ -527,6 +527,12 @@
   letter-spacing: 0.04em;
   margin-bottom: 6px;
 }
+.panel-shortcuts__note {
+  font-size: var(--text-sm);
+  line-height: var(--lh-base);
+  color: var(--text-3);
+  margin: 0 0 8px;
+}
 .panel-shortcuts__section ul {
   list-style: none;
   padding: 0;
@@ -534,9 +540,12 @@
   flex-direction: column;
   gap: 4px;
 }
+/* flex-wrap: opisy z kontekstem ("→ zadanie ważne, termin dziś") nie mieszczą
+   się obok chipa w wąskim sidebarze — bez zawijania wychodziły poza panel. */
 .panel-shortcuts__section li {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
   font-size: var(--text-sm);
   color: var(--text-2);
