@@ -4,11 +4,20 @@
 
 /* ── Tags & tag selector ──────────────────── */
 
+/* Wiersz tagów siedzi teraz przy samej dolnej krawędzi, na jednej linii
+   z pływającym #bottom-bar. padding-right trzyma pigułki po lewej stronie
+   paska — bez tego wjeżdżałyby pod przyciski i stawały się nieklikalne. */
 #tag-selector {
   position: relative;
-  padding: 4px 8px 6px;
+  padding: 4px var(--bottom-bar-reserve) 6px 8px;
   margin-bottom: 2px;
   flex-shrink: 0;
+}
+/* Security ukryty → pasek węższy o jeden przycisk, oddajemy 38px tagom.
+   Ten sam wzorzec co body:has(#main-view.zen-mode) w modes.css. Gdy :has()
+   nie zadziała, zostaje szersza rezerwa — nadmiar miejsca, nie kolizja. */
+body:has(#security-btn-wrapper[hidden]) #tag-selector {
+  padding-right: var(--bottom-bar-reserve-narrow);
 }
 #tag-selector-pills {
   display: flex;

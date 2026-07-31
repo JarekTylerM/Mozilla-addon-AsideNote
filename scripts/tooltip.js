@@ -26,6 +26,9 @@
 // Elementy które dostają tooltip — tylko interaktywne z title lub data-tooltip-content
 const TOOLTIP_SELECTOR = 'button[title], a[title], select[title], input[title], [data-tooltip-content]';
 
+/** Dozwolone wartości data-tooltip-variant → klasa app-tooltip--<v>. */
+const TOOLTIP_VARIANTS = ['preview', 'info'];
+
 const SHOW_DELAY = 380; // ms — eliminuje flash przy szybkim przejeździe
 const HIDE_DELAY = 80;
 
@@ -220,9 +223,22 @@ function _getText(el) {
 function _show(anchor, text) {
   if (!_el || !_labelEl || !_hintEl) return;
 
-  // Podziel "Label · Skrót" na dwie części
+  // Warianty blokowe — bez nich proza trafia w układ zaprojektowany pod
+  // "Etykieta · Skrót" (flex + nowrap) i wychodzi z tego jedna długa belka.
+  //   preview — podgląd treści notatki, tekst dowolny → klamra na 6 linii
+  //   info    — wyjaśnienie przy ustawieniu, tekst autorski → bez klamry
+  // Lista jest zamknięta: nazwa klasy nie może pochodzić wprost z atrybutu.
+  const variant = /** @type {HTMLElement} */ (anchor).dataset?.tooltipVariant;
+  for (const v of TOOLTIP_VARIANTS) {
+    _el.classList.toggle(`app-tooltip--${v}`, variant === v);
+  }
+
+  // Podziel "Label · Skrót" na dwie części — TYLKO dla tooltipów skrótów.
+  // Podgląd treści (variant=preview) niesie dowolny tekst notatki, który
+  // może zawierać " · " — split rozbiłby go na etykietę i "skrót", psując
+  // układ. Proza idzie w całości do etykiety (blok z klamrą na 6 linii).
   const sep = ' · ';
-  const idx  = text.indexOf(sep);
+  const idx  = variant === 'preview' ? -1 : text.indexOf(sep);
   if (idx !== -1) {
     _labelEl.textContent = text.slice(0, idx);
     _hintEl.textContent  = text.slice(idx + sep.length);

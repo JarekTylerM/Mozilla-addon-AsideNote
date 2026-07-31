@@ -615,6 +615,37 @@
   color: var(--text-2);
 }
 
+/* Znacznik "?" z wyjaśnieniem w tooltipie. margin-right: auto — wiersz ma
+   justify-content: space-between, więc bez tego trzeci element rozbiłby
+   układ; tak ikona zostaje przy etykiecie, a select przy prawej krawędzi. */
+.panel-info-icon {
+  margin-inline: 6px auto;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  font-size: var(--text-xs);
+  line-height: 1;
+  color: var(--text-3);
+  cursor: help;
+  user-select: none;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.panel-info-icon:is(:hover, :focus-visible) {
+  color: var(--text);
+  border-color: var(--accent-border);
+}
+
+.panel-info-icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .panel-zoom-row__select {
   font-size: var(--text-md);
   font-family: inherit;

@@ -450,3 +450,64 @@ function _cleanNode(node, doc, depth) {
     _cleanNode(child, doc, depth + 1);
   }
 }
+
+/* ── Tekst do podglądu ──────────────────────────────────────────
+   Jedna implementacja dla wszystkich podglądów treści (lista, tooltip,
+   kosz). Wcześniej były dwie i obie były wadliwe inaczej:
+   notes.js brał textContent, który NIE wstawia separatorów na granicach
+   bloków — "<p>a</p><p>b</p>" dawało "ab", a lista pokazywała
+   "mlekochlebmasło"; panel.js wycinał tagi regexem, więc encje HTML
+   zostawały nierozwinięte.
+   ══════════════════════════════════════════════════════════════ */
+
+/** Elementy, po których treść zaczyna nową linię. */
+const PREVIEW_BREAK_TAGS = new Set([
+  'P', 'DIV', 'H1', 'H2', 'H3', 'LI', 'UL', 'OL',
+  'BLOCKQUOTE', 'PRE', 'DETAILS', 'SUMMARY', 'HR',
+]);
+
+/**
+ * Zamienia HTML notatki na czysty tekst z zachowanymi granicami linii.
+ *
+ * Parsuje w odłączonym dokumencie (jak sanitizeHTML), więc nic się nie
+ * wykonuje. Zwraca tekst, w którym `\n` oddziela bloki — caller decyduje,
+ * czy je pokazać (tooltip), czy spłaszczyć do spacji (jednoliniowa lista).
+ *
+ * @param {string} html
+ * @returns {string}
+ */
+export function htmlToPreviewText(html) {
+  if (!html || typeof html !== 'string') return '';
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  let out = '';
+
+  /** @param {Node} node */
+  const walk = (node) => {
+    for (const child of node.childNodes) {
+      if (child.nodeType === 3 /* TEXT_NODE */) {
+        out += child.textContent ?? '';
+        continue;
+      }
+      if (child.nodeType !== 1 /* ELEMENT_NODE */) continue;
+      const el = /** @type {Element} */ (child);
+      if (el.tagName === 'BR') {
+        out += '\n';
+        continue;
+      }
+      const breaks = PREVIEW_BREAK_TAGS.has(el.tagName);
+      // Łamiemy też PRZED blokiem, nie tylko po nim. Bez tego podlista
+      // sklejała się z tekstem swojego punktu: "<li>raz<ul><li>dwa"
+      // dawało "razdwa" zamiast "raz\ndwa".
+      if (breaks && out && !out.endsWith('\n')) out += '\n';
+      walk(el);
+      if (breaks) out += '\n';
+    }
+  };
+  walk(doc.body);
+
+  return out
+    .replace(/[ \t ]+/g, ' ') // poziome białe znaki — zwiń
+    .replace(/ *\n[ \n]*/g, '\n') // puste linie i spacje wokół — zwiń do jednej
+    .trim();
+}

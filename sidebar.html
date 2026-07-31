@@ -692,6 +692,11 @@
       </div>
       <!-- /#editor-container -->
 
+      <!-- Ostrzeżenie o przycięciu treści do MAX_CONTENT_LEN. Wzorzec ten
+           sam co #title-error: twarde przycięcie robi saveActiveNote,
+           tutaj user dowiaduje się, że to się stało. -->
+      <div id="content-error" class="validation-error" role="alert" hidden></div>
+
       <div id="tag-selector">
         <div id="tag-selector-pills"></div>
         <div id="tag-dropdown" hidden>
@@ -788,6 +793,32 @@
                 <option value="100" selected>100%</option>
                 <option value="110">110%</option>
                 <option value="120">120%</option>
+              </select>
+            </div>
+            <div class="panel-zoom-row">
+              <label
+                for="ui-font-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_font_label"
+                >Krój pisma</label
+              >
+              <!-- Wyjaśnienie idzie przez data-tooltip-content, nie title —
+                   tekst jest długi, więc korzysta z blokowego wariantu
+                   tooltipa. Wariant "info", nie "preview": ten drugi ucina
+                   po 6 linijkach, co przy wyjaśnieniu nie ma sensu. -->
+              <span
+                class="panel-info-icon"
+                tabindex="0"
+                role="note"
+                data-tooltip-variant="info"
+                data-i18n-attr="data-tooltip-content:panel_font_info;aria-label:panel_font_info"
+                >?</span
+              >
+              <select id="ui-font-select" class="panel-zoom-row__select">
+                <option value="system" selected data-i18n="panel_font_system">
+                  Systemowy
+                </option>
+                <option value="lexend">Lexend</option>
               </select>
             </div>
           </section>
@@ -1117,6 +1148,12 @@
                 >
               </li>
               <li>
+                <code>Ctrl+V</code
+                ><span data-i18n="shortcuts_pasteMd"
+                  >→ wklejony Markdown staje się formatowaniem</span
+                >
+              </li>
+              <li>
                 <code>Ctrl+S</code
                 ><span data-i18n="shortcuts_general_save"
                   >→ zapisz natychmiast</span
@@ -1337,6 +1374,12 @@
               <li>
                 <code>[tekst](url)</code
                 ><span data-i18n="shortcuts_markdown_link">→ Link</span>
+              </li>
+              <li>
+                <code>\*tekst\*</code
+                ><span data-i18n="shortcuts_markdown_escape"
+                  >→ znak dosłowny, bez formatowania</span
+                >
               </li>
               <li>
                 <code>2× spacja + Enter</code

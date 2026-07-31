@@ -15,7 +15,9 @@ AsideNotes lives in the Firefox sidebar. Everything you write stays in `browser.
 
 **Notes and tasks in one list.** A task is a note with a due date, an optional time, a reminder, and a recurrence rule. Toggle a note into a task and back at any time.
 
-**Rich-text editor** with a slash menu (`/`), inline markdown shortcuts, and 16 block commands: headings, bullet/numbered/checklist lists, toggle lists, code blocks, quotes, links, and five callout styles (Note, Tip, Important, Warning, Caution).
+**Rich-text editor** with a slash menu (`/`), inline markdown shortcuts, and 16 block commands: headings, bullet/numbered/checklist lists, toggle lists, code blocks, quotes, links, and five callout styles (Note, Tip, Important, Warning, Caution). Escape a marker with `\` to keep it literal.
+
+**Markdown round-trip.** `Alt+K` copies a note as Markdown; pasting Markdown back converts it to formatting — headings, lists (nested, numbered, task), quotes, callouts, fenced code, inline emphasis and links. Conversion only fires when the text actually opens a block, and never inside a code block. Tables and images stay literal: neither is in the sanitiser whitelist (see [Security model](#security-model)).
 
 **Quick capture** from the toolbar popup or the sidebar — a single input that parses natural language, with a live preview of what you are about to create:
 
@@ -41,7 +43,9 @@ Dates are locale-aware: English recognises `tomorrow`, `today`, weekday names an
 
 **Import / export** to JSON, with a backup snapshot taken automatically before any import so the operation is reversible.
 
-**Bilingual UI** — English and Polish, 509 translated strings each.
+**Readable typeface option.** Settings → Appearance lets you switch the whole interface from the system font to **Lexend**, a typeface designed for reading fluency — wider letter spacing and more distinct letter shapes, which can help with dyslexia, low vision and eye strain. The font ships inside the package (latin + latin-ext subsets, ~74 KB); nothing is ever fetched from a CDN, so switching it leaks no request.
+
+**Bilingual UI** — English and Polish, 515 translated strings each.
 
 ---
 
@@ -93,7 +97,7 @@ Vanilla ES modules, zero frameworks, no bundler. TypeScript is used as a *type c
 Three gates must be green before any change lands:
 
 ```bash
-npm test           # 631 tests, plain Node — no test framework
+npm test           # 696 tests, plain Node — no test framework
 npm run typecheck  # tsc --noEmit, strict, checkJs
 node build.mjs     # minify + package
 ```
@@ -158,6 +162,8 @@ Keep the three gates green. `editor.js`, `notes.js`, `panel.js` and `app.js` hav
 
 Licensed under the **Mozilla Public License 2.0** — see [LICENSE](LICENSE).
 
+The bundled **Lexend** typeface is © 2018 The Lexend Project Authors and is distributed under the **SIL Open Font License 1.1** — see [assets/fonts/OFL.txt](assets/fonts/OFL.txt). It is redistributed unmodified.
+
 ---
 
 <details>
@@ -199,7 +205,7 @@ Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, nazwy dn
 
 **Import / eksport** do JSON. Przed każdym importem automatycznie zapisywana jest migawka danych, więc operacja jest odwracalna.
 
-**Dwujęzyczny interfejs** — polski i angielski, po 509 przetłumaczonych ciągów.
+**Dwujęzyczny interfejs** — polski i angielski, po 515 przetłumaczonych ciągów.
 
 ## Instalacja ze źródeł
 
@@ -235,7 +241,7 @@ Czyste moduły ES, zero frameworków, bez bundlera. TypeScript służy jako *spr
 Trzy bramki muszą być zielone przed każdą zmianą:
 
 ```bash
-npm test           # 631 testów, czysty Node — bez frameworka testowego
+npm test           # 696 testów, czysty Node — bez frameworka testowego
 npm run typecheck  # tsc --noEmit, strict, checkJs
 node build.mjs     # minifikacja + paczka
 ```

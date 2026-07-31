@@ -10,6 +10,43 @@
 export const MD_LINK_RX = /\[([^\[\]]*)\]\(([^()\[\]\s]+)\)$/;
 
 /**
+ * Czy znak na pozycji idx jest zaescapowany backslashem.
+ *
+ * Liczymy backslashe wstecz: nieparzysta liczba escapuje znak, parzysta
+ * escapuje same backslashe i znak zostaje normalny (`\\*` to literalny
+ * backslash + działający marker).
+ *
+ * @param {string} text
+ * @param {number} idx pozycja znaku, o który pytamy
+ * @returns {boolean}
+ */
+function _isEscapedAt(text, idx) {
+  let n = 0;
+  for (let i = idx - 1; i >= 0 && text[i] === '\\'; i--) n++;
+  return n % 2 === 1;
+}
+
+/**
+ * Wykrywa zaescapowany marker — użytkownik napisał `\*`, żeby dostać
+ * literalną gwiazdkę zamiast kursywy.
+ *
+ * Caller ma wtedy usunąć backslash i wstawić sam znak. Bez tego backslash
+ * zostawał w tekście, a formatowanie i tak się odpalało — czyli dokładnie
+ * odwrotnie, niż prosił użytkownik.
+ *
+ * @param {string} textBefore tekst w węźle przed kursorem
+ * @param {string} key znak, który właśnie naciśnięto
+ * @returns {{ backslashIdx: number, literal: string } | null}
+ */
+export function findEscapedMarker(textBefore, key) {
+  if (!['*', '_', '~', '~~', '`'].includes(key)) return null;
+  // Backslash tuż przed kursorem, sam niezaescapowany
+  if (!textBefore.endsWith('\\')) return null;
+  if (_isEscapedAt(textBefore, textBefore.length - 1)) return null;
+  return { backslashIdx: textBefore.length - 1, literal: key };
+}
+
+/**
  * Wykrywa wzorzec inline markdown na końcu textBefore.
  * Trigger następuje na ZAMYKAJĄCYM markerze.
  *
@@ -22,11 +59,22 @@ export const MD_LINK_RX = /\[([^\[\]]*)\]\(([^()\[\]\s]+)\)$/;
  *  ~~strike~~        → <s>           trigger: 2. '~'
  *  `code`            → <code>        trigger: '`'
  *
+ * Marker otwierający poprzedzony backslashem (`\*kursywa*`) nie liczy się —
+ * użytkownik prosił o literalny znak. Marker zamykający obsługuje
+ * findEscapedMarker, zanim ta funkcja w ogóle zostanie zawołana.
+ *
  * @param {string} textBefore  tekst w węźle przed kursorem
  * @param {string} key         klawisz który właśnie naciśnięto
  * @returns {{ content: string, openIdx: number, markerLen: number, tag: string } | null}
  */
 export function findInlinePattern(textBefore, key) {
+  const hit = _findInlinePatternRaw(textBefore, key);
+  if (!hit) return null;
+  return _isEscapedAt(textBefore, hit.openIdx) ? null : hit;
+}
+
+/** @param {string} textBefore @param {string} key */
+function _findInlinePatternRaw(textBefore, key) {
   let m;
   if (key === '*') {
     // ***bold italic*** — trigger: 3. '*', textBefore = "***treść**"

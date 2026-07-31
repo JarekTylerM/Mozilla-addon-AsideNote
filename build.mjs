@@ -25,6 +25,7 @@ import { join, extname, dirname, relative } from 'path';
 import { createWriteStream } from 'fs';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import { tmpdir } from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -252,7 +253,7 @@ function processFile(srcPath, relPath) {
 // LICENSE świadomie NIE jest tu wymieniony: MPL-2.0 §3.1 wymaga, żeby tekst
 // licencji towarzyszył dystrybuowanym źródłom.
 const IGNORE = new Set([
-  'node_modules', 'dist', 'tests', '.git',
+  'node_modules', 'dist', 'tests', '.git', 'docs',
   'build.mjs', 'build.js',
   'package.json', 'package-lock.json',
   'features.css',   // zastąpiony przez 7 plików tematycznych
@@ -267,6 +268,9 @@ function buildDir(dir) {
     // więc bez tego filtra każdy build wpakowywał do dist/ paczkę poprzedniego
     // — a ta zawierała jeszcze wcześniejszą. Stąd 7,6 MB zamiast ~700 KB.
     if (f.toLowerCase().endsWith('.zip')) return;
+    // Deklaracje typów TS (types.d.ts itp.) to artefakt dev (checkJs), nie
+    // należą do rozszerzenia — przeglądarka ich nie używa.
+    if (f.toLowerCase().endsWith('.d.ts')) return;
     const full = join(dir, f);
     const rel  = relative(ROOT, full);
     const stat = statSync(full);
@@ -279,19 +283,60 @@ buildDir(ROOT);
 
 // ── ZIP ──────────────────────────────────────────────────────────
 
+// AMO i Firefox wymagają forward-slash w ścieżkach archiwum (ZIP APPNOTE 4.4.17).
+// PowerShell 5.1 Compress-Archive zapisuje backslashe → zasoby (np. assets\...)
+// nie ładują się, a linter AMO odrzuca paczkę. Pakujemy Pythonem (zipfile zawsze
+// daje '/'), z fallbackiem na Info-ZIP; Compress-Archive tylko w ostateczności.
 const zipName = `asidenotes-${version}.zip`;
 const zipPath = join(ROOT, zipName);
 
+function _findPython() {
+  for (const cmd of ['python3', 'python', 'py']) {
+    try {
+      execSync(`${cmd} --version`, { stdio: 'pipe' });
+      return cmd;
+    } catch {
+      /* próbuj następny */
+    }
+  }
+  return null;
+}
+
+/** Pakuje DIST → zipPath z forward-slashami (spec-compliant, sortowane). */
+function _zipWithPython(py) {
+  const helper = join(tmpdir(), `asidenote-zip-${process.pid}.py`);
+  const script = [
+    'import zipfile, os, sys',
+    'dist, out = sys.argv[1], sys.argv[2]',
+    "with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:",
+    '    for root, _dirs, files in os.walk(dist):',
+    '        for f in sorted(files):',
+    '            full = os.path.join(root, f)',
+    "            arc = os.path.relpath(full, dist).replace(os.sep, '/')",
+    '            z.write(full, arc)',
+  ].join('\n');
+  writeFileSync(helper, script, 'utf8');
+  try {
+    execSync(`${py} "${helper}" "${DIST}" "${zipPath}"`, { stdio: 'pipe' });
+  } finally {
+    try { rmSync(helper); } catch { /* best-effort cleanup */ }
+  }
+}
+
 try {
   if (existsSync(zipPath)) rmSync(zipPath);
-  const isWin = process.platform === 'win32';
-  if (isWin) {
+  const py = _findPython();
+  if (py) {
+    _zipWithPython(py);
+  } else if (process.platform !== 'win32') {
+    execSync(`cd "${DIST}" && zip -rX "${zipPath}" .`, { stdio: 'pipe' });
+  } else {
     execSync(
       `powershell -Command "Compress-Archive -Path '${DIST}\\*' -DestinationPath '${zipPath}'"`,
       { stdio: 'pipe' }
     );
-  } else {
-    execSync(`cd "${DIST}" && zip -r "${zipPath}" .`, { stdio: 'pipe' });
+    console.log('\n⚠️  ZIP przez Compress-Archive — ścieżki mogą mieć backslashe (PS 5.1),');
+    console.log('   co odrzuci linter AMO. Zainstaluj Pythona lub Info-ZIP i przebuduj.');
   }
   const zipSize = statSync(zipPath).size;
   console.log(`\n📦 ${zipName} — ${(zipSize / 1024).toFixed(1)} KB`);

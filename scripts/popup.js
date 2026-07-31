@@ -88,6 +88,11 @@ loadUiSettings().then((settings) => {
   } else {
     document.documentElement.dataset.theme = scheme;
   }
+  // Krój pisma — ten sam wybór co w panelu bocznym. Popup dzieli tokens.css,
+  // więc wystarczy atrybut; bez tego przełącznik działałby tylko w połowie UI.
+  if (settings.fontFamily === 'lexend') {
+    document.documentElement.dataset.font = 'lexend';
+  }
 }).catch(() => {
   // Brak danych — zostaje auto (system preference)
 });

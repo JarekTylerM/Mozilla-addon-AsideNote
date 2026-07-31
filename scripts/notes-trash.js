@@ -57,6 +57,40 @@ export function restoreFromTrash(notes, deletedNotes, id) {
 }
 
 /**
+ * Czy notatkę można wyrzucić bez pytania przy wyjściu z edytora.
+ *
+ * Powód: autozapis odpala 600 ms po ostatnim znaku i od tej chwili notatka
+ * istnieje. Skasowanie treści już jej nie usuwa — zostaje na liście jako
+ * "Bez tytułu", a kosz w edytorze jest wtedy WYŁĄCZONY (updateDeleteState
+ * blokuje go dla pustej notatki), więc user nie ma jak jej stąd usunąć.
+ * Stąd biorą się listy pełne pustych wpisów i przypadkowych "/".
+ *
+ * Reguła: wyrzucamy tylko to, co nie niesie ŻADNEJ intencji. Każdy ślad
+ * decyzji użytkownika — tag, termin, godzina, gwiazdka, oznaczenie
+ * "w trakcie" — chroni notatkę, nawet jeśli nie ma w niej tekstu.
+ *
+ * Pusta notatka nie zawiera danych, więc caller usuwa ją wprost, z
+ * pominięciem kosza — trzymanie tam pustych wpisów tylko by go zaśmiecało.
+ *
+ * @param {Note|null|undefined} note
+ * @param {object} ctx
+ * @param {boolean} ctx.textEmpty tytuł i treść puste (liczone z żywego
+ *   edytora przez isNoteEmpty — HTML w note.content bywa `<p><br></p>`)
+ * @param {boolean} [ctx.inFocus] notatka jest oznaczona jako "w trakcie"
+ *   (focusIds żyje poza notatką, więc caller musi to podać)
+ * @returns {boolean}
+ */
+export function isDiscardableNote(note, { textEmpty, inFocus = false }) {
+  if (!note) return false;
+  if (!textEmpty) return false;
+  if (inFocus) return false;
+  if (note.tags?.length) return false;
+  if (note.due || note.time) return false;
+  if (note.important) return false;
+  return true;
+}
+
+/**
  * Zwraca zmiany pól przy konwersji typu note↔task. NIE mutuje wejścia —
  * caller robi Object.assign na notatce w stanie, żeby zachować referencje,
  * na których polega renderList.

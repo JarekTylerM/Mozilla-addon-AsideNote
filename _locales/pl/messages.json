@@ -580,7 +580,7 @@
     "message": "Wolisz nie odrywać rąk od klawiatury? Działają skróty tekstowe (Markdown): # i spacja daje nagłówek, - i spacja listę, **tekst** pogrubienie. Nie musisz ich znać — pasek robi to samo."
   },
   "ob_s2_5": {
-    "message": "Tą ikoną skopiujesz całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K."
+    "message": "Tą ikoną skopiujesz całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K. Działa to też w drugą stronę: wklejony tutaj Markdown sam zamienia się w formatowanie."
   },
   "ob_s2_link": {
     "message": "Zaznacz fragment tekstu i kliknij tę ikonę (albo wciśnij Ctrl+K), żeby wstawić link. Kliknięcie gotowego linku w notatce otwiera go w nowej karcie."
@@ -704,6 +704,15 @@
   },
   "panel_appearance_light": {
     "message": "Jasny"
+  },
+  "panel_font_info": {
+    "message": "Lexend to krój zaprojektowany pod płynność czytania. Ma szersze odstępy między literami i wyraźniej różniące się kształty znaków, dzięki czemu rzadziej mylą się podobne litery. Bywa pomocny przy dysleksji, osłabionym wzroku i zmęczeniu oczu przy dłuższym czytaniu. Zmiana dotyczy całego interfejsu — panelu i okienka szybkiego dodawania."
+  },
+  "panel_font_label": {
+    "message": "Krój pisma"
+  },
+  "panel_font_system": {
+    "message": "Systemowy"
   },
   "panel_zoom_label": {
     "message": "Zoom interfejsu"
@@ -1173,6 +1182,9 @@
   "shortcuts_markdown_codeblock_lang": {
     "message": "→ Blok kodu z językiem"
   },
+  "shortcuts_markdown_escape": {
+    "message": "→ znak dosłowny, bez formatowania"
+  },
   "shortcuts_markdown_h1": {
     "message": "Nagłówek H1"
   },
@@ -1202,6 +1214,9 @@
   },
   "shortcuts_markdown_toggle": {
     "message": "→ Lista rozwijana"
+  },
+  "shortcuts_pasteMd": {
+    "message": "→ wklejony Markdown staje się formatowaniem"
   },
   "shortcuts_qc_capture": {
     "message": "→ dodaj i wyczyść pole"
@@ -1609,6 +1624,15 @@
   },
   "typeToggle_zen_title": {
     "message": "Zen — zaległe i dzisiejsze · Alt+Z"
+  },
+  "validation_contentTooLong": {
+    "message": "Notatka przekroczyła $MAX$ KB — końcówka treści nie została zapisana.",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
   },
   "validation_empty": {
     "message": "Pole nie może być puste"

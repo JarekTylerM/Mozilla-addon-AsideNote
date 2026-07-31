@@ -163,6 +163,68 @@
 .app-tooltip__label {
   font-weight: 500;
 }
+
+/* ── Wariant: podgląd treści notatki ─────────────────────────────
+   Bazowy tooltip jest zaprojektowany pod "Etykieta · Skrót" — flex
+   w jednej linii i white-space: nowrap. Podgląd treści to proza, więc
+   przy 120 znakach rozciągał się w belkę na całą szerokość okna.
+
+   Bez scrolla świadomie: tooltip ma pointer-events: none i chowa się na
+   mouseleave kotwicy, więc do paska przewijania nie dałoby się dojechać
+   kursorem. Zamiast tego blok o stałej szerokości z klamrą na 6 linii —
+   treść i tak jest przycięta do 120 znaków w _previewParts. */
+#app-tooltip.app-tooltip--preview {
+  display: block;
+  max-width: 260px;
+  /* UWAGA: white-space zostaje `normal` na KONTENERZE. Między <span> a <kbd>
+     w sidebar.html są węzły tekstowe z wcięć źródła ("\n      "). Flex je
+     ignoruje, ale blok + pre-wrap renderuje każdy z nich jako pustą linię —
+     dawało to 88px "pustego paddingu" nad i pod treścią. Łamanie linii
+     włączamy wyłącznie na etykiecie, która jedyna niesie treść. */
+  white-space: normal;
+  text-align: left;
+  line-height: var(--lh-base);
+  padding: 7px 10px;
+}
+
+#app-tooltip.app-tooltip--preview .app-tooltip__label {
+  /* htmlToPreviewText wstawia \n na granicach bloków — tu je pokazujemy.
+     Zawijanie długich linii zostaje (pre-wrap, nie pre). */
+  white-space: pre-wrap;
+  font-weight: 400;
+  /* Długi URL bez spacji nie ma gdzie się złamać i rozpycha blok */
+  overflow-wrap: anywhere;
+  /* Klamra na 6 linii zamiast scrolla — do tooltipa i tak nie da się
+     wjechać kursorem (pointer-events: none). Dotyczy WYŁĄCZNIE podglądu
+     treści notatki: tam tekst jest dowolny i trzeba go ograniczyć. */
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Wariant: wyjaśnienie przy ustawieniu ────────────────────────
+   Ten sam układ blokowy co podgląd, ale BEZ klamry. Treść jest autorska
+   i skończona — ucięcie jej w połowie zdania niszczy jedyny powód, dla
+   którego tooltip istnieje. Ograniczanie ma sens tylko tam, gdzie tekst
+   pochodzi od użytkownika i może mieć dowolną długość. */
+#app-tooltip.app-tooltip--info {
+  display: block;
+  max-width: 280px;
+  /* normal na KONTENERZE — pre-wrap renderowałby węzły tekstowe z wcięć
+     sidebar.html jako puste linie (patrz komentarz przy --preview). */
+  white-space: normal;
+  text-align: left;
+  line-height: var(--lh-base);
+  padding: 8px 10px;
+}
+
+#app-tooltip.app-tooltip--info .app-tooltip__label {
+  display: block;
+  white-space: pre-wrap;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
 .app-tooltip__hint {
   font-family: var(--font-mono);
   font-size: var(--text-xs);

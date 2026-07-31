@@ -22,9 +22,20 @@ import {
   newNoteId,
   wantsFocusSeed,
 } from "./quick-capture-core.js";
-import { sanitizeHTML, validateText, MAX_TITLE_LEN } from "./sanitize.js";
+import {
+  sanitizeHTML,
+  validateText,
+  MAX_TITLE_LEN,
+  MAX_CONTENT_LEN,
+  htmlToPreviewText,
+} from "./sanitize.js";
 import { setCursorOffset } from "./editor-selection.js";
-import { moveToTrash, restoreFromTrash, flippedType } from "./notes-trash.js";
+import {
+  moveToTrash,
+  restoreFromTrash,
+  flippedType,
+  isDiscardableNote,
+} from "./notes-trash.js";
 import { updateDueDisplay } from "./date-picker.js";
 /* ── State ────────────────────────────────────── */
 
@@ -169,17 +180,17 @@ function _formatDueRelative(timestamp) {
   }).format(new Date(timestamp));
 }
 
-/* Podglądy tekstowe notatki (etykieta listy, tooltip, title przycisku 👁).
-   DOMParser zamiast detached div z innerHTML — nie tworzy żywych węzłów
-   i nie zapala flag audytu na innerHTML bez sanityzacji.
+/* Podglądy tekstowe notatki: etykieta wiersza listy i tooltip ikony 👁.
+   Ekstrakcja tekstu idzie przez htmlToPreviewText (sanitize.js) — jedna
+   implementacja dla listy, tooltipa i kosza.
 
-   Jedno parsowanie, trzy przycięcia: wszystkie trzy podglądy to ten sam
-   znormalizowany tekst, różnią się tylko długością. Wynik jest memoizowany
-   po (id, content), bo renderList() przebudowuje listę przy każdym filtrze,
-   toggle'u i zapisie, a treść zmienia się tylko dla notatki edytowanej.
-   Cache trzyma przycięte stringi (≤160 znaków), nie pełny tekst notatki. */
+   Jedno parsowanie, dwa przycięcia: oba podglądy to ten sam znormalizowany
+   tekst, różnią się długością i tym, czy zachowują podział na linie. Wynik
+   jest memoizowany po (id, content), bo renderList() przebudowuje listę przy
+   każdym filtrze, toggle'u i zapisie, a treść zmienia się tylko dla notatki
+   edytowanej. Cache trzyma przycięte stringi (≤160 znaków), nie pełny tekst. */
 
-/** @typedef {{ src: string, short: string, full: string, title: string }} PreviewParts */
+/** @typedef {{ src: string, short: string, title: string }} PreviewParts */
 
 /** @type {Map<string, PreviewParts>} */
 const _previewCache = new Map();
@@ -194,15 +205,12 @@ function _previewParts(note) {
   const cached = _previewCache.get(note.id);
   if (cached && cached.src === src) return cached;
 
-  let text = "";
-  if (src) {
-    const doc = new DOMParser().parseFromString(src, "text/html");
-    text = (doc.body.textContent || "").replace(/\s+/g, " ").trim();
-  }
+  const text = htmlToPreviewText(src);
   const parts = {
     src,
-    short: _clip(text, 30),
-    full: _clip(text, 120),
+    // Wiersz listy jest jednoliniowy — łamania spłaszczamy do spacji
+    short: _clip(text.replace(/\n/g, " "), 30),
+    // Tooltip ikony podglądu — blok wieloliniowy, łamania zachowane
     title: _clip(text, 160),
   };
   _previewCache.set(note.id, parts);
@@ -272,6 +280,18 @@ export function setRecurrence(value, days = null) {
 export function selectNote(id) {
   const note = state.notes.find((n) => n.id === id);
   if (!note) return;
+  // Przełączenie na inną notatkę to też wyjście z edytora.
+  if (state.activeId && state.activeId !== id) {
+    // Pusta znika (nikt już do niej nie wróci)...
+    discardEmptyActiveNote();
+    // ...a niepustą trzeba zapisać SYNCHRONICZNIE. Autozapis jest
+    // debounce'owany na 600 ms i wisi jeszcze, gdy user klika inną notatkę.
+    // Poniżej podmieniamy activeId i treść edytora, więc to wywołanie
+    // odpaliłoby się już w kontekście NOWEJ notatki, a ostatnie znaki
+    // poprzedniej przepadłyby bez śladu.
+    saveActiveNote();
+    debouncedSave.cancel();
+  }
   state.activeId = id;
   titleInput.value = note.title;
   // Re-sanityzacja przy odczycie — defense-in-depth dla storage tamper via devtools.
@@ -311,6 +331,34 @@ export function selectNote(id) {
   document.dispatchEvent(new CustomEvent("noteSelected"));
 }
 
+/**
+ * Wyrzuca aktywną notatkę, jeśli nie zostało w niej nic — wołane z każdej
+ * ścieżki wyjścia z edytora (zwinięcie, nowa notatka, przełączenie na inną).
+ *
+ * Bez tego notatka utworzona przez autozapis zostaje na liście na zawsze:
+ * guard w saveActiveNote chroni tylko przypadek "jeszcze nie istnieje"
+ * (!state.activeId), a po skasowaniu treści już nie działa.
+ *
+ * Wprost, nie do kosza — patrz isDiscardableNote. Osierocony wpis
+ * `cursor_<id>` w uiSettings sprząta pruneCursorKeys przy następnym boocie.
+ *
+ * @returns {boolean} czy coś usunięto
+ */
+export function discardEmptyActiveNote() {
+  if (!state.activeId) return false;
+  const note = state.notes.find((n) => n.id === state.activeId);
+  const discardable = isDiscardableNote(note, {
+    textEmpty: isNoteEmpty(),
+    inFocus: state.focusIds.includes(state.activeId),
+  });
+  if (!discardable) return false;
+
+  state.notes = state.notes.filter((n) => n.id !== state.activeId);
+  state.activeId = null;
+  saveNotes(state.notes);
+  return true;
+}
+
 export function saveActiveNote() {
   if (!state.activeId && isNoteEmpty()) return;
 
@@ -319,7 +367,23 @@ export function saveActiveNote() {
   // przepuszcza tylko ALLOWED_TAGS z ALLOWED_ATTRS (patrz sanitize.js).
   // Dzięki temu selectNote może bezpiecznie assignować content do
   // editor.innerHTML bez dodatkowej sanityzacji przy odczycie.
-  const cleanContent = sanitizeHTML(editor.innerHTML);
+  //
+  // MAX_CONTENT_LEN egzekwujemy TUTAJ, nie tylko przy imporcie. Wcześniej
+  // limit obowiązywał wyłącznie na ścieżce importu, więc notatka mogła
+  // urosnąć ponad niego przez pisanie i wklejanie — a przy eksporcie
+  // i ponownym imporcie zostawała ucięta. Limit ma trzymać w obie strony.
+  //
+  // Przycinamy PRZED sanityzacją: DOMParser domknie tag ucięty w połowie,
+  // odwrotna kolejność zostawiałaby zepsuty HTML (ten sam wzorzec co
+  // w handlerze paste i w sanitizeImportedNote).
+  const rawContent = editor.innerHTML;
+  const contentTooLong = rawContent.length > MAX_CONTENT_LEN;
+  const cleanContent = sanitizeHTML(
+    contentTooLong ? rawContent.slice(0, MAX_CONTENT_LEN) : rawContent,
+  );
+  if (contentTooLong) {
+    document.dispatchEvent(new CustomEvent("noteContentTruncated"));
+  }
 
   // Walidacja title — strip control chars, przytnij do MAX_TITLE_LEN.
   // Live feedback dla usera obsługuje osobny handler w app.js przez
@@ -636,7 +700,12 @@ export function updateDeleteState() {
 /** @param {Note|null} note */
 function _syncEditorActionButtons(note) {
   const deleteBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("delete"));
-  if (deleteBtn) deleteBtn.disabled = !state.activeId || isNoteEmpty();
+  // Warunkiem jest ISTNIENIE notatki, nie jej treść. Wcześniej dochodziło
+  // tu `|| isNoteEmpty()` i notatka bez tekstu, ale z tagiem (albo terminem,
+  // gwiazdką) wpadała w pułapkę: discardEmptyActiveNote jej nie rusza, bo
+  // tag to intencja, a kosz był wyłączony, bo nie ma tekstu. Nie dało się
+  // jej usunąć z edytora — trzeba było wracać na listę.
+  if (deleteBtn) deleteBtn.disabled = !note;
 
   const convertBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("convert-type"));
   if (convertBtn) {
@@ -1101,21 +1170,22 @@ function _applyItemLabel(item, note) {
 
   const titleText = note.title?.trim();
   const parts = _previewParts(note);
-  const previewFull = !titleText ? parts.full : null;
-  const previewShort = !titleText ? parts.short : null;
 
-  titleEl.textContent = titleText || previewShort || t("note_untitled");
+  titleEl.textContent = titleText || parts.short || t("note_untitled");
 
-  // Hover tooltip — pełny podgląd gdy tytuł pochodzi z treści
-  if (!titleText && previewFull && previewFull !== previewShort) {
-    titleEl.dataset.tooltipContent = previewFull;
-  } else {
-    delete titleEl.dataset.tooltipContent;
-  }
+  // Tytuł nie ma własnego tooltipa — od pokazywania treści jest ikona 👁
+  // obok. Wcześniej tooltip pojawiał się tylko dla notatek bez tytułu,
+  // więc dublował tę samą rolę w połowie przypadków.
 
+  // Ikona podglądu — jedyny tooltip treści w wierszu listy. Szedł przez
+  // atrybut title, więc trafiał w bazowy układ jednoliniowy; przez
+  // data-tooltip-content dostaje wariant blokowy (patrz overlays.css).
   const previewBtn = /** @type {HTMLElement|null} */ (item.querySelector(".note-item__preview"));
   if (previewBtn) {
-    previewBtn.title = parts.title || t("note_preview_empty");
+    previewBtn.dataset.tooltipContent = parts.title || t("note_preview_empty");
+    previewBtn.dataset.tooltipVariant = "preview";
+    // Natywny title pokazałby się obok naszego tooltipa
+    previewBtn.removeAttribute("title");
   }
 }
 

@@ -112,6 +112,9 @@
 }
 /* ── Bottom bar & tooltip skrótów ────────── */
 
+/* Dokładasz/usuwasz przycisk? Popraw --bottom-bar-reserve w tokens.css —
+   to na nim opiera się padding wiersza tagów, który nie pozwala pigułkom
+   wjechać pod ten pasek. */
 #bottom-bar {
   position: fixed;
   bottom: 10px;

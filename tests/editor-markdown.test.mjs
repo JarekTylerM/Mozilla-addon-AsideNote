@@ -6,7 +6,11 @@
 
 import { test, expect, results } from "./_runner.mjs";
 import { createEditorDOM } from "./dom-harness.mjs";
-import { htmlToMarkdown } from "../scripts/editor-markdown.js";
+import {
+  htmlToMarkdown,
+  markdownToHtml,
+  looksLikeMarkdown,
+} from "../scripts/editor-markdown.js";
 
 /** Helper: renderuje HTML w edytorze i zwraca markdown */
 function md(html) {
@@ -202,6 +206,192 @@ test("pełna notatka — struktura mieszana", () => {
   expect(out).toBe(
     "# Plan\n\nWstęp z **boldem**.\n\n- [x] zrobione\n\n> [!TIP]\n> wskazówka\n\n---\n\n```\nkod\n```",
   );
+});
+
+// ══════════════════════════════════════════════════════════════
+// Kierunek odwrotny: Markdown → HTML (wklejanie)
+// ══════════════════════════════════════════════════════════════
+
+console.log("\n[looksLikeMarkdown]");
+
+test("sygnał blokowy → tak", () => {
+  for (const s of ["# Tytuł", "- punkt", "1. raz", "> cytat", "```js", "---"]) {
+    if (!looksLikeMarkdown(s)) throw new Error("nie wykryto: " + s);
+  }
+});
+
+test("link → tak", () => {
+  expect(looksLikeMarkdown("zobacz [tu](https://a.pl)")).toBe(true);
+});
+
+test("zwykłe zdanie → nie", () => {
+  expect(looksLikeMarkdown("po prostu tekst notatki")).toBe(false);
+});
+
+test("sama emfaza w zdaniu → nie (za mało sygnału)", () => {
+  // Inaczej każdy tekst z gwiazdkami zmieniałby się przy wklejeniu
+  expect(looksLikeMarkdown("mnożenie 5 * 3 i *nacisk*")).toBe(false);
+});
+
+test("pusty tekst → nie", () => {
+  expect(looksLikeMarkdown("")).toBe(false);
+  expect(looksLikeMarkdown(null)).toBe(false);
+});
+
+console.log("\n[markdownToHtml — bloki]");
+
+const mdh = (s) => markdownToHtml(s);
+
+test("nagłówki H1-H3", () => {
+  expect(mdh("# a")).toBe("<h1>a</h1>");
+  expect(mdh("## a")).toBe("<h2>a</h2>");
+  expect(mdh("### a")).toBe("<h3>a</h3>");
+});
+
+test("H4-H6 spłaszczone do H3 (wyżej nie ma czego pokazać)", () => {
+  expect(mdh("#### a")).toBe("<h3>a</h3>");
+  expect(mdh("###### a")).toBe("<h3>a</h3>");
+});
+
+test("lista punktowana i numerowana", () => {
+  expect(mdh("- a\n- b")).toBe("<ul><li>a</li><li>b</li></ul>");
+  expect(mdh("1. a\n2. b")).toBe("<ol><li>a</li><li>b</li></ol>");
+});
+
+test("numeracja od innej liczby zachowuje start", () => {
+  expect(mdh("5. a\n6. b")).toBe('<ol start="5"><li>a</li><li>b</li></ol>');
+});
+
+test("checklista z zaznaczeniem", () => {
+  expect(mdh("- [ ] a\n- [x] b")).toBe(
+    '<ul data-list="checklist"><li data-checked="false">a</li>' +
+      '<li data-checked="true">b</li></ul>',
+  );
+});
+
+test("zagnieżdżenie po wcięciu trafia do POPRZEDNIEGO punktu", () => {
+  // Podlista jako osobny <li> dałaby punkt bez treści — nieedytowalny
+  expect(mdh("- a\n  - a1\n- b")).toBe(
+    "<ul><li>a<ul><li>a1</li></ul></li><li>b</li></ul>",
+  );
+});
+
+test("cytat", () => {
+  expect(mdh("> a")).toBe("<blockquote><p>a</p></blockquote>");
+});
+
+test("callout z etykietą", () => {
+  expect(mdh("> [!WARNING] Uwaga\n> tekst")).toBe(
+    '<blockquote data-callout="warning" data-callout-label="Uwaga">' +
+      "<p>Uwaga<br>tekst</p></blockquote>",
+  );
+});
+
+test("nieznany typ callouta zostaje zwykłym cytatem", () => {
+  expect(mdh("> [!FOO] x")).toBe("<blockquote><p>[!FOO] x</p></blockquote>");
+});
+
+test("blok kodu z językiem, treść nietknięta", () => {
+  expect(mdh("```js\nconst a = *1*;\n```")).toBe(
+    '<pre><code data-language="js">const a = *1*;</code></pre>',
+  );
+});
+
+test("linia pozioma", () => {
+  expect(mdh("---")).toBe("<hr>");
+  expect(mdh("***")).toBe("<hr>");
+});
+
+test("akapit łamany bez pustej linii → <br>", () => {
+  expect(mdh("linia1\nlinia2")).toBe("<p>linia1<br>linia2</p>");
+});
+
+test("pusta linia rozdziela akapity", () => {
+  expect(mdh("a\n\nb")).toBe("<p>a</p><p>b</p>");
+});
+
+console.log("\n[markdownToHtml — inline]");
+
+test("emfaza i kod", () => {
+  expect(mdh("**b** *i* ~~s~~ `c`")).toBe(
+    "<p><strong>b</strong> <em>i</em> <s>s</s> <code>c</code></p>",
+  );
+});
+
+test("potrójny marker → strong+em", () => {
+  expect(mdh("***x***")).toBe("<p><strong><em>x</em></strong></p>");
+});
+
+test("podkreślnik w środku słowa nie robi kursywy", () => {
+  expect(mdh("snake_case_name")).toBe("<p>snake_case_name</p>");
+});
+
+test("link", () => {
+  expect(mdh("[t](https://a.pl)")).toBe('<p><a href="https://a.pl">t</a></p>');
+});
+
+test("escapowany marker zostaje literałem", () => {
+  expect(mdh("a \\*nie kursywa\\* b")).toBe("<p>a *nie kursywa* b</p>");
+});
+
+test("markdown w kodzie inline nietknięty", () => {
+  expect(mdh("`**nie bold**`")).toBe("<p><code>**nie bold**</code></p>");
+});
+
+console.log("\n[markdownToHtml — bezpieczeństwo]");
+
+test("HTML w tekście jest escapowany, nie staje się znacznikiem", () => {
+  expect(mdh("<script>alert(1)</script>")).toBe(
+    "<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>",
+  );
+});
+
+test("HTML w bloku kodu też escapowany", () => {
+  expect(mdh("```\n<b>x</b>\n```")).toBe(
+    "<pre><code>&lt;b&gt;x&lt;/b&gt;</code></pre>",
+  );
+});
+
+test("cudzysłów w treści nie rozbija atrybutu", () => {
+  expect(mdh('# a"b')).toBe("<h1>a&quot;b</h1>");
+});
+
+test("wklejony znak NUL nie podszyje się pod placeholder", () => {
+  // Placeholder używa NUL jako ogranicznika — wejście musi być z niego czyszczone
+  const out = mdh("a 0 b `x`");
+  expect(out).toContain("<code>x</code>");
+  expect(out.includes(" ")).toBe(false);
+});
+
+test("groźny schemat URL nie tworzy linku — bez udziału sanitizera", () => {
+  // markdownToHtml waliduje href sam, nie licząc na późniejszy sanitizeHTML.
+  // Wcześniej bezpieczeństwo linków było niezapisanym kontraktem callera.
+  for (const scheme of ["javascript:alert(1)", "data:text/html,x", "vbscript:x", "file:///etc/passwd"]) {
+    const out = mdh(`[k](${scheme})`);
+    if (out.includes("<a ")) throw new Error("powstał link dla " + scheme);
+  }
+});
+
+test("wielkość liter nie omija filtru schematu", () => {
+  expect(mdh("[k](JaVaScRiPt:alert(1))").includes("<a ")).toBe(false);
+});
+
+test("bezpieczne URL-e nadal działają", () => {
+  for (const url of ["https://ok.pl", "http://ok.pl", "/wzgledny", "mailto:a@b.pl"]) {
+    if (!mdh(`[k](${url})`).includes("<a ")) throw new Error("zablokowany: " + url);
+  }
+});
+
+test("apostrof jest escapowany (atrybuty w pojedynczych cudzysłowach)", () => {
+  expect(mdh("# it's")).toBe("<h1>it&#39;s</h1>");
+});
+
+console.log("\n[round-trip]");
+
+test("markdown → html → markdown zachowuje strukturę", () => {
+  const src = "# Plan\n\n- [x] zrobione\n\n> cytat";
+  const { editor } = createEditorDOM(markdownToHtml(src));
+  expect(htmlToMarkdown(editor)).toBe(src);
 });
 
 results();

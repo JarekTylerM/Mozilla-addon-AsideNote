@@ -314,6 +314,7 @@ export async function loadUiSettings() {
     showToolbar: true,
     showToolbarTooltips: true,
     colorScheme: "auto",
+    fontFamily: "system",
     showEditorPlaceholder: true,
     uiZoom: 100,
     zenMode: false,
@@ -353,6 +354,20 @@ export async function saveLastBackupBeforeImport(snapshot) {
 export async function loadLastBackupBeforeImport() {
   const res = await browser.storage.local.get("_lastBackupBeforeImport");
   return res._lastBackupBeforeImport || null;
+}
+
+/**
+ * Usuwa migawkę backupu (po skonsumowaniu cofnięcia importu). Trzyma dostęp
+ * do storage.local w jednym module — panel.js woła to zamiast bezpośredniego
+ * browser.storage.local.remove. Znacznik self-write zbędny: klucz nie jest w
+ * SYNCED_KEYS, więc handler onChanged (app.js) i tak go nie obsługuje.
+ */
+export async function clearLastBackupBeforeImport() {
+  try {
+    await browser.storage.local.remove("_lastBackupBeforeImport");
+  } catch (e) {
+    console.error("[storage] clearLastBackupBeforeImport failed:", e);
+  }
 }
 
 /* ── Cursor resume — sprzątanie osieroconych wpisów ── */

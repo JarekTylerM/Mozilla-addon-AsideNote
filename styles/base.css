@@ -10,10 +10,20 @@ html {
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  /* Krój z ustawień — reszta UI dziedziczy albo używa font-family: inherit */
+  font-family: var(--font-ui);
   background: radial-gradient(ellipse at top, var(--bg), var(--surface) 100%);
   color: var(--text);
-  padding: 8px 0 60px;
+  /* Dół: tyle, żeby między górną krawędzią pływającego paska a dolną
+     krawędzią edytora został 10px oddechu.
+       pasek sięga:  bottom 10px + wysokość 40,5px   = 50,5px
+       wiersz tagów: 29px + margin-bottom 2px        = 31px
+       minimum bez kolizji: 50,5 − 31 = 19,5px
+       + 10px przerwy                                = 29,5px
+     Pasek nie zasłania samych pigułek, bo #tag-selector rezerwuje miejsce
+     z prawej (--bottom-bar-reserve). Tryby, w których wiersz tagów znika,
+     robią rezerwę pionową u siebie — patrz modes.css. */
+  padding: 8px 0 29px;
   font-size: var(--text-base);
   height: 100vh;
   overflow: hidden;

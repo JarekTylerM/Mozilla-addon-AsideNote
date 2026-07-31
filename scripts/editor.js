@@ -37,10 +37,18 @@ import {
   _restoreCursorTo,
   getCursorOffset,
 } from './editor-selection.js';
-import { findInlinePattern, MD_LINK_RX } from './editor-pattern.js';
+import {
+  findInlinePattern,
+  findEscapedMarker,
+  MD_LINK_RX,
+} from './editor-pattern.js';
 import { isClickUpHTML, preprocessClickUp } from './editor-paste-clickup.js';
 import { initSlashMenu } from './editor-slash-menu.js';
-import { htmlToMarkdown } from './editor-markdown.js';
+import {
+  htmlToMarkdown,
+  markdownToHtml,
+  looksLikeMarkdown,
+} from './editor-markdown.js';
 
 // #editor jest zawsze w sidebar.html — rzutujemy z pominięciem null.
 const editor = /** @type {HTMLElement} */ (document.getElementById('editor'));
@@ -445,6 +453,24 @@ function _tryInlineMarkdown(e) {
 
   const offset = range.startOffset;
   const textBefore = (node.textContent ?? "").slice(0, offset);
+
+  // Escape ma pierwszeństwo: `\*` to prośba o literalną gwiazdkę, więc
+  // zjadamy backslash i wstawiamy sam znak, zamiast formatować.
+  const escaped = findEscapedMarker(textBefore, e.key);
+  if (escaped) {
+    e.preventDefault();
+    undo.checkpoint();
+    const full = node.textContent ?? '';
+    node.textContent =
+      full.slice(0, escaped.backslashIdx) + escaped.literal + full.slice(offset);
+    const caret = escaped.backslashIdx + escaped.literal.length;
+    const r = document.createRange();
+    r.setStart(node, caret);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    return true;
+  }
 
   const pattern = findInlinePattern(textBefore, e.key);
   if (!pattern) return false;
@@ -1850,7 +1876,7 @@ function _initPaste() {
       if (trimmed) {
         const tmp = document.createElement('div');
         tmp.innerHTML = trimmed;
-        if (tmp.querySelectorAll('*').length > 5000) {
+        if (_exceedsNodeBudget(trimmed)) {
           document.execCommand(
             'insertText',
             false,
@@ -1864,8 +1890,50 @@ function _initPaste() {
 
     // Fallback: plain text (np. z terminala, edytora kodu)
     const text = plain.length > MAX_PASTE ? plain.slice(0, MAX_PASTE) : plain;
+
+    // Markdown → tekst formatowany. Tylko gdy tekst NAPRAWDĘ wygląda na
+    // markdown (looksLikeMarkdown wymaga sygnału blokowego) i gdy nie
+    // wklejamy do bloku kodu — tam składnia ma zostać dosłowna.
+    // Wynik i tak przechodzi przez sanitizeHTML; markdownToHtml escapuje
+    // tekst u siebie, więc wklejony `<script>` nie stanie się znacznikiem.
+    if (!_caretInCodeBlock() && looksLikeMarkdown(text)) {
+      const md = sanitizeHTML(markdownToHtml(text));
+      // Ten sam limit co gałąź HTML. Markdown potrafi rozdmuchać wejście:
+      // 200 KB linii "> a" daje ~80 000 węzłów. Bez tej zapory gałąź MD
+      // była obejściem ochrony, którą gałąź HTML miała od początku.
+      if (md && !_exceedsNodeBudget(md) && _insertRichContent(md)) return;
+    }
+
     document.execCommand('insertText', false, text);
   });
+}
+
+/**
+ * Górny limit elementów we wklejanej treści — zapora na paste bomb.
+ * Dotyczy KAŻDEJ ścieżki produkującej HTML z wklejki (HTML i Markdown).
+ */
+const MAX_PASTE_NODES = 5000;
+
+/**
+ * Czy HTML przekracza budżet węzłów. Parsujemy w odłączonym <div>, więc
+ * nic z tego nie trafia do dokumentu, jeśli odpowiedź brzmi "tak".
+ * @param {string} html
+ * @returns {boolean}
+ */
+function _exceedsNodeBudget(html) {
+  const probe = document.createElement('div');
+  probe.innerHTML = html;
+  return probe.querySelectorAll('*').length > MAX_PASTE_NODES;
+}
+
+/**
+ * Czy kursor stoi w bloku kodu — tam markdown ma zostać dosłowny.
+ * @returns {boolean}
+ */
+function _caretInCodeBlock() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return false;
+  return !!_elOf(sel.getRangeAt(0).startContainer)?.closest('pre, code');
 }
 
 /**

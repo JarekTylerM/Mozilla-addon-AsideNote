@@ -6,7 +6,11 @@
  */
 
 import { test, expect, results } from './_runner.mjs';
-import { findInlinePattern, MD_LINK_RX } from './editor-pattern.mjs';
+import {
+  findInlinePattern,
+  findEscapedMarker,
+  MD_LINK_RX,
+} from './editor-pattern.mjs';
 
 // ── 1. findInlinePattern — bold ───────────────────────────────────
 
@@ -216,6 +220,60 @@ test('spacja w URL → null', () => {
 });
 test('zagnieżdżone nawiasy → null', () => {
   expect('[a]([b](c))'.match(MD_LINK_RX)).toBe(null);
+});
+
+// ── Escapowanie markerów ──────────────────────────────────────────
+
+console.log('\nEscapowanie');
+
+test('\\* na końcu → escape, nie formatowanie', () => {
+  const e = findEscapedMarker('abc\\', '*');
+  expect(e.backslashIdx).toBe(3);
+  expect(e.literal).toBe('*');
+});
+
+test('escape działa dla wszystkich markerów', () => {
+  for (const k of ['*', '_', '~', '~~', '`']) {
+    if (!findEscapedMarker('x\\', k)) throw new Error('brak escape dla ' + k);
+  }
+});
+
+test('zwykły znak po backslashu nie jest markerem', () => {
+  expect(findEscapedMarker('abc\\', 'a')).toBeNull();
+});
+
+test('bez backslasha nie ma escape', () => {
+  expect(findEscapedMarker('abc', '*')).toBeNull();
+});
+
+test('podwójny backslash NIE escapuje markera (parzysta liczba)', () => {
+  // \\* to literalny backslash + działający marker
+  expect(findEscapedMarker('abc\\\\', '*')).toBeNull();
+});
+
+test('potrójny backslash znowu escapuje (nieparzysta)', () => {
+  expect(findEscapedMarker('abc\\\\\\', '*')).toBeTruthy();
+});
+
+test('zaescapowany marker OTWIERAJĄCY blokuje formatowanie', () => {
+  // \*kursywa* — użytkownik chciał literalnych gwiazdek
+  expect(findInlinePattern('\\*kursywa', '*')).toBeNull();
+});
+
+test('zaescapowane pogrubienie też nie łapie', () => {
+  expect(findInlinePattern('\\**bold*', '*')).toBeNull();
+});
+
+test('backslash gdzie indziej nie psuje normalnego formatowania', () => {
+  const p = findInlinePattern('sciezka\\do\\pliku *kursywa', '*');
+  expect(p.tag).toBe('em');
+  expect(p.content).toBe('kursywa');
+});
+
+test('podwójny backslash przed markerem → formatowanie działa', () => {
+  const p = findInlinePattern('x\\\\*kursywa', '*');
+  expect(p.tag).toBe('em');
+  expect(p.content).toBe('kursywa');
 });
 
 // ── WYNIKI ────────────────────────────────────────────────────────

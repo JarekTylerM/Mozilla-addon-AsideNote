@@ -580,7 +580,7 @@
     "message": "Prefer keeping your hands on the keyboard? Text shortcuts (Markdown) work too: # and space makes a heading, - and space a list, **text** bold. No need to learn them — the toolbar does the same."
   },
   "ob_s2_5": {
-    "message": "This icon copies the whole note as Markdown text you can paste anywhere — into an email, a document or a chat. Shortcut: Alt+K."
+    "message": "This icon copies the whole note as Markdown text, ready to paste anywhere — an email, a document, a chat. Shortcut: Alt+K. It works the other way too: Markdown pasted in here turns into formatting by itself."
   },
   "ob_s2_link": {
     "message": "Select some text and click this icon (or press Ctrl+K) to insert a link. Clicking a finished link in a note opens it in a new tab."
@@ -704,6 +704,15 @@
   },
   "panel_appearance_light": {
     "message": "Light"
+  },
+  "panel_font_info": {
+    "message": "Lexend is a typeface designed for reading fluency. Wider letter spacing and more distinct letter shapes make similar characters harder to confuse. It can help with dyslexia, low vision, and eye strain during longer reading. The change applies to the whole interface — the panel and the quick add window."
+  },
+  "panel_font_label": {
+    "message": "Typeface"
+  },
+  "panel_font_system": {
+    "message": "System"
   },
   "panel_zoom_label": {
     "message": "Interface zoom"
@@ -1173,6 +1182,9 @@
   "shortcuts_markdown_codeblock_lang": {
     "message": "→ Code block with language"
   },
+  "shortcuts_markdown_escape": {
+    "message": "→ literal character, no formatting"
+  },
   "shortcuts_markdown_h1": {
     "message": "Heading H1"
   },
@@ -1202,6 +1214,9 @@
   },
   "shortcuts_markdown_toggle": {
     "message": "→ Toggle list"
+  },
+  "shortcuts_pasteMd": {
+    "message": "→ pasted Markdown becomes formatting"
   },
   "shortcuts_qc_capture": {
     "message": "→ add and clear the field"
@@ -1609,6 +1624,15 @@
   },
   "typeToggle_zen_title": {
     "message": "Zen — overdue and today only · Alt+Z"
+  },
+  "validation_contentTooLong": {
+    "message": "Note exceeded $MAX$ KB — the end of the content was not saved.",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
   },
   "validation_empty": {
     "message": "Field cannot be empty"

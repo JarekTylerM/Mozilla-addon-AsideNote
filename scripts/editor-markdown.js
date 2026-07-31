@@ -24,6 +24,10 @@
    niż ratują składnię.
    ══════════════════════════════════════════════════════════════ */
 
+// safeHref jest czysty (URL API + regex, zero DOM), więc import nie psuje
+// testowalności tego modułu w Node. Jedna definicja blokowanych schematów.
+import { safeHref } from "./sanitize.js";
+
 const BLOCK_TAGS = new Set([
   "P",
   "DIV",
@@ -283,4 +287,303 @@ function _wrap(node, marker) {
   const m = inner.match(/^(\s*)([\s\S]*?)(\s*)$/);
   if (!m || !m[2]) return inner; // sam whitespace — bez markerów
   return m[1] + marker + m[2] + marker + m[3];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Kierunek odwrotny: Markdown → HTML (wklejanie)
+
+   Powód: htmlToMarkdown pozwalał skopiować notatkę jako Markdown, ale
+   wklejenie Markdownu dawało dosłowny tekst "## Tytuł". Obieg działał
+   tylko w jedną stronę.
+
+   Czysta transformacja string → string. Wynik i tak przechodzi przez
+   sanitizeHTML w handlerze paste (defense in depth), ale tekst escapujemy
+   już tutaj — moduł nigdy nie produkuje znaczników, których nie zamierzał.
+
+   Zakres = to, co edytor umie pokazać (ALLOWED_TAGS w sanitize.js).
+   Nagłówki H4-H6 spłaszczamy do H3, bo wyżej ich nie ma. Tabele i obrazy
+   zostają tekstem — świadomie, patrz komentarz przy whiteliście.
+   ══════════════════════════════════════════════════════════════ */
+
+/**
+ * Escapuje tekst do wstawienia w HTML — również w atrybut.
+ *
+ * Apostrof jest tu celowo, mimo że wszystkie atrybuty budujemy
+ * w cudzysłowach podwójnych: to założenie nie jest nigdzie wymuszone
+ * i pierwsza zmiana na `href='…'` zrobiłaby z tego wyjście z atrybutu.
+ *
+ * @param {string} s
+ */
+function _esc(s) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+const CALLOUT_TYPES = ["note", "tip", "important", "warning", "caution"];
+
+const RX_FENCE = /^[ \t]*(```|~~~)[ \t]*(\w+)?[ \t]*$/;
+const RX_HR = /^[ \t]*([-*_])[ \t]*\1[ \t]*\1[-*_ \t]*$/;
+const RX_HEADING = /^[ \t]*(#{1,6})[ \t]+(.*)$/;
+const RX_QUOTE = /^[ \t]*>/;
+const RX_LINK = /\[[^\]]*\]\([^\s)]+\)/;
+
+/**
+ * Czy tekst wygląda na Markdown na tyle, żeby go konwertować.
+ *
+ * Wymagamy sygnału BLOKOWEGO na początku linii (nagłówek, lista, cytat,
+ * płot kodu, linia pozioma) albo linku. Samo `*coś*` w zdaniu nie
+ * wystarcza — inaczej zwykły tekst z gwiazdkami zamieniałby się przy
+ * wklejeniu w kursywę, o co nikt nie prosił.
+ *
+ * @param {string} text
+ * @returns {boolean}
+ */
+export function looksLikeMarkdown(text) {
+  if (!text) return false;
+  const block =
+    /^[ \t]*(#{1,6}[ \t]+\S|[-*+][ \t]+\S|\d+[.)][ \t]+\S|>[ \t]?\S|```|~~~)/m;
+  return block.test(text) || RX_HR.test(text) || RX_LINK.test(text);
+}
+
+/**
+ * Zamienia Markdown na HTML zgodny z edytorem.
+ * @param {string} text
+ * @returns {string}
+ */
+export function markdownToHtml(text) {
+  const lines = String(text ?? "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n");
+  /** @type {string[]} */
+  const out = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    const fence = line.match(RX_FENCE);
+    if (fence) {
+      const marker = fence[1];
+      const lang = fence[2] ?? "";
+      /** @type {string[]} */
+      const body = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== marker) {
+        body.push(lines[i]);
+        i++;
+      }
+      i++; // zamykający płot (albo koniec tekstu)
+      const attr = lang ? ` data-language="${_esc(lang)}"` : "";
+      out.push(`<pre><code${attr}>${_esc(body.join("\n"))}</code></pre>`);
+      continue;
+    }
+
+    if (RX_HR.test(line)) {
+      out.push("<hr>");
+      i++;
+      continue;
+    }
+
+    const h = line.match(RX_HEADING);
+    if (h) {
+      const level = Math.min(h[1].length, 3); // H4-H6 → H3
+      out.push(`<h${level}>${_inlineMd(h[2].trim())}</h${level}>`);
+      i++;
+      continue;
+    }
+
+    if (RX_QUOTE.test(line)) {
+      /** @type {string[]} */
+      const body = [];
+      while (i < lines.length && RX_QUOTE.test(lines[i])) {
+        body.push(lines[i].replace(/^[ \t]*>[ \t]?/, ""));
+        i++;
+      }
+      const cal = (body[0] ?? "").match(/^\[!(\w+)\][ \t]*(.*)$/);
+      if (cal && CALLOUT_TYPES.includes(cal[1].toLowerCase())) {
+        const label = cal[2].trim();
+        const rest = body.slice(1);
+        if (label) rest.unshift(label);
+        const attr = label ? ` data-callout-label="${_esc(label)}"` : "";
+        out.push(
+          `<blockquote data-callout="${cal[1].toLowerCase()}"${attr}>${_paras(rest)}</blockquote>`,
+        );
+      } else {
+        out.push(`<blockquote>${_paras(body)}</blockquote>`);
+      }
+      continue;
+    }
+
+    if (_listMatch(line)) {
+      const built = _buildList(lines, i);
+      out.push(built.html);
+      i = built.next;
+      continue;
+    }
+
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    /** @type {string[]} */
+    const para = [];
+    while (i < lines.length && lines[i].trim() && !_startsBlock(lines[i])) {
+      para.push(lines[i].trim());
+      i++;
+    }
+    out.push(`<p>${para.map(_inlineMd).join("<br>")}</p>`);
+  }
+
+  return out.join("");
+}
+
+/** Czy linia otwiera nowy blok — akapit musi się na niej urwać. @param {string} l */
+function _startsBlock(l) {
+  return (
+    !!_listMatch(l) ||
+    RX_QUOTE.test(l) ||
+    RX_HEADING.test(l) ||
+    RX_FENCE.test(l) ||
+    RX_HR.test(l)
+  );
+}
+
+/** Akapity wewnątrz cytatu — puste linie rozdzielają. @param {string[]} lines */
+function _paras(lines) {
+  /** @type {string[]} */
+  const out = [];
+  /** @type {string[]} */
+  let buf = [];
+  const flush = () => {
+    if (buf.length) out.push(`<p>${buf.map(_inlineMd).join("<br>")}</p>`);
+    buf = [];
+  };
+  for (const l of lines) {
+    if (l.trim()) buf.push(l.trim());
+    else flush();
+  }
+  flush();
+  return out.join("") || "<p><br></p>";
+}
+
+/**
+ * Rozpoznaje element listy.
+ * @param {string} line
+ * @returns {{ indent: number, ordered: boolean, start: number, checked: boolean|null, text: string } | null}
+ */
+function _listMatch(line) {
+  const m = line.match(/^([ \t]*)(?:([-*+])|(\d+)[.)])[ \t]+(.*)$/);
+  if (!m) return null;
+  const task = m[4].match(/^\[([ xX])\][ \t]+(.*)$/);
+  return {
+    indent: m[1].replace(/\t/g, "  ").length,
+    ordered: !m[2],
+    start: m[3] ? parseInt(m[3], 10) : 1,
+    checked: task ? task[1].toLowerCase() === "x" : null,
+    text: task ? task[2] : m[4],
+  };
+}
+
+/**
+ * Buduje listę (z zagnieżdżeniem po wcięciu) od lines[start].
+ * @param {string[]} lines @param {number} start
+ * @returns {{ html: string, next: number }}
+ */
+function _buildList(lines, start) {
+  const first = /** @type {NonNullable<ReturnType<typeof _listMatch>>} */ (
+    _listMatch(lines[start])
+  );
+  const isChecklist = first.checked !== null;
+  const tag = first.ordered ? "ol" : "ul";
+  /** @type {string[]} */
+  const items = [];
+  let i = start;
+
+  while (i < lines.length) {
+    const m = _listMatch(lines[i]);
+    if (!m || m.indent < first.indent) break;
+
+    if (m.indent > first.indent) {
+      const nested = _buildList(lines, i);
+      // Podlista należy do POPRZEDNIEGO punktu. Wstawiona jako osobny <li>
+      // dałaby punkt bez własnej treści — czyli element nieedytowalny.
+      if (items.length) {
+        items[items.length - 1] = items[items.length - 1].replace(
+          /<\/li>$/,
+          `${nested.html}</li>`,
+        );
+      } else {
+        items.push(`<li><br>${nested.html}</li>`);
+      }
+      i = nested.next;
+      continue;
+    }
+
+    // Zmiana rodzaju listy na tym samym poziomie kończy tę listę
+    if (m.ordered !== first.ordered || (m.checked !== null) !== isChecklist) break;
+
+    const attr = m.checked === null ? "" : ` data-checked="${m.checked}"`;
+    items.push(`<li${attr}>${_inlineMd(m.text)}</li>`);
+    i++;
+  }
+
+  const attrs =
+    (isChecklist ? ' data-list="checklist"' : "") +
+    (first.ordered && first.start !== 1 ? ` start="${first.start}"` : "");
+  return { html: `<${tag}${attrs}>${items.join("")}</${tag}>`, next: i };
+}
+
+/**
+ * Inline: kod, linki, pogrubienie, kursywa, przekreślenie.
+ *
+ * Kod i escapowane znaki chowamy pod placeholdery, zanim ruszymy resztę —
+ * `*` w bloku kodu nie jest kursywą, a `\*` to literalna gwiazdka.
+ *
+ * @param {string} raw
+ * @returns {string}
+ */
+function _inlineMd(raw) {
+  /** @type {string[]} */
+  const stash = [];
+  // Znak NUL jako ogranicznik placeholdera — nie da się go wpisać z
+  // klawiatury ani wkleić z sensownego zrodla, wiec nie zderzy sie z trescia.
+  // Zapisany jako sekwencja ucieczki, nie surowy bajt w pliku.
+  const SENT = "\u0000";
+  const keep = (/** @type {string} */ html) =>
+    SENT + (stash.push(html) - 1) + SENT;
+
+  let s = String(raw);
+  s = s.split(SENT).join(""); // wklejony NUL nie może udawać placeholdera
+
+  // 1. kod inline — pierwszy, chroni swoją treść przed dalszymi regułami
+  s = s.replace(/`([^`]+)`/g, (_m, c) => keep(`<code>${_esc(c)}</code>`));
+  // 2. escapowane znaki markdown → literał (też odkładany na bok)
+  s = s.replace(/\\([\\`*_~[\]()#+\-.!>])/g, (_m, c) => keep(_esc(c)));
+  // 3. dopiero teraz reszta jest bezpieczna do escapowania HTML
+  s = _esc(s);
+  // 4. linki — schemat walidujemy TUTAJ, nie tylko w sanitizeHTML.
+  // Wcześniej bezpieczeństwo opierało się na tym, że każdy caller pamięta
+  // o sanitizerze; to był kontrakt nigdzie niezapisany. Odrzucony URL
+  // (javascript:, data:, …) zostaje zwykłym tekstem, nie linkiem.
+  s = s.replace(/\[([^\]]*)\]\(([^\s)]+)\)/g, (_m, t, href) => {
+    const safe = safeHref(href);
+    if (!safe) return t || href;
+    return `<a href="${_esc(safe)}">${t || _esc(safe)}</a>`;
+  });
+  // 5. emfaza — od najdłuższych markerów do najkrótszych
+  s = s.replace(/\*\*\*(\S(?:[^*]*\S)?)\*\*\*/g, "<strong><em>$1</em></strong>");
+  s = s.replace(/___(\S(?:[^_]*\S)?)___/g, "<strong><em>$1</em></strong>");
+  s = s.replace(/\*\*(\S(?:[^*]*\S)?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__(\S(?:[^_]*\S)?)__/g, "<strong>$1</strong>");
+  s = s.replace(/~~(\S(?:[^~]*\S)?)~~/g, "<s>$1</s>");
+  s = s.replace(/\*(\S(?:[^*]*\S)?)\*/g, "<em>$1</em>");
+  s = s.replace(/(^|[^\w_])_(\S(?:[^_]*\S)?)_(?![\w_])/g, "$1<em>$2</em>");
+
+  const restore = new RegExp(SENT + "(\\d+)" + SENT, "g");
+  return s.replace(restore, (_m, n) => stash[Number(n)]);
 }

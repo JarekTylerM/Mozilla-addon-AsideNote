@@ -271,6 +271,11 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
   max-height: none;
   flex: 1;
   min-height: 0;
+  /* W tym trybie #tag-selector jest ukryty, więc rezerwa pod pływający
+     pasek nie ma się o co oprzeć — lista sięga samego dołu. Bez tego
+     paddingu ostatni element listy chowa się pod przyciskami i nie da się
+     go doscrollować. */
+  padding-bottom: var(--bottom-bar-clear);
 }
 
 #main-view.list-expanded .note-header,
@@ -293,7 +298,10 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
             │    ├─ #toolbar  (shrink: 0)
             │    └─ #editor   (flex: 1, height auto)
             └─ #tag-selector  (shrink: 0)
-   #bottom-bar jest position: fixed — padding-bottom: 52px chroni przed zasłonięciem.
+   #bottom-bar jest position: fixed. Nie chroni go już rezerwa w pionie —
+   wiersz tagów stoi z nim w jednej linii i odsuwa się w bok przez
+   padding-right: var(--bottom-bar-reserve). Tam, gdzie wiersza tagów nie ma
+   (list-expanded), rezerwę w pionie robi sama lista.
 */
 
 body.is-focus-mode {

@@ -7,7 +7,12 @@
  */
 
 import { test, expect, results } from './_runner.mjs';
-import { moveToTrash, restoreFromTrash, flippedType } from './notes-trash.mjs';
+import {
+  moveToTrash,
+  restoreFromTrash,
+  flippedType,
+  isDiscardableNote,
+} from './notes-trash.mjs';
 
 const mkNote = (id, over = {}) => ({
   id, type: 'note', title: 't-' + id, content: '', created: 1000, tags: [], ...over,
@@ -152,6 +157,61 @@ test('nie mutuje wejścia', () => {
   flippedType(note);
   expect(note.type).toBe('note');
   expect('completed' in note).toBe(false);
+});
+
+// ── isDiscardableNote ─────────────────────────────────────────────
+
+console.log('\n5. isDiscardableNote');
+
+const EMPTY = { textEmpty: true };
+
+test('pusta notatka bez śladu intencji → do wyrzucenia', () => {
+  expect(isDiscardableNote(mkNote('a'), EMPTY)).toBe(true);
+});
+
+test('jest tekst → zostaje', () => {
+  expect(isDiscardableNote(mkNote('a'), { textEmpty: false })).toBe(false);
+});
+
+// Wszystko poniżej to ślad decyzji użytkownika — notatka musi przetrwać,
+// nawet gdy nie ma w niej ani słowa.
+
+test('ma tag → zostaje', () => {
+  expect(isDiscardableNote(mkNote('a', { tags: ['praca'] }), EMPTY)).toBe(false);
+});
+
+test('ma termin → zostaje', () => {
+  expect(isDiscardableNote(mkNote('a', { due: 1785276000000 }), EMPTY)).toBe(false);
+});
+
+test('ma godzinę → zostaje', () => {
+  expect(isDiscardableNote(mkNote('a', { time: '14:30' }), EMPTY)).toBe(false);
+});
+
+test('oznaczona gwiazdką → zostaje', () => {
+  expect(isDiscardableNote(mkNote('a', { important: true }), EMPTY)).toBe(false);
+});
+
+test('oznaczona "w trakcie" → zostaje (focusIds żyje poza notatką)', () => {
+  expect(isDiscardableNote(mkNote('a'), { textEmpty: true, inFocus: true })).toBe(false);
+});
+
+test('puste pola nie liczą się jako intencja', () => {
+  const n = mkNote('a', { tags: [], due: null, time: null, important: false });
+  expect(isDiscardableNote(n, EMPTY)).toBe(true);
+});
+
+test('zadanie bez terminu też idzie do wyrzucenia', () => {
+  expect(isDiscardableNote(mkNote('a', { type: 'task', completed: false }), EMPTY)).toBe(true);
+});
+
+test('brak notatki → false, bez wyjątku', () => {
+  expect(isDiscardableNote(null, EMPTY)).toBe(false);
+  expect(isDiscardableNote(undefined, EMPTY)).toBe(false);
+});
+
+test('domyślnie inFocus=false — brak pola nie chroni notatki', () => {
+  expect(isDiscardableNote(mkNote('a'), { textEmpty: true })).toBe(true);
 });
 
 results();

@@ -31,6 +31,7 @@ import {
   CURRENT_SCHEMA,
   saveDeletedNotes,
   loadLastBackupBeforeImport,
+  clearLastBackupBeforeImport,
 } from "./storage.js";
 import { rescheduleAll } from "./alarms.js";
 import { t } from "./i18n.js";
@@ -43,6 +44,7 @@ import {
   MAX_TAG_NAME_LEN,
   MAX_IMPORT_NOTES,
   MAX_IMPORT_TAGS,
+  htmlToPreviewText,
 } from "./sanitize.js";
 /** @param {string} id @returns {HTMLElement} */
 const _byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -662,7 +664,7 @@ export async function initUndoImport(backupOverride = null) {
 
     await saveNotes(state.notes);
     await saveTags(tagState.tags);
-    await browser.storage.local.remove("_lastBackupBeforeImport");
+    await clearLastBackupBeforeImport();
 
     wrapper.hidden = true;
     renderList();
@@ -1026,6 +1028,17 @@ export function initUiSettings(settings) {
     };
   }
 
+  // Krój pisma
+  const fontSelect = _byInput("ui-font-select");
+  if (fontSelect) {
+    fontSelect.value = settings.fontFamily ?? "system";
+    _applyFont(settings.fontFamily ?? "system");
+    fontSelect.onchange = () => {
+      _applyFont(fontSelect.value);
+      saveUiSettings({ fontFamily: fontSelect.value });
+    };
+  }
+
   // Color scheme
   _applyColorScheme(settings.colorScheme ?? "auto");
   _initSchemeToggle(settings.colorScheme ?? "auto");
@@ -1034,6 +1047,24 @@ export function initUiSettings(settings) {
 /** @param {boolean} show */
 function _applyToolbar(show) {
   _byId("toolbar").hidden = !show;
+}
+
+/**
+ * Ustawia krój interfejsu. Podmieniamy atrybut, nie style — reszta idzie
+ * przez token --font-ui w tokens.css, więc sidebar i popup zmieniają się
+ * razem, bez dublowania listy fontów w JS.
+ *
+ * Gdy pliku Lexenda nie ma w paczce, @font-face nie zadziała i zostaje
+ * fallback systemowy — przełącznik nigdy nie zostawia pustego interfejsu.
+ *
+ * @param {string} value "system" albo "lexend"
+ */
+function _applyFont(value) {
+  if (value === "lexend") {
+    document.documentElement.dataset.font = "lexend";
+  } else {
+    delete document.documentElement.dataset.font;
+  }
 }
 
 /** @param {number} value */
@@ -1329,12 +1360,13 @@ function _esc(s) {
     .replace(/'/g, "&#39;");
 }
 
-/** @param {string} html */
+/**
+ * Podgląd treści dla kosza. Korzysta ze wspólnego htmlToPreviewText —
+ * wcześniej była tu druga implementacja wycinająca tagi regexem, przez
+ * co encje HTML (&amp;, &lt;) zostawały nierozwinięte w podglądzie.
+ * @param {string} html
+ */
 function _contentPreview(html) {
-  if (!html) return "";
-  const text = html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const text = htmlToPreviewText(html).replace(/\n/g, " ");
   return text.length > 120 ? text.slice(0, 120) + "…" : text;
 }

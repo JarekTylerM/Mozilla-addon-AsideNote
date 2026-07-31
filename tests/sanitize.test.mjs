@@ -18,6 +18,7 @@ import {
   MAX_TAG_NAME_LEN,
   MAX_CONTENT_LEN,
   MAX_ID_LEN,
+  htmlToPreviewText,
 } from './sanitize.mjs';
 
 // jsdom dostarcza DOMParser — sanitizeHTML używa go dopiero przy wywołaniu,
@@ -542,6 +543,63 @@ test('form/input → tagi usunięte', () => {
   expect(out.includes('<form')).toBe(false);
   expect(out.includes('<input')).toBe(false);
   expect(out).toContain('tekst');
+});
+
+// ── htmlToPreviewText ─────────────────────────────────────────────
+
+console.log('\n7. htmlToPreviewText');
+
+test('akapity dostają własne linie, nie sklejają się', () => {
+  // textContent dawał tu "PierwszaDruga" — słowa zlepione bez separatora
+  expect(htmlToPreviewText('<p>Pierwsza</p><p>Druga</p>')).toBe('Pierwsza\nDruga');
+});
+
+test('punkty listy w osobnych liniach', () => {
+  expect(htmlToPreviewText('<ul><li>mleko</li><li>chleb</li></ul>')).toBe('mleko\nchleb');
+});
+
+test('podlista nie skleja się z tekstem swojego punktu', () => {
+  expect(htmlToPreviewText('<ol><li>raz<ul><li>pod</li></ul></li><li>dwa</li></ol>')).toBe(
+    'raz\npod\ndwa',
+  );
+});
+
+test('<br> łamie linię', () => {
+  expect(htmlToPreviewText('A<br>B')).toBe('A\nB');
+});
+
+test('nagłówek, cytat i toggle łamią', () => {
+  expect(htmlToPreviewText('<h1>N</h1><p>a</p>')).toBe('N\na');
+  expect(htmlToPreviewText('<blockquote><p>c</p></blockquote><p>d</p>')).toBe('c\nd');
+  expect(htmlToPreviewText('<details><summary>S</summary><p>t</p></details>')).toBe('S\nt');
+});
+
+test('inline NIE łamie linii', () => {
+  expect(htmlToPreviewText('<p>tekst <strong>gruby</strong> dalej</p>')).toBe(
+    'tekst gruby dalej',
+  );
+});
+
+test('puste akapity nie produkują pustych linii', () => {
+  expect(htmlToPreviewText('<p>a</p><p></p><p></p><p>b</p>')).toBe('a\nb');
+});
+
+test('encje HTML są rozwijane (regex-owy strip tagów tego nie robił)', () => {
+  expect(htmlToPreviewText('<p>a &amp; b &lt; c</p>')).toBe('a & b < c');
+});
+
+test('wielokrotne spacje zwijane do jednej', () => {
+  expect(htmlToPreviewText('<p>a    b</p>')).toBe('a b');
+});
+
+test('nic nie wykonuje się przy parsowaniu', () => {
+  expect(htmlToPreviewText('<img src=x onerror=alert(1)>tekst')).toBe('tekst');
+});
+
+test('puste i niepoprawne wejście → pusty string', () => {
+  expect(htmlToPreviewText('')).toBe('');
+  expect(htmlToPreviewText(null)).toBe('');
+  expect(htmlToPreviewText(undefined)).toBe('');
 });
 
 // ── WYNIKI ────────────────────────────────────────────────────────

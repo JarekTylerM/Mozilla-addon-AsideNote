@@ -25,6 +25,7 @@ import {
   renderList,
   selectNote,
   saveActiveNote,
+  discardEmptyActiveNote,
   deleteActiveNote,
   updateDeleteState,
   debouncedSave,
@@ -68,7 +69,12 @@ import {
   syncReminder,
   updateDueDisplay,
 } from "./date-picker.js";
-import { validateText, MAX_TITLE_LEN, isValidId } from "./sanitize.js";
+import {
+  validateText,
+  MAX_TITLE_LEN,
+  MAX_CONTENT_LEN,
+  isValidId,
+} from "./sanitize.js";
 import * as undo from "./undo.js";
 import { initOnboarding, initOnboardingPanel } from "./onboarding.js";
 
@@ -264,6 +270,8 @@ function _resetForm(type) {
     _setListExpanded(false);
     saveUiSettings({ listExpanded: false });
   }
+  // "Nowa notatka" porzuca bieżącą — jeśli była pusta, nie ma po co zostawać
+  discardEmptyActiveNote();
   state.activeId = null;
   state.pendingType = type;
   titleInput.value = "";
@@ -281,6 +289,9 @@ _byId("new-task").onclick = () => _resetForm("task");
 
 function _collapseEditor() {
   const prevId = state.activeId;
+  // Kolejność: najpierw sprzątanie, potem zapis. Odwrotnie zapisalibyśmy
+  // pustą notatkę tylko po to, żeby ją zaraz usunąć.
+  discardEmptyActiveNote();
   // Zapisz synchronicznie przed wyczyszczeniem — debounce (600ms) mógł
   // nie zdążyć odpalić gdy user szybko kliknie collapse po ostatnim znaku
   saveActiveNote();
@@ -343,6 +354,33 @@ titleInput.addEventListener("input", () => {
 
   debouncedSave();
   updateNoteStatus();
+});
+
+/* ── Edytor: limit długości treści ────────────────────────────────
+   Twarde przycięcie robi notes.js::saveActiveNote (jedno miejsce, jak
+   przy tytule) i stamtąd leci to zdarzenie. Tutaj tylko komunikat —
+   bez niego notatka traciłaby końcówkę bez słowa. */
+
+const contentError = /** @type {HTMLElement|null} */ (
+  document.getElementById("content-error")
+);
+
+document.addEventListener("noteContentTruncated", () => {
+  if (!contentError) return;
+  contentError.textContent = t("validation_contentTooLong", [
+    String(Math.floor(MAX_CONTENT_LEN / 1000)),
+  ]);
+  contentError.hidden = false;
+});
+
+// Komunikat znika, gdy treść wróci pod limit albo przy zmianie notatki
+editor.addEventListener("input", () => {
+  if (contentError && !contentError.hidden && editor.innerHTML.length <= MAX_CONTENT_LEN) {
+    contentError.hidden = true;
+  }
+});
+document.addEventListener("noteSelected", () => {
+  if (contentError) contentError.hidden = true;
 });
 
 /* ── Edytor: convert / important / focus / delete  */
