@@ -627,34 +627,6 @@ export function toggleFocus(id) {
 
 /* ── UI state sync ────────────────────────────── */
 
-export function updateNoteStatus() {
-  const el = document.getElementById("note-status");
-  if (!el) return;
-  const note = state.activeId
-    ? state.notes.find((n) => n.id === state.activeId)
-    : null;
-  const isTask = note ? note.type === "task" : state.pendingType === "task";
-  if (!state.activeId && isNoteEmpty()) {
-    el.innerHTML = "";
-    return;
-  }
-  const title = titleInput.value.trim();
-  const kindKey = isTask ? "noteStatus_kind_task" : "noteStatus_kind_note";
-  const kindStr = t(kindKey);
-  const _esc = (/** @type {string} */ s) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  if (title) {
-    el.innerHTML = `${_esc(t("noteStatus_editing", [kindStr]))}: <button type="button" class="note-status__title">\u00ab${_esc(title)}\u00bb</button>`;
-  } else {
-    el.innerHTML = `${_esc(t("noteStatus_editing", [kindStr]))}: <button type="button" class="note-status__title">\u00ab${_esc(t("noteStatus_noTitle"))}\u00bb</button> ${_esc(t("titleHint_short"))}`;
-  }
-
-  el.querySelector(".note-status__title")?.addEventListener("click", () => {
-    document.getElementById("title")?.focus();
-  });
-}
-
 /**
  * Czytelna etykieta cykliczności notatki ("" gdy brak).
  * Jedno źródło etykiety dla badge w edytorze i ikony ↺ na liście —
@@ -693,10 +665,9 @@ export function updateDeleteState() {
   _syncEditorActionButtons(activeNote);
   _syncTaskMeta(activeNote);
   _syncRecurrenceBadge(activeNote);
-  updateNoteStatus();
 }
 
-/* Przyciski akcji edytora: delete / convert / focus / important / collapse */
+/* Przyciski akcji edytora: delete / convert / focus / important */
 /** @param {Note|null} note */
 function _syncEditorActionButtons(note) {
   const deleteBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("delete"));
@@ -739,14 +710,6 @@ function _syncEditorActionButtons(note) {
     importantBtn.title = t(
       note?.important ? "important_remove_title" : "important_title",
     );
-  }
-
-  const collapseBtn = document.getElementById("collapse-editor-btn");
-  if (collapseBtn) {
-    const listExpanded = document
-      .getElementById("main-view")
-      ?.classList.contains("list-expanded");
-    collapseBtn.hidden = !!listExpanded;
   }
 }
 
@@ -957,7 +920,53 @@ export function renderList() {
   ) {
     const empty = document.createElement("div");
     empty.className = "notes-empty";
-    empty.textContent = t("list_empty");
+    const msg = document.createElement("span");
+    msg.className = "notes-empty__msg";
+    msg.textContent = t("list_empty");
+    // Pusta lista mówi, gdzie i co wpisać: wskazuje pole po jego napisie
+    // (tuż pod nim jest wyszukiwarka, więc "pole u góry" byłoby niejasne)
+    // i pokazuje dwa konkretne wpisy z wynikiem. `!` to prefiks wpisywany w
+    // tekst, nie klawisz — stąd przykład zamiast kafelka klawisza.
+    const lead = document.createElement("p");
+    lead.className = "notes-empty__lead";
+    lead.textContent = t("list_empty_lead");
+
+    const examples = document.createElement("ul");
+    examples.className = "notes-empty__examples";
+    for (const [exKey, resultKey] of [
+      ["list_empty_ex_note", "list_empty_ex_note_result"],
+      ["list_empty_ex_task", "list_empty_ex_task_result"],
+    ]) {
+      const li = document.createElement("li");
+      // Klik wstawia przykład do pola szybkiego dodawania (bez zapisu) —
+      // pod polem od razu pokazuje się podgląd, Enter dodaje
+      const ex = document.createElement("button");
+      ex.type = "button";
+      ex.className = "notes-empty__example";
+      ex.textContent = t(exKey);
+      ex.title = t("list_empty_ex_insert_title");
+      ex.addEventListener("click", () => {
+        const qc = /** @type {HTMLInputElement|null} */ (
+          document.getElementById("quick-capture")
+        );
+        if (!qc) return;
+        qc.value = t(exKey);
+        qc.focus();
+        qc.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      const result = document.createElement("span");
+      result.className = "notes-empty__result";
+      result.textContent = t(resultKey);
+      li.append(ex, result);
+      examples.appendChild(li);
+    }
+
+    // Trzecia droga — okienko z paska narzędzi, działa z dowolnej karty
+    const popupHint = document.createElement("p");
+    popupHint.className = "notes-empty__aside";
+    popupHint.textContent = t("list_empty_popup");
+
+    empty.append(msg, lead, examples, popupHint);
     notesList.appendChild(empty);
     updateDeleteState();
     _updateNewItemHint();
@@ -1119,6 +1128,10 @@ function _renderSection(key, items) {
   const header = document.createElement("button");
   header.className =
     "section-header" + (isCollapsed ? " section-header--collapsed" : "");
+  // Zaległe są domyślnie zwinięte (mniej presji), ale wtedy jedynym śladem
+  // jest licznik — wyróżniony, żeby przeterminowane zadanie nie umknęło
+  if (key === "overdue" && items.length > 0)
+    header.classList.add("section-header--alert");
   header.dataset.section = key;
   // Czytniki ekranu muszą wiedzieć że nagłówek zwija/rozwija sekcję —
   // sam chevron tekstowy (▸/▾) tego nie komunikuje
@@ -1237,7 +1250,15 @@ function _renderNoteItem(note) {
   previewBtn.className = "note-item__preview icon--preview";
   previewBtn.setAttribute("aria-label", t("note_preview_ariaLabel"));
   titleWrapper.appendChild(previewBtn);
-  div.appendChild(titleWrapper);
+
+  // Tytuł i tagi dzielą jeden zawijany kontener: gdy się mieszczą, wiersz
+  // ma jedną linię; tagi schodzą pod tytuł dopiero, gdy brakuje miejsca.
+  // Wcześniej tagi zawsze stały w osobnej linii i podwajały wysokość
+  // każdego otagowanego wiersza.
+  const main = document.createElement("div");
+  main.className = "note-item__main";
+  main.appendChild(titleWrapper);
+  div.appendChild(main);
   _applyItemLabel(div, note);
 
   // Ikona recurrence — etykieta współdzielona z badge (patrz _recurrenceLabel)
@@ -1307,7 +1328,7 @@ function _renderNoteItem(note) {
       more.textContent = `+${tags.length - 2}`;
       row.appendChild(more);
     }
-    div.appendChild(row);
+    main.appendChild(row);
   }
   // Klawiatura i kliki — delegacja na #notesList (patrz niżej)
   notesList.appendChild(div);
@@ -1362,9 +1383,12 @@ notesList.addEventListener("click", (e) => {
     postponeToTomorrow(id);
   } else if (_target(e)?.closest(".note-item__delete")) {
     _deleteAndMoveFocus(id, item);
-  } else if (_target(e)?.closest(".note-item__preview")) {
-    // tylko hover tooltip — klik nie robi nic
-  } else if (_target(e)?.closest(".note-item__title")) {
+  } else {
+    // Cały wiersz otwiera notatkę — wcześniej tylko tekst tytułu, więc klik
+    // w wolne miejsce wiersza, termin albo tagi (kursor: pointer!) nic nie
+    // robił. Duży cel kliknięcia = szybsza praca w biegu (prawo Fittsa).
+    // Ikona podglądu też otwiera: jej rola to tooltip na hover, a martwy
+    // punkt w środku klikalnego wiersza tylko myli.
     selectNote(id);
   }
 });
@@ -1411,6 +1435,9 @@ notesList.addEventListener("keydown", (e) => {
       while (prev && !prev.classList.contains("note-item"))
         prev = prev.previousElementSibling;
       if (prev) /** @type {HTMLElement} */ (prev).focus();
+      // ↑ na pierwszym elemencie wraca do wyszukiwarki — domyka pętlę
+      // wyszukiwarka ↓ lista ↑ wyszukiwarka (patrz app.js)
+      else document.getElementById("search")?.focus();
       break;
     }
 

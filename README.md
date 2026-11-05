@@ -37,7 +37,7 @@ Dates are locale-aware: English recognises `tomorrow`, `today`, weekday names an
 
 **Reminders** via `alarms` + desktop `notifications`, with recurrence: daily, weekly, monthly, yearly, or a custom set of weekdays.
 
-**Focus mode**, **zen mode** (tasks only), collapsible sections (Today, Overdue, Done…), and per-note cursor resume — reopen a note and the caret is where you left it.
+**Two screens** — the list fills the panel; an open note gets the whole panel too, and `←` or `Esc` takes you back. **Zen mode** (tasks only), collapsible sections (Today, Overdue, Done…), and per-note cursor resume — reopen a note and the caret is where you left it.
 
 **Trash** — deleted notes are recoverable for 30 days (up to 50 items), then auto-expire.
 
@@ -129,6 +129,8 @@ Notes carry a `schemaVersion` (currently **3**). `loadNotes()` migrates older da
 
 ## Security model
 
+> Evaluating AsideNotes for company use? See **[docs/SECURITY.md](docs/SECURITY.md)** (Polish) — permissions, network isolation, residual risk and enterprise deployment, each claim with a way to verify it and guarded by `tests/security-surface.test.mjs`.
+
 Content is sanitised **on write**, not only on import — so whatever reaches storage is already clean. `selectNote()` re-sanitises on read anyway, as defence in depth against storage tampering via devtools.
 
 `sanitizeHTML()` parses into a detached `DOMParser` document (an `<img onerror=…>` never fires), then reduces anything outside the whitelist to its text content:
@@ -199,7 +201,7 @@ Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, nazwy dn
 
 **Przypomnienia** przez `alarms` + powiadomienia systemowe, z powtarzaniem: codziennie, co tydzień, co miesiąc, co rok lub we własnym zestawie dni tygodnia.
 
-**Tryb skupienia**, **tryb zen** (tylko zadania), zwijane sekcje (Dziś, Zaległe, Zrobione…) oraz wznawianie pozycji kursora — otwierasz notatkę i karetka stoi tam, gdzie ją zostawiłeś.
+**Dwa ekrany** — lista wypełnia panel; otwarta notatka też dostaje cały panel, a `←` lub `Esc` wraca na listę. **Tryb zen** (tylko zadania), zwijane sekcje (Dziś, Zaległe, Zrobione…) oraz wznawianie pozycji kursora — otwierasz notatkę i karetka stoi tam, gdzie ją zostawiłeś.
 
 **Kosz** — usunięte notatki można odzyskać przez 30 dni (do 50 elementów), potem wygasają automatycznie.
 
@@ -251,6 +253,8 @@ node build.mjs     # minifikacja + paczka
 `storage.js` i `sanitize.js` to celowe wąskie gardła. Persystencja i sanityzacja mają dokładnie po jednej implementacji; jeśli piszesz drugą — to jest ten bug.
 
 ## Model bezpieczeństwa
+
+> Ocena do użytku w firmie: **[docs/SECURITY.md](docs/SECURITY.md)** — uprawnienia, izolacja od sieci, ryzyko rezydualne i wdrożenie przez polityki Firefoksa; każde twierdzenie ze sposobem weryfikacji.
 
 Treść jest sanityzowana **przy zapisie**, nie tylko przy imporcie — dane w storage są zawsze czyste. `selectNote()` sanityzuje ponownie przy odczycie, jako defense-in-depth na wypadek manipulacji storage przez devtools.
 

@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
-   modes.css — zen mode, focus mode
-   Importuj jako ostatni — override reguły bazowe przez .zen-mode
-   i body.is-focus-mode.
+   modes.css — zen mode, ekran listy / ekran notatki
+   Importuj jako ostatni — override reguły bazowe przez .zen-mode,
+   #main-view.list-expanded i body.is-editing.
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Zen mode ─────────────────────────────── */
@@ -46,9 +46,7 @@
     #type-toggle-btn,
     #toolbar,
     #tag-selector,
-    .new-item-inline,
-    .focusmode-btn,
-    #collapse-editor-btn
+    .new-item-inline
   ) {
   opacity: var(--zen-dim, 0.5);
   transition: opacity var(--transition-slow) ease;
@@ -64,9 +62,7 @@
     #type-toggle-btn,
     #toolbar,
     #tag-selector,
-    .new-item-inline,
-    .focusmode-btn,
-    #collapse-editor-btn
+    .new-item-inline
   ):is(:hover, :focus-within) {
   opacity: 1;
 }
@@ -80,9 +76,6 @@
 }
 .zen-mode :is(#filter-btn, #type-toggle-btn) {
   --zen-dim: 0.2;
-}
-.zen-mode :is(.focusmode-btn, #collapse-editor-btn) {
-  --zen-dim: 0.15;
 }
 
 /* ── Wyjątki mechanizmu ──────────────────────────── */
@@ -119,10 +112,6 @@
   background: #fff0;
   color: var(--text-3);
   opacity: 0.5;
-}
-
-.zen-mode .status-row {
-  display: none;
 }
 
 .zen-mode .new-item-link {
@@ -262,20 +251,31 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
   min-height: 0;
 }
 
+/* W tym trybie #tag-selector jest ukryty, więc nic nie stoi w jednej linii
+   z pływającym #bottom-bar — ramka listy kończy się NAD paskiem, a pasek
+   ma własny pas u dołu. Wcześniej lista sięgała samego dołu: pasek
+   nachodził na róg ramki i na wiersz "Dodaj notatkę lub zadanie".
+     body padding-bottom (base.css):     29px
+     + ten padding:   52 + 6 − 29     =  29px
+     = dół ramki 58px nad krawędzią okna, pasek kończy się na 50,5px */
 #main-view.list-expanded .notes-list-wrapper {
   flex: 1;
   min-height: 0;
+  padding-bottom: calc(var(--bottom-bar-clear) + 6px - 29px);
 }
 
 #main-view.list-expanded #notesList {
   max-height: none;
   flex: 1;
   min-height: 0;
-  /* W tym trybie #tag-selector jest ukryty, więc rezerwa pod pływający
-     pasek nie ma się o co oprzeć — lista sięga samego dołu. Bez tego
-     paddingu ostatni element listy chowa się pod przyciskami i nie da się
-     go doscrollować. */
-  padding-bottom: var(--bottom-bar-clear);
+}
+
+/* Pusta lista w pełnej wysokości — komunikat na środku, nie przyklejony
+   do górnej krawędzi ogromnej pustej ramki */
+#main-view.list-expanded #notesList:has(> .notes-empty:only-child) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 #main-view.list-expanded .note-header,
@@ -286,83 +286,55 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
   display: none !important;
 }
 
-/* ── Focus mode ──────────────────────────── */
+/* ── Ekran notatki (body.is-editing) ─────────
+   Drugi z dwóch ekranów panelu (app.js: "Dwa ekrany"). Notatka dostaje
+   całą wysokość; szybkie dodawanie, szukanie i lista są schowane, powrót
+   przez ← w nagłówku albo Esc. Zastąpił widok pośredni (lista ~30% +
+   edytor) i osobny tryb skupienia (ikona w rogu, Alt+M).
 
-/*
    Layout pionowy (flex column od body w dół):
-     body (flex column, 100vh, padding 0)
-       └─ #main-view (flex: 1, column, overflow hidden)
+     body (flex column, 100vh — base.css)
+       └─ #main-view (flex: 1, column, overflow hidden — list.css)
             ├─ .note-header   (shrink: 0)
             ├─ #due-wrapper   (shrink: 0, opcjonalny)
             ├─ #editor-container (flex: 1, min-height: 0)
             │    ├─ #toolbar  (shrink: 0)
-            │    └─ #editor   (flex: 1, height auto)
+            │    └─ #editor   (flex: 1)
             └─ #tag-selector  (shrink: 0)
-   #bottom-bar jest position: fixed. Nie chroni go już rezerwa w pionie —
-   wiersz tagów stoi z nim w jednej linii i odsuwa się w bok przez
-   padding-right: var(--bottom-bar-reserve). Tam, gdzie wiersza tagów nie ma
-   (list-expanded), rezerwę w pionie robi sama lista.
-*/
+   #bottom-bar jest position: fixed; wiersz tagów stoi z nim w jednej linii
+   i odsuwa się w bok przez padding-right: var(--bottom-bar-reserve)
+   (tags.css). Dolny padding body (base.css) liczy ten układ. */
 
-body.is-focus-mode {
-  padding: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-body.is-focus-mode #main-view {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding-bottom: 52px;
-}
-
-/* ZAMIEŃ: */
-body.is-focus-mode .quick-capture,
-body.is-focus-mode .search-row,
-body.is-focus-mode #active-filters,
-body.is-focus-mode #filter-bar,
-body.is-focus-mode #type-toggle,
-body.is-focus-mode .notes-list-wrapper,
-body.is-focus-mode .status-row {
+body.is-editing .quick-capture,
+body.is-editing .quick-capture-preview,
+body.is-editing .search-row,
+body.is-editing #active-filters,
+body.is-editing #filter-bar,
+body.is-editing #type-toggle,
+body.is-editing .notes-list-wrapper {
   display: none !important;
 }
 
-body.is-focus-mode .note-header {
+body.is-editing .note-header {
   flex-shrink: 0;
-  padding-inline: 8px;
+  margin-top: 0;
 }
-body.is-focus-mode #title-error {
+body.is-editing #title-error,
+body.is-editing #due-wrapper {
   flex-shrink: 0;
-  padding-inline: 8px;
-}
-body.is-focus-mode #due-wrapper {
-  flex-shrink: 0;
-  padding-inline: 8px;
 }
 
 #editor-container {
   position: relative;
-  transition:
-    border-radius var(--transition-slow) ease,
-    margin var(--transition-slow) ease;
 }
-body.is-focus-mode #editor-container {
+body.is-editing #editor-container {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  margin: 0;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
 }
 
-body.is-focus-mode #editor {
+body.is-editing #editor {
   flex: 1;
   min-height: 0;
   height: auto !important;
@@ -370,43 +342,8 @@ body.is-focus-mode #editor {
   overflow-y: auto;
 }
 
-body.is-focus-mode #tag-selector {
+body.is-editing #tag-selector {
   flex-shrink: 0;
-}
-
-/* Przyciski w rogu edytora */
-.focusmode-btn {
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
-  z-index: var(--z-editor-btn);
-  opacity: 0.4;
-  transition:
-    opacity var(--transition),
-    background-color var(--transition);
-}
-.focusmode-btn:hover {
-  opacity: 1 !important;
-}
-body.is-focus-mode .focusmode-btn {
-  opacity: 0.5;
-}
-
-#collapse-editor-btn {
-  position: absolute;
-  bottom: 6px;
-  right: 36px;
-  z-index: var(--z-editor-btn);
-  opacity: 0.4;
-  transition:
-    opacity var(--transition),
-    background-color var(--transition);
-}
-#collapse-editor-btn:hover {
-  opacity: 1 !important;
-}
-body.is-focus-mode #collapse-editor-btn {
-  opacity: 0.5;
 }
 
 #main-view.no-transition *,

@@ -323,7 +323,7 @@ const STEPS = [
     side: 'bottom',
   },
 
-  // ── Lekcja 5: Tryby skupienia — zen i focus mode, tam i z powrotem ──
+  // ── Lekcja 5: Tryby skupienia — zen tam i z powrotem, ekran notatki ──
   // Klasa zen-mode żyje na #main-view (nie na body) — patrz notes.js renderList
   {
     stage: 5, idx: 0,
@@ -362,33 +362,22 @@ const STEPS = [
     side: 'right',
   },
   {
+    // Notatka otwiera się na całą wysokość panelu (body.is-editing) —
+    // krok uczy drogi powrotu: ← w nagłówku albo Esc
     stage: 5, idx: 3,
-    target: '#focusmode-btn',
+    target: '#back-btn',
     textKey: 'ob_s5_4',
     type: 'try',
     await: {
       type: 'mutation',
       selector: 'body',
       options: { attributes: true, attributeFilter: ['class'] },
-      check: (muts, el) => el.classList.contains('is-focus-mode'),
+      check: (muts, el) => !el.classList.contains('is-editing'),
     },
-    side: 'top',
+    side: 'bottom',
   },
   {
     stage: 5, idx: 4,
-    target: '#focusmode-btn',
-    textKey: 'ob_s5_5',
-    type: 'try',
-    await: {
-      type: 'mutation',
-      selector: 'body',
-      options: { attributes: true, attributeFilter: ['class'] },
-      check: (muts, el) => !el.classList.contains('is-focus-mode'),
-    },
-    side: 'top',
-  },
-  {
-    stage: 5, idx: 5,
     target: null,
     textKey: 'ob_done_s5',
     type: 'done',
@@ -404,11 +393,13 @@ const STEPS = [
     side: 'bottom',
   },
   {
+    // revealHidden — wiersz typów mógł zostać schowany (stan zapamiętany)
     stage: 6, idx: 1,
     target: '#type-toggle',
     textKey: 'ob_s6_2',
     type: 'show',
     side: 'bottom',
+    revealHidden: '#type-toggle',
   },
   {
     stage: 6, idx: 2,
@@ -629,19 +620,24 @@ function _show(stepIdx) {
   const idxInStage   = step.idx;
   const total        = stepsInStage.length;
 
-  // Resolve target
-  const targetEl =
-    typeof step.target === 'function'
-      ? step.target()
-      : step.target
-        ? document.querySelector(step.target)
-        : null;
-
   // Odkryj hidden element jeśli krok tego wymaga
   if (step.revealHidden) {
     const revealEl = /** @type {HTMLElement|null} */ (document.querySelector(step.revealHidden));
     if (revealEl) revealEl.hidden = false;
   }
+
+  // Resolve target — po revealHidden, żeby odkryty element miał już wymiary
+  const resolved =
+    typeof step.target === 'function'
+      ? step.target()
+      : step.target
+        ? document.querySelector(step.target)
+        : null;
+  // Element istnieje, ale nie jest wyrenderowany (np. edytor schowany, gdy
+  // lista zajmuje cały panel) — podświetlenie i tooltip trafiłyby w róg
+  // ekranu (0,0). Krok pokazujemy wtedy wyśrodkowany, jak krok bez celu.
+  const targetEl =
+    resolved && resolved.getClientRects().length > 0 ? resolved : null;
 
   // Podświetl
   _highlight(targetEl);

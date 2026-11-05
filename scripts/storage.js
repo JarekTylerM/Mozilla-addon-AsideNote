@@ -316,6 +316,7 @@ export async function loadUiSettings() {
     colorScheme: "auto",
     fontFamily: "system",
     showEditorPlaceholder: true,
+    fullToolbar: false,
     uiZoom: 100,
     zenMode: false,
     ...(res.uiSettings || {}),

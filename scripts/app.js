@@ -30,7 +30,6 @@ import {
   updateDeleteState,
   debouncedSave,
   convertType,
-  updateNoteStatus,
   setDueDate,
   setDueTime,
   setReminder,
@@ -41,6 +40,7 @@ import {
   updateActiveFilters,
   setRecurrence,
   restoreDeletedNote,
+  isNoteEmpty,
 } from "./notes.js";
 
 import { tagState } from "./tags.js";
@@ -148,7 +148,6 @@ Promise.all([
       secWrapper.hidden = uiSettings.securityAcknowledged ?? false;
     if (secToggle) secToggle.checked = uiSettings.securityAcknowledged ?? false;
     _initSecurityBtn();
-    _initFocusModeBtn(uiSettings.focusMode ?? false);
     initOnboarding(uiSettings);
     initOnboardingPanel();
 
@@ -157,7 +156,11 @@ Promise.all([
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", () => renderList());
-    _setListExpanded(uiSettings.listExpanded ?? false);
+    // Start zawsze od ekranu listy — przy świeżym otwarciu sidebara nic nie
+    // jest otwarte. Dawne uiSettings.listExpanded / focusMode opisywały
+    // układy, których już nie ma (patrz "Dwa ekrany" niżej) — nie są czytane.
+    _showListScreen();
+    _setTypeToggleHidden(uiSettings.typeToggleHidden ?? false);
     if (uiSettings.zenMode) {
       state.zenMode = true;
       document.getElementById("zen-btn")?.classList.add("is-active");
@@ -263,13 +266,35 @@ document.addEventListener("reminderFromPicker", (e) => {
 
 /* ── + Notatka / + Zadanie (puste formularze) ──── */
 
+/* ── Dwa ekrany: lista ↔ notatka ──────────────────
+   Panel ma dokładnie dwa układy, zawsze jeden z nich:
+     • lista   — #main-view.list-expanded: szybkie dodawanie, szukanie,
+                 lista na pełną wysokość; edytor schowany
+     • notatka — body.is-editing: edytor na pełną wysokość z ← w nagłówku;
+                 szybkie dodawanie, szukanie i lista schowane
+   Wcześniej był też widok pośredni (lista ~30% + edytor pod nią) i osobny
+   "tryb skupienia" — w panelu szerokim na ~400px oba były za ciasne i
+   wymagały pamiętania, w którym z trzech stanów się jest. */
+
+const _backBtn = /** @type {HTMLElement|null} */ (document.getElementById("back-btn"));
+
+function _showListScreen() {
+  document.body.classList.remove("is-editing");
+  document.getElementById("main-view")?.classList.add("list-expanded");
+  if (_backBtn) _backBtn.hidden = true;
+}
+
+function _showEditorScreen() {
+  document.getElementById("main-view")?.classList.remove("list-expanded");
+  document.body.classList.add("is-editing");
+  if (_backBtn) _backBtn.hidden = false;
+}
+
+const _isEditorScreen = () => document.body.classList.contains("is-editing");
+
 /** @param {'note'|'task'} type */
 function _resetForm(type) {
-  const mainView = document.getElementById("main-view");
-  if (mainView?.classList.contains("list-expanded")) {
-    _setListExpanded(false);
-    saveUiSettings({ listExpanded: false });
-  }
+  _showEditorScreen();
   // "Nowa notatka" porzuca bieżącą — jeśli była pusta, nie ma po co zostawać
   discardEmptyActiveNote();
   state.activeId = null;
@@ -281,7 +306,6 @@ function _resetForm(type) {
   renderTagSelector();
   renderList();
   titleInput.focus();
-  _updateTitleHint();
 }
 
 _byId("new-note").onclick = () => _resetForm("note");
@@ -303,41 +327,44 @@ function _collapseEditor() {
   undo.reset("");
   updateDeleteState();
   renderList();
-
-  if (document.body.classList.contains("is-focus-mode")) {
-    const focusModeBtn = document.getElementById("focusmode-btn");
-    _setFocusMode(false, focusModeBtn);
-    saveUiSettings({ focusMode: false });
-  }
-  _setListExpanded(true);
-  saveUiSettings({ listExpanded: true });
+  _showListScreen();
 
   // Przywróć fokus na element z którego wyszliśmy
-  if (prevId) {
-    const el = document.querySelector(
-      `#notesList .note-item[data-id="${prevId}"]`,
-    );
-    if (el) /** @type {HTMLElement} */ (el).focus();
+  const el = prevId
+    ? /** @type {HTMLElement|null} */ (
+        document.querySelector(`#notesList .note-item[data-id="${prevId}"]`)
+      )
+    : null;
+  if (el) el.focus();
+  // Porzucony pusty wpis nie ma wiersza — fokus zostałby w schowanym polu
+  // tytułu/edytora, gdzie pisanie trafiałoby w niewidoczny formularz
+  else if (document.activeElement instanceof HTMLElement &&
+           document.activeElement.closest("#main-view") &&
+           document.activeElement.getClientRects().length === 0) {
+    document.activeElement.blur();
   }
 }
 
-document
-  .getElementById("collapse-editor-btn")
-  ?.addEventListener("click", _collapseEditor);
+// ← w nagłówku notatki — to samo co Esc
+_backBtn?.addEventListener("click", _collapseEditor);
 
-/* ── Edytor: tytuł — autosave + status live + walidacja długości ──── */
+// Ctrl+↑/↓ w edytorze (editor.js) wskazuje sąsiedni element listy. Lista
+// jest na ekranie notatki schowana, więc zamiast fokusu na niewidocznym
+// wierszu otwieramy sąsiednią notatkę od razu — przeglądanie bez powrotu.
+document.addEventListener("openAdjacentNote", (e) => {
+  const id = _detail(e)?.id;
+  if (!id || id === state.activeId) return;
+  selectNote(id);
+  editor.focus();
+});
+
+/* ── Edytor: tytuł — autosave + walidacja długości ──── */
 
 // Element komunikatu walidacji pod polem tytułu — musi istnieć w sidebar.html
 // (#title-error). Pojawia się gdy user przekroczy MAX_TITLE_LEN znaków.
 const titleError = /** @type {HTMLElement} */ (document.getElementById("title-error"));
-const titleHint = /** @type {HTMLElement} */ (document.getElementById("title-hint"));
-
-function _updateTitleHint() {
-  updateNoteStatus();
-}
 
 titleInput.addEventListener("input", () => {
-  _updateTitleHint();
   // Live walidacja długości — pokaż komunikat zanim user kliknie poza pole.
   // Sanityzacja control chars i twarde przycięcie do limitu dzieje się
   // w notes.js::saveActiveNote — tu tylko sygnał dla usera.
@@ -353,7 +380,6 @@ titleInput.addEventListener("input", () => {
   }
 
   debouncedSave();
-  updateNoteStatus();
 });
 
 /* ── Edytor: limit długości treści ────────────────────────────────
@@ -403,7 +429,17 @@ _byId("delete").onclick = () => {
   if (state.activeId) clearAlarm(state.activeId);
   deleteActiveNote();
   renderTagSelector();
+  _expandListIfIdle();
 };
+
+/* Po usunięciu otwartej notatki ekran notatki byłby pustą formą — wracamy
+   na listę. "Bezczynny" = brak otwartej notatki i pusty formularz.
+   pendingType się do tego nie nadaje: w spoczynku ma wartość "note". */
+function _expandListIfIdle() {
+  if (state.activeId || !isNoteEmpty()) return;
+  _showListScreen();
+  updateDeleteState();
+}
 
 /* ── Edytor: due date / time / reminder / clear ─ */
 
@@ -462,6 +498,40 @@ searchInput.addEventListener("input", (e) => {
   _debouncedSearchRender();
 });
 
+/* Wyszukiwarka ↔ lista bez myszy: ↓ przechodzi do pierwszego wyniku,
+   Enter otwiera pierwszy wynik, Esc czyści zapytanie (drugi Esc działa jak
+   dotąd — zamyka edytor). Pętla "Alt+S → wpisz → Enter" to najszybsza
+   droga do notatki w biegu. */
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown" || (e.key === "Enter" && !e.isComposing)) {
+    // Debounce renderu mógł jeszcze nie odpalić — lista musi już odpowiadać
+    // temu, co jest w polu, zanim wybierzemy "pierwszy wynik"
+    _debouncedSearchRender.flush();
+    const first = /** @type {HTMLElement|null} */ (
+      document.querySelector("#notesList .note-item")
+    );
+    if (!first?.dataset.id) return;
+    e.preventDefault();
+    if (e.key === "ArrowDown") {
+      first.focus();
+    } else {
+      selectNote(first.dataset.id);
+      setTimeout(() => titleInput.focus(), 50);
+    }
+    return;
+  }
+  if (e.key === "Escape" && searchInput.value) {
+    e.preventDefault();
+    // Nie przepuszczaj do globalnego Esc — ten zamknąłby otwartą notatkę
+    e.stopPropagation();
+    _debouncedSearchRender.cancel();
+    searchInput.value = "";
+    state.searchQuery = "";
+    if (searchClear) searchClear.hidden = true;
+    renderList();
+  }
+});
+
 searchClear?.addEventListener("click", () => {
   searchInput.value = "";
   state.searchQuery = "";
@@ -488,10 +558,19 @@ function _updateTypeToggleBtn() {
   typeToggleBtn.classList.add(TYPE_ICONS[state.filterType] ?? TYPE_ICONS.all);
 }
 
+/** @param {boolean} hidden */
+function _setTypeToggleHidden(hidden) {
+  if (typeToggleRow) typeToggleRow.hidden = hidden;
+  typeToggleBtn?.setAttribute("aria-expanded", String(!hidden));
+}
+
+// Ukrycie wiersza Wszystko/Notatki/Zadania jest zapamiętywane — kto raz go
+// schował, żeby odzyskać miejsce na listę, nie musi robić tego przy każdym
+// otwarciu sidebara. Ikona przycisku nadal pokazuje aktywny filtr typu.
 typeToggleBtn?.addEventListener("click", () => {
-  const isVisible = typeToggleRow && !typeToggleRow.hidden;
-  if (typeToggleRow) typeToggleRow.hidden = isVisible;
-  typeToggleBtn.setAttribute("aria-expanded", String(!isVisible));
+  const hide = !!typeToggleRow && !typeToggleRow.hidden;
+  _setTypeToggleHidden(hide);
+  saveUiSettings({ typeToggleHidden: hide });
 });
 
 document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((el) => {
@@ -730,19 +809,10 @@ document.querySelectorAll(".shortcuts-subtab").forEach((el) => {
 
 /* ── Tag selector się odświeża po wyborze ──────── */
 
-editor.addEventListener("input", _updateTitleHint);
-
+// Otwarcie notatki (klik, Enter, Shift+Enter w capture, popup) = ekran notatki
 document.addEventListener("noteSelected", () => {
-  const mainView = document.getElementById("main-view");
-  if (mainView?.classList.contains("list-expanded")) {
-    _setListExpanded(false);
-    saveUiSettings({ listExpanded: false });
-    // Po zmianie list-expanded odśwież stan przycisków — collapse-editor-btn
-    // musi wiedzieć że lista już nie jest rozszerzona
-    updateDeleteState();
-  }
+  _showEditorScreen();
   renderTagSelector();
-  _updateTitleHint();
 });
 
 document.addEventListener("forceSave", () => {
@@ -844,6 +914,19 @@ document.addEventListener("keydown", (e) => {
   // przestają działać z włączonym CapsLockiem (e.key = "C" zamiast "c")
   const altKey = e.altKey ? e.key?.toLowerCase() : null;
 
+  // Skróty prowadzące do elementów ekranu listy działają też z ekranu
+  // notatki — najpierw zamykają notatkę (autosave), inaczej fokus trafiałby
+  // w schowane pole i skrót nic by nie robił.
+  if (altKey && ["c", "t", "s", "f", "l"].includes(altKey) && _isEditorScreen()) {
+    _collapseEditor();
+    // Alt+L: _collapseEditor już ustawił fokus na wierszu, z którego
+    // przyszliśmy — dokładnie tam, gdzie Alt+L ma prowadzić
+    if (altKey === "l") {
+      e.preventDefault();
+      return;
+    }
+  }
+
   // Alt+C — fokus quick capture
   if (altKey === "c") {
     e.preventDefault();
@@ -906,13 +989,6 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Alt+M — toggle tryb skupienia (focus mode)
-  if (altKey === "m") {
-    e.preventDefault();
-    document.getElementById("focusmode-btn")?.click();
-    return;
-  }
-
   // Alt+K — kopiuj treść notatki jako Markdown
   if (altKey === "k") {
     e.preventDefault();
@@ -920,11 +996,14 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Esc — zwiń edytor gdy aktywny (tylko gdy focus NIE jest w edytorze)
+  // Esc — wróć na listę z ekranu notatki (gdy fokus NIE jest w edytorze;
+  // ten przypadek obsługuje gałąź "Escape — z edytora/tytułu" niżej).
+  // Warunkiem jest ekran, nie stan: pendingType w spoczynku to "note",
+  // więc dawne (activeId || pendingType) było prawdziwe także na liście.
   if (
     e.key === "Escape" &&
     !e.altKey &&
-    (state.activeId || state.pendingType) &&
+    _isEditorScreen() &&
     !editor.contains(document.activeElement) &&
     document.activeElement !== titleInput
   ) {
@@ -1013,62 +1092,8 @@ function _initSecurityBtn() {
   });
 }
 
-function _initFocusModeBtn(initialFocusMode = false) {
-  const btn = document.getElementById("focusmode-btn");
-  if (!btn) return;
-
-  // Przywróć stan z poprzedniej sesji — tylko gdy jest aktywna notatka.
-  // Przy ponownym otwarciu sidebara state.activeId jest null (świeży start)
-  // więc focus mode bez notatki dałby pusty fullscreen.
-  if (initialFocusMode && state.activeId) {
-    _setFocusMode(true, btn);
-  } else if (initialFocusMode && !state.activeId) {
-    // Wyczyść zapisany stan — nie ma co do czego wracać
-    saveUiSettings({ focusMode: false });
-  }
-
-  btn.addEventListener("click", () => {
-    const next = !document.body.classList.contains("is-focus-mode");
-    _setFocusMode(next, btn);
-    saveUiSettings({ focusMode: next });
-  });
-}
-
-/** @param {boolean} active @param {HTMLElement|null} btn */
-function _setFocusMode(active, btn) {
-  document.body.classList.toggle("is-focus-mode", active);
-  if (btn) {
-    btn.classList.toggle("icon--focusmode-enter", !active);
-    btn.classList.toggle("icon--focusmode-exit", active);
-    btn.title = t(active ? "focusMode_exit_title" : "focusMode_enter_title");
-    btn.setAttribute(
-      "aria-label",
-      t(active ? "focusMode_exit_ariaLabel" : "focusMode_enter_ariaLabel"),
-    );
-  }
-  const backBtn = document.getElementById("back-btn");
-  if (backBtn) backBtn.hidden = !active;
-}
-
-/** @param {boolean} active */
-function _setListExpanded(active) {
-  document
-    .getElementById("main-view")
-    ?.classList.toggle("list-expanded", active);
-}
-
-const backBtn = /** @type {HTMLElement} */ (document.getElementById("back-btn"));
-if (backBtn) {
-  backBtn.addEventListener("click", () => {
-    const focusModeBtn = document.getElementById("focusmode-btn");
-    if (document.body.classList.contains("is-focus-mode")) {
-      _setFocusMode(false, focusModeBtn);
-      saveUiSettings({ focusMode: false });
-    }
-  });
-}
-
 // clear tag after delete note or task from flist
 document.addEventListener("noteDeleted", () => {
   renderTagSelector();
+  _expandListIfIdle();
 });

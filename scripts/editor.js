@@ -23,11 +23,14 @@ import {
   decideBackspaceAction,
 } from './editor-block-analyzer.js';
 import {
-  _getListItem,
   _isCursorAtListStart,
-  _focusLi,
-  _indentListItem,
   _outdentListItem,
+  _indentListItems,
+  _outdentListItems,
+  _selectedListItems,
+  _normalizeListNesting,
+  _saveSelection,
+  _restoreSelection,
   _splitListItemKeepingNested,
   _splitBlockAtCaret,
   _mergeListItemBack,
@@ -43,6 +46,8 @@ import {
   MD_LINK_RX,
 } from './editor-pattern.js';
 import { isClickUpHTML, preprocessClickUp } from './editor-paste-clickup.js';
+import { normalizePastedHTML } from './editor-paste-normalize.js';
+import { insertPastedHTML } from './editor-paste-insert.js';
 import { initSlashMenu } from './editor-slash-menu.js';
 import {
   htmlToMarkdown,
@@ -524,7 +529,7 @@ function _tryInlineMarkdown(e) {
 
 function _initKeydown() {
   editor.addEventListener('keydown', (e) => {
-    // Ctrl+↑/↓ — wyjście z edytora na sąsiedni element listy
+    // Ctrl+↑/↓ — poprzednia / następna notatka z listy
     if (
       (e.ctrlKey || e.metaKey) &&
       (e.key === 'ArrowUp' || e.key === 'ArrowDown')
@@ -574,7 +579,7 @@ function _initKeydown() {
 
   // Toolbar active state — zarejestrowane w initToolbar()
 }
-/* ── Exit to list (Ctrl+↑/↓) ──────────────────── */
+/* ── Sąsiednia notatka (Ctrl+↑/↓) ─────────────── */
 
 /** @param {'prev'|'next'} direction */
 function _exitToList(direction) {
@@ -609,7 +614,13 @@ function _exitToList(direction) {
     target = direction === 'prev' ? items[items.length - 1] : items[0];
   }
 
-  /** @type {HTMLElement} */ (target).focus();
+  // Lista jest na ekranie notatki schowana (app.js: "Dwa ekrany") — fokus na
+  // niewidocznym wierszu nic by nie dał. app.js otwiera wskazaną notatkę.
+  document.dispatchEvent(
+    new CustomEvent('openAdjacentNote', {
+      detail: { id: /** @type {HTMLElement} */ (target).dataset.id },
+    }),
+  );
 }
 
 /* ── Force save (Ctrl+S) ──────────────────────── */
@@ -1547,10 +1558,25 @@ function _handleTab(e) {
   }
 
   // ── Tab w liście — indent/outdent ─────────────
-  const li = _getListItem();
-  if (!li) return;
+  if (!sel?.rangeCount) return;
+  // Listy wklejone jako <ul><li/><ul>…</ul></ul> najpierw naprawiamy —
+  // inaczej punkty w takiej podliście nie mają "rodzica" i Tab nic nie robi.
+  const saved = _saveSelection();
+  if (_normalizeListNesting(editor)) _restoreSelection(saved);
+
+  const items = _selectedListItems(sel.getRangeAt(0));
+  if (!items.length) return;
   e.preventDefault();
-  e.shiftKey ? _outdentListItem(li) : _indentListItem(li);
+  undo.checkpoint();
+  const changed = e.shiftKey
+    ? _outdentListItems(items)
+    : _indentListItems(items);
+  if (changed) {
+    undo.checkpoint();
+    // Przeniesienie węzłów nie wywołuje 'input' — bez tego wcięcie
+    // zapisywało się dopiero przy następnym naciśnięciu klawisza.
+    document.dispatchEvent(new Event('forceSave'));
+  }
 }
 
 /**
@@ -1849,6 +1875,14 @@ function _handleCtrl(e) {
       e.preventDefault();
       openLinkModal();
       break;
+    // Ctrl+\ — wyczyść formatowanie (jak w Google Docs / Notion). Przycisk
+    // Tx jest w podstawowym toolbarze schowany, więc skrót jest główną drogą.
+    case '\\':
+      e.preventDefault();
+      undo.checkpoint();
+      document.execCommand('removeFormat');
+      debouncedSave();
+      break;
   }
 }
 
@@ -1865,13 +1899,16 @@ function _initPaste() {
     const html = cd.getData('text/html');
     const plain = cd.getData('text/plain');
 
-    if (html) {
+    // W bloku kodu wklejamy zawsze czysty tekst — formatowanie nie ma tam sensu
+    if (html && !_caretInCodeBlock()) {
       const processed = isClickUpHTML(html) ? preprocessClickUp(html) : html;
       // Przycinaj PRZED sanityzacją — DOMParser w sanitizeHTML domknie
       // ucięte w połowie tagi; slice po sanityzacji zostawiał zepsuty HTML
       const raw = processed ?? html;
       const clipped = raw.length > MAX_PASTE ? raw.slice(0, MAX_PASTE) : raw;
-      const trimmed = sanitizeHTML(clipped);
+      // normalizePastedHTML: listy Outlooka, style → <strong>/<em>, tabele,
+      // opakowania stron — póki widać jeszcze style="", które sanityzacja wytnie
+      const trimmed = sanitizeHTML(normalizePastedHTML(clipped));
       // Limit węzłów DOM — zapobiega paste bomb z zagnieżdżonych tagów
       if (trimmed) {
         const tmp = document.createElement('div');
@@ -1937,99 +1974,14 @@ function _caretInCodeBlock() {
 }
 
 /**
- * Wstawia sanityzowany HTML w miejsce kursora przez Range API.
- * Bloki (ul/ol/p/h1-h3/blockquote/pre) wstawiane ZA bieżącym blokiem,
- * żeby uniknąć wstawiania bloków wewnątrz <p> (Firefox to odrzuca).
+ * Wstawia sanityzowany HTML w miejsce kursora (logika → editor-paste-insert.js).
+ * @param {string} html
  * @returns {boolean} true gdy wstawiono
  */
-/** @param {string} html @returns {boolean} */
 function _insertRichContent(html) {
-  const sel = /** @type {Selection} */ (window.getSelection());
-  if (!sel.rangeCount) return false;
-
-  // Strip clipboard metadata comments (<!--StartFragment--> etc.)
-  const stripped = html.replace(/<!--[\s\S]*?-->/g, '').trim();
-  if (!stripped) return false;
-
-  const tmp = document.createElement('div');
-  tmp.innerHTML = stripped;
-  if (!tmp.childNodes.length) return false;
-
-  const range = sel.getRangeAt(0);
-  range.deleteContents();
-
-  const BLOCK = new Set([
-    'UL',
-    'OL',
-    'P',
-    'H1',
-    'H2',
-    'H3',
-    'BLOCKQUOTE',
-    'PRE',
-    'DIV',
-    'HR',
-  ]);
-  const hasBlock = Array.from(tmp.childNodes).some(
-    (n) =>
-      n.nodeType === Node.ELEMENT_NODE &&
-      BLOCK.has(/** @type {Element} */ (n).tagName),
-  );
-
-  if (hasBlock) {
-    // Znajdź bezpośrednie dziecko editora gdzie jest kursor
-    /** @type {Node|null} */
-    let anchor = range.startContainer;
-    while (anchor && anchor.parentNode !== editor) anchor = anchor.parentNode;
-
-    const nodes = Array.from(tmp.childNodes)
-      .filter((n) => n.nodeType === Node.ELEMENT_NODE || (n.textContent ?? '').trim())
-      .map((n) => n.cloneNode(true));
-
-    if (anchor && anchor !== editor) {
-      let ref = /** @type {ChildNode} */ (anchor);
-      nodes.forEach((node) => {
-        ref.after(node);
-        ref = /** @type {ChildNode} */ (node);
-      });
-
-      // Usuń pusty blok-kontener jeśli cursor był w pustym <p>
-      const anchorEl = /** @type {HTMLElement} */ (anchor);
-      if (!(anchorEl.textContent ?? '').trim() && anchorEl.tagName === 'P')
-        anchorEl.remove();
-
-      const r = document.createRange();
-      r.setStartAfter(ref);
-      r.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(r);
-    } else {
-      nodes.forEach((n) => editor.appendChild(n));
-      const last = nodes[nodes.length - 1];
-      const r = document.createRange();
-      r.setStartAfter(last);
-      r.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(r);
-    }
-  } else {
-    // Inline (bold, italic, link, code) — wstaw w miejscu kursora
-    const frag = document.createDocumentFragment();
-    Array.from(tmp.childNodes).forEach((n) =>
-      frag.appendChild(n.cloneNode(true)),
-    );
-    const last = frag.lastChild;
-    range.insertNode(frag);
-    if (last) {
-      const r = document.createRange();
-      r.setStartAfter(last);
-      r.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(r);
-    }
-  }
-
+  if (!insertPastedHTML(editor, html)) return false;
   editor.focus();
+  undo.checkpoint(); // stan po wklejeniu — Ctrl+Z cofa całą wklejkę naraz
   debouncedSave();
   return true;
 }

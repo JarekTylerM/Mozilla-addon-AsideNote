@@ -17,8 +17,10 @@
    Walidacja pól: limit długości (DoS prevention) + odfiltrowanie
    kontrolnych Unicode (bidi spoofing, null bytes).
 
-   ALLOWED_TAGS: podzbiór tagów produkowanych przez edytor. Wszystko
-   spoza tej listy jest redukowane do textContent — bez wyjątków.
+   ALLOWED_TAGS: podzbiór tagów produkowanych przez edytor. Tag spoza
+   tej listy jest ROZPAKOWYWANY — znika sam znacznik, jego (oczyszczona)
+   zawartość zostaje. Wyjątek: DROPPED_TAGS (script, style, iframe…) —
+   te znikają razem z treścią, bo ich "tekst" to kod, nie treść notatki.
 
    ALLOWED_ATTRS: per-tag whitelist atrybutów. Żaden event handler
    (on*) nie przejdzie, bo nie ma go w żadnej liście.
@@ -389,10 +391,47 @@ export function safeHref(href) {
 }
 
 /**
+ * Tagi usuwane RAZEM z zawartością. Ich textContent to kod albo elementy
+ * interfejsu, nie treść: rozpakowany <style> z maila wkleiłby do notatki
+ * arkusz CSS, a <script> — kod JS. Reszta nieznanych tagów jest
+ * rozpakowywana (patrz _cleanNode).
+ */
+export const DROPPED_TAGS = new Set([
+  'SCRIPT',
+  'STYLE',
+  'TEMPLATE',
+  'NOSCRIPT',
+  'TITLE',
+  'HEAD',
+  'META',
+  'LINK',
+  'BASE',
+  'IFRAME',
+  'FRAME',
+  'FRAMESET',
+  'OBJECT',
+  'EMBED',
+  'APPLET',
+  'SVG',
+  'MATH',
+  'CANVAS',
+  'AUDIO',
+  'VIDEO',
+  'SELECT',
+  'TEXTAREA',
+  'INPUT',
+  'BUTTON',
+]);
+
+/**
  * Sanityzuje HTML string.
  * Zwraca string zawierający wyłącznie ALLOWED_TAGS z ALLOWED_ATTRS.
- * Wszystkie on* handlery, <script>, <iframe>, <object>, <embed>,
- * <form>, <input> etc. są usuwane (tag nieznany → jego textContent).
+ * Wszystkie on* handlery są usuwane (żaden nie jest na whiteliście).
+ * Tagi z DROPPED_TAGS znikają z treścią; pozostałe nieznane tagi
+ * (<section>, <font>, <o:p>…) są rozpakowywane — zawartość zostaje,
+ * oczyszczona tymi samymi regułami. Wcześniej nieznany tag zamieniał się
+ * w swój textContent, co spłaszczało całą wklejkę ze strony owiniętej
+ * w <article> do jednej linii bez formatowania.
  *
  * @param {string} html
  * @returns {string}
@@ -421,9 +460,23 @@ function _cleanNode(node, doc, depth) {
   for (let i = children.length - 1; i >= 0; i--) {
     const child = children[i];
 
-    if (!ALLOWED_TAGS.has(child.tagName) || depth >= MAX_SANITIZE_DEPTH) {
+    if (DROPPED_TAGS.has(child.tagName.toUpperCase())) {
+      child.remove();
+      continue;
+    }
+
+    if (depth >= MAX_SANITIZE_DEPTH) {
       // Użyj doc zamiast globalnego document — poprawny kontekst DOMParsera
       child.replaceWith(doc.createTextNode(child.textContent || ''));
+      continue;
+    }
+
+    if (!ALLOWED_TAGS.has(child.tagName)) {
+      // Najpierw oczyść wnętrze, potem zdejmij sam znacznik. Głębokość
+      // rośnie także dla rozpakowywanych tagów — inaczej 50 000
+      // zagnieżdżonych <font> ominęłoby limit rekurencji.
+      _cleanNode(child, doc, depth + 1);
+      child.replaceWith(...Array.from(child.childNodes));
       continue;
     }
 
@@ -439,7 +492,10 @@ function _cleanNode(node, doc, depth) {
     if (child.tagName === 'A') {
       const href = safeHref(child.getAttribute('href'));
       if (href === null) {
-        child.replaceWith(doc.createTextNode(child.textContent || ''));
+        // Kotwica bez adresu albo z groźnym schematem — zostaje sama
+        // treść, z formatowaniem (<a name="x"><b>Tytuł</b></a>).
+        _cleanNode(child, doc, depth + 1);
+        child.replaceWith(...Array.from(child.childNodes));
         continue;
       }
       child.setAttribute('href', href);
