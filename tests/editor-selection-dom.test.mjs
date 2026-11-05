@@ -26,6 +26,10 @@ import { test, expect, results } from './_runner.mjs';
 import {
   _indentListItem,
   _outdentListItem,
+  _indentListItems,
+  _outdentListItems,
+  _selectedListItems,
+  _normalizeListNesting,
   _splitListItemKeepingNested,
   _splitBlockAtCaret,
   _mergeListItemBack,
@@ -97,6 +101,135 @@ test('element najwyższego poziomu (brak li-rodzica) → no-op', () => {
   const ed = reset('<ul><li>one</li></ul>');
   _outdentListItem(ed.querySelector('li'));
   expect(ed.innerHTML).toBe('<ul><li>one</li></ul>');
+});
+
+test('FIX: środkowy podpunkt — punkty pod nim idą za nim (kolejność zachowana)', () => {
+  // Wcześniej: A › B, D, a potem C — D przeskakiwał nad C
+  const ed = reset('<ul><li>A<ul><li>B</li><li>C</li><li>D</li></ul></li></ul>');
+  const c = Array.from(ed.querySelectorAll('li')).find((l) => l.firstChild.textContent === 'C');
+  _outdentListItem(c);
+  expect(ed.innerHTML).toBe('<ul><li>A<ul><li>B</li></ul></li><li>C<ul><li>D</li></ul></li></ul>');
+});
+
+test('FIX: następniki dołączają do istniejącej podlisty wyciąganego punktu', () => {
+  const ed = reset('<ul><li>A<ul><li>B<ul><li>B1</li></ul></li><li>C</li></ul></li></ul>');
+  const b = Array.from(ed.querySelectorAll('li')).find((l) => l.firstChild.textContent === 'B');
+  _outdentListItem(b);
+  expect(ed.innerHTML).toBe('<ul><li>A</li><li>B<ul><li>B1</li><li>C</li></ul></li></ul>');
+});
+
+test('FIX: kursor zostaje w miejscu po wcięciu (nie skacze na początek)', () => {
+  const ed = reset('<ul><li>one</li><li>two</li></ul>');
+  const two = ed.querySelectorAll('li')[1];
+  setCaret(two.firstChild, 2);
+  _indentListItem(two);
+  const sel = window.getSelection();
+  expect(sel.anchorNode).toBe(two.firstChild);
+  expect(sel.anchorOffset).toBe(2);
+});
+
+test('wcięcie w checkliście → podlista też jest checklistą', () => {
+  const ed = reset(
+    '<ul data-list="checklist"><li data-checked="false">a</li><li data-checked="true">b</li></ul>',
+  );
+  _indentListItem(ed.querySelectorAll('li')[1]);
+  expect(ed.innerHTML).toBe(
+    '<ul data-list="checklist"><li data-checked="false">a<ul data-list="checklist"><li data-checked="true">b</li></ul></li></ul>',
+  );
+});
+
+// ── Wiele punktów naraz ───────────────────────────────────────────
+
+console.log('\n2b. Tab / Shift+Tab na zaznaczeniu wielu punktów');
+
+function selectText(startNode, startOffset, endNode, endOffset) {
+  const r = document.createRange();
+  r.setStart(startNode, startOffset);
+  r.setEnd(endNode, endOffset);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(r);
+  return r;
+}
+
+test('_selectedListItems: zaznaczenie B..D → trzy punkty', () => {
+  const ed = reset('<ul><li>A</li><li>B</li><li>C</li><li>D</li></ul>');
+  const lis = ed.querySelectorAll('li');
+  const r = selectText(lis[1].firstChild, 0, lis[3].firstChild, 1);
+  expect(_selectedListItems(r).map((l) => l.textContent)).toEqual(['B', 'C', 'D']);
+});
+
+test('_selectedListItems: rodzic zaznaczony → jego podpunkty pominięte', () => {
+  const ed = reset('<ul><li>A<ul><li>A1</li></ul></li><li>B</li></ul>');
+  const lis = ed.querySelectorAll('li');
+  const r = selectText(lis[0].firstChild, 0, lis[2].firstChild, 1);
+  expect(_selectedListItems(r).map((l) => l.firstChild.textContent)).toEqual(['A', 'B']);
+});
+
+test('FIX: Tab na zaznaczeniu B..D wcina wszystkie trzy', () => {
+  const ed = reset('<ul><li>A</li><li>B</li><li>C</li><li>D</li></ul>');
+  const lis = ed.querySelectorAll('li');
+  const r = selectText(lis[1].firstChild, 0, lis[3].firstChild, 1);
+  expect(_indentListItems(_selectedListItems(r))).toBe(true);
+  expect(ed.innerHTML).toBe('<ul><li>A<ul><li>B</li><li>C</li><li>D</li></ul></li></ul>');
+});
+
+test('Tab, gdy pierwszego zaznaczonego nie ma pod co wciąć → nic się nie zmienia', () => {
+  const ed = reset('<ul><li>A</li><li>B</li></ul>');
+  const lis = ed.querySelectorAll('li');
+  const r = selectText(lis[0].firstChild, 0, lis[1].firstChild, 1);
+  expect(_indentListItems(_selectedListItems(r))).toBe(false);
+  expect(ed.innerHTML).toBe('<ul><li>A</li><li>B</li></ul>');
+});
+
+test('FIX: Shift+Tab na zaznaczeniu B..C (bez D) → B, C wyżej, D pod C', () => {
+  const ed = reset('<ul><li>A<ul><li>B</li><li>C</li><li>D</li></ul></li></ul>');
+  const lis = Array.from(ed.querySelectorAll('li'));
+  const b = lis.find((l) => l.firstChild.textContent === 'B');
+  const c = lis.find((l) => l.firstChild.textContent === 'C');
+  const r = selectText(b.firstChild, 0, c.firstChild, 1);
+  expect(_outdentListItems(_selectedListItems(r))).toBe(true);
+  expect(ed.innerHTML).toBe('<ul><li>A</li><li>B</li><li>C<ul><li>D</li></ul></li></ul>');
+});
+
+test('zaznaczenie przeżywa operację (te same węzły i offsety)', () => {
+  const ed = reset('<ul><li>A</li><li>B</li><li>C</li></ul>');
+  const lis = ed.querySelectorAll('li');
+  const r = selectText(lis[1].firstChild, 0, lis[2].firstChild, 1);
+  _indentListItems(_selectedListItems(r));
+  const sel = window.getSelection().getRangeAt(0);
+  expect(sel.startContainer.textContent).toBe('B');
+  expect(sel.endContainer.textContent).toBe('C');
+  expect(sel.endOffset).toBe(1);
+});
+
+// ── _normalizeListNesting ─────────────────────────────────────────
+
+console.log('\n2c. _normalizeListNesting (ul wprost w ul)');
+
+test('lista w liście → podlista poprzedniego punktu', () => {
+  const ed = reset('<ul><li>A</li><ul><li>A1</li></ul><li>B</li></ul>');
+  expect(_normalizeListNesting(ed)).toBe(true);
+  expect(ed.innerHTML).toBe('<ul><li>A<ul><li>A1</li></ul></li><li>B</li></ul>');
+});
+
+test('po naprawie Tab działa na takim punkcie', () => {
+  const ed = reset('<ul><li>A</li><ul><li>A1</li><li>A2</li></ul></ul>');
+  _normalizeListNesting(ed);
+  const a2 = Array.from(ed.querySelectorAll('li')).find((l) => l.textContent === 'A2');
+  expect(_indentListItem(a2)).toBe(true);
+  expect(ed.innerHTML).toBe('<ul><li>A<ul><li>A1<ul><li>A2</li></ul></li></ul></li></ul>');
+});
+
+test('lista w liście bez poprzedniego punktu → punkt z <br> (edytowalny)', () => {
+  const ed = reset('<ul><ul><li>x</li></ul></ul>');
+  _normalizeListNesting(ed);
+  expect(ed.innerHTML).toBe('<ul><li><br><ul><li>x</li></ul></li></ul>');
+});
+
+test('poprawna struktura → false, bez zmian', () => {
+  const ed = reset('<ul><li>A<ul><li>B</li></ul></li></ul>');
+  expect(_normalizeListNesting(ed)).toBe(false);
 });
 
 // ── getCursorOffset / setCursorOffset ─────────────────────────────

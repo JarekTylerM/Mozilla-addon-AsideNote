@@ -52,12 +52,78 @@ export function _focusLi(li) {
   getEditor().focus();
 }
 
-/** @param {Element} li */
-export function _indentListItem(li) {
-  const prev = li.previousElementSibling;
-  if (!prev || prev.tagName !== "LI") return;
+/**
+ * @typedef {{ sc: Node, so: number, ec: Node, eo: number }} SavedSelection
+ */
 
-  const tag = li.parentElement?.tagName ?? "UL";
+/**
+ * Zapamiętuje zaznaczenie jako pary (węzeł, offset).
+ *
+ * Przeniesienie węzła w DOM to usunięcie + wstawienie, a usunięcie zwija
+ * żywe zakresy do rodzica — kursor w przenoszonym punkcie listy lądowałby
+ * poza nim. Same węzły tekstowe przeżywają przeniesienie, więc wystarczy
+ * po operacji ustawić zakres na nich ponownie.
+ *
+ * @returns {SavedSelection|null}
+ */
+export function _saveSelection() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+  const r = sel.getRangeAt(0);
+  return { sc: r.startContainer, so: r.startOffset, ec: r.endContainer, eo: r.endOffset };
+}
+
+/**
+ * Przywraca zaznaczenie z _saveSelection. Zwraca false, gdy węzły zniknęły
+ * z dokumentu (wtedy caller wybiera własny fallback).
+ * @param {SavedSelection|null} saved
+ * @returns {boolean}
+ */
+export function _restoreSelection(saved) {
+  if (!saved || !saved.sc.isConnected || !saved.ec.isConnected) return false;
+  const sel = window.getSelection();
+  if (!sel) return false;
+  try {
+    const r = document.createRange();
+    r.setStart(saved.sc, saved.so);
+    r.setEnd(saved.ec, saved.eo);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    return true;
+  } catch {
+    return false; // offset poza węzłem po mutacji — niech caller ustawi kursor
+  }
+}
+
+/**
+ * Przywraca zaznaczenie, a gdy się nie da — kursor na początek punktu.
+ * Fokus PRZED zakresem: focus() na nieaktywnym contenteditable potrafi
+ * przestawić kursor, więc ustawiony wcześniej zakres by przepadł.
+ * @param {SavedSelection|null} saved
+ * @param {Element} li
+ */
+function _restoreOrFocusLi(saved, li) {
+  getEditor()?.focus();
+  if (!_restoreSelection(saved)) _focusLi(li);
+}
+
+/**
+ * Wcięcie punktu pod poprzedni punkt.
+ *
+ * Kursor zostaje tam, gdzie był — wcześniej Tab przeskakiwał na początek
+ * punktu, co przy wcinaniu w trakcie pisania wybijało z rytmu.
+ *
+ * @param {Element} li
+ * @param {boolean} [manageSelection=true] false, gdy caller sam pilnuje zaznaczenia (operacja na wielu punktach)
+ * @returns {boolean} true, gdy punkt został przeniesiony
+ */
+export function _indentListItem(li, manageSelection = true) {
+  const prev = li.previousElementSibling;
+  if (!prev || prev.tagName !== "LI") return false;
+
+  const saved = manageSelection ? _saveSelection() : null;
+  const parentList = li.parentElement;
+  const tag = parentList?.tagName ?? "UL";
   // Reużyj istniejącej podlisty w prev: najpierw tego samego typu, a jeśli prev
   // ma już podlistę innego typu — dołącz do niej. Bez tego drugiego kroku
   // powstawały dwie równoległe listy (<ol> + <ul>) pod jednym elementem.
@@ -66,23 +132,171 @@ export function _indentListItem(li) {
     prev.querySelector(":scope > ul, :scope > ol");
   if (!nested) {
     nested = document.createElement(tag);
+    // Podlista checklisty jest checklistą — inaczej eksport do Markdown
+    // gubi stan [x] wciętych punktów.
+    const kind = parentList?.getAttribute("data-list");
+    if (kind) nested.setAttribute("data-list", kind);
     prev.appendChild(nested);
   }
 
   nested.appendChild(li);
-  _focusLi(li);
+  if (manageSelection) _restoreOrFocusLi(saved, li);
+  return true;
 }
 
-/** @param {Element} li */
-export function _outdentListItem(li) {
+/**
+ * Wyciągnięcie punktu poziom wyżej (za punkt-rodzica).
+ *
+ * Punkty, które stały POD wyciąganym, przechodzą do niego jako podpunkty.
+ * Wcześniej zostawały przy dawnym rodzicu, czyli wizualnie NAD wyciągniętym
+ * punktem — Shift+Tab na środku podlisty odwracał kolejność (A › B, C, D;
+ * Shift+Tab na C dawało A › B, D, a dopiero potem C).
+ *
+ * @param {Element} li
+ * @param {boolean} [manageSelection=true]
+ * @returns {boolean} true, gdy punkt został przeniesiony
+ */
+export function _outdentListItem(li, manageSelection = true) {
   const parentList = li.parentElement;
-  if (!parentList) return;
+  if (!parentList) return false;
   const parentLi = parentList.parentElement;
-  if (!parentLi || parentLi.tagName !== "LI") return;
+  if (!parentLi || parentLi.tagName !== "LI") return false;
+
+  const saved = manageSelection ? _saveSelection() : null;
+
+  /** @type {Element[]} */
+  const following = [];
+  for (let n = li.nextElementSibling; n; n = n.nextElementSibling) following.push(n);
+  if (following.length) {
+    let sub = li.querySelector(":scope > ul, :scope > ol");
+    if (!sub) {
+      sub = document.createElement(parentList.tagName.toLowerCase());
+      const kind = parentList.getAttribute("data-list");
+      if (kind) sub.setAttribute("data-list", kind);
+      li.appendChild(sub);
+    }
+    for (const f of following) sub.appendChild(f);
+  }
 
   parentLi.after(li);
   if (parentList.children.length === 0) parentList.remove();
-  _focusLi(li);
+  if (manageSelection) _restoreOrFocusLi(saved, li);
+  return true;
+}
+
+/** @param {Node} n */
+const _isListEl = (n) =>
+  n.nodeType === Node.ELEMENT_NODE &&
+  (/** @type {Element} */ (n).tagName === "UL" || /** @type {Element} */ (n).tagName === "OL");
+
+/**
+ * Punkty listy objęte zaznaczeniem — tylko "korzenie": punkt, którego
+ * przodek-punkt też jest zaznaczony, pomijamy, bo i tak przesunie się
+ * razem z nim.
+ *
+ * Punkt liczy się jako zaznaczony, gdy zakres dotyka jego WŁASNEJ treści
+ * (nie podlisty) — inaczej zaznaczenie podpunktów łapałoby też rodzica,
+ * który je zawiera.
+ *
+ * @param {Range} range
+ * @returns {Element[]} w kolejności dokumentu
+ */
+export function _selectedListItems(range) {
+  const ed = getEditor();
+  const startEl =
+    range.startContainer.nodeType === Node.TEXT_NODE
+      ? range.startContainer.parentElement
+      : /** @type {Element} */ (range.startContainer);
+  const caretLi = startEl?.closest("li") ?? null;
+
+  if (range.collapsed) return caretLi && ed.contains(caretLi) ? [caretLi] : [];
+
+  const hit = Array.from(ed.querySelectorAll("li")).filter((li) =>
+    Array.from(li.childNodes).some((n) => !_isListEl(n) && range.intersectsNode(n)),
+  );
+  if (!hit.length) return caretLi && ed.contains(caretLi) ? [caretLi] : [];
+
+  const set = new Set(hit);
+  return hit.filter((li) => {
+    for (let p = li.parentElement?.closest("li"); p; p = p.parentElement?.closest("li")) {
+      if (set.has(p)) return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * Tab na zaznaczeniu wielu punktów — wcina wszystkie, nie tylko pierwszy.
+ *
+ * Wszystko albo nic: gdy pierwszego punktu nie ma pod co wciąć (początek
+ * listy), nie ruszamy żadnego. Inaczej kolejne punkty wsunęłyby się pod
+ * pierwszy i zmieniły się relacje między zaznaczonymi punktami.
+ *
+ * @param {Element[]} items wynik _selectedListItems
+ * @returns {boolean}
+ */
+export function _indentListItems(items) {
+  if (!items.length) return false;
+  if (items[0].previousElementSibling?.tagName !== "LI") return false;
+  const saved = _saveSelection();
+  for (const li of items) _indentListItem(li, false);
+  _restoreOrFocusLi(saved, items[0]);
+  return true;
+}
+
+/**
+ * Shift+Tab na zaznaczeniu wielu punktów. Od końca — wtedy żaden
+ * zaznaczony punkt nie zostaje "następnikiem" wyciąganego i nie trafia
+ * do jego podlisty (patrz _outdentListItem).
+ *
+ * @param {Element[]} items wynik _selectedListItems
+ * @returns {boolean}
+ */
+export function _outdentListItems(items) {
+  if (!items.length) return false;
+  const saved = _saveSelection();
+  let moved = false;
+  for (const li of [...items].reverse()) moved = _outdentListItem(li, false) || moved;
+  if (moved) _restoreOrFocusLi(saved, items[0]);
+  return moved;
+}
+
+/**
+ * Naprawia listę zagnieżdżoną bezpośrednio w liście (<ul><li>A</li><ul>…</ul></ul>).
+ *
+ * Taki układ produkuje m.in. Google Docs i część edytorów webmaili.
+ * Przeglądarka go wyświetla, ale nasze operacje zakładają li > ul:
+ * Tab/Shift+Tab nic nie robiły, a eksport do Markdown pomijał te punkty.
+ * Podlista trafia do poprzedniego punktu; gdy go nie ma — do nowego,
+ * pustego punktu z <br> (inaczej nie dałoby się w niego wejść kursorem).
+ *
+ * @param {Element} root
+ * @returns {boolean} true, gdy coś poprawiono (caller przywraca zaznaczenie)
+ */
+export function _normalizeListNesting(root) {
+  const strays = Array.from(
+    root.querySelectorAll("ul > ul, ul > ol, ol > ul, ol > ol"),
+  );
+  if (!strays.length) return false;
+  const doc = root.ownerDocument;
+  for (const list of strays) {
+    const prev = list.previousElementSibling;
+    if (prev && prev.tagName === "LI") {
+      const last = prev.lastElementChild;
+      if (last && _isListEl(last)) {
+        while (list.firstChild) last.appendChild(list.firstChild);
+        list.remove();
+      } else {
+        prev.appendChild(list);
+      }
+    } else {
+      const li = doc.createElement("li");
+      li.appendChild(doc.createElement("br"));
+      list.before(li);
+      li.appendChild(list);
+    }
+  }
+  return true;
 }
 
 /**

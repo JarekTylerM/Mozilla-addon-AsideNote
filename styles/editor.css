@@ -241,7 +241,7 @@
 #toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
+  gap: 6px;
   align-items: center;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -253,8 +253,66 @@
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
+}
+/* Kreska między grupami (format / listy / wstawianie / akcje) — bez niej
+   kilkanaście ikon zlewało się w jeden ciąg. Odstęp 6px po obu stronach
+   kreski: gap #toolbar z lewej, padding z prawej. */
+.toolbar-group + .toolbar-group {
+  border-left: 1px solid var(--border);
+  padding-left: 6px;
+}
+
+/* Pasek podstawowy (domyślny): bez rzadko używanych przycisków, z których
+   każdy ma inną drogę — wyczyść formatowanie: Ctrl+\, separator: `---`
+   lub menu "/", cofnij/ponów: Ctrl+Z / Ctrl+Y. Pełny pasek włącza
+   Ustawienia → Edytor (panel.js ustawia data-toolbar-full na <html>). */
+html:not([data-toolbar-full]) #toolbar :is(
+    [data-cmd="removeFormat"],
+    [data-cmd="insertHorizontalRule"],
+    #undo-btn,
+    #redo-btn
+  ) {
+  display: none;
+}
+
+/* Rysunek ikony 16px w polu klikania 20px — przy kresce 2px pełne 20px
+   wyglądało ciężej niż tekst obok. Pole klikania się nie zmienia. */
+#toolbar .panel-icon {
+  mask-size: 16px;
+}
+
+/* Pełny pasek przy szerokości poniżej 444px (zmierzone: potrzebuje 436px)
+   nie mieści się w jednym rzędzie. Cofnij/Ponów mają uniwersalne skróty
+   (Ctrl+Z / Ctrl+Y), więc w wąskim panelu chowamy właśnie je. W pasku
+   podstawowym są schowane zawsze (reguła wyżej). */
+@media (max-width: 443.98px) {
+  #undo-btn,
+  #redo-btn {
+    display: none;
+  }
+}
+
+/* Gdy jeden rząd się nie mieści, zamiast łamać się w przypadkowym miejscu —
+   z kreską grupy na początku drugiego rzędu albo z samotną ikoną — pasek
+   dzieli się równo: format + listy | wstawianie + akcje. Pseudo-element o
+   pełnej szerokości wymusza złamanie po 2. grupie (order), a 3. grupa, jako
+   pierwsza w rzędzie, traci kreskę. Pseudo-element tworzy własny pusty
+   rząd, więc row-gap liczy się dwa razy — stąd połowa (2×3px).
+   Progi zmierzone: pasek podstawowy potrzebuje 344px, pełny (bez
+   Cofnij/Ponów) 390px. Zmieniasz zestaw przycisków? Zmierz ponownie. */
+@media (max-width: 343.98px) {
+  #toolbar { row-gap: 3px; }
+  #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  .toolbar-group:nth-child(n + 3) { order: 3; }
+  .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
+}
+@media (min-width: 344px) and (max-width: 389.98px) {
+  html[data-toolbar-full] #toolbar { row-gap: 3px; }
+  html[data-toolbar-full] #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  html[data-toolbar-full] .toolbar-group:nth-child(n + 3) { order: 3; }
+  html[data-toolbar-full] .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
 }
 
 #toolbar select {
@@ -521,7 +579,7 @@ summary:empty::after {
 
 /* Strzałka — wąski przycisk z chevronem */
 .toolbar-split__arrow {
-  width: 18px;
+  width: 16px;
   height: 24px;
   flex-shrink: 0;
   padding: 0;
@@ -541,10 +599,10 @@ summary:empty::after {
 }
 .toolbar-split__caret {
   display: inline-block;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   background-color: var(--text-2);
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath fill='black' d='M7.41 8.58L12 13.17l4.59-4.59L18 10l-6 6l-6-6z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;

@@ -18,7 +18,8 @@ import { debouncedSave } from './notes.js';
 import {
   _getCurrentBlock,
   _clearBlock,
-  _outdentListItem,
+  _saveSelection,
+  _restoreSelection,
 } from './editor-selection.js';
 
 const editor = /** @type {HTMLElement} */ (document.getElementById('editor'));
@@ -326,16 +327,48 @@ function _toggleChecklist() {
       ? node.parentElement
       : /** @type {Element} */ (node);
 
-  // Toggle off — jesteśmy w checkliście
-  const existingUl = el?.closest('ul[data-list="checklist"]');
+  // Toggle off — jesteśmy w checkliście. Bierzemy najbardziej zewnętrzną:
+  // wyłączenie ma objąć całą checklistę, nie tylko podlistę z kursorem.
+  let existingUl = el?.closest('ul[data-list="checklist"]') ?? null;
+  for (
+    let up = existingUl?.parentElement?.closest('ul[data-list="checklist"]');
+    up;
+    up = up.parentElement?.closest('ul[data-list="checklist"]')
+  ) {
+    existingUl = up;
+  }
   if (existingUl) {
+    // Każdy punkt — także wcięty — staje się osobnym akapitem, w kolejności.
+    // Wcześniej p.innerHTML = li.innerHTML wkładało podlistę DO akapitu
+    // (<p>tekst<ul>…</ul></p>), co parser HTML rozbijał przy następnym
+    // wczytaniu notatki. Węzły przenosimy (nie kopiujemy), więc kursor
+    // zostaje w swoim tekście.
+    const saved = _saveSelection();
     const fragment = document.createDocumentFragment();
-    Array.from(existingUl.children).forEach((li) => {
-      const p = document.createElement('p');
-      p.innerHTML = li.innerHTML || '<br>';
-      fragment.appendChild(p);
-    });
+    /** @param {Element} list */
+    const flatten = (list) => {
+      for (const li of Array.from(list.children)) {
+        if (li.tagName === 'UL' || li.tagName === 'OL') {
+          flatten(li);
+          continue;
+        }
+        const p = document.createElement('p');
+        /** @type {Element[]} */
+        const subs = [];
+        for (const n of Array.from(li.childNodes)) {
+          if (n.nodeName === 'UL' || n.nodeName === 'OL') subs.push(/** @type {Element} */ (n));
+          else p.appendChild(n);
+        }
+        if (!(p.textContent ?? '').trim() && !p.querySelector('br')) {
+          p.appendChild(document.createElement('br'));
+        }
+        fragment.appendChild(p);
+        subs.forEach(flatten);
+      }
+    };
+    flatten(existingUl);
     existingUl.replaceWith(fragment);
+    _restoreSelection(saved);
     undo.checkpoint();
     document.dispatchEvent(new Event('forceSave'));
     return;

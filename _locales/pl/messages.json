@@ -6,7 +6,7 @@
     "message": "Wróć do listy"
   },
   "back_title": {
-    "message": "Wróć do listy"
+    "message": "Wróć do listy · Esc"
   },
   "callout_caution": {
     "message": "Caution"
@@ -25,9 +25,6 @@
   },
   "callout_warning": {
     "message": "Warning"
-  },
-  "collapseEditor_title": {
-    "message": "Zamknij edytor  Esc"
   },
   "common_today": {
     "message": "dziś"
@@ -266,18 +263,6 @@
   "filter_title": {
     "message": "Filtry · Alt+F"
   },
-  "focusMode_enter_ariaLabel": {
-    "message": "Włącz tryb skupienia"
-  },
-  "focusMode_enter_title": {
-    "message": "Tryb skupienia (Alt+M)"
-  },
-  "focusMode_exit_ariaLabel": {
-    "message": "Wyłącz tryb skupienia"
-  },
-  "focusMode_exit_title": {
-    "message": "Wyjdź z trybu skupienia (Alt+M)"
-  },
   "focus_ariaLabel": {
     "message": "Oznacz jako w trakcie"
   },
@@ -400,6 +385,27 @@
   "list_empty": {
     "message": "Brak notatek i zadań"
   },
+  "list_empty_lead": {
+    "message": "Wpisz coś w polu „Notatka lub !zadanie” na górze i naciśnij Enter. Na przykład:"
+  },
+  "list_empty_ex_note": {
+    "message": "Procedura LOTO pompa P-3"
+  },
+  "list_empty_ex_note_result": {
+    "message": "→ notatka"
+  },
+  "list_empty_ex_task": {
+    "message": "!Wymiana filtra jutro 10:00"
+  },
+  "list_empty_ex_task_result": {
+    "message": "→ zadanie na jutro, 10:00"
+  },
+  "list_empty_ex_insert_title": {
+    "message": "Wstaw do pola szybkiego dodawania"
+  },
+  "list_empty_popup": {
+    "message": "Z dowolnej karty: Alt+Shift+S otwiera to samo pole w małym okienku."
+  },
   "list_empty_filtered": {
     "message": "Brak wyników"
   },
@@ -423,37 +429,6 @@
   },
   "newItemInline_task": {
     "message": "zadanie"
-  },
-  "noteStatus_editing": {
-    "message": "Edytujesz $KIND$",
-    "placeholders": {
-      "kind": {
-        "content": "$1",
-        "example": "zadanie"
-      }
-    }
-  },
-  "noteStatus_editingWithTitle": {
-    "message": "Edytujesz $KIND$: $TITLE$",
-    "placeholders": {
-      "kind": {
-        "content": "$1",
-        "example": "zadanie"
-      },
-      "title": {
-        "content": "$2",
-        "example": "Wyślij raport"
-      }
-    }
-  },
-  "noteStatus_kind_note": {
-    "message": "notatkę"
-  },
-  "noteStatus_kind_task": {
-    "message": "zadanie"
-  },
-  "noteStatus_noTitle": {
-    "message": "Brak tytułu"
   },
   "note_deleteItem_ariaLabel": {
     "message": "Usuń notatkę z listy"
@@ -535,7 +510,7 @@
     "message": "Znasz całą składnię szybkiego dodawania. Następna lekcja: tryby skupienia — mniej rozpraszaczy, gdy chcesz się skoncentrować."
   },
   "ob_done_s5": {
-    "message": "Tryby skupienia opanowane: Alt+Z wycisza widok, Alt+M daje pełny ekran do pisania. Następna lekcja: porządek w notatkach — szukanie, filtry i tagi."
+    "message": "Tryby skupienia opanowane: Alt+Z wycisza listę, a otwarta notatka zawsze ma cały panel dla siebie — Esc wraca na listę. Następna lekcja: porządek w notatkach — szukanie, filtry i tagi."
   },
   "ob_done_s6": {
     "message": "Porządek opanowany. Została ostatnia lekcja: twoje dane, kopie zapasowe i skróty klawiaturowe."
@@ -631,16 +606,13 @@
     "message": "Interfejs przygasł, a lista pokazuje tylko dzisiejsze sprawy. Ten sam przycisk (albo Alt+Z) wraca do normalnego widoku — wypróbuj."
   },
   "ob_s5_3": {
-    "message": "Drugi tryb działa w edytorze. Najpierw otwórz dowolną notatkę z listy."
+    "message": "Otwarta notatka zajmuje cały panel — lista chowa się, żeby nic nie rozpraszało. Otwórz dowolną notatkę z listy."
   },
   "ob_s5_3_empty": {
     "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
   },
   "ob_s5_4": {
-    "message": "Tryb skupienia: edytor wypełnia całe okno — idealny do dłuższego pisania. Kliknij ikonę w prawym dolnym rogu edytora albo wciśnij Alt+M."
-  },
-  "ob_s5_5": {
-    "message": "Piszesz bez rozpraszaczy. Wyjście działa tak samo: ikona w rogu albo Alt+M — wypróbuj teraz."
+    "message": "Do listy wracasz strzałką ← obok tytułu albo klawiszem Esc. Wszystko zapisuje się samo — wypróbuj teraz."
   },
   "ob_s6_1": {
     "message": "Wyszukiwarka przeszukuje tytuły i treść wszystkich notatek. Skrót: Alt+S."
@@ -761,6 +733,9 @@
   },
   "panel_editor_toolbarToggle": {
     "message": "Pokaż toolbar edytora · Alt+E"
+  },
+  "panel_editor_toolbarFull": {
+    "message": "Pełny pasek: czyszczenie formatowania, separator, cofnij/ponów"
   },
   "panel_editor_toolbarTooltips": {
     "message": "Pokaż podpowiedzi w toolbarze"
@@ -1032,9 +1007,6 @@
   "security_tooltip_text": {
     "message": "Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do profilu Firefox."
   },
-  "shortcuts_focusMode": {
-    "message": "→ tryb skupienia"
-  },
   "shortcuts_formatting": {
     "message": "Formatowanie"
   },
@@ -1061,6 +1033,9 @@
   },
   "shortcuts_formatting_link": {
     "message": "→ wstaw / edytuj link"
+  },
+  "shortcuts_formatting_clear": {
+    "message": "→ wyczyść formatowanie"
   },
   "shortcuts_formatting_linkOpen": {
     "message": "→ otwórz link w nowej karcie"
@@ -1135,7 +1110,7 @@
     "message": "Nawigacja po liście"
   },
   "shortcuts_list_ctrlArrows": {
-    "message": "Przejdź do poprzedniej / następnej notatki z edytora"
+    "message": "Poprzednia / następna notatka (w edytorze)"
   },
   "shortcuts_list_delete": {
     "message": "Usuń notatkę"
@@ -1145,6 +1120,21 @@
   },
   "shortcuts_list_space": {
     "message": "Zaznacz / odznacz zadanie"
+  },
+  "shortcuts_list_upToSearch": {
+    "message": "Z pierwszej pozycji wróć do wyszukiwarki"
+  },
+  "shortcuts_search": {
+    "message": "Wyszukiwarka"
+  },
+  "shortcuts_search_down": {
+    "message": "Przejdź do wyników"
+  },
+  "shortcuts_search_enter": {
+    "message": "Otwórz pierwszy wynik"
+  },
+  "shortcuts_search_esc": {
+    "message": "Wyczyść wyszukiwanie"
   },
   "shortcuts_markdown": {
     "message": "Skróty Markdown"
@@ -1362,6 +1352,9 @@
   "slash_cmd_quote": {
     "message": "Cytat"
   },
+  "slash_cmd_hr": {
+    "message": "Separator"
+  },
   "slash_cmd_toggle": {
     "message": "Lista rozwijana"
   },
@@ -1454,14 +1447,11 @@
   "timeAgo_minutes": {
     "message": "$1 min temu"
   },
-  "titleHint_short": {
-    "message": "początek treści pojawi się jako tymczasowy tytuł na liście."
-  },
   "title_label": {
     "message": "Tytuł"
   },
   "title_placeholder": {
-    "message": "Tytuł"
+    "message": "Tytuł (domyślnie pierwsza linia treści)"
   },
   "toast_trashed": {
     "message": "Przeniesiono do kosza"
@@ -1509,7 +1499,7 @@
     "message": "Wyczyść formatowanie"
   },
   "toolbar_clearFormat_title": {
-    "message": "Wyczyść formatowanie"
+    "message": "Wyczyść formatowanie · Ctrl+\\"
   },
   "toolbar_code": {
     "message": "Kod inline"

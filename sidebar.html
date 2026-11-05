@@ -167,10 +167,6 @@
             </button>
           </div>
         </div>
-
-        <div class="status-row">
-          <div id="note-status"></div>
-        </div>
       </div>
       <!-- /.main-view-padded (lista) -->
 
@@ -678,17 +674,6 @@
           aria-multiline="true"
           data-i18n-attr="aria-label:editor_ariaLabel"
         ></div>
-        <button
-          id="collapse-editor-btn"
-          class="icon-btn icon-btn--sm icon-btn--ghost icon--collapse-editor"
-          data-i18n-attr="title:collapseEditor_title;aria-label:collapseEditor_title"
-          hidden
-        ></button>
-        <button
-          id="focusmode-btn"
-          class="icon-btn icon-btn--sm icon-btn--ghost icon--focusmode-enter focusmode-btn"
-          data-i18n-attr="title:focusMode_enter_title;aria-label:focusMode_enter_ariaLabel"
-        ></button>
       </div>
       <!-- /#editor-container -->
 
@@ -829,6 +814,13 @@
               <input type="checkbox" id="toolbar-toggle" checked />
               <span data-i18n="panel_editor_toolbarToggle"
                 >Pokaż toolbar formatowania</span
+              >
+            </label>
+            <label class="panel-toggle">
+              <input type="checkbox" id="toolbar-full-toggle" />
+              <span data-i18n="panel_editor_toolbarFull"
+                >Pełny pasek: czyszczenie formatowania, separator,
+                cofnij/ponów</span
               >
             </label>
             <label class="panel-toggle">
@@ -1128,10 +1120,6 @@
                 >
               </li>
               <li>
-                <code>Alt+M</code
-                ><span data-i18n="shortcuts_focusMode">→ tryb skupienia</span>
-              </li>
-              <li>
                 <code>Alt+Z</code
                 ><span data-i18n="shortcuts_zenMode">→ tryb zen</span>
               </li>
@@ -1213,6 +1201,36 @@
                 <code>Ctrl+↑</code><code>Ctrl+↓</code
                 ><span data-i18n="shortcuts_list_ctrlArrows"
                   >→ z edytora do listy</span
+                >
+              </li>
+              <li>
+                <code>↑</code
+                ><span data-i18n="shortcuts_list_upToSearch"
+                  >→ z pierwszej pozycji do wyszukiwarki</span
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel-shortcuts__section">
+            <b data-i18n="shortcuts_search">Wyszukiwarka</b>
+            <ul>
+              <li>
+                <code>↓</code
+                ><span data-i18n="shortcuts_search_down"
+                  >→ przejdź do wyników</span
+                >
+              </li>
+              <li>
+                <code>Enter</code
+                ><span data-i18n="shortcuts_search_enter"
+                  >→ otwórz pierwszy wynik</span
+                >
+              </li>
+              <li>
+                <code>Esc</code
+                ><span data-i18n="shortcuts_search_esc"
+                  >→ wyczyść wyszukiwanie</span
                 >
               </li>
             </ul>
@@ -1424,6 +1442,12 @@
                 >
               </li>
               <li>
+                <code>Ctrl+\</code
+                ><span data-i18n="shortcuts_formatting_clear"
+                  >→ wyczyść formatowanie</span
+                >
+              </li>
+              <li>
                 <code>Klik</code
                 ><span data-i18n="shortcuts_formatting_linkOpen"
                   >→ otwórz link w nowej karcie</span
@@ -1595,10 +1619,6 @@
                   ><span data-i18n="shortcuts_general_capture"
                     >→ quick capture</span
                   >
-                </li>
-                <li>
-                  <code>Alt+M</code
-                  ><span data-i18n="shortcuts_focusMode">→ tryb skupienia</span>
                 </li>
                 <li>
                   <code>Alt+S</code

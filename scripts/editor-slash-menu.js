@@ -71,6 +71,14 @@ const COMMANDS = [
     icon: "icon--quote",
     labelKey: "slash_cmd_quote",
   },
+  // Separator — przycisk zniknął z podstawowego toolbara, więc menu "/"
+  // (obok `---`) jest jego główną drogą
+  {
+    id: "hr",
+    group: "blocks",
+    icon: "icon--hr",
+    labelKey: "slash_cmd_hr",
+  },
   {
     id: "callout-note",
     group: "callout",
@@ -428,6 +436,21 @@ function _execute(id) {
       if (block && block !== editor) block.innerHTML = "<br>";
       document.execCommand("formatBlock", false, "blockquote");
       break;
+
+    // Separator + pusty akapit pod nim, kursor w akapicie — pisanie
+    // toczy się dalej bez dodatkowego Entera
+    case "hr": {
+      const hr = document.createElement("hr");
+      const p = document.createElement("p");
+      p.innerHTML = "<br>";
+      if (block && block !== editor) block.replaceWith(hr, p);
+      else editor?.append(hr, p);
+      const r = document.createRange();
+      r.setStart(p, 0);
+      r.collapse(true);
+      _selectRange(r);
+      break;
+    }
 
     default:
       if (id.startsWith("callout-")) {

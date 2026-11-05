@@ -196,7 +196,9 @@ export function initDatePicker() {
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !_popover.hidden) {
-      e.stopPropagation();
+      // Immediate: globalny Esc w app.js (też na document) zamknąłby
+      // inaczej całą notatkę razem z kalendarzem
+      e.stopImmediatePropagation();
       _close();
     }
   });

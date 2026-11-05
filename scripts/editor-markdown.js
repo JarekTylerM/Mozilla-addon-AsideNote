@@ -130,23 +130,39 @@ function _blockToMd(el) {
 
 /**
  * UL/OL → linie listy; indent to prefiks wcięcia dla tego poziomu.
+ *
+ * inChecklist: podlista punktu checklisty też jest checklistą, nawet bez
+ * własnego data-list (tak powstawała przy wcinaniu Tabem). Bez tego
+ * eksport gubił stan [x] wciętych punktów.
+ *
  * @param {Element} list
  * @param {string} indent
+ * @param {boolean} [inChecklist=false]
  * @returns {string}
  */
-function _listToMd(list, indent) {
+function _listToMd(list, indent, inChecklist = false) {
   const ordered = list.tagName === "OL";
-  const checklist = list.getAttribute("data-list") === "checklist";
+  const checklist =
+    list.getAttribute("data-list") === "checklist" || (inChecklist && !ordered);
   const start = parseInt(list.getAttribute("start") ?? "1", 10) || 1;
 
   const lines = [];
   let n = start;
+  // Wcięcie podlist ostatniego punktu — potrzebne dla <ul> wpiętej wprost
+  // w listę (<ul><li>A</li><ul>…</ul></ul>, np. z Google Docs). Taka lista
+  // to podpunkty poprzedniego punktu; wcześniej była po cichu pomijana.
+  let lastChildIndent = indent + "  ";
 
   for (const li of Array.from(list.children)) {
+    if (li.tagName === "UL" || li.tagName === "OL") {
+      lines.push(_listToMd(li, lastChildIndent, checklist));
+      continue;
+    }
     if (li.tagName !== "LI") continue;
 
+    const task = checklist || li.hasAttribute("data-checked");
     let marker;
-    if (checklist) {
+    if (task) {
       const checked = li.getAttribute("data-checked") === "true";
       marker = checked ? "- [x] " : "- [ ] ";
     } else if (ordered) {
@@ -179,9 +195,10 @@ function _listToMd(list, indent) {
     lines.push(indent + marker + text);
 
     // Wcięcie kontynuacji = szerokość markera (CommonMark), checklist jak "- "
-    const childIndent = indent + " ".repeat(checklist ? 2 : marker.length);
+    const childIndent = indent + " ".repeat(task ? 2 : marker.length);
+    lastChildIndent = childIndent;
     for (const sub of sublists) {
-      lines.push(_listToMd(sub, childIndent));
+      lines.push(_listToMd(sub, childIndent, task));
     }
   }
 

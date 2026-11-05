@@ -148,6 +148,24 @@ test("formatowanie inline wewnątrz li", () => {
   );
 });
 
+test("FIX: wcięty punkt checklisty (podlista bez data-list) zachowuje [x]", () => {
+  expect(
+    md(
+      '<ul data-list="checklist"><li data-checked="false">a<ul><li data-checked="true">b</li></ul></li></ul>',
+    ),
+  ).toBe("- [ ] a\n  - [x] b");
+});
+
+test("FIX: lista wpięta wprost w listę (ul > ul) nie znika z eksportu", () => {
+  expect(md("<ul><li>A</li><ul><li>A1</li></ul><li>B</li></ul>")).toBe(
+    "- A\n  - A1\n- B",
+  );
+});
+
+test("ul > ul pod numerowaną → wcięcie wg szerokości markera", () => {
+  expect(md("<ol><li>A</li><ul><li>x</li></ul></ol>")).toBe("1. A\n   - x");
+});
+
 console.log("\n[blockquote / callout]");
 
 test("zwykły cytat", () => {

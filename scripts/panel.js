@@ -405,7 +405,8 @@ export function initTagSelector() {
     const focused = document.activeElement;
     if (!tagDropdown.contains(focused)) return;
     e.preventDefault();
-    e.stopPropagation();
+    // Immediate — patrz date-picker.js: globalny Esc zamknąłby notatkę
+    e.stopImmediatePropagation();
     tagDropdown.hidden = true;
     // Wróć fokus na addBtn (tam skąd dropdown został otwarty)
     const addBtn = /** @type {HTMLElement|null} */ (document.querySelector("#tag-selector-pills .tag-add-btn"));
@@ -1013,6 +1014,23 @@ export function initUiSettings(settings) {
       document.documentElement.dataset.editorPlaceholder =
         placeholderToggle.checked ? "" : "off";
       saveUiSettings({ showEditorPlaceholder: placeholderToggle.checked });
+    };
+  }
+
+  // Pełny toolbar — domyślnie podstawowy (bez czyszczenia formatowania,
+  // separatora, cofnij/ponów: mają skróty / menu "/"). Widoczność robi CSS
+  // po atrybucie na <html> (editor.css: data-toolbar-full).
+  const fullToolbarToggle = _byInput("toolbar-full-toggle");
+  if (fullToolbarToggle) {
+    /** @param {boolean} on */
+    const apply = (on) => {
+      document.documentElement.toggleAttribute("data-toolbar-full", on);
+    };
+    fullToolbarToggle.checked = settings.fullToolbar ?? false;
+    apply(fullToolbarToggle.checked);
+    fullToolbarToggle.onchange = () => {
+      apply(fullToolbarToggle.checked);
+      saveUiSettings({ fullToolbar: fullToolbarToggle.checked });
     };
   }
 

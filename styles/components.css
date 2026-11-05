@@ -227,6 +227,13 @@
   opacity: .6;
 }
 
+/* Sekcja wymagająca uwagi (zaległe) — licznik czytelny także po zwinięciu */
+.section-header--alert .section-header__count {
+  color: var(--danger);
+  font-weight: 600;
+  opacity: 1;
+}
+
 /* ──────────────────────────────────────────────
    .validation-error — inline walidacja formularzy
    ────────────────────────────────────────────── */

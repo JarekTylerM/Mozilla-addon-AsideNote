@@ -1,15 +1,15 @@
 {
   "manifest_version": 2,
   "name": "__MSG_extension_name__",
-  "version": "1.0.0",
-  "version_name": "1.0.0",
+  "version": "1.0.1",
+  "version_name": "1.0.1",
   "description": "__MSG_extension_description__",
   "default_locale": "en",
   "author": "Jarek Tyler M.",
   "developer": {
     "name": "Jarek Tyler M."
   },
-  "content_security_policy": "script-src 'self'; object-src 'none'; img-src 'self' data:; base-uri 'none'",
+  "content_security_policy": "script-src 'self'; object-src 'none'; img-src 'self' data:; base-uri 'none'; connect-src 'none'; frame-src 'none'; worker-src 'none'; media-src 'none'; form-action 'none'",
   "browser_specific_settings": {
     "gecko": {
       "id": "asidenotes-tyler@addons.mozilla.org",

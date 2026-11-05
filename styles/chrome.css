@@ -100,16 +100,6 @@
   }
 }
 
-.status-row {
-  display: flex;
-  align-items: center;
-  min-height: 28px;
-}
-
-.status-row #note-status {
-  flex: 1;
-  min-width: 0;
-}
 /* ── Bottom bar & tooltip skrótów ────────── */
 
 /* Dokładasz/usuwasz przycisk? Popraw --bottom-bar-reserve w tokens.css —

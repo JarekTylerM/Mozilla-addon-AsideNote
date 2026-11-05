@@ -20,7 +20,7 @@
 /* ── Quick capture ─────────────────────────── */
 
 .quick-capture {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
@@ -87,7 +87,7 @@
   display: flex;
   gap: 6px;
   align-items: center;
-  margin-block: 0 12px;
+  margin-block: 0 8px;
 }
 .search-wrapper {
   position: relative;
@@ -328,7 +328,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .type-toggle__btn {
   flex: 1;
@@ -401,6 +401,58 @@
   font-size: var(--text-base);
   color: var(--text-3);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+/* Pusta lista: zdanie prowadzące, dwa przykładowe wpisy z wynikiem,
+   dopisek o popupie. Przykład wygląda jak tekst w polu (mono, ramka),
+   bo dokładnie to user ma wpisać — kliknięcie go tam wstawia. */
+.notes-empty__lead,
+.notes-empty__aside {
+  margin: 0;
+  max-width: 28em;
+  font-size: var(--text-sm);
+  line-height: var(--lh-tight);
+  color: var(--text-2);
+}
+.notes-empty__aside {
+  margin-top: 6px;
+  color: var(--text-3);
+}
+.notes-empty__examples {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 6px 8px;
+  align-items: center;
+  font-size: var(--text-sm);
+  text-align: left;
+}
+.notes-empty__examples li {
+  display: contents;
+}
+.notes-empty__example {
+  justify-self: end;
+  padding: 2px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--text);
+  white-space: nowrap;
+  transition: border-color var(--transition);
+}
+.notes-empty__example:hover {
+  border-color: var(--border-strong);
+}
+.notes-empty__result {
+  color: var(--text-3);
 }
 .notes-empty--filtered {
   display: flex;
@@ -472,14 +524,17 @@
 /* ── Note item ────────────────────────────── */
 
 .note-item {
+  /* Wysokość pierwszej linii wiersza. Elementy obok tytułu (checkbox,
+     termin, gwiazdka, ↺) wyrównują się do niej, a nie do środka całego
+     wiersza — przy tagach zawiniętych pod tytuł zostają przy tytule. */
+  --row-line: 20px;
   padding: 6px 36px 6px 10px;
   cursor: pointer;
   border-bottom: 1px solid var(--border);
   position: relative;
   color: var(--text-2);
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 6px;
   /* Pozycje poza viewportem listy nie są renderowane (FF 125+; starsze
      wersje ignorują) — tani zysk przy setkach notatek, zero zmian layoutu */
@@ -502,13 +557,37 @@
   opacity: 1;
 }
 
-.note-item__title-wrap {
+/* Tytuł + tagi: zawijany kontener. Tytuł bierze tyle, ile potrzebuje
+   (flex-basis: auto), więc tagi mieszczą się obok krótkich tytułów, a pod
+   długie schodzą same — bez ucinania tytułu na rzecz tagów. */
+.note-item__main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+}
+
+.note-item__title-wrap {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: var(--row-line);
   display: flex;
   align-items: center;
   gap: 4px;
   overflow: hidden;
+}
+
+/* Elementy obok tytułu — wyrównanie do pierwszej linii (patrz --row-line) */
+.note-item > .note-checkbox {
+  margin-top: calc((var(--row-line) - 14px) / 2);
+}
+.note-item > :is(.note-item__due, .note-item__star, .note-item__recurrence) {
+  line-height: var(--row-line);
+}
+.note-item > .note-item__postpone {
+  height: var(--row-line);
 }
 
 .note-item__title {
@@ -654,11 +733,17 @@
 
 .note-tags-row {
   display: flex;
+  align-items: center;
   gap: 4px;
-  flex-basis: 100%;
-  margin-left: 20px;
-  margin-top: 3px;
+  flex: 0 1 auto;
+  min-width: 0;
   flex-wrap: wrap;
+}
+/* Pigułki na liście są informacją pomocniczą — mniejsze niż w edytorze
+   (.tag-pill dziedziczy font-size, co dawało ~23px wysokości na wiersz) */
+.note-tags-row .tag-pill {
+  font-size: var(--text-sm);
+  line-height: 16px;
 }
 .tag-more {
   font-size: var(--text-xs);
@@ -704,32 +789,6 @@
 
 /* ── Note header & meta ───────────────────── */
 
-#note-status {
-  font-size: var(--text-sm);
-  color: var(--text-3);
-  padding: 4px 6px;
-  margin-block: 4px 0;
-  font-style: italic;
-  white-space: normal;
-  border-top: 1px solid transparent;
-  transition: border-color var(--transition-slow);
-}
-
-.note-status__title {
-  font-weight: inherit;
-  font-style: normal;
-  color: var(--text-2);
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  font-size: inherit;
-  cursor: pointer;
-  transition: color var(--transition);
-}
-.note-status__title:hover {
-  color: var(--zen);
-}
 .note-header {
   display: flex;
   align-items: center;

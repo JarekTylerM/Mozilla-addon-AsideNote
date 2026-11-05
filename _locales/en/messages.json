@@ -6,7 +6,7 @@
     "message": "Wróć do listy"
   },
   "back_title": {
-    "message": "Wróć do listy"
+    "message": "Back to list · Esc"
   },
   "callout_caution": {
     "message": "Caution"
@@ -25,9 +25,6 @@
   },
   "callout_warning": {
     "message": "Warning"
-  },
-  "collapseEditor_title": {
-    "message": "Close editor  Esc"
   },
   "common_today": {
     "message": "today"
@@ -266,18 +263,6 @@
   "filter_title": {
     "message": "Filters · Alt+F"
   },
-  "focusMode_enter_ariaLabel": {
-    "message": "Enter focus mode"
-  },
-  "focusMode_enter_title": {
-    "message": "Focus mode (Alt+M)"
-  },
-  "focusMode_exit_ariaLabel": {
-    "message": "Exit focus mode"
-  },
-  "focusMode_exit_title": {
-    "message": "Exit focus mode (Alt+M)"
-  },
   "focus_ariaLabel": {
     "message": "Mark as in progress"
   },
@@ -400,6 +385,27 @@
   "list_empty": {
     "message": "No notes or tasks"
   },
+  "list_empty_lead": {
+    "message": "Type in the “Note or !task” field at the top and press Enter. For example:"
+  },
+  "list_empty_ex_note": {
+    "message": "Pump P-3 lockout procedure"
+  },
+  "list_empty_ex_note_result": {
+    "message": "→ a note"
+  },
+  "list_empty_ex_task": {
+    "message": "!Replace filter tomorrow 10:00"
+  },
+  "list_empty_ex_task_result": {
+    "message": "→ a task for tomorrow, 10:00"
+  },
+  "list_empty_ex_insert_title": {
+    "message": "Insert into the quick-capture field"
+  },
+  "list_empty_popup": {
+    "message": "From any tab: Alt+Shift+S opens the same field in a small window."
+  },
   "list_empty_filtered": {
     "message": "No results"
   },
@@ -423,37 +429,6 @@
   },
   "newItemInline_task": {
     "message": "task"
-  },
-  "noteStatus_editing": {
-    "message": "Editing $KIND$",
-    "placeholders": {
-      "kind": {
-        "content": "$1",
-        "example": "task"
-      }
-    }
-  },
-  "noteStatus_editingWithTitle": {
-    "message": "Editing $KIND$: $TITLE$",
-    "placeholders": {
-      "kind": {
-        "content": "$1",
-        "example": "task"
-      },
-      "title": {
-        "content": "$2",
-        "example": "Send report"
-      }
-    }
-  },
-  "noteStatus_kind_note": {
-    "message": "note"
-  },
-  "noteStatus_kind_task": {
-    "message": "task"
-  },
-  "noteStatus_noTitle": {
-    "message": "No title"
   },
   "note_deleteItem_ariaLabel": {
     "message": "Delete note from list"
@@ -535,7 +510,7 @@
     "message": "You know the whole quick capture syntax. Next lesson: focus modes — fewer distractions when you want to concentrate."
   },
   "ob_done_s5": {
-    "message": "Focus modes mastered: Alt+Z quiets the view, Alt+M gives you a full-screen editor. Next lesson: keeping things organized — search, filters and tags."
+    "message": "Focus modes mastered: Alt+Z quiets the list, and an open note always gets the whole panel — Esc takes you back. Next lesson: keeping things organized — search, filters and tags."
   },
   "ob_done_s6": {
     "message": "Organization mastered. One lesson left: your data, backups and keyboard shortcuts."
@@ -631,16 +606,13 @@
     "message": "The interface dimmed and the list shows only today's items. The same button (or Alt+Z) returns to the normal view — try it."
   },
   "ob_s5_3": {
-    "message": "The second mode lives in the editor. First, open any note from the list."
+    "message": "An open note takes the whole panel — the list steps aside so nothing distracts you. Open any note from the list."
   },
   "ob_s5_3_empty": {
     "message": "The list is empty. Add a note in the field above (type something and press Enter), then click it on the list."
   },
   "ob_s5_4": {
-    "message": "Focus mode: the editor fills the whole window — perfect for longer writing. Click the icon in the bottom-right corner of the editor or press Alt+M."
-  },
-  "ob_s5_5": {
-    "message": "You're writing distraction-free. Exiting works the same way: the corner icon or Alt+M — try it now."
+    "message": "Get back to the list with the ← arrow next to the title or the Esc key. Everything saves automatically — try it now."
   },
   "ob_s6_1": {
     "message": "Search looks through the titles and content of all your notes. Shortcut: Alt+S."
@@ -761,6 +733,9 @@
   },
   "panel_editor_toolbarToggle": {
     "message": "Show editor toolbar · Alt+E"
+  },
+  "panel_editor_toolbarFull": {
+    "message": "Full toolbar: clear formatting, separator, undo/redo"
   },
   "panel_editor_toolbarTooltips": {
     "message": "Show toolbar tooltips"
@@ -1032,9 +1007,6 @@
   "security_tooltip_text": {
     "message": "Notes are not encrypted and are visible to anyone with access to this Firefox profile."
   },
-  "shortcuts_focusMode": {
-    "message": "→ focus mode"
-  },
   "shortcuts_formatting": {
     "message": "Formatting"
   },
@@ -1061,6 +1033,9 @@
   },
   "shortcuts_formatting_link": {
     "message": "→ insert / edit link"
+  },
+  "shortcuts_formatting_clear": {
+    "message": "→ clear formatting"
   },
   "shortcuts_formatting_linkOpen": {
     "message": "→ open link in new tab"
@@ -1135,7 +1110,7 @@
     "message": "Navigate list"
   },
   "shortcuts_list_ctrlArrows": {
-    "message": "Go to previous / next note from editor"
+    "message": "Previous / next note (in the editor)"
   },
   "shortcuts_list_delete": {
     "message": "Delete note"
@@ -1145,6 +1120,21 @@
   },
   "shortcuts_list_space": {
     "message": "Toggle task checkbox"
+  },
+  "shortcuts_list_upToSearch": {
+    "message": "From the first item, back to search"
+  },
+  "shortcuts_search": {
+    "message": "Search"
+  },
+  "shortcuts_search_down": {
+    "message": "Move to results"
+  },
+  "shortcuts_search_enter": {
+    "message": "Open the first result"
+  },
+  "shortcuts_search_esc": {
+    "message": "Clear the search"
   },
   "shortcuts_markdown": {
     "message": "Markdown shortcuts"
@@ -1362,6 +1352,9 @@
   "slash_cmd_quote": {
     "message": "Quote"
   },
+  "slash_cmd_hr": {
+    "message": "Divider"
+  },
   "slash_cmd_toggle": {
     "message": "Toggle list"
   },
@@ -1454,14 +1447,11 @@
   "timeAgo_minutes": {
     "message": "$1 min ago"
   },
-  "titleHint_short": {
-    "message": "the beginning of your note will appear as a temporary title in the list."
-  },
   "title_label": {
     "message": "Title"
   },
   "title_placeholder": {
-    "message": "Title"
+    "message": "Title (defaults to the first line)"
   },
   "toast_trashed": {
     "message": "Moved to Trash"
@@ -1509,7 +1499,7 @@
     "message": "Clear formatting"
   },
   "toolbar_clearFormat_title": {
-    "message": "Clear formatting"
+    "message": "Clear formatting · Ctrl+\\"
   },
   "toolbar_code": {
     "message": "Inline code"
