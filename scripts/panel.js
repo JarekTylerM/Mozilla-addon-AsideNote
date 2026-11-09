@@ -19,7 +19,9 @@ import {
   saveActiveNote,
   selectNote,
   restoreDeletedNote,
+  setPinnedActions,
 } from "./notes.js";
+import { normalizePinnedActions } from "./note-menu.js";
 import {
   saveNotes,
   saveFilterPrefs,
@@ -418,6 +420,14 @@ export function initTagSelector() {
     openPanel();
     switchPanelTab("tags");
   };
+
+  // Tag utworzony przez #nazwa w szybkim dodawaniu ma być od razu widoczny
+  // w panelu, selektorze i otwartych filtrach
+  document.addEventListener("tagsChanged", () => {
+    _renderTagsPanel();
+    renderTagSelector();
+    if (!_byId("filter-bar").hidden) _renderFilterOptions(_byId("filter-options"));
+  });
 }
 
 export function renderTagSelector() {
@@ -1034,6 +1044,60 @@ export function initUiSettings(settings) {
     };
   }
 
+  // Menu ⋮ — zaznaczone działanie zostaje w menu, odznaczone staje się ikoną
+  // w nagłówku. Zapisujemy listę przypiętych: pusta (domyślna) to pełne menu.
+  const pinned = normalizePinnedActions(settings.pinnedNoteActions);
+  setPinnedActions(pinned);
+  const actionToggles = /** @type {HTMLInputElement[]} */ (
+    [...document.querySelectorAll("input[data-note-action]")]
+  );
+  for (const input of actionToggles) {
+    input.checked = !pinned.includes(input.dataset.noteAction ?? "");
+    input.onchange = () => {
+      const next = actionToggles
+        .filter((el) => !el.checked)
+        .map((el) => el.dataset.noteAction);
+      setPinnedActions(next);
+      saveUiSettings({ pinnedNoteActions: next });
+    };
+  }
+
+  // Ikona podglądu na liście: po najechaniu (domyślnie), zawsze albo wyłączona.
+  // Widoczność robi CSS po atrybucie na <html> (list.css: data-preview-icon).
+  const previewIconSelect = _byInput("preview-icon-select");
+  if (previewIconSelect) {
+    /** @param {string} value */
+    const apply = (value) => {
+      document.documentElement.dataset.previewIcon = value;
+    };
+    const saved = ["always", "off"].includes(settings.previewIcon)
+      ? settings.previewIcon
+      : "hover";
+    previewIconSelect.value = saved;
+    apply(saved);
+    previewIconSelect.onchange = () => {
+      apply(previewIconSelect.value);
+      saveUiSettings({ previewIcon: previewIconSelect.value });
+    };
+  }
+
+  // Przycisk "+" w sekcjach listy: domyślnie zawsze widoczny, bo samo najechanie
+  // nie jest oczywiste (list.css: data-section-add).
+  const sectionAddSelect = _byInput("section-add-select");
+  if (sectionAddSelect) {
+    /** @param {string} value */
+    const apply = (value) => {
+      document.documentElement.dataset.sectionAdd = value;
+    };
+    const saved = settings.sectionAdd === "hover" ? "hover" : "always";
+    sectionAddSelect.value = saved;
+    apply(saved);
+    sectionAddSelect.onchange = () => {
+      apply(sectionAddSelect.value);
+      saveUiSettings({ sectionAdd: sectionAddSelect.value });
+    };
+  }
+
   // Zoom
   const zoomSelect = _byInput("ui-zoom-select");
   if (zoomSelect) {
@@ -1060,6 +1124,102 @@ export function initUiSettings(settings) {
   // Color scheme
   _applyColorScheme(settings.colorScheme ?? "auto");
   _initSchemeToggle(settings.colorScheme ?? "auto");
+
+  _initQuickSettings();
+}
+
+/** Kolejność zmiany motywu przyciskiem w dolnym pasku */
+const QUICK_THEME_ORDER = ["auto", "dark", "light"];
+
+/**
+ * Szybkie ustawienia w dolnym pasku. Nie mają własnego stanu ani zapisu:
+ * uruchamiają kontrolki panelu i czytają z nich wartości. Dzięki temu pasek
+ * i panel nie mogą się rozjechać, a zapis jest w jednym miejscu.
+ */
+function _initQuickSettings() {
+  const themeBtn = _byId("quick-theme");
+  const fontBtn = _byId("quick-font");
+  // Zoom zmieniają dwie pary przycisków: w dolnym pasku i przy liście w panelu
+  const zoomOutBtns = /** @type {HTMLButtonElement[]} */ ([
+    _byId("quick-zoom-out"),
+    _byId("panel-zoom-out"),
+  ]);
+  const zoomInBtns = /** @type {HTMLButtonElement[]} */ ([
+    _byId("quick-zoom-in"),
+    _byId("panel-zoom-in"),
+  ]);
+  const zoomValue = _byId("quick-zoom-value");
+  const fontSelect = /** @type {HTMLSelectElement} */ (_byId("ui-font-select"));
+  const zoomSelect = /** @type {HTMLSelectElement} */ (_byId("ui-zoom-select"));
+  const zoomSteps = [...zoomSelect.options].map((o) => o.value);
+
+  const currentScheme = () =>
+    /** @type {HTMLElement|null} */ (document.querySelector(".scheme-btn.is-active"))
+      ?.dataset.scheme ?? "auto";
+
+  /** @param {HTMLSelectElement} select @param {string} value */
+  const changeSelect = (select, value) => {
+    select.value = value;
+    select.dispatchEvent(new Event("change"));
+  };
+
+  const sync = () => {
+    const scheme = currentScheme();
+    QUICK_THEME_ORDER.forEach((s) => themeBtn.classList.remove(`icon--scheme-${s}`));
+    themeBtn.classList.add(`icon--scheme-${scheme}`);
+    const themeLabel = t("quickSettings_theme", [t(`panel_appearance_${scheme}`)]);
+    themeBtn.title = themeLabel;
+    themeBtn.setAttribute("aria-label", themeLabel);
+
+    const fontLabel = t("quickSettings_font", [
+      fontSelect.selectedOptions[0]?.textContent?.trim() ?? "",
+    ]);
+    fontBtn.title = fontLabel;
+    fontBtn.setAttribute("aria-label", fontLabel);
+
+    const step = zoomSteps.indexOf(zoomSelect.value);
+    zoomValue.textContent = `${zoomSelect.value}%`;
+    zoomOutBtns.forEach((btn) => {
+      btn.disabled = step <= 0;
+    });
+    zoomInBtns.forEach((btn) => {
+      btn.disabled = step >= zoomSteps.length - 1;
+    });
+  };
+
+  themeBtn.onclick = () => {
+    const idx = QUICK_THEME_ORDER.indexOf(currentScheme());
+    const next = QUICK_THEME_ORDER[(idx + 1) % QUICK_THEME_ORDER.length];
+    /** @type {HTMLElement|null} */ (
+      document.querySelector(`.scheme-btn[data-scheme="${next}"]`)
+    )?.click();
+  };
+
+  _byId("quick-tags").onclick = () => {
+    if (panelEl.hidden) openPanel();
+    switchPanelTab("tags");
+  };
+
+  fontBtn.onclick = () => {
+    changeSelect(fontSelect, fontSelect.value === "lexend" ? "system" : "lexend");
+  };
+
+  zoomOutBtns.forEach((btn) => {
+    btn.onclick = () => {
+      changeSelect(zoomSelect, zoomSteps[zoomSteps.indexOf(zoomSelect.value) - 1]);
+    };
+  });
+  zoomInBtns.forEach((btn) => {
+    btn.onclick = () => {
+      changeSelect(zoomSelect, zoomSteps[zoomSteps.indexOf(zoomSelect.value) + 1]);
+    };
+  });
+
+  // Te same zdarzenia odpala też panel, więc zmiana w nim odświeża pasek
+  document.addEventListener("themeChanged", sync);
+  fontSelect.addEventListener("change", sync);
+  zoomSelect.addEventListener("change", sync);
+  sync();
 }
 
 /** @param {boolean} show */

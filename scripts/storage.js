@@ -306,6 +306,18 @@ export async function saveFocusId(ids) {
   }
 }
 
+/* ── Ostrzeżenie o wersji tymczasowej ─────────── */
+
+/**
+ * Czy ten dodatek załadowano tymczasowo z głównym identyfikatorem, czyli na
+ * danych zainstalowanej wersji. Znacznik ustawia background.js.
+ * @returns {Promise<boolean>}
+ */
+export async function loadTempOverInstalled() {
+  const res = await browser.storage.session?.get("tempOverInstalled");
+  return res?.tempOverInstalled === true;
+}
+
 /* ── UI settings ──────────────────────────────── */
 
 export async function loadUiSettings() {
@@ -317,22 +329,37 @@ export async function loadUiSettings() {
     fontFamily: "system",
     showEditorPlaceholder: true,
     fullToolbar: false,
+    pinnedNoteActions: [],
+    previewIcon: "hover",
+    sectionAdd: "always",
     uiZoom: 100,
     zenMode: false,
     ...(res.uiSettings || {}),
   };
 }
 
-/** @param {Record<string, any>} patch */
-export async function saveUiSettings(patch) {
-  // Merge z istniejącymi — żeby zmiana jednego pola nie kasowała pozostałych
-  try {
+/** Ostatni zapis ustawień w kolejce — patrz saveUiSettings */
+let _uiSettingsQueue = Promise.resolve();
+
+/**
+ * Zapisy idą po kolei. Każdy czyta całe ustawienia, dokleja zmianę i zapisuje
+ * całość, więc dwa równoczesne czytałyby ten sam stan, a późniejszy kasowałby
+ * zmianę wcześniejszego.
+ * @param {Record<string, any>} patch
+ * @returns {Promise<void>}
+ */
+export function saveUiSettings(patch) {
+  const run = _uiSettingsQueue.then(async () => {
+    // Merge z istniejącymi — żeby zmiana jednego pola nie kasowała pozostałych
     const current = await loadUiSettings();
     await _set({ uiSettings: { ...current, ...patch } });
-  } catch (e) {
+  });
+  // Nieudany zapis nie może zablokować kolejnych
+  _uiSettingsQueue = run.catch(() => {});
+  return run.catch((e) => {
     console.error("[storage] saveUiSettings failed:", e);
     throw e;
-  }
+  });
 }
 
 /* ── Backup przed importem ────────────────────── */

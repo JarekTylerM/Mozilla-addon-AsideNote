@@ -77,10 +77,12 @@ export function wantsFocusSeed(item) {
  * @param {string} raw — tekst z pola capture
  * @param {string|null} [locale] przekazywany do parseCapture (testy)
  * @returns {object|null} obiekt notatki gotowy do zapisania, albo null
- *   gdy input nie daje sensownego tytułu
+ *   gdy input nie daje sensownego tytułu. Pole tagNames to jednorazowy seed,
+ *   jak focus: caller zamienia nazwy na id w `tags` i kasuje je przed zapisem
+ *   (sidebar i popup trzymają tagi w różnych miejscach).
  */
 export function buildItemFromCapture(raw, locale = null) {
-  const { isTask, isUrgent, isInProgress, title, due, time, recurrence } =
+  const { isTask, isUrgent, isInProgress, title, due, time, recurrence, tagNames } =
     parseCapture(raw, locale);
   if (!title) return null;
 
@@ -91,6 +93,7 @@ export function buildItemFromCapture(raw, locale = null) {
     content: '',
     created: Date.now(),
     tags: [],
+    tagNames,
     ...(isTask && {
       completed: false,
       due: captureDue({ isUrgent, isInProgress, due }),

@@ -265,16 +265,75 @@
 }
 
 /* Pasek podstawowy (domyślny): bez rzadko używanych przycisków, z których
-   każdy ma inną drogę — wyczyść formatowanie: Ctrl+\, separator: `---`
-   lub menu "/", cofnij/ponów: Ctrl+Z / Ctrl+Y. Pełny pasek włącza
-   Ustawienia → Edytor (panel.js ustawia data-toolbar-full na <html>). */
+   każdy ma inną drogę — separator: `---` lub menu "/", cofnij/ponów:
+   Ctrl+Z / Ctrl+Y. Pełny pasek włącza Ustawienia → Edytor (panel.js ustawia
+   data-toolbar-full na <html>). */
 html:not([data-toolbar-full]) #toolbar :is(
-    [data-cmd="removeFormat"],
     [data-cmd="insertHorizontalRule"],
-    #undo-btn,
-    #redo-btn
+    #toolbar-history
   ) {
   display: none;
+}
+
+/* Style tekstu, układ wąski: jeden przycisk i panel wysuwany spod strzałki.
+   Panel ma position: fixed, żeby wyjść poza pasek (pozycję liczy
+   editor-toolbar.js). */
+.toolbar-styles {
+  display: none;
+  position: fixed;
+  z-index: var(--z-overlay);
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+.toolbar-styles.is-open {
+  display: flex;
+}
+/* Kilka aktywnych stylów naraz. Na strzałce, bo ikona jest maską i nie pokaże
+   niczego ponad swój kształt. */
+#text-style-split .toolbar-split__arrow {
+  position: relative;
+}
+#text-style-split.has-multiple .toolbar-split__arrow::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Style tekstu, układ szeroki: cztery przyciski wprost w pasku. display: contents
+   włącza je w siatkę grupy bez zmiany DOM. Progi zmierzone: pasek podstawowy
+   potrzebuje 334px, pełny (bez Cofnij/Ponów) 357px, a zwinięcie stylów oszczędza
+   53px. Zmieniasz zestaw przycisków? Zmierz ponownie. */
+@media (min-width: 334px) {
+  html:not([data-toolbar-full]) #text-style-split {
+    display: contents;
+  }
+  html:not([data-toolbar-full]) :is(#text-style-main, #text-style-arrow) {
+    display: none;
+  }
+  html:not([data-toolbar-full]) .toolbar-styles {
+    display: contents;
+  }
+}
+@media (min-width: 357px) {
+  #text-style-split {
+    display: contents;
+  }
+  :is(#text-style-main, #text-style-arrow) {
+    display: none;
+  }
+  .toolbar-styles {
+    display: contents;
+  }
 }
 
 /* Rysunek ikony 16px w polu klikania 20px — przy kresce 2px pełne 20px
@@ -283,13 +342,12 @@ html:not([data-toolbar-full]) #toolbar :is(
   mask-size: 16px;
 }
 
-/* Pełny pasek przy szerokości poniżej 444px (zmierzone: potrzebuje 436px)
+/* Pełny pasek przy szerokości poniżej 421px (zmierzone: potrzebuje 413px)
    nie mieści się w jednym rzędzie. Cofnij/Ponów mają uniwersalne skróty
    (Ctrl+Z / Ctrl+Y), więc w wąskim panelu chowamy właśnie je. W pasku
    podstawowym są schowane zawsze (reguła wyżej). */
-@media (max-width: 443.98px) {
-  #undo-btn,
-  #redo-btn {
+@media (max-width: 420.98px) {
+  #toolbar-history {
     display: none;
   }
 }
@@ -300,15 +358,15 @@ html:not([data-toolbar-full]) #toolbar :is(
    pełnej szerokości wymusza złamanie po 2. grupie (order), a 3. grupa, jako
    pierwsza w rzędzie, traci kreskę. Pseudo-element tworzy własny pusty
    rząd, więc row-gap liczy się dwa razy — stąd połowa (2×3px).
-   Progi zmierzone: pasek podstawowy potrzebuje 344px, pełny (bez
-   Cofnij/Ponów) 390px. Zmieniasz zestaw przycisków? Zmierz ponownie. */
-@media (max-width: 343.98px) {
+   Progi po zwinięciu stylów: pasek podstawowy potrzebuje 281px, pełny (bez
+   Cofnij/Ponów) 304px. Zmieniasz zestaw przycisków? Zmierz ponownie. */
+@media (max-width: 280.98px) {
   #toolbar { row-gap: 3px; }
   #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
   .toolbar-group:nth-child(n + 3) { order: 3; }
   .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
 }
-@media (min-width: 344px) and (max-width: 389.98px) {
+@media (min-width: 281px) and (max-width: 303.98px) {
   html[data-toolbar-full] #toolbar { row-gap: 3px; }
   html[data-toolbar-full] #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
   html[data-toolbar-full] .toolbar-group:nth-child(n + 3) { order: 3; }
@@ -336,12 +394,11 @@ html:not([data-toolbar-full]) #toolbar :is(
 #toolbar select:hover {
   background: var(--surface-hover);
 }
-#toolbar button.is-active {
-  opacity: 0.8;
-}
-/* Feedback po skopiowaniu jako Markdown — zielony check */
-#copy-md-btn.is-copied {
-  background-color: var(--success);
+/* Stan aktywny: pełny kolor akcentu. Ikona jest maską, więc jej tło to sam rysunek
+   i nie da się pod nią podłożyć "wciśniętego" pola. Same krycie (0,5 → 0,8)
+   było prawie niewidoczne. */
+#toolbar .panel-icon.is-active {
+  background-color: var(--accent);
   opacity: 1;
 }
 

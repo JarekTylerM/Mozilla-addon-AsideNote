@@ -531,7 +531,11 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 8px;
-  width: 224px;
+  /* W rem, bo tekst rośnie z zoomem interfejsu: stała szerokość w px nie
+     mieściła nazw dni przy większym zoomie i szerszym kroju (Lexend). */
+  width: min(18rem, calc(100vw - 8px));
+  max-height: calc(100vh - 8px);
+  overflow-y: auto;
 }
 .date-picker-popover[hidden] {
   display: none;
@@ -576,10 +580,14 @@
 /* Grid */
 .date-picker-calendar__grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* minmax(0, …): samo 1fr nie schodzi poniżej szerokości treści, więc jedna
+     długa nazwa dnia rozpychała całą siatkę poza okienko. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 1px;
 }
 .date-picker-calendar__weekday {
+  min-width: 0;
+  overflow: hidden;
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-3);
@@ -676,7 +684,7 @@
 }
 
 .date-picker-time__input {
-  width: 72px;
+  width: 6rem;
   flex-shrink: 0;
   height: 28px;
   padding: 0 8px;

@@ -35,6 +35,20 @@ export const MAX_TITLE_LEN = 200;
 // buforu na alfabety nie-łacińskie z multibajtowymi znakami.
 export const MAX_TAG_NAME_LEN = 50;
 
+/**
+ * Postać nazwy tagu do porównań: `#praca-dom` ma trafić w tag "Praca dom",
+ * a `wellbefi` w "Wellbefi". Służy tylko do porównywania, nie do zapisu.
+ * @param {string} name
+ * @returns {string}
+ */
+export function normalizeTagName(name) {
+  return String(name)
+    .normalize('NFC')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, ' ');
+}
+
 // Treść notatki (HTML): 50 KB. Realnie notatka tekstowa to <5 KB;
 // 50 KB pozwala na obszerne wklejone fragmenty bez utraty UX, ale chroni
 // przed skumulowanym DoS przy imporcie (2 000 notatek × 50 KB = 100 MB

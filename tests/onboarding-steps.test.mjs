@@ -15,6 +15,7 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { test, expect, results } from './_runner.mjs';
+import { parseCapture } from './parser.mjs';
 
 const read = (rel) =>
   readFileSync(fileURLToPath(new URL('../' + rel, import.meta.url)), 'utf8');
@@ -280,11 +281,45 @@ test('tour pokazuje, jak nadać każdy stan, po którym da się filtrować', () 
   // Lekcja 5 uczy filtrów "ważne" i "tylko w trakcie". Jeśli przewodnik
   // nie pokazuje przycisków nadających te stany, uczy filtrować po czymś,
   // czego użytkownik nie umie ustawić.
-  const targets = new Set(
-    STEPS.map((s) => field(s.body, 'target')).filter(Boolean),
-  );
-  for (const sel of ['#important-btn', '#focus-btn', '#convert-type']) {
-    if (!targets.has(sel)) throw new Error(`tour nie pokazuje ${sel}`);
+  // Te stany nadaje się z nagłówka: z menu ⋮ albo z ikony przypiętej w
+  // ustawieniach. Każda akcja musi mieć własny krok, pozycję w menu i ikonę.
+  const cases = [
+    { key: 'ob_s1_convert', pin: 'pin-convert', item: 'convert-type' },
+    { key: 'ob_s3_important', pin: 'pin-important', item: 'important-btn' },
+    { key: 'ob_s3_focus', pin: 'pin-focus', item: 'focus-btn' },
+  ];
+  const menu = HTML.slice(HTML.indexOf('id="note-menu"'), HTML.indexOf('id="title-error"'));
+  for (const { key, pin, item } of cases) {
+    const step = STEPS.find((s) => field(s.body, 'textKey') === key);
+    if (!step) throw new Error(`tour nie opisuje ${key}`);
+    if (!step.body.includes(`noteActionTarget('${pin}')`)) {
+      throw new Error(`krok ${key} nie celuje w ${pin}`);
+    }
+    if (!menu.includes(`id="${item}"`)) throw new Error(`menu nie ma pozycji ${item}`);
+    if (!resolves(`#${pin}`)) throw new Error(`brak ikony ${pin}`);
+  }
+  if (!resolves('#note-menu-btn')) throw new Error('brak przycisku menu');
+});
+
+test('przykłady składni z tekstów naprawdę się parsują', () => {
+  // Przewodnik uczył kiedyś "tomorrow 6pm", którego parser nie przyjmuje:
+  // słowo zostawało w tytule, a użytkownik dostawał zadanie bez godziny.
+  const locales = { en: 'en-US', pl: 'pl' };
+  /** Tekst po "Wpisz:" / "Type:" aż do "i wciśnij" / "and press". */
+  const typed = (msg) => msg.match(/(?:Wpisz|Type): (.+?) (?:i wciśnij|and press)/)?.[1];
+  for (const lang of LANGS) {
+    const cases = [
+      { key: 'list_empty_ex_task', text: MESSAGES[lang].list_empty_ex_task.message, time: '10:00' },
+      { key: 'ob_s3_1', text: typed(MESSAGES[lang].ob_s3_1.message), time: '18:00' },
+      { key: 'ob_s4_1', text: typed(MESSAGES[lang].ob_s4_1.message), time: '09:00' },
+    ];
+    for (const { key, text, time } of cases) {
+      if (!text) throw new Error(`${lang}/${key}: nie znaleziono przykładu w tekście`);
+      const parsed = parseCapture(text, locales[lang]);
+      if (!parsed.isTask) throw new Error(`${lang}/${key}: "${text}" nie tworzy zadania`);
+      if (parsed.time !== time) throw new Error(`${lang}/${key}: "${text}" daje godzinę ${parsed.time}`);
+      if (!parsed.due) throw new Error(`${lang}/${key}: "${text}" nie ma terminu`);
+    }
   }
 });
 

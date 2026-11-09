@@ -35,9 +35,6 @@
   "common_yesterday": {
     "message": "wczoraj"
   },
-  "convertType_ariaLabel": {
-    "message": "Zmień typ"
-  },
   "convertType_toNote_title": {
     "message": "Zamień na notatkę"
   },
@@ -97,12 +94,6 @@
   },
   "day_short_6": {
     "message": "Sb"
-  },
-  "delete_ariaLabel": {
-    "message": "Usuń notatkę"
-  },
-  "delete_title": {
-    "message": "Usuń · Del"
   },
   "deletedNote_deletePermanently": {
     "message": "Usuń trwale"
@@ -263,14 +254,8 @@
   "filter_title": {
     "message": "Filtry · Alt+F"
   },
-  "focus_ariaLabel": {
-    "message": "Oznacz jako w trakcie"
-  },
   "focus_remove_title": {
     "message": "W trakcie — usuń oznaczenie"
-  },
-  "focus_title": {
-    "message": "W trakcie — oznacz jako aktywne"
   },
   "import_confirm": {
     "message": "Import zastąpi wszystkie istniejące notatki i tagi. Czy chcesz kontynuować?"
@@ -346,9 +331,6 @@
   "important_remove_title": {
     "message": "Usuń oznaczenie ważności"
   },
-  "important_title": {
-    "message": "Ważne"
-  },
   "linkModal_cancel": {
     "message": "Anuluj"
   },
@@ -383,28 +365,28 @@
     "message": "Adres URL"
   },
   "list_empty": {
-    "message": "Brak notatek i zadań"
+    "message": "Zacznij od pierwszego wpisu"
   },
   "list_empty_lead": {
-    "message": "Wpisz coś w polu „Notatka lub !zadanie” na górze i naciśnij Enter. Na przykład:"
+    "message": "Napisz coś w polu na górze i naciśnij Enter albo od razu otwórz edytor."
   },
   "list_empty_ex_note": {
-    "message": "Procedura LOTO pompa P-3"
+    "message": "Pomysł na weekend: wycieczka w góry"
   },
   "list_empty_ex_note_result": {
-    "message": "→ notatka"
+    "message": "Powstanie notatka"
   },
   "list_empty_ex_task": {
-    "message": "!Wymiana filtra jutro 10:00"
+    "message": "!Spacer w parku jutro 10:00"
   },
   "list_empty_ex_task_result": {
-    "message": "→ zadanie na jutro, 10:00"
+    "message": "Znak ! tworzy zadanie, tu na jutro, 10:00"
   },
   "list_empty_ex_insert_title": {
     "message": "Wstaw do pola szybkiego dodawania"
   },
   "list_empty_popup": {
-    "message": "Z dowolnej karty: Alt+Shift+S otwiera to samo pole w małym okienku."
+    "message": "otwiera szybkie dodawanie z dowolnej karty."
   },
   "list_empty_filtered": {
     "message": "Brak wyników"
@@ -417,18 +399,6 @@
   },
   "list_empty_noTasks": {
     "message": "Brak zadań"
-  },
-  "newItemInline_note": {
-    "message": "notatkę"
-  },
-  "newItemInline_or": {
-    "message": "lub"
-  },
-  "newItemInline_prefix": {
-    "message": "Dodaj"
-  },
-  "newItemInline_task": {
-    "message": "zadanie"
   },
   "note_deleteItem_ariaLabel": {
     "message": "Usuń notatkę z listy"
@@ -522,7 +492,7 @@
     "message": "Przewodnik"
   },
   "ob_s1_1": {
-    "message": "To pole szybkiego dodawania. Wpisz cokolwiek — np. kupić mleko. Pod polem od razu widzisz, co powstanie. Enter dodaje wpis."
+    "message": "To pole szybkiego dodawania. Wpisz cokolwiek — np. pomysł na weekend. Pod polem od razu widzisz, co powstanie. Enter dodaje wpis."
   },
   "ob_s1_2": {
     "message": "Każdy wpis trafia na tę listę. Kliknij swój, żeby go otworzyć."
@@ -534,10 +504,10 @@
     "message": "To edytor — tu rozwijasz myśl, a wyżej zmieniasz tytuł. Wszystko zapisuje się samo w trakcie pisania; nie ma przycisku Zapisz. Pomyłkę cofniesz przez Ctrl+Z."
   },
   "ob_s1_4": {
-    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kółko do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !zadzwonić do znajomego. Zadaniu ustawisz też termin z przypomnieniem, ale o tym w lekcji Zadania i terminy."
+    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kółko do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !kawa ze znajomym. Zadaniu ustawisz też termin z przypomnieniem, ale o tym w lekcji Zadania i terminy."
   },
   "ob_s1_convert": {
-    "message": "Tym przyciskiem zamienisz otwartą notatkę w zadanie i z powrotem — nic nie tracisz, odhaczenie wraca po ponownej zmianie. Przydaje się, gdy luźna myśl okazuje się jednak czymś do zrobienia."
+    "message": "Tutaj zamienisz otwartą notatkę w zadanie i z powrotem — nic nie tracisz, odhaczenie wraca po ponownej zmianie. Przydaje się, gdy luźna myśl okazuje się jednak czymś do zrobienia."
   },
   "ob_s2_1": {
     "message": "Otwórz dowolną notatkę z listy — na niej poćwiczymy formatowanie."
@@ -546,7 +516,7 @@
     "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
   },
   "ob_s2_2": {
-    "message": "Pasek narzędzi działa jak w edytorze tekstu: zaznacz fragment i kliknij ikonę — pogrubienie, kursywa, nagłówki, listy, cytaty. Alt+E chowa i przywraca pasek."
+    "message": "Pasek narzędzi działa jak w edytorze tekstu: zaznacz fragment i kliknij ikonę — pogrubienie, kursywa, nagłówki, listy, cytaty. W wąskim panelu style tekstu są pod strzałką obok pogrubienia. Alt+E chowa i przywraca pasek."
   },
   "ob_s2_3": {
     "message": "Wpisz / w pustej linii edytora — otworzy się menu wszystkich bloków: listy zadań, bloki kodu, kolorowe ramki i inne."
@@ -555,13 +525,13 @@
     "message": "Wolisz nie odrywać rąk od klawiatury? Działają skróty tekstowe (Markdown): # i spacja daje nagłówek, - i spacja listę, **tekst** pogrubienie. Nie musisz ich znać — pasek robi to samo."
   },
   "ob_s2_5": {
-    "message": "Tą ikoną skopiujesz całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K. Działa to też w drugą stronę: wklejony tutaj Markdown sam zamienia się w formatowanie."
+    "message": "Tutaj skopiujesz też całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K. Działa to też w drugą stronę: wklejony tutaj Markdown sam zamienia się w formatowanie."
   },
   "ob_s2_link": {
     "message": "Zaznacz fragment tekstu i kliknij tę ikonę (albo wciśnij Ctrl+K), żeby wstawić link. Kliknięcie gotowego linku w notatce otwiera go w nowej karcie."
   },
   "ob_s3_1": {
-    "message": "Wpisz: !zadzwonić do mamy jutro 18:00 i wciśnij Enter. Znak ! tworzy zadanie, a słowa jutro i 18:00 same zamieniają się w termin z przypomnieniem."
+    "message": "Wpisz: !kino z przyjaciółmi jutro 18:00 i wciśnij Enter. Znak ! tworzy zadanie, a słowa jutro i 18:00 same zamieniają się w termin z przypomnieniem."
   },
   "ob_s3_2": {
     "message": "Zadanie ma kółko do odhaczenia i termin pod tytułem. Kliknij swoje zadanie, żeby je otworzyć."
@@ -573,28 +543,28 @@
     "message": "Kliknij pole terminu — w jednym miejscu ustawisz datę, godzinę i przypomnienie."
   },
   "ob_s3_4": {
-    "message": "Na dole włączysz powtarzanie: codziennie, co tydzień, co miesiąc, co rok albo w wybrane dni — np. podlać kwiaty w każdy poniedziałek."
+    "message": "Na dole włączysz powtarzanie: codziennie, co tydzień, co miesiąc, co rok albo w wybrane dni — np. joga w każdy poniedziałek."
   },
   "ob_s3_5": {
-    "message": "Lista sama grupuje zadania: Zaległe, Dziś, Jutro, Ten tydzień… Odhaczone zadanie przenosi się do Ukończonych."
+    "message": "Lista sama grupuje zadania: Do nadrobienia, Dziś, Jutro, Ten tydzień… Odhaczone zadanie przenosi się do Ukończonych."
   },
   "ob_s3_focus": {
-    "message": "Ta ikona oznacza zadanie jako w trakcie — do tego, czym zajmujesz się teraz. Zadanie ważne jest w trakcie automatycznie."
+    "message": "Tutaj oznaczysz zadanie jako w trakcie — do tego, czym zajmujesz się teraz. Skrót: Alt+W."
   },
   "ob_s3_important": {
-    "message": "Gwiazdka oznacza zadanie jako ważne — wskakuje wtedy na górę listy i można po tym filtrować."
+    "message": "Tutaj oznaczysz zadanie jako ważne — wskakuje wtedy na górę listy i można po tym filtrować. Skrót: Alt+I."
   },
   "ob_s4_1": {
-    "message": "Cała lekcja dzieje się w tym jednym polu. Wpisz: !!raport w piątek 9:00 i wciśnij Enter. Zanim to zrobisz, spójrz pod pole — podgląd mówi, co dokładnie powstanie."
+    "message": "Cała lekcja dzieje się w tym jednym polu. Wpisz: !!bilety na koncert jutro 9:00 i wciśnij Enter. Zanim to zrobisz, spójrz pod pole — podgląd mówi, co dokładnie powstanie."
   },
   "ob_s4_dates": {
-    "message": "Termin wpisujesz zwykłymi słowami: dziś, jutro, nazwa dnia tygodnia (bierze najbliższy taki), albo data 15.06 — z rokiem, jeśli chcesz: 15.06.2030. Godzina to 14:30 i od razu ustawia przypomnienie."
+    "message": "Termin wpisujesz zwykłymi słowami: dziś, jutro, pojutrze, za 3 dni, w środę, na piątek (bierze najbliższy taki dzień) albo data 15.06 — z rokiem, jeśli chcesz: 15.06.2030. Godzina to 14:30 lub o 14:30 i od razu ustawia przypomnienie."
   },
   "ob_s4_priority": {
-    "message": "Znaki na początku ustawiają rangę: ! tworzy zadanie, !! zadanie ważne, !> zadanie w trakcie. To dokładnie te same stany, które przed chwilą klikałeś gwiazdką i ikoną obok tytułu."
+    "message": "Znaki na początku ustawiają rangę: ! tworzy zadanie, !! zadanie ważne i od razu w trakcie, !> zadanie w trakcie. To te same stany, które ustawisz w menu notatki, tyle że tam każdy osobno."
   },
   "ob_s4_recurrence": {
-    "message": "Powtarzanie też działa tekstem: codziennie, co tydzień, co miesiąc, co rok. Czego parser nie zrozumie, zostawia w tytule — jeśli więc widzisz swój tekst w podglądzie zamiast terminu, znaczy że nie został rozpoznany."
+    "message": "Powtarzanie też działa tekstem: codziennie, co tydzień, co miesiąc, co rok, co wtorek. Czego parser nie zrozumie, zostawia w tytule — jeśli więc widzisz swój tekst w podglądzie zamiast terminu, znaczy że nie został rozpoznany. A tekst w cudzysłowie zawsze zostaje dosłowny."
   },
   "ob_s4_shortcuts": {
     "message": "Do pola trafisz bez myszy: Alt+C stawia w nim kursor, Alt+T od razu z prefiksem zadania. A Alt+Shift+S otwiera to samo pole w małym okienku nad dowolną stroną — ta sama składnia, a przycisk ? pokazuje ją w całości."
@@ -627,7 +597,7 @@
     "message": "Filtry można łączyć: status zadania, ważne, termin, tagi. Aktywne filtry widać nad listą i jednym kliknięciem je wyczyścisz."
   },
   "ob_s6_5": {
-    "message": "Tag to kolorowa etykieta, np. praca albo dom. Przypinasz je pod edytorem (+ dodaj tag), a nazwy i kolory zmieniasz w ustawieniach. Jedna notatka może mieć kilka tagów."
+    "message": "Tag to kolorowa etykieta, np. praca albo dom. Przypinasz je pod edytorem (+ dodaj tag) albo od razu przy dodawaniu, wpisując #praca. Nazwy i kolory zmieniasz w ustawieniach. Jedna notatka może mieć kilka tagów."
   },
   "ob_s7_1": {
     "message": "AsideNotes działa z każdej karty przeglądarki: Alt+Shift+Q otwiera i zamyka ten panel, a Alt+Shift+S wywołuje okienko szybkiego dodawania — notujesz bez przerywania pracy."
@@ -735,7 +705,7 @@
     "message": "Pokaż toolbar edytora · Alt+E"
   },
   "panel_editor_toolbarFull": {
-    "message": "Pełny pasek: czyszczenie formatowania, separator, cofnij/ponów"
+    "message": "Pełny pasek: separator, cofnij/ponów"
   },
   "panel_editor_toolbarTooltips": {
     "message": "Pokaż podpowiedzi w toolbarze"
@@ -981,7 +951,7 @@
     "message": "Notatki"
   },
   "section_overdue": {
-    "message": "Zaległe"
+    "message": "Do nadrobienia"
   },
   "section_today": {
     "message": "Dzisiaj"
@@ -1230,7 +1200,7 @@
     "message": "15.06.2030"
   },
   "shortcuts_qc_ex_plain": {
-    "message": "kup mleko"
+    "message": "pomysł na weekend"
   },
   "shortcuts_qc_ex_today": {
     "message": "dziś"
@@ -1251,7 +1221,7 @@
     "message": "→ zwykła notatka"
   },
   "shortcuts_qc_recurrence": {
-    "message": "→ powtarzanie (też: co miesiąc, co rok)"
+    "message": "→ powtarzanie (też: co miesiąc, co rok, co wtorek)"
   },
   "shortcuts_qc_task": {
     "message": "→ zadanie zamiast notatki"
@@ -1269,7 +1239,7 @@
     "message": "→ godzina i przypomnienie o tej porze"
   },
   "shortcuts_qc_weekdays": {
-    "message": "→ najbliższy taki dzień"
+    "message": "→ najbliższy taki dzień (też: w środę, na piątek)"
   },
   "shortcuts_quickCapture": {
     "message": "Quick capture"
@@ -1613,7 +1583,7 @@
     "message": "Tryb zen"
   },
   "typeToggle_zen_title": {
-    "message": "Zen — zaległe i dzisiejsze · Alt+Z"
+    "message": "Zen — do nadrobienia i dzisiejsze · Alt+Z"
   },
   "validation_contentTooLong": {
     "message": "Notatka przekroczyła $MAX$ KB — końcówka treści nie została zapisana.",
@@ -1655,7 +1625,7 @@
     "message": "Wartość jest za długa"
   },
   "zen_allClear_sub": {
-    "message": "Brak zaległych i dzisiejszych zadań"
+    "message": "Na dziś nie masz nic do zrobienia"
   },
   "zen_allClear_title": {
     "message": "Wszystko ogarnięte"
@@ -1665,12 +1635,6 @@
   },
   "linkTooltip_copied": {
     "message": "Skopiowano ✓"
-  },
-  "copyMd_title": {
-    "message": "Kopiuj jako Markdown · Alt+K"
-  },
-  "copyMd_ariaLabel": {
-    "message": "Kopiuj treść notatki jako Markdown"
   },
   "shortcuts_copyMd": {
     "message": "→ kopiuj notatkę jako Markdown"
@@ -1689,5 +1653,155 @@
   },
   "note_postponeToTomorrow": {
     "message": "Przesuń na jutro"
+  },
+  "noteMenu_ariaLabel": {
+    "message": "Więcej działań"
+  },
+  "noteMenu_important": {
+    "message": "Ważne"
+  },
+  "noteMenu_inProgress": {
+    "message": "W trakcie"
+  },
+  "noteMenu_copyMd": {
+    "message": "Kopiuj jako Markdown"
+  },
+  "noteMenu_delete": {
+    "message": "Przenieś do kosza"
+  },
+  "shortcuts_important": {
+    "message": "→ oznacz jako ważne"
+  },
+  "shortcuts_inProgress": {
+    "message": "→ oznacz jako w trakcie"
+  },
+  "shortcuts_complete": {
+    "message": "→ ukończ otwarte zadanie"
+  },
+  "panel_noteMenu_title": {
+    "message": "Menu trzech kropek"
+  },
+  "panel_noteMenu_hint": {
+    "message": "Zaznaczone działania są schowane w menu. Odznaczone widać jako ikony w nagłówku notatki."
+  },
+  "panel_noteMenu_convert": {
+    "message": "Zamiana notatki i zadania"
+  },
+  "section_add_notes": {
+    "message": "Nowa notatka"
+  },
+  "section_add_unscheduled": {
+    "message": "Nowe zadanie bez terminu"
+  },
+  "section_add_today": {
+    "message": "Nowe zadanie na dziś"
+  },
+  "section_add_tomorrow": {
+    "message": "Nowe zadanie na jutro"
+  },
+  "section_add_week": {
+    "message": "Nowe zadanie na ten tydzień"
+  },
+  "section_add_month": {
+    "message": "Nowe zadanie na ten miesiąc"
+  },
+  "section_add_later": {
+    "message": "Nowe zadanie na później"
+  },
+  "panel_previewIcon_label": {
+    "message": "Ikona podglądu na liście"
+  },
+  "panel_previewIcon_hover": {
+    "message": "Po najechaniu"
+  },
+  "panel_previewIcon_always": {
+    "message": "Zawsze"
+  },
+  "panel_previewIcon_off": {
+    "message": "Wyłączona"
+  },
+  "panel_sectionAdd_label": {
+    "message": "Przycisk + w sekcjach listy"
+  },
+  "panel_sectionAdd_always": {
+    "message": "Zawsze"
+  },
+  "panel_sectionAdd_hover": {
+    "message": "Po najechaniu"
+  },
+  "quickSettings_ariaLabel": {
+    "message": "Szybkie ustawienia"
+  },
+  "quickSettings_theme": {
+    "message": "Motyw: $1 · kliknij, aby zmienić",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickSettings_font": {
+    "message": "Krój pisma: $1 · kliknij, aby zmienić",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickSettings_zoomOut": {
+    "message": "Zmniejsz interfejs"
+  },
+  "quickSettings_zoomIn": {
+    "message": "Powiększ interfejs"
+  },
+  "list_empty_tutorial_title": {
+    "message": "Pierwszy raz w AsideNotes?"
+  },
+  "list_empty_tutorial_desc": {
+    "message": "Krótki samouczek pokaże najważniejsze funkcje. Później znajdziesz go w ustawieniach (⚙), w sekcji Przewodnik."
+  },
+  "list_empty_tutorial_btn": {
+    "message": "Uruchom samouczek"
+  },
+  "list_empty_newNote": {
+    "message": "Nowa notatka"
+  },
+  "list_empty_newTask": {
+    "message": "Nowe zadanie"
+  },
+  "list_empty_examples_label": {
+    "message": "Przykłady do wypróbowania"
+  },
+  "quickCapture_preview_tag_new": {
+    "message": "#$NAME$ (nowy tag)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "validation_tagExists": {
+    "message": "Tag o tej nazwie już istnieje"
+  },
+  "shortcuts_qc_ex_tag": {
+    "message": "#praca"
+  },
+  "shortcuts_qc_tag": {
+    "message": "→ tag: przypisze istniejący lub utworzy nowy"
+  },
+  "shortcuts_qc_ex_quoted": {
+    "message": "!\"wersja 1.10\""
+  },
+  "shortcuts_qc_quoted": {
+    "message": "→ tekst dosłowny, bez szukania dat i tagów"
+  },
+  "quickCapture_preview_needTitle": {
+    "message": "Dopisz tytuł, żeby dodać wpis"
+  },
+  "toolbar_textStyle_menu": {
+    "message": "Style tekstu"
+  },
+  "tempBuild_warning": {
+    "message": "Uwaga: ta wersja tymczasowa pracuje na tych samych notatkach co zainstalowany dodatek. Do testów załaduj dist-dev/manifest.json."
   }
 }

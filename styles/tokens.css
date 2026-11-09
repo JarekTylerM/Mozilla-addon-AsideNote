@@ -266,3 +266,32 @@
 :root[data-font='lexend'] {
   --font-ui: 'Lexend', system-ui, -apple-system, sans-serif;
 }
+
+/* Wersja testowa (node build.mjs --dev), znacznik ustawia build-flavor.js. W tym
+   pliku, bo dzielą go panel i popup. Kolor stały, nie z motywu: ma być widoczny
+   tak samo wszędzie i nie kojarzyć się z żadnym stanem interfejsu.
+   pointer-events: none, żeby nie zasłaniał klikania. */
+:root[data-build='dev'] body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10000;
+  height: 3px;
+  background: #e8590c;
+  pointer-events: none;
+}
+:root[data-build='dev'] body::after {
+  content: "DEV";
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 10000;
+  padding: 0 6px 1px;
+  border-radius: 0 0 4px 4px;
+  background: #e8590c;
+  color: #fff;
+  font: 700 9px/12px system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  transform: translateX(-50%);
+  pointer-events: none;
+}

@@ -9,7 +9,7 @@
  * NIE kopiować przez sync.bat — patrz komentarz w sync.bat.
  */
 
-import { validateText, MAX_TAG_NAME_LEN } from './sanitize.mjs';
+import { validateText, normalizeTagName, MAX_TAG_NAME_LEN } from './sanitize.mjs';
 
 // ── Mock: saveTags noop ───────────────────────────────────────────
 function saveTags() { /* noop — brak browser.storage w Node.js */ }
@@ -37,11 +37,26 @@ export function getTag(id) {
   return tagState.tags.find((t) => t.id === id) ?? null;
 }
 
+export function findTagByName(name) {
+  const wanted = normalizeTagName(name);
+  return tagState.tags.find((t) => normalizeTagName(t.name) === wanted) ?? null;
+}
+
+export function resolveTagNames(names) {
+  const ids = new Set();
+  for (const name of names) {
+    const tag = findTagByName(name) ?? createTag(name).tag;
+    if (tag) ids.add(tag.id);
+  }
+  return [...ids];
+}
+
 export function createTag(name) {
   const result = validateText(name, MAX_TAG_NAME_LEN);
   if (result.error) return { ok: false, error: result.error };
   const trimmed = result.value.trim();
   if (!trimmed) return { ok: false, error: 'validation_empty' };
+  if (findTagByName(trimmed)) return { ok: false, error: 'validation_tagExists' };
 
   const color = PALETTE[tagState.tags.length % PALETTE.length];
   const tag = {
@@ -62,6 +77,8 @@ export function updateTag(id, name) {
   if (result.error) return { ok: false, error: result.error };
   const trimmed = result.value.trim();
   if (!trimmed) return { ok: false, error: 'validation_empty' };
+  const sameName = findTagByName(trimmed);
+  if (sameName && sameName.id !== id) return { ok: false, error: 'validation_tagExists' };
 
   tag.name = trimmed;
   saveTags(tagState.tags);

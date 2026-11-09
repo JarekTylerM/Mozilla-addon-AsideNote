@@ -45,8 +45,7 @@
     #filter-btn,
     #type-toggle-btn,
     #toolbar,
-    #tag-selector,
-    .new-item-inline
+    #tag-selector
   ) {
   opacity: var(--zen-dim, 0.5);
   transition: opacity var(--transition-slow) ease;
@@ -61,14 +60,13 @@
     #filter-btn,
     #type-toggle-btn,
     #toolbar,
-    #tag-selector,
-    .new-item-inline
+    #tag-selector
   ):is(:hover, :focus-within) {
   opacity: 1;
 }
 
 /* POZIOMY — odstępstwa od domyślnego 0.5 */
-.zen-mode :is(.quick-capture, #filter-bar, .new-item-inline) {
+.zen-mode :is(.quick-capture, #filter-bar) {
   --zen-dim: 0.6;
 }
 .zen-mode #toolbar {
@@ -112,11 +110,6 @@
   background: #fff0;
   color: var(--text-3);
   opacity: 0.5;
-}
-
-.zen-mode .new-item-link {
-  color: var(--text-3);
-  border-bottom-color: var(--text-3);
 }
 
 /* Tag pille: wyciszenie remapem koloru, bez hover-restore */
@@ -215,7 +208,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 /* ── Note header — wyciszenie ikon ────────────────
    Celowo POZA wspólnym mechanizmem: przyciski note-headera mają
-   style ID-owe w list.css (#important-btn.is-active, #delete:hover…),
+   style ID-owe w list.css (#status-important, #status-focus…),
    które muszą wygrywać specyficznością — wspólny blok :is() z ID-ami
    by je przykrył (zgaszona gwiazdka ważności itd.). */
 
@@ -253,8 +246,8 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 /* W tym trybie #tag-selector jest ukryty, więc nic nie stoi w jednej linii
    z pływającym #bottom-bar — ramka listy kończy się NAD paskiem, a pasek
-   ma własny pas u dołu. Wcześniej lista sięgała samego dołu: pasek
-   nachodził na róg ramki i na wiersz "Dodaj notatkę lub zadanie".
+   ma własny pas u dołu. Wcześniej lista sięgała samego dołu i pasek
+   nachodził na róg ramki.
      body padding-bottom (base.css):     29px
      + ten padding:   52 + 6 − 29     =  29px
      = dół ramki 58px nad krawędzią okna, pasek kończy się na 50,5px */
@@ -271,11 +264,14 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 }
 
 /* Pusta lista w pełnej wysokości — komunikat na środku, nie przyklejony
-   do górnej krawędzi ogromnej pustej ramki */
-#main-view.list-expanded #notesList:has(> .notes-empty:only-child) {
+   do górnej krawędzi ogromnej pustej ramki. Puste sekcje z przyciskiem "+"
+   zostają pod nim, przy dolnej krawędzi. */
+#main-view.list-expanded #notesList:has(> .notes-empty) {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+}
+#main-view.list-expanded #notesList > .notes-empty {
+  margin-block: auto;
 }
 
 #main-view.list-expanded .note-header,

@@ -40,6 +40,9 @@ const MIRRORED = [
   'editor-selection',
   'notes-trash',
   'focus-trap',
+  'note-menu',
+  'note-sections',
+  'build-flavor',
 ];
 
 function syncMirrors() {
@@ -90,6 +93,12 @@ for (const file of files) {
     totalFailed += f;
     totalBugged += b;
     if (f > 0) failedFiles.push(file);
+  } else {
+    // Plik, który nie doszedł do podsumowania, wywrócił się (np. błąd składni).
+    // Bez tego jego testy po cichu znikały z licznika, a suite był zielony.
+    totalFailed += 1;
+    failedFiles.push(`${file} (nie uruchomił się)`);
+    if (result.stderr) process.stderr.write(result.stderr);
   }
 }
 

@@ -1,6 +1,9 @@
 # Build output
 dist/
+dist-dev/
+dist-self/
 *.zip
+*.xpi
 
 # Node
 node_modules/
@@ -18,6 +21,9 @@ tests/editor-block-analyzer.mjs
 tests/editor-selection.mjs
 tests/notes-trash.mjs
 tests/focus-trap.mjs
+tests/note-menu.mjs
+tests/note-sections.mjs
+tests/build-flavor.mjs
 tests/quick-capture-preview.mjs
 tests/quick-capture-help.mjs
 

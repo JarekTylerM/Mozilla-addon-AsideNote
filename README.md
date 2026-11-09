@@ -30,14 +30,16 @@ AsideNotes lives in the Firefox sidebar. Everything you write stays in `browser.
 | `!!Ship the release` | an **important** task — due today, and marked in progress |
 | `!>Refactor parser` | a task marked **in progress**, due today |
 | `!!>Hotfix` | the same as `!!` — important already implies in progress |
+| `Weekend idea #home` | a note with the tag **home** — created if it does not exist yet |
+| `!"version 6/15"` | a task with literal text: quotes switch off date and tag parsing |
 
-Dates are locale-aware: English recognises `tomorrow`, `today`, weekday names and `MM/DD`; Polish recognises `jutro`, `dziś`/`dzisiaj`, weekday names and `DD.MM`. An invalid date (`30.02`) or time (`25:99`) is deliberately *not* matched — the text stays in the title so you can see it wasn't understood, rather than being silently misread.
+Dates are locale-aware: English recognises `tomorrow`, `today`, `in 3 days`, weekday names (`on friday`, `every tuesday`) and `MM/DD`; Polish recognises `jutro`, `dziś`/`dzisiaj`, `pojutrze`, `za 3 dni`, inflected weekday names (`w środę`, `co wtorek`) and `DD.MM`. An invalid date (`30.02`) or time (`25:99`) is deliberately *not* matched — the text stays in the title so you can see it wasn't understood, rather than being silently misread.
 
 **Tags** with colours, filtering, and search across titles and content.
 
 **Reminders** via `alarms` + desktop `notifications`, with recurrence: daily, weekly, monthly, yearly, or a custom set of weekdays.
 
-**Two screens** — the list fills the panel; an open note gets the whole panel too, and `←` or `Esc` takes you back. **Zen mode** (tasks only), collapsible sections (Today, Overdue, Done…), and per-note cursor resume — reopen a note and the caret is where you left it.
+**Two screens** — the list fills the panel; an open note gets the whole panel too, and `←` or `Esc` takes you back. **Zen mode** (tasks only), collapsible sections (Today, To catch up, Done…), and per-note cursor resume — reopen a note and the caret is where you left it.
 
 **Trash** — deleted notes are recoverable for 30 days (up to 50 items), then auto-expire.
 
@@ -58,11 +60,27 @@ git clone https://github.com/JarekTylerM/Mozilla-addon-AsideNote.git
 cd Mozilla-addon-AsideNote
 ```
 
+```bash
+npm run build:dev   # → dist-dev/
+```
+
 1. Open `about:debugging#/runtime/this-firefox` in Firefox.
 2. Click **Load Temporary Add-on…**
-3. Select `manifest.json` from the repo root.
+3. Select `dist-dev/manifest.json`.
 
-The extension is unloaded when Firefox closes. To build a distributable package:
+This test build has its own add-on ID, so its notes are **separate** from an installed AsideNotes, and both can run side by side. It is called **AsideNotes DEV**, has an orange icon and a DEV stripe, and uses `Alt+Shift+W` / `Alt+Shift+A`. It is unloaded when Firefox closes.
+
+Do not load `manifest.json` from the repo root while you use the installed add-on: it has the same ID, replaces the installed version and works on the same notes. The sidebar shows a warning if that happens.
+
+To keep the test build installed permanently, sign it through AMO as a self-distributed add-on:
+
+1. `npm run build:self` creates `asidenotes-dev-<version>.zip` and adds the version to `updates/asidenotes-dev.json`.
+2. Upload the ZIP on AMO, choosing **On your own**, and download the signed `.xpi`.
+3. Publish it as `asidenotes-dev-<version>.xpi` in a GitHub release tagged `dev-v<version>`, and commit the updates file to `main`. Installed copies then update themselves.
+
+Every upload needs a higher `version` in `manifest.json`.
+
+To build a distributable package:
 
 ```bash
 npm install
@@ -194,14 +212,16 @@ Wszystko, co napiszesz, zostaje w `browser.storage.local` na Twoim komputerze. R
 | `!!Wypuść wydanie` | zadanie **ważne** — termin dziś, oznaczone też jako w trakcie |
 | `!>Refaktor parsera` | zadanie **w trakcie**, termin dziś |
 | `!!>Hotfix` | to samo co `!!` — ważne już oznacza w trakcie |
+| `Pomysł na weekend #dom` | notatkę z tagiem **dom** — tag powstanie, jeśli go jeszcze nie ma |
+| `!"wersja 1.10"` | zadanie z dosłownym tekstem: cudzysłów wyłącza szukanie dat i tagów |
 
-Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, nazwy dni tygodnia i `DD.MM`; angielski — `tomorrow`, `today`, nazwy dni i `MM/DD`. Niepoprawna data (`30.02`) lub godzina (`25:99`) **celowo nie jest dopasowywana** — fragment zostaje w tytule, żebyś zobaczył, że nie został zrozumiany. To lepsze niż ciche zrozumienie źle.
+Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, `pojutrze`, `za 3 dni`, odmienione nazwy dni (`w środę`, `co wtorek`) i `DD.MM`; angielski — `tomorrow`, `today`, `in 3 days`, nazwy dni (`on friday`, `every tuesday`) i `MM/DD`. Niepoprawna data (`30.02`) lub godzina (`25:99`) **celowo nie jest dopasowywana** — fragment zostaje w tytule, żebyś zobaczył, że nie został zrozumiany. To lepsze niż ciche zrozumienie źle.
 
 **Tagi** z kolorami, filtrowaniem i wyszukiwaniem po tytułach i treści.
 
 **Przypomnienia** przez `alarms` + powiadomienia systemowe, z powtarzaniem: codziennie, co tydzień, co miesiąc, co rok lub we własnym zestawie dni tygodnia.
 
-**Dwa ekrany** — lista wypełnia panel; otwarta notatka też dostaje cały panel, a `←` lub `Esc` wraca na listę. **Tryb zen** (tylko zadania), zwijane sekcje (Dziś, Zaległe, Zrobione…) oraz wznawianie pozycji kursora — otwierasz notatkę i karetka stoi tam, gdzie ją zostawiłeś.
+**Dwa ekrany** — lista wypełnia panel; otwarta notatka też dostaje cały panel, a `←` lub `Esc` wraca na listę. **Tryb zen** (tylko zadania), zwijane sekcje (Dziś, Do nadrobienia, Zrobione…) oraz wznawianie pozycji kursora — otwierasz notatkę i karetka stoi tam, gdzie ją zostawiłeś.
 
 **Kosz** — usunięte notatki można odzyskać przez 30 dni (do 50 elementów), potem wygasają automatycznie.
 
@@ -213,11 +233,27 @@ Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, nazwy dn
 
 Wtyczki nie ma jeszcze na addons.mozilla.org, więc załaduj ją tymczasowo:
 
+```bash
+npm run build:dev   # → dist-dev/
+```
+
 1. Otwórz `about:debugging#/runtime/this-firefox`.
 2. Kliknij **Załaduj tymczasowy dodatek…**
-3. Wskaż `manifest.json` z katalogu głównego repo.
+3. Wskaż `dist-dev/manifest.json`.
 
-Rozszerzenie znika po zamknięciu Firefoksa. Paczka do dystrybucji: `npm install && node build.mjs`.
+Ta wersja testowa ma własny identyfikator, więc jej notatki są **oddzielone** od zainstalowanego AsideNotes i obie mogą działać naraz. Nazywa się **AsideNotes DEV**, ma pomarańczową ikonę i pasek DEV oraz skróty `Alt+Shift+W` / `Alt+Shift+A`. Znika po zamknięciu Firefoksa.
+
+Nie ładuj `manifest.json` z katalogu głównego, gdy używasz zainstalowanego dodatku: ma ten sam identyfikator, zastępuje zainstalowaną wersję i pracuje na tych samych notatkach. Panel boczny ostrzeże, jeśli tak się stanie.
+
+Aby mieć wersję testową zainstalowaną na stałe, podpisz ją w AMO jako dodatek dystrybuowany samodzielnie:
+
+1. `npm run build:self` tworzy `asidenotes-dev-<wersja>.zip` i dopisuje wersję do `updates/asidenotes-dev.json`.
+2. Wyślij ZIP na AMO, wybierając **Na własną rękę**, i pobierz podpisany plik `.xpi`.
+3. Opublikuj go jako `asidenotes-dev-<wersja>.xpi` w wydaniu GitHuba z tagiem `dev-v<wersja>`, a plik aktualizacji zacommituj do `main`. Zainstalowane kopie zaktualizują się same.
+
+Każde wysłanie wymaga wyższego `version` w `manifest.json`.
+
+Paczka do dystrybucji: `npm install && node build.mjs`.
 
 Wymaga **Firefoksa 120+**.
 

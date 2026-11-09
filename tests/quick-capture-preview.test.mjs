@@ -30,6 +30,8 @@ const MESSAGES = {
   quickCapture_preview_flag_important: 'Important',
   quickCapture_preview_flag_inProgress: 'In progress',
   quickCapture_preview_flags: '$1 · $2',
+  quickCapture_preview_tag_new: '#$1 (new tag)',
+  quickCapture_preview_needTitle: 'Add a title',
   recurrence_daily: 'Daily',
   recurrence_weekly: 'Weekly',
   recurrence_monthly: 'Monthly',
@@ -176,9 +178,41 @@ test('zwykłe zadanie nie dostaje żadnej z tych flag', () => {
   expect(d.text).toBe('Adding task: check email');
 });
 
-test('cykliczność trafia do flag', () => {
+test('cykliczność trafia do flag, a bez daty dostaje termin dziś', () => {
   const d = describeCapture('!standup daily', EN);
-  expect(d.text).toBe('Adding task: standup · Daily');
+  expect(d.text).toBe('Adding task today: standup · Daily');
+});
+
+test('nowy tag jest oznaczony, żeby literówka nie przeszła niezauważona', () => {
+  const env = { ...EN, tags: [{ name: 'Work' }] };
+  expect(describeCapture('idea #Wrok', env).text).toBe('Adding note: idea · #Wrok (new tag)');
+});
+
+test('istniejący tag bez oznaczenia, bez względu na wielkość liter', () => {
+  const env = { ...EN, tags: [{ name: 'Work' }] };
+  expect(describeCapture('idea #work', env).text).toBe('Adding note: idea · #work');
+});
+
+test('tag pasuje mimo myślnika zamiast spacji', () => {
+  const env = { ...EN, tags: [{ name: 'Home office' }] };
+  expect(describeCapture('idea #home-office', env).text).toBe('Adding note: idea · #home-office');
+});
+
+test('tagi idą za flagami zadania', () => {
+  const env = { ...EN, tags: [{ name: 'home' }] };
+  expect(describeCapture('!walk weekly #home', env).text).toBe(
+    'Adding task today: walk · Weekly · #home',
+  );
+});
+
+test('sam tag: podgląd prosi o tytuł, bo Enter nic nie doda', () => {
+  expect(describeCapture('#work', EN).text).toBe('Add a title');
+  expect(describeCapture('!#work', EN).text).toBe('Add a title');
+  expect(describeCapture('!#work', EN).type).toBe('task');
+});
+
+test('bez listy tagów każdy wygląda na nowy', () => {
+  expect(describeCapture('x #a', EN).text).toBe('Adding note: x · #a (new tag)');
 });
 
 test('każdy rodzaj cykliczności ma swoją etykietę', () => {

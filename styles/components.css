@@ -227,9 +227,10 @@
   opacity: .6;
 }
 
-/* Sekcja wymagająca uwagi (zaległe) — licznik czytelny także po zwinięciu */
+/* Sekcja "Do nadrobienia" — licznik czytelny także po zwinięciu. Złoty, nie
+   czerwony: ma przypominać bez presji, jak stany "ważne" i "w trakcie". */
 .section-header--alert .section-header__count {
-  color: var(--danger);
+  color: var(--gold-text);
   font-weight: 600;
   opacity: 1;
 }

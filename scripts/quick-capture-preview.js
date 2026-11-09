@@ -21,6 +21,7 @@
 
 import { parseCapture } from './parser.js';
 import { captureDue } from './quick-capture-core.js';
+import { normalizeTagName } from './sanitize.js';
 
 /** Separator flag w opisie — także między opisem a flagami (patrz locale). */
 const FLAG_SEPARATOR = ' · ';
@@ -39,6 +40,8 @@ const RECURRENCE_KEYS = {
  * @property {string} locale UI locale — do Intl ORAZ do parseCapture
  *   (jawnie, nie autodetekcja: podgląd i zapis muszą parsować tak samo)
  * @property {number} [now] "teraz" — wstrzykiwalne dla testów
+ * @property {{ name: string }[]} [tags] istniejące tagi: podgląd odróżnia
+ *   przypisanie od utworzenia nowego, żeby literówka nie przeszła niezauważona
  */
 
 /**
@@ -51,8 +54,8 @@ const RECURRENCE_KEYS = {
  * Etykieta dnia dla terminu: "dziś" / "jutro" / "wczoraj", a poza tym
  * zakresem — data dzienna w locale użytkownika.
  *
- * "Wczoraj" jest osiągalne: parser przyjmuje jawną datę wsteczną
- * (np. `!raport 01.01` w lipcu), więc podgląd musi to nazwać.
+ * "Wczoraj" jest osiągalne: parser przyjmuje datę wsteczną z jawnym rokiem
+ * (np. `!raport 06.11.2026` 7 listopada), więc podgląd musi to nazwać.
  *
  * @param {number} timestamp
  * @param {PreviewEnv} env
@@ -93,15 +96,40 @@ export function formatCaptureDay(timestamp, env) {
 export function describeCapture(raw, env) {
   if (!raw || !raw.trim()) return null;
 
-  const { isTask, isUrgent, isInProgress, title, due, time, recurrence } =
+  const { isTask, isUrgent, isInProgress, title, due, time, recurrence, tagNames } =
     parseCapture(raw, env.locale);
+
+  // Sam tag nie daje tytułu, więc Enter niczego nie doda: podgląd mówi, czego
+  // brakuje, zamiast obiecywać wpis, który nie powstanie
+  if (!title && tagNames.length) {
+    return {
+      type: isTask ? 'task' : 'note',
+      text: env.t('quickCapture_preview_needTitle'),
+    };
+  }
+
+  const known = new Set((env.tags ?? []).map((t) => normalizeTagName(t.name)));
+  const tagFlags = tagNames.map((name) =>
+    known.has(normalizeTagName(name))
+      ? `#${name}`
+      : env.t('quickCapture_preview_tag_new', [name]),
+  );
+
+  /** @param {string} base @param {string[]} flags */
+  const withFlags = (base, flags) =>
+    flags.length
+      ? env.t('quickCapture_preview_flags', [base, flags.join(FLAG_SEPARATOR)])
+      : base;
 
   if (!isTask) {
     return {
       type: 'note',
-      text: title
-        ? env.t('quickCapture_preview_note_titled', [title])
-        : env.t('quickCapture_preview_note_empty'),
+      text: withFlags(
+        title
+          ? env.t('quickCapture_preview_note_titled', [title])
+          : env.t('quickCapture_preview_note_empty'),
+        tagFlags,
+      ),
     };
   }
 
@@ -148,12 +176,5 @@ export function describeCapture(raw, env) {
       : null;
   if (recurrenceKey) flags.push(env.t(recurrenceKey));
 
-  if (flags.length) {
-    text = env.t('quickCapture_preview_flags', [
-      text,
-      flags.join(FLAG_SEPARATOR),
-    ]);
-  }
-
-  return { type: 'task', text };
+  return { type: 'task', text: withFlags(text, [...flags, ...tagFlags]) };
 }

@@ -20,7 +20,7 @@
    Dlaczego składnia capture jest OSOBNĄ lekcją, i to po "Zadaniach":
    to jeden ekran gęstej wiedzy (priorytety, daty, godziny, cykliczność),
    który wcześniej rozłaziłby się po opisach przycisków. Idzie po lekcji 3,
-   bo "!!raport w piątek 9:00" ma sens dopiero, gdy użytkownik wie, co to
+   bo "!!bilety na koncert jutro 9:00" ma sens dopiero, gdy użytkownik wie, co to
    termin i co robi gwiazdka — inaczej uczyłby się skrótu do pojęć,
    których jeszcze nie zna. Lekcja 3 pokazuje te stany myszą, lekcja 4
    to samo z klawiatury.
@@ -80,6 +80,15 @@ const noteItemTarget = () =>
   document.querySelector('.notes-empty');
 const noteListEmpty = () => !document.querySelector('#notesList .note-item');
 
+/* Krok o działaniu z nagłówka: wskazuje jego ikonę, gdy użytkownik przypiął ją
+   w ustawieniach, inaczej menu ⋮, w którym to działanie wtedy jest. Dlatego
+   teksty tych kroków mówią "tutaj", a nie "pod trzema kropkami". */
+/** @param {string} pinId */
+const noteActionTarget = (pinId) => () => {
+  const pin = document.getElementById(pinId);
+  return pin && !pin.hidden ? pin : document.getElementById('note-menu-btn');
+};
+
 /** @type {Step[]} */
 const STEPS = [
   // ── Lekcja 1: Start — pierwsza notatka i podstawowe pojęcia ──
@@ -119,10 +128,10 @@ const STEPS = [
   },
   {
     // Konwersja typu tuż po wyjaśnieniu "notatka vs zadanie" — pojęcie
-    // i przycisk, który je odwraca, w jednym miejscu. Przycisk jest
-    // widoczny zawsze (tylko disabled), więc nie potrzebuje revealHidden.
+    // i miejsce, w którym się je odwraca. Samo menu zostaje zamknięte, bo
+    // pokazanie pozycji wymagałoby otwarcia go pod warstwą przewodnika.
     stage: 1, idx: 4,
-    target: '#convert-type',
+    target: noteActionTarget('pin-convert'),
     textKey: 'ob_s1_convert',
     type: 'show',
     side: 'bottom',
@@ -186,7 +195,7 @@ const STEPS = [
   },
   {
     stage: 2, idx: 5,
-    target: '#copy-md-btn',
+    target: noteActionTarget('pin-copy'),
     textKey: 'ob_s2_5',
     type: 'show',
     side: 'bottom',
@@ -219,20 +228,19 @@ const STEPS = [
     await: { type: 'click', selector: '#notesList .note-item' },
     side: 'right',
   },
-  // Oba przyciski są odsłaniane przez notes.js, gdy notatka jest otwarta
-  // (importantBtn.hidden = !state.activeId) — poprzedni krok właśnie ją
-  // otworzył, więc nie trzeba revealHidden. Typ 'show', nie 'try':
-  // wymuszanie kliknięcia zmieniałoby stan notatki użytkownika.
+  // Poprzedni krok otworzył notatkę, więc nagłówek jest na ekranie. Typ
+  // 'show', nie 'try': wymuszanie kliknięcia zmieniałoby stan notatki
+  // użytkownika.
   {
     stage: 3, idx: 2,
-    target: '#important-btn',
+    target: noteActionTarget('pin-important'),
     textKey: 'ob_s3_important',
     type: 'show',
     side: 'bottom',
   },
   {
     stage: 3, idx: 3,
-    target: '#focus-btn',
+    target: noteActionTarget('pin-focus'),
     textKey: 'ob_s3_focus',
     type: 'show',
     side: 'bottom',
@@ -544,15 +552,26 @@ function _migrateStages(uiSettings) {
   return migrated;
 }
 
-/** @param {{ onboardingStages?: Record<number, boolean>, onboardingStagesVersion?: number }} uiSettings */
+/**
+ * @param {{ onboardingStages?: Record<number, boolean>, onboardingStagesVersion?: number, onboardingDismissed?: boolean }} uiSettings
+ */
 export function initOnboarding(uiSettings) {
   _stagesDone = _migrateStages(uiSettings);
   _buildOverlay();
 
-  // Pierwsze uruchomienie — etap 1 auto-start po krótkim delay
-  if (!_stagesDone[1]) {
+  // Pierwsze uruchomienie — etap 1 auto-start po krótkim delay. Osobny znacznik
+  // zamiast _stagesDone: odrzucenie przewodnika nie oznacza ukończenia lekcji,
+  // więc panel nie pokaże przy niej ptaszka.
+  if (!_stagesDone[1] && !uiSettings.onboardingDismissed) {
     setTimeout(() => startStage(1), 600);
   }
+}
+
+/* Użytkownik odrzucił przewodnik. Sam _close() nic nie zapisywał, więc pierwsza
+   lekcja wracała przy każdym otwarciu panelu. Lekcje dalej są w ustawieniach. */
+function _dismiss() {
+  _close();
+  saveUiSettings({ onboardingDismissed: true });
 }
 
 /** @param {number} stageNum */
@@ -580,7 +599,7 @@ function _buildOverlay() {
   document.getElementById('onboarding-prev')
     ?.addEventListener('click', () => _advance(-1));
   document.getElementById('onboarding-skip')
-    ?.addEventListener('click', _close);
+    ?.addEventListener('click', _dismiss);
   document.getElementById('onboarding-settings')
     ?.addEventListener('click', () => {
       _close();
@@ -589,7 +608,7 @@ function _buildOverlay() {
 
   document.addEventListener('keydown', (e) => {
     if (_overlay.hidden) return;
-    if (e.key === 'Escape')     _close();
+    if (e.key === 'Escape')     _dismiss();
     if (e.key === 'ArrowRight') _advance(1);
     if (e.key === 'ArrowLeft')  _advance(-1);
   });

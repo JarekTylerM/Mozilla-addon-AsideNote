@@ -38,6 +38,18 @@ async function rescheduleOnBoot() {
 browser.runtime.onStartup.addListener(rescheduleOnBoot);
 browser.runtime.onInstalled.addListener(rescheduleOnBoot);
 
+// Wersja testowa ma identyfikator z "-dev@" (build-dev-manifest.mjs)
+const IS_DEV_BUILD = /-dev@/.test(browser.runtime.id);
+
+// Tymczasowe załadowanie z głównym identyfikatorem działa na danych zainstalowanego
+// dodatku. Sidebar pokazuje wtedy ostrzeżenie. storage.session znika z zamknięciem
+// przeglądarki, więc zainstalowana wersja nie odziedziczy tego znacznika.
+browser.runtime.onInstalled.addListener((details) => {
+  browser.storage.session.set({
+    tempOverInstalled: !!details.temporary && !IS_DEV_BUILD,
+  });
+});
+
 // Powiadomienie gdy alarm odpali
 browser.alarms.onAlarm.addListener(async (alarm) => {
   const res = await browser.storage.local.get("notes");
@@ -67,7 +79,7 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
       "assets/icons/mdi--notebook-edit-outline-48.png",
     ),
     title:
-      "AsideNote: " +
+      (IS_DEV_BUILD ? "AsideNote DEV: " : "AsideNote: ") +
       (note?.title || browser.i18n.getMessage("notif_title_fallback")),
     message,
   });

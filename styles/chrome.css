@@ -116,9 +116,92 @@
   background: var(--bar-bg);
   border-radius: var(--radius-lg);
   padding: 3px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100vw - 20px);
 }
 #shortcut-tooltip-wrapper {
   position: relative;
+}
+
+/* Szybkie ustawienia: widoczne po najechaniu na pasek i przy pracy klawiaturą.
+   :focus-visible, nie :focus-within: po kliknięciu fokus zostaje na przycisku
+   i pasek nie zwijałby się po odjechaniu myszą. */
+.quick-settings {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+  border-right: 1px solid var(--border);
+}
+#bottom-bar:is(:hover, :has(:focus-visible)) .quick-settings {
+  display: flex;
+  animation: quick-settings-in 0.12s ease-out;
+}
+@keyframes quick-settings-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #bottom-bar:is(:hover, :has(:focus-visible)) .quick-settings {
+    animation: none;
+  }
+}
+/* W wąskim panelu szybkie ustawienia dostają cały rząd nad przyciskami i pasek
+   rośnie w górę. Bez pełnej szerokości część głównych ikon przeskakiwałaby do
+   górnego rzędu, czyli uciekałaby spod kursora. */
+@media (max-width: 439.98px) {
+  .quick-settings {
+    flex: 0 0 100%;
+    justify-content: flex-end;
+    padding: 0 0 3px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+.quick-settings .icon-btn {
+  background-color: var(--text-2);
+  border-color: transparent;
+  opacity: 0.6;
+}
+.quick-settings .icon-btn:hover {
+  opacity: 1;
+}
+.quick-settings__text {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--text-md);
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+.quick-settings__text:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.quick-settings__text:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.quick-settings__step {
+  min-width: 24px;
+  padding: 0;
+  font-size: var(--text-base);
+}
+.quick-settings__value {
+  min-width: 3.2em;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  text-align: center;
 }
 
 /* Ikony bottom-bar */

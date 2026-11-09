@@ -188,6 +188,7 @@ test('żaden przykład nie zostawia po sobie śmieci w tytule', () => {
   for (const lang of LANGS) {
     for (const r of QUICK_CAPTURE_HELP) {
       if (r.desc === 'shortcuts_qc_plain') continue; // notatka, nie składnia
+      if (r.desc === 'shortcuts_qc_quoted') continue; // osobny test niżej
       for (const tok of r.tokens) {
         if (tok.key === undefined) continue; // prefiksy testowane wyżej
         const ex = example(lang, tok);
@@ -197,6 +198,23 @@ test('żaden przykład nie zostawia po sobie śmieci w tytule', () => {
         }
       }
     }
+  }
+});
+
+test('przykład tagu naprawdę tworzy tag', () => {
+  for (const lang of LANGS) {
+    const ex = example(lang, row('shortcuts_qc_tag').tokens[0]);
+    expect(parseCapture(`x ${ex}`, PARSER_LOCALE[lang]).tagNames).toEqual([ex.slice(1)]);
+  }
+});
+
+test('przykład cudzysłowu daje dosłowny tytuł, bez terminu', () => {
+  for (const lang of LANGS) {
+    const ex = example(lang, row('shortcuts_qc_quoted').tokens[0]);
+    const out = parseCapture(ex, PARSER_LOCALE[lang]);
+    expect(out.isTask).toBe(true);
+    expect(out.due).toBeNull();
+    expect(out.title).toBe(ex.slice(2, -1));
   }
 });
 
