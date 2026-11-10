@@ -48,8 +48,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  /* nie nachodź na bottom-bar (fixed po prawej) */
-  max-width: calc(100% - 120px);
+  /* Nie nachodź na bottom-bar (fixed po prawej). Rezerwa z tokenu, nie
+     z liczby: stałe 120px było za małe dla paska z trzema przyciskami
+     i toast wjeżdżał pod niego o 14px. 10px to własny odstęp od lewej. */
+  max-width: calc(100% - var(--bottom-bar-reserve) - 10px);
   padding: 6px 12px;
   background: var(--bar-bg);
   border: 1px solid var(--border);
@@ -97,6 +99,22 @@
 @media (prefers-reduced-motion: reduce) {
   .undo-toast {
     animation: none;
+  }
+}
+
+/* Security ukryty → pasek węższy, toast może być szerszy (ten sam wzorzec
+   co wiersz tagów w tags.css) */
+body:has(#security-btn-wrapper[hidden]) .undo-toast {
+  max-width: calc(100% - var(--bottom-bar-reserve-narrow) - 10px);
+}
+/* W wąskim panelu obok paska zostaje ~140px — za mało na "Przeniesiono do
+   kosza" i przycisk Cofnij. Toast staje wtedy nad paskiem i bierze całą
+   szerokość. */
+@media (max-width: 340px) {
+  .undo-toast,
+  body:has(#security-btn-wrapper[hidden]) .undo-toast {
+    bottom: calc(var(--bottom-bar-clear) + 4px);
+    max-width: calc(100% - 20px);
   }
 }
 

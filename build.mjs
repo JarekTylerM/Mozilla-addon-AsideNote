@@ -425,5 +425,5 @@ if (IS_SELF) {
   console.log(`  Podpisane .xpi ma trafić pod: ${devUpdateLink(version)}`);
 } else if (IS_DEV) {
   console.log('  Załaduj w about:debugging: dist-dev/manifest.json');
-  console.log('  Osobne dane, nazwa "AsideNotes DEV", skróty Alt+Shift+W i Alt+Shift+A.');
+  console.log('  Osobne dane, nazwa "AsideNotes DEV", skróty Alt+Shift+D i Alt+Shift+A.');
 }

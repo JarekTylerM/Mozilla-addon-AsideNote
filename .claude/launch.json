@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sidebar-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/JAROSA~2/AppData/Local/Temp/claude/4ade1d35d9bb0346/df7138b6-588f-4ad6-b70f-fb8014ba9630/scratchpad/preview/server.mjs",
+        ".",
+        "5199"
+      ],
+      "port": 5199
+    }
+  ]
+}

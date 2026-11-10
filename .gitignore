@@ -23,6 +23,10 @@ tests/notes-trash.mjs
 tests/focus-trap.mjs
 tests/note-menu.mjs
 tests/note-sections.mjs
+tests/recurrence.mjs
+tests/list-focus.mjs
+tests/last-export.mjs
+tests/onboarding-stages.mjs
 tests/build-flavor.mjs
 tests/quick-capture-preview.mjs
 tests/quick-capture-help.mjs

@@ -23,9 +23,13 @@ export const DEV_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 
 /**
  * Skróty inne niż w wersji głównej: te same przy obu dodatkach trafiałyby
  * tylko do jednego z nich, nie wiadomo którego.
+ *
+ * Litera nie może otwierać menu Firefoksa: Alt(+Shift)+litera menu wygrywa
+ * ze skrótem dodatku (Alt+Shift+W otwierało "Widok" w polskim Firefoksie).
+ * Zajęte litery pilnuje MENU_ACCESS_KEYS w tests/dev-build.test.mjs.
  */
 const DEV_SHORTCUTS = {
-  'toggle-sidebar': 'Alt+Shift+W',
+  'toggle-sidebar': 'Alt+Shift+D',
   _execute_browser_action: 'Alt+Shift+A',
 };
 

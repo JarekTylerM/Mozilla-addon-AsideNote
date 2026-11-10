@@ -427,6 +427,14 @@
   flex-direction: column;
   gap: 6px;
 }
+/* "Ostatni eksport: …" pod przyciskiem eksportu — informacja, nie alarm:
+   ten sam wygląd co opis zajętości pamięci nad przyciskami */
+.last-export {
+  margin: -2px 0 4px;
+  font-size: var(--text-sm);
+  color: var(--text-3);
+  line-height: var(--lh-tight);
+}
 #import-label {
   text-align: center;
   cursor: pointer;

@@ -359,6 +359,18 @@
                 >
               </span>
             </button>
+            <!-- Tylko gdy termin jest dziś lub minął (np. po kliknięciu
+                 przypomnienia) — notatki Firefoksa nie mają przycisku drzemki -->
+            <button
+              type="button"
+              id="due-postpone"
+              class="due-bar__postpone"
+              data-i18n="due_postpone_label"
+              data-i18n-attr="title:note_postponeToTomorrow;aria-label:note_postponeToTomorrow"
+              hidden
+            >
+              Na jutro
+            </button>
             <button
               type="button"
               id="due-clear"
@@ -1122,6 +1134,9 @@
                 <span class="btn__icon icon--file-download"></span>
                 <span data-i18n="panel_data_export">Eksportuj dane (JSON)</span>
               </button>
+              <!-- Wiek ostatniej kopii: storage.local to jedyne miejsce,
+                   w którym są notatki (tekst wpisuje panel.js) -->
+              <p id="last-export-info" class="last-export"></p>
               <label class="btn btn--block btn--icon-left" id="import-label">
                 <span class="btn__icon icon--file-upload"></span>
                 <span data-i18n="panel_data_import">Importuj dane (JSON)</span>
@@ -1325,13 +1340,13 @@
             <b data-i18n="shortcuts_sidebar">Sidebar</b>
             <ul>
               <li>
-                <code>Alt+Shift+Q</code
+                <code data-command="toggle-sidebar">Alt+Shift+Q</code
                 ><span data-i18n="shortcuts_general_toggle"
                   >→ otwórz / zamknij sidebar</span
                 >
               </li>
               <li>
-                <code>Alt+Shift+S</code
+                <code data-command="_execute_browser_action">Alt+Shift+S</code
                 ><span data-i18n="shortcuts_general_popup"
                   >→ popup szybkiego dodawania</span
                 >
@@ -1918,13 +1933,13 @@
             <div class="tooltip-section">
               <ul>
                 <li>
-                  <code>Alt+Shift+Q</code
+                  <code data-command="toggle-sidebar">Alt+Shift+Q</code
                   ><span data-i18n="shortcuts_general_toggle"
                     >→ otwórz / zamknij</span
                   >
                 </li>
                 <li>
-                  <code>Alt+Shift+S</code
+                  <code data-command="_execute_browser_action">Alt+Shift+S</code
                   ><span data-i18n="shortcuts_general_popup"
                     >→ szybkie dodawanie (popup)</span
                   >

@@ -43,6 +43,10 @@ const MIRRORED = [
   'note-menu',
   'note-sections',
   'build-flavor',
+  'recurrence',
+  'list-focus',
+  'last-export',
+  'onboarding-stages',
 ];
 
 function syncMirrors() {

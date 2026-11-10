@@ -261,7 +261,7 @@
     "message": "Import will replace all existing notes and tags. Continue?"
   },
   "import_error_fileTooLarge": {
-    "message": "File is too large (max 20 MB)"
+    "message": "File is too large (max 5 MB)"
   },
   "import_error_missingNotes": {
     "message": "Invalid file — expected JSON with a notes field"
@@ -567,7 +567,13 @@
     "message": "Repetition works as text too: daily, weekly, monthly, yearly, every tuesday. Whatever the parser does not understand it leaves in the title — so if you see your text in the preview instead of a due date, it was not recognised. And text in quotes always stays literal."
   },
   "ob_s4_shortcuts": {
-    "message": "You can reach the field without the mouse: Alt+C puts the cursor in it, Alt+T does it with the task prefix. And Alt+Shift+S opens the same field in a small window over any page — same syntax, and the ? button shows all of it."
+    "message": "You can reach the field without the mouse: Alt+C puts the cursor in it, Alt+T does it with the task prefix. And $POPUP$ opens the same field in a small window over any page — same syntax, and the ? button shows all of it.",
+    "placeholders": {
+      "popup": {
+        "content": "$2",
+        "example": "Alt+Shift+S"
+      }
+    }
   },
   "ob_s5_1": {
     "message": "Zen mode quiets everything except what matters today. Click this icon or press Alt+Z."
@@ -600,7 +606,17 @@
     "message": "A tag is a colored label, e.g. work or home. Attach them below the editor (+ add tag) or right when adding, by typing #work. Rename and recolor them in settings. One note can have several tags."
   },
   "ob_s7_1": {
-    "message": "AsideNotes works from any browser tab: Alt+Shift+Q opens and closes this panel, and Alt+Shift+S brings up the quick add window — you jot things down without interrupting your work."
+    "message": "AsideNotes works from any browser tab: $TOGGLE$ opens and closes this panel, and $POPUP$ brings up the quick add window — you jot things down without interrupting your work.",
+    "placeholders": {
+      "toggle": {
+        "content": "$1",
+        "example": "Alt+Shift+Q"
+      },
+      "popup": {
+        "content": "$2",
+        "example": "Alt+Shift+S"
+      }
+    }
   },
   "ob_s7_2": {
     "message": "Under the ⚙ icon you'll find settings: theme, interface size and the full list of keyboard shortcuts (Shortcuts tab)."
@@ -670,6 +686,24 @@
   },
   "panel_data_import": {
     "message": "Import from JSON"
+  },
+  "panel_data_lastExport_never": {
+    "message": "Last export: none yet"
+  },
+  "panel_data_lastExport_today": {
+    "message": "Last export: today"
+  },
+  "panel_data_lastExport_yesterday": {
+    "message": "Last export: yesterday"
+  },
+  "panel_data_lastExport_daysAgo": {
+    "message": "Last export: $DAYS$ days ago",
+    "placeholders": {
+      "days": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
   },
   "panel_data_title": {
     "message": "Data"
@@ -1251,7 +1285,7 @@
     "message": "All shortcuts →"
   },
   "shortcuts_sidebar": {
-    "message": "Alt+Shift+Q — open / close sidebar"
+    "message": "Sidebar"
   },
   "shortcuts_tab_editor": {
     "message": "Editor"
@@ -1657,6 +1691,9 @@
   "note_postponeToTomorrow": {
     "message": "Postpone to tomorrow"
   },
+  "due_postpone_label": {
+    "message": "Tomorrow"
+  },
   "notif_digest_overdue": {
     "message": "Overdue: $COUNT$",
     "placeholders": {
@@ -1839,5 +1876,14 @@
   },
   "tempBuild_warning": {
     "message": "Warning: this temporary build works on the same notes as the installed add-on. For testing, load dist-dev/manifest.json."
+  },
+  "shortcut_unassigned": {
+    "message": "not set"
+  },
+  "shortcut_unassigned_hint": {
+    "message": "Firefox did not assign this shortcut (another add-on may already use it). Set it in about:addons → ⚙ → Manage Extension Shortcuts."
+  },
+  "shortcut_unassigned_inline": {
+    "message": "a shortcut you set in about:addons"
   }
 }

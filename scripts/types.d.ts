@@ -29,12 +29,15 @@ interface Note {
   title: string;
   content: string;
   created: number;
+  /** czas ostatniej zmiany tytułu lub treści (brak = nigdy nie edytowana) */
+  updated?: number;
+  /** ważne — zadanie wyżej w sekcji; notatka przypięta na górze sekcji Notatki */
+  important?: boolean;
   tags: string[];
 
   // task-only
   completed?: boolean;
   focus?: boolean;
-  important?: boolean;
   due?: number | null;
   time?: string | null;
   reminder?: number;

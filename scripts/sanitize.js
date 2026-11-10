@@ -214,6 +214,18 @@ export function sanitizeImportedNote(raw) {
   /** @type {Note} */
   const note = { id: raw.id, type, title, content, created, tags };
 
+  // updated — czas ostatniej edycji treści/tytułu (sortowanie sekcji Notatki)
+  if (
+    typeof raw.updated === 'number' &&
+    raw.updated > 0 &&
+    raw.updated < 4102444800000
+  ) {
+    note.updated = raw.updated;
+  }
+
+  // Ważne dotyczy też notatek — przypina je na górze sekcji Notatki
+  if (raw.important === true) note.important = true;
+
   // Pola task-only — tylko jeśli type=task
   if (type === 'task') {
     note.completed = raw.completed === true;

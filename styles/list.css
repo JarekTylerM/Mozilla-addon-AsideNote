@@ -700,6 +700,28 @@ html[data-section-add="hover"]
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Wąski panel (~280–340px): po odjęciu checkboxa, terminu i miejsca na ✕
+   tytuł dostawał 70–90px, czyli kilkanaście znaków ("Bardzo długi t…"),
+   a z Lexendem i powiększeniem 6–10. Tytuł to jedyna rzecz, po której
+   rozpoznaje się wpis, więc tu łamie się do dwóch linii zamiast ucinać
+   po jednej. Sąsiednie elementy są wyrównane do pierwszej linii
+   (--row-line), więc zostają na swoich miejscach. */
+@media (max-width: 340px) {
+  .note-item__title-wrap {
+    align-items: flex-start;
+  }
+  .note-item__title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: var(--row-line);
+  }
+  .note-item__title-wrap .note-item__preview {
+    margin-top: calc((var(--row-line) - 14px) / 2);
+  }
+}
 .note-item__due {
   font-size: var(--text-xs);
   color: var(--text-3);

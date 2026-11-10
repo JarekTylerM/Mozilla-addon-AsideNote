@@ -33,8 +33,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 8px 0 6px;
-  height: 28px;
+  /* min-height, nie height: w wąskim panelu przypomnienie i ↺ schodzą do
+     drugiej linii (patrz .due-bar__text) i pasek rośnie razem z nimi */
+  padding: 3px 8px 3px 6px;
+  min-height: 28px;
   font-size: var(--text-sm);
   font-family: inherit;
   color: var(--text-3);
@@ -70,11 +72,21 @@
   background-color: var(--text-2);
 }
 
+/* Zawijany, nie przycinany: z przyciskiem "Na jutro" obok wąski panel
+   (~280px) ucinał godzinę i chował pigułkę przypomnienia oraz ↺ — nie było
+   widać, czy przypomnienie jest ustawione. Teraz to, co się nie mieści,
+   schodzi do drugiej linii. */
 .due-bar__text {
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 5px;
+}
+#due-date-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .due-bar__recurrence {
@@ -105,6 +117,29 @@
   mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;
+}
+
+/* "Na jutro" — tekst zamiast ikony: działanie ma być czytelne bez tooltipa */
+.due-bar__postpone {
+  flex-shrink: 0;
+  padding: 0 8px;
+  background: var(--surface);
+  border: none;
+  border-left: 1px solid var(--border);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.due-bar__postpone[hidden] {
+  display: none;
+}
+.due-bar__postpone:hover,
+.due-bar__postpone:focus-visible {
+  background: var(--accent-bg);
+  color: var(--text);
 }
 
 .due-bar__clear {
@@ -341,6 +376,13 @@ html:not([data-toolbar-full]) #toolbar :is(
 #toolbar .panel-icon {
   mask-size: 16px;
 }
+/* Ikony paska w spoczynku: 0,7 zamiast ogólnego 0,5 z .panel-icon. Przy 0,5
+   kontrast z tłem wynosił ok. 2,2:1 (zmierzone w jasnym motywie) — poniżej
+   3:1 dla elementów interfejsu. :not() zostawia hover, disabled i stan
+   aktywny ich własnym regułom. */
+#toolbar .panel-icon:not(:disabled, :hover, .is-active) {
+  opacity: 0.7;
+}
 
 /* Pełny pasek przy szerokości poniżej 421px (zmierzone: potrzebuje 413px)
    nie mieści się w jednym rzędzie. Cofnij/Ponów mają uniwersalne skróty
@@ -395,7 +437,7 @@ html:not([data-toolbar-full]) #toolbar :is(
   background: var(--surface-hover);
 }
 /* Stan aktywny: pełny kolor akcentu. Ikona jest maską, więc jej tło to sam rysunek
-   i nie da się pod nią podłożyć "wciśniętego" pola. Same krycie (0,5 → 0,8)
+   i nie da się pod nią podłożyć "wciśniętego" pola. Same krycie (0,7 → 0,8)
    było prawie niewidoczne. */
 #toolbar .panel-icon.is-active {
   background-color: var(--accent);

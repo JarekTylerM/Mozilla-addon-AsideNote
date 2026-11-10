@@ -39,6 +39,7 @@ import { rescheduleAll } from "./alarms.js";
 import { t } from "./i18n.js";
 import { setTooltipsEnabled } from "./tooltip.js";
 import { createFocusTrap } from "./focus-trap.js";
+import { lastExportInfo } from "./last-export.js";
 import {
   sanitizeHTML,
   sanitizeImportedNote,
@@ -73,6 +74,9 @@ export function openPanel() {
   panelEl.hidden = false;
   _renderTagsPanel();
   updateStorageUsage();
+  // Przy każdym otwarciu: panel boczny bywa otwarty przez wiele dni,
+  // a "N dni temu" liczy się od dziś
+  updateLastExportInfo();
   renderDeletedNotes();
   initUndoImport();
 }
@@ -763,6 +767,21 @@ export async function updateStorageUsage() {
   }
 }
 
+/* ── Ostatni eksport ───────────────────────────────
+   storage.local to jedyna kopia notatek, a odinstalowanie dodatku ją kasuje.
+   Sekcja "Dane" pokazuje więc wiek ostatniej kopii. Znacznik siedzi w
+   uiSettings, które nie trafiają do pliku eksportu — import go nie nadpisze. */
+
+/** @type {unknown} uiSettings.lastExportAt */
+let _lastExportAt;
+
+export function updateLastExportInfo() {
+  const el = document.getElementById("last-export-info");
+  if (!el) return;
+  const info = lastExportInfo(_lastExportAt);
+  el.textContent = t(`panel_data_lastExport_${info.kind}`, [String(info.days)]);
+}
+
 function _exportData() {
   const data = {
     version: browser.runtime.getManifest().version,
@@ -788,6 +807,11 @@ function _exportData() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+
+  // Czas kliknięcia eksportu — rozszerzenie nie wie, czy plik zapisano
+  _lastExportAt = Date.now();
+  saveUiSettings({ lastExportAt: _lastExportAt }).catch(() => {});
+  updateLastExportInfo();
 }
 
 /** @param {File} file */
@@ -996,6 +1020,9 @@ export function togglePanel() {
 
 /** @param {Record<string, any>} settings */
 export function initUiSettings(settings) {
+  _lastExportAt = settings.lastExportAt;
+  updateLastExportInfo();
+
   // Toolbar toggle
   const toggle = _byInput("toolbar-toggle");
   if (toggle) {

@@ -50,10 +50,22 @@ body:has(#security-btn-wrapper[hidden]) #tag-selector {
   position: relative;
   display: inline-flex;
   align-items: center;
+  /* Do lewej: <button> środkuje zawartość, więc za długa nazwa wystawała
+     z pigułki po OBU stronach i była ucinana bez wielokropka
+     ("kwartalny-przegląd" → "wartalny-przegla") */
+  justify-content: flex-start;
   gap: 3px;
   white-space: nowrap;
 }
+/* Wielokropek musi siedzieć na elemencie z tekstem: text-overflow nie działa
+   na kontenerze flex, którym jest sama pigułka */
+.tag-pill__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .tag-pill__count {
+  flex-shrink: 0;
   font-size: var(--text-xs);
   font-weight: 700;
   line-height: 1;

@@ -68,7 +68,7 @@ npm run build:dev   # → dist-dev/
 2. Click **Load Temporary Add-on…**
 3. Select `dist-dev/manifest.json`.
 
-This test build has its own add-on ID, so its notes are **separate** from an installed AsideNotes, and both can run side by side. It is called **AsideNotes DEV**, has an orange icon and a DEV stripe, and uses `Alt+Shift+W` / `Alt+Shift+A`. It is unloaded when Firefox closes.
+This test build has its own add-on ID, so its notes are **separate** from an installed AsideNotes, and both can run side by side. It is called **AsideNotes DEV**, has an orange icon and a small DEV marker next to the security icon, and uses `Alt+Shift+D` / `Alt+Shift+A`. It is unloaded when Firefox closes.
 
 Do not load `manifest.json` from the repo root while you use the installed add-on: it has the same ID, replaces the installed version and works on the same notes. The sidebar shows a warning if that happens.
 
@@ -241,7 +241,7 @@ npm run build:dev   # → dist-dev/
 2. Kliknij **Załaduj tymczasowy dodatek…**
 3. Wskaż `dist-dev/manifest.json`.
 
-Ta wersja testowa ma własny identyfikator, więc jej notatki są **oddzielone** od zainstalowanego AsideNotes i obie mogą działać naraz. Nazywa się **AsideNotes DEV**, ma pomarańczową ikonę i pasek DEV oraz skróty `Alt+Shift+W` / `Alt+Shift+A`. Znika po zamknięciu Firefoksa.
+Ta wersja testowa ma własny identyfikator, więc jej notatki są **oddzielone** od zainstalowanego AsideNotes i obie mogą działać naraz. Nazywa się **AsideNotes DEV**, ma pomarańczową ikonę, mały znacznik DEV obok ikony bezpieczeństwa oraz skróty `Alt+Shift+D` / `Alt+Shift+A`. Znika po zamknięciu Firefoksa.
 
 Nie ładuj `manifest.json` z katalogu głównego, gdy używasz zainstalowanego dodatku: ma ten sam identyfikator, zastępuje zainstalowaną wersję i pracuje na tych samych notatkach. Panel boczny ostrzeże, jeśli tak się stanie.
 

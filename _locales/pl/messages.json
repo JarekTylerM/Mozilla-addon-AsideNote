@@ -261,7 +261,7 @@
     "message": "Import zastąpi wszystkie istniejące notatki i tagi. Czy chcesz kontynuować?"
   },
   "import_error_fileTooLarge": {
-    "message": "Plik jest za duży (max 20 MB)"
+    "message": "Plik jest za duży (max 5 MB)"
   },
   "import_error_missingNotes": {
     "message": "Niepoprawny plik — oczekiwano JSON z polem notes"
@@ -567,7 +567,13 @@
     "message": "Powtarzanie też działa tekstem: codziennie, co tydzień, co miesiąc, co rok, co wtorek. Czego parser nie zrozumie, zostawia w tytule — jeśli więc widzisz swój tekst w podglądzie zamiast terminu, znaczy że nie został rozpoznany. A tekst w cudzysłowie zawsze zostaje dosłowny."
   },
   "ob_s4_shortcuts": {
-    "message": "Do pola trafisz bez myszy: Alt+C stawia w nim kursor, Alt+T od razu z prefiksem zadania. A Alt+Shift+S otwiera to samo pole w małym okienku nad dowolną stroną — ta sama składnia, a przycisk ? pokazuje ją w całości."
+    "message": "Do pola trafisz bez myszy: Alt+C stawia w nim kursor, Alt+T od razu z prefiksem zadania. A $POPUP$ otwiera to samo pole w małym okienku nad dowolną stroną — ta sama składnia, a przycisk ? pokazuje ją w całości.",
+    "placeholders": {
+      "popup": {
+        "content": "$2",
+        "example": "Alt+Shift+S"
+      }
+    }
   },
   "ob_s5_1": {
     "message": "Tryb zen wycisza wszystko poza tym, co ważne dziś. Kliknij tę ikonę albo wciśnij Alt+Z."
@@ -600,7 +606,17 @@
     "message": "Tag to kolorowa etykieta, np. praca albo dom. Przypinasz je pod edytorem (+ dodaj tag) albo od razu przy dodawaniu, wpisując #praca. Nazwy i kolory zmieniasz w ustawieniach. Jedna notatka może mieć kilka tagów."
   },
   "ob_s7_1": {
-    "message": "AsideNotes działa z każdej karty przeglądarki: Alt+Shift+Q otwiera i zamyka ten panel, a Alt+Shift+S wywołuje okienko szybkiego dodawania — notujesz bez przerywania pracy."
+    "message": "AsideNotes działa z każdej karty przeglądarki: $TOGGLE$ otwiera i zamyka ten panel, a $POPUP$ wywołuje okienko szybkiego dodawania — notujesz bez przerywania pracy.",
+    "placeholders": {
+      "toggle": {
+        "content": "$1",
+        "example": "Alt+Shift+Q"
+      },
+      "popup": {
+        "content": "$2",
+        "example": "Alt+Shift+S"
+      }
+    }
   },
   "ob_s7_2": {
     "message": "Pod ikoną ⚙ znajdziesz ustawienia: motyw, rozmiar interfejsu i pełną listę skrótów klawiaturowych (zakładka Skróty)."
@@ -670,6 +686,24 @@
   },
   "panel_data_import": {
     "message": "Importuj z JSON"
+  },
+  "panel_data_lastExport_never": {
+    "message": "Ostatni eksport: jeszcze nie było"
+  },
+  "panel_data_lastExport_today": {
+    "message": "Ostatni eksport: dziś"
+  },
+  "panel_data_lastExport_yesterday": {
+    "message": "Ostatni eksport: wczoraj"
+  },
+  "panel_data_lastExport_daysAgo": {
+    "message": "Ostatni eksport: $DAYS$ dni temu",
+    "placeholders": {
+      "days": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
   },
   "panel_data_title": {
     "message": "Dane"
@@ -1251,7 +1285,7 @@
     "message": "Wszystkie skróty →"
   },
   "shortcuts_sidebar": {
-    "message": "Alt+Shift+Q — otwórz / zamknij sidebar"
+    "message": "Sidebar"
   },
   "shortcuts_tab_editor": {
     "message": "Edytor"
@@ -1657,6 +1691,9 @@
   "note_postponeToTomorrow": {
     "message": "Przesuń na jutro"
   },
+  "due_postpone_label": {
+    "message": "Na jutro"
+  },
   "notif_digest_overdue": {
     "message": "Zaległe: $COUNT$",
     "placeholders": {
@@ -1839,5 +1876,14 @@
   },
   "tempBuild_warning": {
     "message": "Uwaga: ta wersja tymczasowa pracuje na tych samych notatkach co zainstalowany dodatek. Do testów załaduj dist-dev/manifest.json."
+  },
+  "shortcut_unassigned": {
+    "message": "nie ustawiony"
+  },
+  "shortcut_unassigned_hint": {
+    "message": "Firefox nie przypisał tego skrótu (może używa go już inny dodatek). Ustaw go w about:addons → ⚙ → Zarządzaj skrótami rozszerzeń."
+  },
+  "shortcut_unassigned_inline": {
+    "message": "skrót ustawiany w about:addons"
   }
 }

@@ -31,6 +31,7 @@
    ══════════════════════════════════════════════════════════════ */
 
 import { t } from './i18n.js';
+import { commandShortcutSubstitutions } from './command-shortcuts.js';
 import { saveUiSettings } from './storage.js';
 
 /**
@@ -670,8 +671,12 @@ function _show(stepIdx) {
   _byId('onboarding-stage-label').textContent = t(STAGE_LABELS[step.stage]);
   _byId('onboarding-progress').textContent = `${idxInStage + 1} / ${total}`;
   const useFallback = step.isFallback?.() && step.textKeyFallback;
-  _byId('onboarding-text').textContent =
-    t((useFallback ? step.textKeyFallback : step.textKey) ?? '');
+  // Podstawienia dla tekstów ze skrótami Alt+Shift+… ($TOGGLE$, $POPUP$);
+  // pozostałe komunikaty nie mają placeholderów i je ignorują
+  _byId('onboarding-text').textContent = t(
+    (useFallback ? step.textKeyFallback : step.textKey) ?? '',
+    commandShortcutSubstitutions(),
+  );
 
   // Przyciski
   const prevBtn     = document.getElementById('onboarding-prev');

@@ -146,10 +146,15 @@ export function makeTagPill(
   }
 
   pill.className = 'tag-pill pill' + (removable ? ' pill--clickable' : '');
-  pill.textContent =
+  // Nazwa w osobnym elemencie: to on dostaje wielokropek, gdy pigułka
+  // (max-width w components.css) jest za wąska — patrz .tag-pill__label
+  const label = document.createElement('span');
+  label.className = 'tag-pill__label';
+  label.textContent =
     truncate && tag.name.length > truncate
       ? tag.name.slice(0, truncate) + '…'
       : tag.name;
+  pill.appendChild(label);
   pill.style.setProperty('--tag-bg-light', tag.color.bg);
   pill.style.setProperty('--tag-fg-light', tag.color.fg);
   pill.style.setProperty('--tag-bg-dark',  tag.color.darkBg || tag.color.bg);

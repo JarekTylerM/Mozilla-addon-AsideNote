@@ -34,6 +34,7 @@ import {
   toggleCompleted,
   resetPendingMeta,
   setDueDate,
+  postponeToTomorrow,
   setDueTime,
   setReminder,
   toggleFocus,
@@ -44,7 +45,9 @@ import {
   setRecurrence,
   restoreDeletedNote,
   isNoteEmpty,
+  listRowIds,
 } from "./notes.js";
+import { nextFocusId } from "./list-focus.js";
 
 import { tagState } from "./tags.js";
 import { initEditor } from "./editor.js";
@@ -82,6 +85,7 @@ import * as undo from "./undo.js";
 import { initOnboarding, initOnboardingPanel } from "./onboarding.js";
 import { initNoteMenu } from "./note-menu.js";
 import { applyBuildFlavor } from "./build-flavor.js";
+import { applyCommandShortcuts, loadCommandShortcuts } from "./command-shortcuts.js";
 
 applyBuildFlavor();
 
@@ -102,6 +106,14 @@ const _detail = (e) => /** @type {CustomEvent} */ (e).detail;
 /* ── Boot ────────────────────────────────────── */
 
 applyStaticTranslations();
+// Skróty Alt+Shift+… z Firefoksa, nie z manifestu: wersja testowa ma inne,
+// a użytkownik może je zmienić w about:addons. Odświeżane po powrocie do
+// panelu, bo zmiana w about:addons nie wysyła żadnego zdarzenia.
+const _refreshCommandShortcuts = () =>
+  loadCommandShortcuts().then(() => applyCommandShortcuts());
+applyCommandShortcuts();
+_refreshCommandShortcuts();
+window.addEventListener("focus", _refreshCommandShortcuts);
 // Wiersze składni quick capture nie mają data-i18n (są generowane), więc
 // renderujemy je z własnym t() — kolejność względem applyStaticTranslations
 // jest bez znaczenia.
@@ -169,10 +181,8 @@ Promise.all([
     _showListScreen();
     _setTypeToggleHidden(uiSettings.typeToggleHidden ?? false);
     if (uiSettings.zenMode) {
-      state.zenMode = true;
-      document.getElementById("zen-btn")?.classList.add("is-active");
       document.getElementById("main-view")?.classList.add("no-transition");
-      renderList();
+      _setZen(true, { persist: false });
       requestAnimationFrame(() => {
         document.getElementById("main-view")?.classList.remove("no-transition");
       });
@@ -335,11 +345,30 @@ function _resetForm(type, due = null) {
   titleInput.focus();
 }
 
+/** Sekcja, której "+" otworzył bieżący nowy wpis — dokąd oddać fokus po Esc */
+/** @type {string|null} */
+let _newItemSection = null;
+
 // "+" w nagłówku sekcji listy: typ i termin pasujące do tej sekcji
 document.addEventListener("newItemInSection", (e) => {
-  const { type, due } = _detail(e);
+  const { type, due, section } = _detail(e);
   _resetForm(type, due);
+  _newItemSection = section || null;
 });
+
+/**
+ * Fokus na wiersz listy; gdy go nie ma, na pierwszy wiersz, a na pustej
+ * liście na pole szybkiego dodawania — fokus nigdy nie zostaje na <body>.
+ * @param {string|null} id
+ */
+function _focusListRow(id) {
+  const row = /** @type {HTMLElement|null} */ (
+    (id && document.querySelector(`#notesList .note-item[data-id="${CSS.escape(id)}"]`)) ||
+    document.querySelector("#notesList .note-item")
+  );
+  if (row) row.focus();
+  else quickCaptureInput.focus();
+}
 
 function _collapseEditor() {
   const prevId = state.activeId;
@@ -366,9 +395,19 @@ function _collapseEditor() {
         document.querySelector(`#notesList .note-item[data-id="${prevId}"]`)
       )
     : null;
+  // Porzucony pusty wpis z "+" sekcji nie ma wiersza — fokus wraca na ten "+"
+  const addBtn = !el && _newItemSection
+    ? /** @type {HTMLElement|null} */ (
+        document.querySelector(
+          `#notesList .section-add[data-add-to-section="${CSS.escape(_newItemSection)}"]`,
+        )
+      )
+    : null;
+  _newItemSection = null;
   if (el) el.focus();
-  // Porzucony pusty wpis nie ma wiersza — fokus zostałby w schowanym polu
-  // tytułu/edytora, gdzie pisanie trafiałoby w niewidoczny formularz
+  else if (addBtn) addBtn.focus();
+  // Bez wiersza i bez "+" fokus zostałby w schowanym polu tytułu/edytora,
+  // gdzie pisanie trafiałoby w niewidoczny formularz
   else if (document.activeElement instanceof HTMLElement &&
            document.activeElement.closest("#main-view") &&
            document.activeElement.getClientRects().length === 0) {
@@ -490,10 +529,17 @@ _byId("note-complete").onclick = () => {
 document.addEventListener("focusChanged", () => updateDeleteState());
 
 _byId("delete").onclick = () => {
-  if (state.activeId) clearAlarm(state.activeId);
+  const id = state.activeId;
+  // Lista jest na ekranie notatki schowana, ale wyrenderowana — sąsiada
+  // usuwanego wpisu trzeba odczytać, zanim wpis zniknie
+  const before = listRowIds();
+  if (id) clearAlarm(id);
   deleteActiveNote();
   renderTagSelector();
   _expandListIfIdle();
+  // Pozycja menu, którą kliknięto, właśnie się schowała — fokus idzie na
+  // sąsiedni wiersz listy zamiast przepaść
+  if (id && !_isEditorScreen()) _focusListRow(nextFocusId(before, id, listRowIds()));
 };
 
 /* Po usunięciu otwartej notatki ekran notatki byłby pustą formą — wracamy
@@ -526,6 +572,13 @@ _byId("due-time").addEventListener("change", (e) => {
   _rescheduleActive();
   updateDeleteState();
 });
+
+_byId("due-postpone").onclick = () => {
+  if (!state.activeId) return;
+  postponeToTomorrow(state.activeId);
+  // Przycisk właśnie się schował — fokus zostaje w pasku terminu
+  _byId("due-display-btn").focus();
+};
 
 _byId("due-clear").onclick = () => {
   if (!state.activeId) {
@@ -612,8 +665,35 @@ searchClear?.addEventListener("click", () => {
   searchInput.focus();
 });
 
-/** @type {boolean|null} */
-let _preZenToolbarState = null;
+/* ── Zen ──────────────────────────────────────────
+   Zen chowa pasek narzędzi edytora, ale NIE rusza zapisanego ustawienia
+   "Pokaż pasek" — dawniej przełączał jego checkbox (czyli zapisywał
+   preferencję), a poprzedni stan trzymał tylko w pamięci. Po zamknięciu
+   panelu w zenie pasek zostawał wyłączony na stałe. Teraz Alt+E w zenie
+   pokazuje pasek tylko na czas tej sesji zenu. */
+
+/** Pasek pokazany ręcznie (Alt+E) w trakcie zenu — nie trafia do storage */
+let _zenToolbarShown = false;
+
+function _syncToolbarVisibility() {
+  const toggle = /** @type {HTMLInputElement|null} */ (document.getElementById("toolbar-toggle"));
+  const show = state.zenMode ? _zenToolbarShown : (toggle?.checked ?? true);
+  _byId("toolbar").hidden = !show;
+}
+
+/**
+ * Jedyne wejście włączania/wyłączania zenu: stan, przycisk, zapis, pasek, lista.
+ * @param {boolean} on
+ * @param {{ persist?: boolean }} [opts]
+ */
+function _setZen(on, { persist = true } = {}) {
+  state.zenMode = on;
+  _zenToolbarShown = false;
+  document.getElementById("zen-btn")?.classList.toggle("is-active", on);
+  if (persist) saveUiSettings({ zenMode: on });
+  _syncToolbarVisibility();
+  renderList();
+}
 
 // ── Type filter buttons (all / note / task) ───────────────────────
 const TYPE_ICONS = {
@@ -648,7 +728,6 @@ typeToggleBtn?.addEventListener("click", () => {
 document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((el) => {
   const btn = /** @type {HTMLElement} */ (el);
   btn.onclick = () => {
-    state.zenMode = false;
     state.filterType = /** @type {'all'|'note'|'task'} */ (btn.dataset.type ?? 'all');
 
     document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((b) => {
@@ -656,33 +735,16 @@ document.querySelectorAll("#type-toggle .type-toggle__btn").forEach((el) => {
     });
 
     _updateTypeToggleBtn();
-    renderList();
+    // Wybór typu wychodzi z zenu (zen pokazuje tylko zadania) — przez _setZen,
+    // żeby przycisk, zapisane ustawienie i pasek narzędzi nie zostały w stanie zen
+    if (state.zenMode) _setZen(false);
+    else renderList();
   };
 });
 
 // ── Zen btn (przeniesiony z type-toggle do search-row) ────────────
 document.getElementById("zen-btn")?.addEventListener("click", () => {
-  state.zenMode = !state.zenMode;
-  saveUiSettings({ zenMode: state.zenMode });
-  const toolbarToggle = /** @type {HTMLInputElement|null} */ (document.getElementById("toolbar-toggle"));
-  if (state.zenMode) {
-    _preZenToolbarState = toolbarToggle?.checked ?? true;
-    if (toolbarToggle?.checked) {
-      toolbarToggle.checked = false;
-      toolbarToggle.dispatchEvent(new Event("change"));
-    }
-  } else {
-    if (toolbarToggle && _preZenToolbarState !== null) {
-      toolbarToggle.checked = _preZenToolbarState;
-      toolbarToggle.dispatchEvent(new Event("change"));
-      _byId("toolbar").hidden = !_preZenToolbarState;
-    }
-    _preZenToolbarState = null;
-  }
-  document
-    .getElementById("zen-btn")
-    ?.classList.toggle("is-active", state.zenMode);
-  renderList();
+  _setZen(!state.zenMode);
 });
 
 /* ── Filter date ───────────────────────────────── */
@@ -1136,14 +1198,17 @@ document.addEventListener("keydown", (e) => {
   // Alt+E — toggle toolbar edytora (działa też w zen mode)
   if (altKey === "e") {
     e.preventDefault();
+    // W zenie tylko na czas sesji zenu — zapisane ustawienie zostaje
+    if (state.zenMode) {
+      _zenToolbarShown = !_zenToolbarShown;
+      _syncToolbarVisibility();
+      return;
+    }
     const toggle = /** @type {HTMLInputElement|null} */ (document.getElementById("toolbar-toggle"));
-    const toolbar = document.getElementById("toolbar");
-    if (toggle && toolbar) {
+    if (toggle) {
       toggle.checked = !toggle.checked;
-      toolbar.hidden = !toggle.checked;
-      // Zapisz preferencję przez event — nie blokuje jeśli handler nie odpali
+      // Zapis preferencji i pokazanie paska robi handler change (panel.js)
       toggle.dispatchEvent(new Event("change"));
-      if (state.zenMode) _preZenToolbarState = toggle.checked;
     }
     return;
   }

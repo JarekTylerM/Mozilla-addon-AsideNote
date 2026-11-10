@@ -87,6 +87,21 @@ test('skróty różnią się od skrótów wersji głównej', () => {
   }
 });
 
+// Litery menu Firefoksa (Alt+litera, także z Shiftem) — PL: Plik, Edycja,
+// Widok, Historia, Zakładki, Narzędzia, Pomoc; EN: File, Edit, View,
+// History (S), Bookmarks, Tools, Help. Menu wygrywa ze skrótem dodatku.
+const MENU_ACCESS_KEYS = new Set(['P', 'E', 'W', 'H', 'Z', 'N', 'F', 'V', 'S', 'B', 'T']);
+
+test('skróty wersji testowej nie otwierają menu Firefoksa', () => {
+  for (const [command, def] of Object.entries(dev.commands)) {
+    const key = /** @type {any} */ (def).suggested_key.default;
+    const m = /^Alt\+Shift\+([A-Z])$/.exec(key);
+    if (m && MENU_ACCESS_KEYS.has(m[1])) {
+      throw new Error(`${command}: ${key} otwiera menu Firefoksa`);
+    }
+  }
+});
+
 test('reszta manifestu jest taka sama', () => {
   expect(dev.version).toBe(prod.version);
   expect(JSON.stringify(dev.permissions)).toBe(JSON.stringify(prod.permissions));

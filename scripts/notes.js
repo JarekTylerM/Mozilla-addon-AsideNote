@@ -17,6 +17,7 @@ import { debounce, foldText, queryTerms, matchesTerms } from "./utils.js";
 import { getTag, makeTagPill, resolveTagNames, tagState } from "./tags.js";
 import { clearAlarm, scheduleAlarm, isAlarmable } from "./alarms.js";
 import { t, getUILocale, getShortWeekdays } from "./i18n.js";
+import { applyCommandShortcuts } from "./command-shortcuts.js";
 import {
   buildItemFromCapture,
   newNoteId,
@@ -37,6 +38,7 @@ import {
   isDiscardableNote,
 } from "./notes-trash.js";
 import { updateDueDisplay } from "./date-picker.js";
+import { nextDueDate, contentForNextInstance } from "./recurrence.js";
 import {
   NOTE_ACTIONS,
   normalizePinnedActions,
@@ -49,6 +51,7 @@ import {
   newItemForSection,
 } from "./note-sections.js";
 import { startStage } from "./onboarding.js";
+import { nextFocusId } from "./list-focus.js";
 
 /** Działanie z nagłówka → id jego pozycji w menu ⋮ */
 const NOTE_ACTION_ITEMS = {
@@ -293,6 +296,14 @@ export function postponeToTomorrow(id) {
   note.due = tomorrow.getTime();
   saveNotes(state.notes);
   scheduleAlarm(note);
+  // Otwarte zadanie: pole daty, picker i "Na jutro" muszą pokazać nowy termin
+  if (state.activeId === id) {
+    if (dueInput) dueInput.value = _toDateInputValue(note.due);
+    import("./date-picker.js").then(({ syncDatePicker }) => {
+      syncDatePicker(_toDateInputValue(note.due) || null);
+    });
+    updateDeleteState();
+  }
   renderList();
 }
 
@@ -464,6 +475,11 @@ export function saveActiveNote() {
 
   const note = state.notes.find((n) => n.id === state.activeId);
   if (!note) return;
+  // Czas edycji tylko przy faktycznej zmianie — samo otwarcie i zamknięcie
+  // notatki (zapis przy wyjściu z edytora) nie może jej wypychać na górę
+  if (note.title !== cleanTitle || note.content !== cleanContent) {
+    note.updated = Date.now();
+  }
   note.title = cleanTitle;
   note.content = cleanContent;
   saveNotes(state.notes);
@@ -605,11 +621,14 @@ export function toggleCompleted(id) {
         id: newNoteId(),
         type: "task",
         title: note.title,
-        content: "",
+        // Ta sama treść (np. lista kroków), checklista od nowa — recurrence.js
+        content: contentForNextInstance(note.content),
         created: Date.now(),
         tags: [...(note.tags || [])],
         completed: false,
-        due: _nextDueDate(note.due, note.recurrence, note.recurrenceDays),
+        // Najbliższy termin cyklu, który nie jest w przeszłości — odhaczenie
+        // zaległego zadania nie tworzy kolejnej zaległej instancji
+        due: nextDueDate(note.due, note.recurrence, note.recurrenceDays),
         recurrenceDays: note.recurrenceDays ?? null,
         time: note.time ?? null,
         reminder: note.reminder ?? 0,
@@ -874,6 +893,20 @@ function _syncTaskMeta(note) {
     displayBtn.classList.toggle("has-value", !!dueInput?.value);
   }
 
+  // "Na jutro" — zapisane, nieukończone zadanie z terminem dziś lub zaległym.
+  // Typowa droga: przypomnienie → klik → otwarte zadanie → przełożenie.
+  const postponeBtn = document.getElementById("due-postpone");
+  if (postponeBtn) {
+    const endOfToday = new Date();
+    endOfToday.setHours(24, 0, 0, 0);
+    postponeBtn.hidden = !(
+      note?.type === "task" &&
+      !note.completed &&
+      !!note.due &&
+      note.due < endOfToday.getTime()
+    );
+  }
+
   document.dispatchEvent(
     new CustomEvent("reminderChanged", {
       detail: { value: reminderValue },
@@ -925,39 +958,6 @@ export function clearFilters() {
   renderList();
 }
 
-/** @param {number} due @param {string} recurrence @param {number[]|null} [recurrenceDays] @returns {number} */
-function _nextDueDate(due, recurrence, recurrenceDays = null) {
-  const d = new Date(due);
-  switch (recurrence) {
-    case "daily":
-      d.setDate(d.getDate() + 1);
-      break;
-    case "weekly":
-      d.setDate(d.getDate() + 7);
-      break;
-    case "monthly":
-      d.setMonth(d.getMonth() + 1);
-      break;
-    case "yearly":
-      d.setFullYear(d.getFullYear() + 1);
-      break;
-    case "custom": {
-      const days =
-        recurrenceDays && recurrenceDays.length > 0
-          ? recurrenceDays
-          : [1, 2, 3, 4, 5]; // fallback: pn-pt
-      // Znajdź następny dzień tygodnia z listy zaczynając od jutra
-      for (let i = 1; i <= 7; i++) {
-        d.setDate(d.getDate() + 1);
-        if (days.includes(d.getDay())) break;
-      }
-      break;
-    }
-  }
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
 /** @param {number} tsA @param {number} tsB */
 function _sameDay(tsA, tsB) {
   const a = new Date(tsA);
@@ -969,7 +969,84 @@ function _sameDay(tsA, tsB) {
   );
 }
 
+/* ── Fokus klawiatury a przebudowa listy ──────────
+   renderList() buduje listę od zera, więc wiersz z fokusem przestaje istnieć
+   i fokus spada na <body>. Po odhaczeniu Spacją, przełożeniu albo zwinięciu
+   sekcji trzeba było wracać na listę skrótem Alt+L. Fokus jest zapamiętywany
+   przed przebudową i oddawany po niej; który wiersz go dostaje, liczy
+   list-focus.js. */
+
+/**
+ * Wpis, od którego fokus ma odejść przy najbliższej przebudowie: akcja
+ * przenosi go do innej sekcji (odhaczenie, przełożenie), a użytkownik
+ * pracuje dalej w tym samym miejscu listy.
+ * @type {string|null}
+ */
+let _moveFocusOffId = null;
+
+/** @returns {string[]} identyfikatory wierszy w kolejności listy */
+export function listRowIds() {
+  return [...notesList.querySelectorAll(".note-item")].map(
+    (el) => /** @type {HTMLElement} */ (el).dataset.id ?? "",
+  );
+}
+
+/**
+ * @typedef {{ kind: 'item', id: string, ids: string[] }
+ *   | { kind: 'section'|'add', key: string }} ListFocus
+ */
+
+/** @returns {ListFocus|null} */
+function _captureListFocus() {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !notesList.contains(active)) return null;
+  // Tylko fokus z klawiatury. Po kliknięciu myszą nie ma czego ratować,
+  // a przeniesienie fokusu rysowałoby obwódkę na sąsiednim wierszu.
+  if (!active.matches(":focus-visible")) return null;
+
+  const row = /** @type {HTMLElement|null} */ (active.closest(".note-item"));
+  if (row?.dataset.id) return { kind: "item", id: row.dataset.id, ids: listRowIds() };
+  const header = /** @type {HTMLElement|null} */ (active.closest(".section-header"));
+  if (header?.dataset.section) return { kind: "section", key: header.dataset.section };
+  const add = /** @type {HTMLElement|null} */ (active.closest(".section-add"));
+  if (add?.dataset.addToSection) return { kind: "add", key: add.dataset.addToSection };
+  return null;
+}
+
+/** @param {ListFocus|null} saved */
+function _restoreListFocus(saved) {
+  const moveOffId = _moveFocusOffId;
+  _moveFocusOffId = null;
+  if (!saved) return;
+  // Fokus jest już gdzie indziej (np. w otwieranej notatce) — nie zabieramy go
+  if (document.activeElement && document.activeElement !== document.body) return;
+
+  /** @type {Element|null} */
+  let target = null;
+  if (saved.kind === "item") {
+    const id = nextFocusId(saved.ids, saved.id, listRowIds(), {
+      moveOff: moveOffId === saved.id,
+    });
+    if (id) target = notesList.querySelector(`.note-item[data-id="${CSS.escape(id)}"]`);
+  } else if (saved.kind === "section") {
+    target = notesList.querySelector(
+      `.section-header[data-section="${CSS.escape(saved.key)}"]`,
+    );
+  } else {
+    target = notesList.querySelector(
+      `.section-add[data-add-to-section="${CSS.escape(saved.key)}"]`,
+    );
+  }
+  /** @type {HTMLElement|null} */ (target)?.focus();
+}
+
 export function renderList() {
+  const focus = _captureListFocus();
+  _renderListBody();
+  _restoreListFocus(focus);
+}
+
+function _renderListBody() {
   notesList.innerHTML = "";
 
   // Notatki usunięte w tej sesji zostawiają martwe wpisy w _previewCache.
@@ -1102,7 +1179,12 @@ export function renderList() {
     if (key === "done") {
       items.sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
     } else if (key === "notes") {
-      items.sort((a, b) => b.created - a.created);
+      // Ważne (gwiazdka) przypięte na górze, potem ostatnio edytowane —
+      // notatka, do której wraca się codziennie, nie opada pod nowsze
+      items.sort((a, b) => {
+        if (!!b.important !== !!a.important) return b.important ? 1 : -1;
+        return (b.updated ?? b.created) - (a.updated ?? a.created);
+      });
     } else {
       items.sort((a, b) => {
         if (state.focusIds.includes(a.id)) return -1;
@@ -1204,7 +1286,9 @@ function _newItemButton(section, labelKey) {
   );
   btn.addEventListener("click", () => {
     document.dispatchEvent(
-      new CustomEvent("newItemInSection", { detail: newItemForSection(section) }),
+      new CustomEvent("newItemInSection", {
+        detail: { ...newItemForSection(section), section },
+      }),
     );
   });
   return btn;
@@ -1286,10 +1370,14 @@ function _buildStartScreen() {
   screen.appendChild(tutorial);
 
   const tip = el("p", "notes-empty__tip");
+  // Rzeczywisty skrót popupu (w wersji testowej inny, może być zmieniony)
+  const popupKbd = el("kbd", "notes-empty__kbd", "");
+  popupKbd.dataset.command = "_execute_browser_action";
   tip.append(
-    el("kbd", "notes-empty__kbd", "Alt+Shift+S"),
+    popupKbd,
     document.createTextNode(` ${t("list_empty_popup")}`),
   );
+  applyCommandShortcuts(tip);
   screen.appendChild(tip);
 
   return screen;
@@ -1588,7 +1676,10 @@ notesList.addEventListener("click", (e) => {
     // Ekran notatki i formularz należą do app.js
     document.dispatchEvent(
       new CustomEvent("newItemInSection", {
-        detail: newItemForSection(addBtn.dataset.addToSection ?? ""),
+        detail: {
+          ...newItemForSection(addBtn.dataset.addToSection ?? ""),
+          section: addBtn.dataset.addToSection ?? "",
+        },
       }),
     );
     return;
@@ -1605,8 +1696,11 @@ notesList.addEventListener("click", (e) => {
   const id = item.dataset.id;
 
   if (_target(e)?.closest(".note-checkbox")) {
+    // Wpis zmienia sekcję — fokus zostaje w miejscu listy (patrz _moveFocusOffId)
+    _moveFocusOffId = id;
     toggleCompleted(id);
   } else if (_target(e)?.closest(".note-item__postpone")) {
+    _moveFocusOffId = id;
     postponeToTomorrow(id);
   } else if (_target(e)?.closest(".note-item__delete")) {
     _deleteAndMoveFocus(id, item);
@@ -1637,6 +1731,8 @@ notesList.addEventListener("keydown", (e) => {
       const note = state.notes.find((n) => n.id === id);
       if (note?.type === "task") {
         e.preventDefault();
+        // Kolejna Spacja ma odhaczyć następne zadanie, a nie cofnąć to samo
+        _moveFocusOffId = id;
         toggleCompleted(id);
       }
       break;
