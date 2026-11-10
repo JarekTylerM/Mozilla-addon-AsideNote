@@ -124,7 +124,8 @@
      2 przyciski: 2×32 + 1×6 + 2×3 =  76px  (zmierzone:  76)
      + right:10px + 8px luzu
 
-     Zmieniasz liczbę lub rozmiar przycisków? Popraw obie liczby. */
+     Zmieniasz liczbę lub rozmiar przycisków? Popraw obie liczby — także
+     wariant wersji testowej (:root[data-build='dev'], +38px na .dev-badge). */
   --bottom-bar-reserve: 132px;        /* poziomo, 3 przyciski */
   --bottom-bar-reserve-narrow: 94px;  /* poziomo, security ukryty */
   --bottom-bar-clear: 52px;           /* pionowo: ile odsłonić pod treścią */
@@ -268,30 +269,40 @@
 }
 
 /* Wersja testowa (node build.mjs --dev), znacznik ustawia build-flavor.js. W tym
-   pliku, bo dzielą go panel i popup. Kolor stały, nie z motywu: ma być widoczny
-   tak samo wszędzie i nie kojarzyć się z żadnym stanem interfejsu.
-   pointer-events: none, żeby nie zasłaniał klikania. */
-:root[data-build='dev'] body::before {
-  content: "";
-  position: fixed;
-  inset: 0 0 auto;
-  z-index: 10000;
-  height: 3px;
-  background: #e8590c;
-  pointer-events: none;
+   pliku, bo dzielą go panel i popup.
+   Celowo cichy, nieruchomy znacznik "DEV" (panel: obok ikony bezpieczeństwa w
+   #bottom-bar, popup: przy tytule) zamiast jaskrawego paska na górze —
+   kolorowy pasek przez cały czas w polu widzenia rozprasza przy dłuższym
+   testowaniu. Kolory z motywu, bez animacji. */
+.dev-badge {
+  display: none;
 }
-:root[data-build='dev'] body::after {
+:root[data-build='dev'] .dev-badge {
+  display: inline-flex;
+}
+.dev-badge,
+:root[data-build='dev'] .popup-title::after {
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  font: 600 var(--text-xs) / 1 system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  cursor: default;
+  user-select: none;
+}
+:root[data-build='dev'] .popup-title::after {
   content: "DEV";
-  position: fixed;
-  top: 0;
-  left: 50%;
-  z-index: 10000;
-  padding: 0 6px 1px;
-  border-radius: 0 0 4px 4px;
-  background: #e8590c;
-  color: #fff;
-  font: 700 9px/12px system-ui, sans-serif;
-  letter-spacing: 0.08em;
-  transform: translateX(-50%);
-  pointer-events: none;
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 4px;
+  vertical-align: 1px;
+}
+/* Znacznik dokłada do #bottom-bar jedno miejsce (32px + gap 6px) — rezerwa
+   wiersza tagów rośnie o tyle samo (patrz --bottom-bar-reserve wyżej). */
+:root[data-build='dev'] {
+  --bottom-bar-reserve: 170px;
+  --bottom-bar-reserve-narrow: 132px;
 }

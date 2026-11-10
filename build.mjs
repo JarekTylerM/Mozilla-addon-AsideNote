@@ -51,6 +51,23 @@ const IS_SELF = process.argv.includes('--self');
 const IS_DEV = IS_SELF || process.argv.includes('--dev');
 const DIST = join(ROOT, IS_SELF ? 'dist-self' : IS_DEV ? 'dist-dev' : 'dist');
 
+/** @param {string} name wartość z --name=wartość */
+function argValue(name) {
+  const arg = process.argv.find(a => a.startsWith(`--${name}=`));
+  return arg ? arg.slice(name.length + 3) : undefined;
+}
+
+// Tylko --self: wersja paczki testowej niezależna od wersji głównej z AMO,
+// np. node build.mjs --self --version=1.0.1.1 --version-name=1.0.1a
+const SELF_OVERRIDE = {
+  version: argValue('version'),
+  versionName: argValue('version-name'),
+};
+if (!IS_SELF && (SELF_OVERRIDE.version || SELF_OVERRIDE.versionName)) {
+  console.error('--version i --version-name działają tylko z --self');
+  process.exit(1);
+}
+
 // ── Helpers ──────────────────────────────────────────────────────
 
 function read(p)       { return readFileSync(p, 'utf8'); }
@@ -232,7 +249,8 @@ mkdirSync(DIST, { recursive: true });
 
 // Wczytaj manifest żeby dostać wersję
 const manifest = JSON.parse(read(join(ROOT, 'manifest.json')));
-const version  = manifest.version;
+// Paczka --self może mieć własny numer (SELF_OVERRIDE), wersja główna nie
+const version  = (IS_SELF && SELF_OVERRIDE.version) || manifest.version;
 
 let totalOrig = 0;
 let totalMin  = 0;
@@ -255,7 +273,9 @@ function processFile(srcPath, relPath) {
   let minified;
   if (IS_DEV) {
     // Czytelne źródła ułatwiają debugowanie. Sam manifest dostaje własne ID.
-    const toManifest = IS_SELF ? toSelfDistributedManifest : toDevManifest;
+    const toManifest = IS_SELF
+      ? (/** @type {any} */ m) => toSelfDistributedManifest(m, SELF_OVERRIDE)
+      : toDevManifest;
     minified = relPath === 'manifest.json'
       ? JSON.stringify(toManifest(JSON.parse(original)), null, 2)
       : original;

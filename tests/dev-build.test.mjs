@@ -113,6 +113,23 @@ test('version_name to zwykły numer wersji', () => {
   expect(self.version_name).toBe(prod.version);
 });
 
+test('własny numer paczki: version liczbowy, etykieta w version_name', () => {
+  const m = toSelfDistributedManifest(prod, { version: '1.0.1.1', versionName: '1.0.1a' });
+  expect(m.version).toBe('1.0.1.1');
+  expect(m.version_name).toBe('1.0.1a');
+  expect(prod.version === '1.0.1.1').toBe(false); // wejście bez zmian
+});
+
+test('wersja z literą (1.0.1a) jest odrzucana — AMO i Firefox uznałyby ją za niższą', () => {
+  let threw = false;
+  try {
+    toSelfDistributedManifest(prod, { version: '1.0.1a' });
+  } catch {
+    threw = true;
+  }
+  expect(threw).toBe(true);
+});
+
 test('wpis aktualizacji ma wersję i adres pliku .xpi', () => {
   const file = withUpdateEntry(null, '1.0.1');
   const updates = file.addons[DEV_ADDON_ID].updates;

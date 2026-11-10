@@ -215,6 +215,13 @@
   opacity: 1;
 }
 
+/* Znacznik wersji testowej — wymiary jak .icon-btn--md, żeby nie zmieniał
+   wysokości paska. Wygląd w tokens.css (wspólny z popupem). */
+#dev-badge {
+  width: 32px;
+  height: 32px;
+}
+
 /* ── Security button ────────────────────────── */
 #security-btn-wrapper {
   position: relative;

@@ -968,6 +968,9 @@
   "security_btn_ariaLabel": {
     "message": "Security warning"
   },
+  "devBadge_title": {
+    "message": "Test version: separate data from the installed add-on"
+  },
   "security_btn_title": {
     "message": "Security warning"
   },

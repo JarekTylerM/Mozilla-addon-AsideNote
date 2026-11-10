@@ -968,6 +968,9 @@
   "security_btn_ariaLabel": {
     "message": "Ostrzeżenie bezpieczeństwa"
   },
+  "devBadge_title": {
+    "message": "Wersja testowa: osobne dane niż w zainstalowanym dodatku"
+  },
   "security_btn_title": {
     "message": "Ostrzeżenie bezpieczeństwa"
   },

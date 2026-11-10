@@ -52,14 +52,32 @@ export function devUpdateLink(version) {
 }
 
 /**
+ * Numer wersji, który AMO przyjmie: 1–4 liczby rozdzielone kropkami, bez zer
+ * wiodących. Litery ("1.0.1a") to stary format Firefoksa, w którym oznaczają
+ * wersję PRZEDPREMIEROWĄ — 1.0.1a jest niższe niż 1.0.1, więc nie zastąpi
+ * już wydanej 1.0.1. Wyświetlana etykieta idzie wtedy w version_name.
+ */
+export const AMO_VERSION_RE = /^(0|[1-9]\d{0,8})(\.(0|[1-9]\d{0,8})){0,3}$/;
+
+/**
  * Manifest wersji testowej do podpisania w AMO. Bez przyrostka w version_name:
  * wersję i tak odróżnia nazwa, a walidacja AMO dostaje zwykły numer.
  * @param {any} manifest manifest wersji głównej
+ * @param {{ version?: string, versionName?: string }} [override] tylko dla tej
+ *   paczki (node build.mjs --self --version=1.0.1.1 --version-name=1.0.1a);
+ *   wersja główna w manifest.json zostaje bez zmian
  * @returns {any}
  */
-export function toSelfDistributedManifest(manifest) {
-  const dev = toDevManifest(manifest);
-  dev.version_name = manifest.version;
+export function toSelfDistributedManifest(manifest, override = {}) {
+  const version = override.version ?? manifest.version;
+  if (!AMO_VERSION_RE.test(version)) {
+    throw new Error(
+      `Wersja "${version}" nie przejdzie walidacji AMO: użyj samych liczb ` +
+        `(np. 1.0.1.1), a etykietę z literą podaj w --version-name.`,
+    );
+  }
+  const dev = toDevManifest({ ...manifest, version });
+  dev.version_name = override.versionName ?? version;
   dev.browser_specific_settings.gecko.update_url = DEV_UPDATE_URL;
   return dev;
 }

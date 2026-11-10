@@ -4,7 +4,8 @@
    ──────────────────────────────────────────────────────────────
    Wersja testowa (node build.mjs --dev) ma własny identyfikator, a więc
    osobne dane. Tu jest tylko jej rozpoznanie i znacznik na <html>, po którym
-   tokens.css rysuje pomarańczowy pasek z napisem DEV w panelu i popupie.
+   tokens.css pokazuje cichy znacznik DEV (panel: obok ikony bezpieczeństwa,
+   popup: przy tytule).
    ══════════════════════════════════════════════════════════════ */
 
 /**
