@@ -17,6 +17,7 @@ import {
   pruneCursorSettings,
   consumeSelfWrite,
   retryPendingWrites,
+  loadTempOverInstalled,
 } from "./storage.js";
 import { debounce } from "./utils.js";
 
@@ -30,6 +31,8 @@ import {
   updateDeleteState,
   debouncedSave,
   convertType,
+  toggleCompleted,
+  resetPendingMeta,
   setDueDate,
   setDueTime,
   setReminder,
@@ -77,6 +80,10 @@ import {
 } from "./sanitize.js";
 import * as undo from "./undo.js";
 import { initOnboarding, initOnboardingPanel } from "./onboarding.js";
+import { initNoteMenu } from "./note-menu.js";
+import { applyBuildFlavor } from "./build-flavor.js";
+
+applyBuildFlavor();
 
 /* ── DOM refs ────────────────────────────────── */
 
@@ -220,7 +227,24 @@ async function _reloadStateFromStorage() {
 // (notes + focusId + deletedNotes) — scal je w jeden reload.
 const _debouncedExternalReload = debounce(_reloadStateFromStorage, 150);
 
+const _tempBuildBanner = document.getElementById("temp-build-banner");
+
+function _syncTempBuildBanner() {
+  loadTempOverInstalled()
+    .then((active) => {
+      if (_tempBuildBanner) _tempBuildBanner.hidden = !active;
+    })
+    .catch(() => {});
+}
+_syncTempBuildBanner();
+
 browser.storage.onChanged.addListener((changes, area) => {
+  // Znacznik może przyjść już po starcie panelu: background dostaje
+  // onInstalled równolegle z otwieraniem sidebara
+  if (area === "session") {
+    _syncTempBuildBanner();
+    return;
+  }
   if (area !== "local") return;
 
   // Live select — popup (Shift+Enter) lub kliknięcie powiadomienia zapisuje
@@ -292,24 +316,30 @@ function _showEditorScreen() {
 
 const _isEditorScreen = () => document.body.classList.contains("is-editing");
 
-/** @param {'note'|'task'} type */
-function _resetForm(type) {
+/** @param {'note'|'task'} type @param {number|null} [due] */
+function _resetForm(type, due = null) {
   _showEditorScreen();
   // "Nowa notatka" porzuca bieżącą — jeśli była pusta, nie ma po co zostawać
   discardEmptyActiveNote();
   state.activeId = null;
   state.pendingType = type;
+  resetPendingMeta(due);
   titleInput.value = "";
   editor.innerHTML = "";
   undo.reset("");
+  /** @type {HTMLInputElement} */ (_byId("due-time")).value = "";
   updateDeleteState();
+  syncDatePicker(/** @type {HTMLInputElement} */ (_byId("due-date")).value || null);
   renderTagSelector();
   renderList();
   titleInput.focus();
 }
 
-_byId("new-note").onclick = () => _resetForm("note");
-_byId("new-task").onclick = () => _resetForm("task");
+// "+" w nagłówku sekcji listy: typ i termin pasujące do tej sekcji
+document.addEventListener("newItemInSection", (e) => {
+  const { type, due } = _detail(e);
+  _resetForm(type, due);
+});
 
 function _collapseEditor() {
   const prevId = state.activeId;
@@ -322,6 +352,7 @@ function _collapseEditor() {
   debouncedSave.cancel?.();
   state.activeId = null;
   state.pendingType = null;
+  resetPendingMeta();
   titleInput.value = "";
   editor.innerHTML = "";
   undo.reset("");
@@ -409,18 +440,51 @@ document.addEventListener("noteSelected", () => {
   if (contentError) contentError.hidden = true;
 });
 
-/* ── Edytor: convert / important / focus / delete  */
+/* ── Nagłówek notatki: checkbox, symbole, menu ⋮ ─ */
+
+initNoteMenu(_byId("note-menu-btn"), _byId("note-menu"));
+
+// Ikony przypięte do nagłówka przekazują klik pozycji menu — stąd jedna
+// logika niezależnie od tego, gdzie użytkownik trzyma dane działanie.
+document.querySelectorAll("[data-note-pin]").forEach((el) => {
+  const pin = /** @type {HTMLElement} */ (el);
+  pin.addEventListener("click", () => {
+    _byId(pin.dataset.notePin ?? "").click();
+  });
+});
 
 _byId("convert-type").onclick = () =>
   convertType(state.activeId);
 
-_byId("important-btn").onclick = () => {
+const _toggleActiveImportant = () => {
   if (state.activeId) toggleImportant(state.activeId);
 };
 
-_byId("focus-btn").onclick = () => {
+const _toggleActiveFocus = () => {
   if (!state.activeId) saveActiveNote();
   if (state.activeId) toggleFocus(state.activeId);
+};
+
+_byId("important-btn").onclick = _toggleActiveImportant;
+_byId("focus-btn").onclick = _toggleActiveFocus;
+
+// Symbol znika razem ze stanem, który zdejmuje. Fokus idzie do tytułu, żeby
+// nie przepadł z chowanym przyciskiem przy pracy z klawiatury.
+_byId("status-important").onclick = () => {
+  _toggleActiveImportant();
+  titleInput.focus();
+};
+_byId("status-focus").onclick = () => {
+  _toggleActiveFocus();
+  titleInput.focus();
+};
+
+_byId("note-complete").onclick = () => {
+  if (!state.activeId) return;
+  // Następna instancja zadania cyklicznego kopiuje tytuł, a ostatnie
+  // wpisane znaki mogą jeszcze czekać w debounce autozapisu.
+  saveActiveNote();
+  toggleCompleted(state.activeId);
 };
 
 document.addEventListener("focusChanged", () => updateDeleteState());
@@ -464,7 +528,15 @@ _byId("due-time").addEventListener("change", (e) => {
 });
 
 _byId("due-clear").onclick = () => {
-  if (!state.activeId) return;
+  if (!state.activeId) {
+    // Zadanie jeszcze nie powstało, więc czyścimy tylko to, co ma w nim wylądować
+    resetPendingMeta();
+    /** @type {HTMLInputElement} */ (_byId("due-time")).value = "";
+    syncDatePicker(null);
+    syncRecurrence(null);
+    updateDeleteState();
+    return;
+  }
   const note = state.notes.find((n) => n.id === state.activeId);
   if (!note) return;
 
@@ -712,8 +784,14 @@ quickCaptureInput.addEventListener("keydown", (e) => {
   const val = _val(e).trim();
   if (!val) return;
   const item = /** @type {Note|null} */ (quickCapture(val));
+  // Bez tytułu nic nie powstało (np. samo "#praca"), więc tekst zostaje w polu
+  // razem z podglądem, zamiast zniknąć bez śladu
+  if (!item) {
+    _updateQcPreview(val);
+    return;
+  }
   quickCaptureInput.value = "";
-  if (e.shiftKey && item) {
+  if (e.shiftKey) {
     selectNote(item.id);
     titleInput.focus();
   }
@@ -1012,6 +1090,24 @@ document.addEventListener("keydown", (e) => {
   if (altKey === "k") {
     e.preventDefault();
     document.getElementById("copy-md-btn")?.click();
+    return;
+  }
+
+  // Alt+I / Alt+W / Ctrl+Enter — stan otwartej notatki. Pozycje menu i checkbox
+  // same mówią, czy akcja jest teraz dostępna: hidden lub disabled = nie ma
+  // czego przełączyć (np. "w trakcie" w ukończonym zadaniu).
+  const headerAction =
+    altKey === "i"
+      ? "important-btn"
+      : altKey === "w"
+        ? "focus-btn"
+        : e.ctrlKey && !e.altKey && e.key === "Enter"
+          ? "note-complete"
+          : null;
+  if (headerAction && _isEditorScreen()) {
+    e.preventDefault();
+    const btn = /** @type {HTMLButtonElement} */ (_byId(headerAction));
+    if (!btn.hidden && !btn.disabled) btn.click();
     return;
   }
 

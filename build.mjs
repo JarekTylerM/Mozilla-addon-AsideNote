@@ -5,6 +5,14 @@
  * Uruchomienie: node build.mjs
  * Output:       dist/  +  asidenotes-X.Y.Z.zip
  *
+ * Wersja testowa: node build.mjs --dev
+ * Output:         dist-dev/ (bez minifikacji i bez ZIP-a), z własnym ID, a więc
+ *                 z osobnymi danymi. Patrz build-dev-manifest.mjs.
+ *
+ * Wersja testowa do podpisania w AMO ("Na własną rękę"): node build.mjs --self
+ * Output:         dist-self/ + asidenotes-dev-X.Y.Z.zip + updates/asidenotes-dev.json
+ *
+
  * Co robi:
  *   - Minifikuje JS  (usuwa komentarze, whitespace, puste linie)
  *   - Minifikuje CSS (usuwa komentarze, whitespace)
@@ -26,10 +34,22 @@ import { createWriteStream } from 'fs';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { tmpdir } from 'os';
+import {
+  toDevManifest,
+  toSelfDistributedManifest,
+  withUpdateEntry,
+  devUpdateLink,
+  DEV_ICON_PATH,
+  DEV_ICON_SVG,
+  DEV_UPDATE_URL,
+  DEV_UPDATES_FILE,
+} from './build-dev-manifest.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
-const DIST = join(ROOT, 'dist');
+const IS_SELF = process.argv.includes('--self');
+const IS_DEV = IS_SELF || process.argv.includes('--dev');
+const DIST = join(ROOT, IS_SELF ? 'dist-self' : IS_DEV ? 'dist-dev' : 'dist');
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -233,7 +253,14 @@ function processFile(srcPath, relPath) {
   totalOrig += origSize;
 
   let minified;
-  if (ext === '.js')        minified = minifyJS(original);
+  if (IS_DEV) {
+    // Czytelne źródła ułatwiają debugowanie. Sam manifest dostaje własne ID.
+    const toManifest = IS_SELF ? toSelfDistributedManifest : toDevManifest;
+    minified = relPath === 'manifest.json'
+      ? JSON.stringify(toManifest(JSON.parse(original)), null, 2)
+      : original;
+  }
+  else if (ext === '.js')   minified = minifyJS(original);
   else if (ext === '.css')  minified = minifyCSS(original);
   else if (ext === '.html') minified = minifyHTML(original);
   else                      minified = original; // JSON, txt — bez zmian
@@ -253,8 +280,8 @@ function processFile(srcPath, relPath) {
 // LICENSE świadomie NIE jest tu wymieniony: MPL-2.0 §3.1 wymaga, żeby tekst
 // licencji towarzyszył dystrybuowanym źródłom.
 const IGNORE = new Set([
-  'node_modules', 'dist', 'tests', '.git', 'docs',
-  'build.mjs', 'build.js',
+  'node_modules', 'dist', 'dist-dev', 'dist-self', 'updates', 'tests', '.git', 'docs',
+  'build.mjs', 'build.js', 'build-dev-manifest.mjs',
   'package.json', 'package-lock.json',
   'features.css',   // zastąpiony przez 7 plików tematycznych
   'README.md', 'tsconfig.json', 'sync.bat',
@@ -281,13 +308,15 @@ function buildDir(dir) {
 
 buildDir(ROOT);
 
+if (IS_DEV) write(join(DIST, DEV_ICON_PATH), DEV_ICON_SVG);
+
 // ── ZIP ──────────────────────────────────────────────────────────
 
 // AMO i Firefox wymagają forward-slash w ścieżkach archiwum (ZIP APPNOTE 4.4.17).
 // PowerShell 5.1 Compress-Archive zapisuje backslashe → zasoby (np. assets\...)
 // nie ładują się, a linter AMO odrzuca paczkę. Pakujemy Pythonem (zipfile zawsze
 // daje '/'), z fallbackiem na Info-ZIP; Compress-Archive tylko w ostateczności.
-const zipName = `asidenotes-${version}.zip`;
+const zipName = IS_SELF ? `asidenotes-dev-${version}.zip` : `asidenotes-${version}.zip`;
 const zipPath = join(ROOT, zipName);
 
 function _findPython() {
@@ -323,7 +352,8 @@ function _zipWithPython(py) {
   }
 }
 
-try {
+// Wersja testowa ładowana lokalnie nie idzie do dystrybucji, więc nie ma paczki
+if (!IS_DEV || IS_SELF) try {
   if (existsSync(zipPath)) rmSync(zipPath);
   const py = _findPython();
   if (py) {
@@ -364,4 +394,16 @@ const saved    = totalOrig - totalMin;
 const savedPct = ((saved / totalOrig) * 100).toFixed(1);
 console.log('─'.repeat(60));
 console.log(`  Łącznie: ${size(totalOrig)} → ${size(totalMin)}  (oszczędność: ${size(saved)} / ${savedPct}%)`);
-console.log(`\n  Output: dist/`);
+console.log(`\n  Output: ${IS_SELF ? 'dist-self/' : IS_DEV ? 'dist-dev/' : 'dist/'}`);
+if (IS_SELF) {
+  const updatesPath = join(ROOT, DEV_UPDATES_FILE);
+  const existing = existsSync(updatesPath) ? JSON.parse(read(updatesPath)) : null;
+  write(updatesPath, JSON.stringify(withUpdateEntry(existing, version), null, 2) + '\n');
+  console.log(`\n  Do wysłania na AMO ("Na własną rękę"): ${zipName}`);
+  console.log(`  Plik aktualizacji:  ${DEV_UPDATES_FILE}`);
+  console.log(`  Sprawdzany pod:     ${DEV_UPDATE_URL}`);
+  console.log(`  Podpisane .xpi ma trafić pod: ${devUpdateLink(version)}`);
+} else if (IS_DEV) {
+  console.log('  Załaduj w about:debugging: dist-dev/manifest.json');
+  console.log('  Osobne dane, nazwa "AsideNotes DEV", skróty Alt+Shift+W i Alt+Shift+A.');
+}

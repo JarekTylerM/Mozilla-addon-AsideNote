@@ -12,7 +12,7 @@
   "content_security_policy": "script-src 'self'; object-src 'none'; img-src 'self' data:; base-uri 'none'; connect-src 'none'; frame-src 'none'; worker-src 'none'; media-src 'none'; form-action 'none'",
   "browser_specific_settings": {
     "gecko": {
-      "id": "sasidenotes-tyler@addons.mozilla.org",
+      "id": "asidenotes-tyler@addons.mozilla.org",
       "strict_min_version": "120.0",
       "data_collection_permissions": {
         "required": ["none"]

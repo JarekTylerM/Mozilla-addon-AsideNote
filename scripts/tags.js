@@ -8,7 +8,7 @@
    ══════════════════════════════════════════════════════════════ */
 
 import { saveTags } from './storage.js';
-import { validateText, MAX_TAG_NAME_LEN } from './sanitize.js';
+import { validateText, normalizeTagName, MAX_TAG_NAME_LEN } from './sanitize.js';
 
 /** @type {TagColor[]} */
 export const PALETTE = [
@@ -35,6 +35,31 @@ export function getTag(id) {
 }
 
 /**
+ * Tag o tej nazwie, bez względu na wielkość liter i separatory.
+ * @param {string} name
+ * @returns {Tag|null}
+ */
+export function findTagByName(name) {
+  const wanted = normalizeTagName(name);
+  return tagState.tags.find((t) => normalizeTagName(t.name) === wanted) ?? null;
+}
+
+/**
+ * Nazwy z quick capture → id tagów. Istniejący tag jest używany ponownie,
+ * brakujący powstaje. Nazwa, której nie da się utworzyć, jest pomijana.
+ * @param {string[]} names
+ * @returns {string[]} id tagów, bez powtórzeń
+ */
+export function resolveTagNames(names) {
+  const ids = new Set();
+  for (const name of names) {
+    const tag = findTagByName(name) ?? createTag(name).tag;
+    if (tag) ids.add(tag.id);
+  }
+  return [...ids];
+}
+
+/**
  * Tworzy tag z walidacją nazwy.
  * @param {string} name
  * @returns {{ ok: boolean, tag?: Tag, error?: string }} klucz i18n błędu
@@ -47,6 +72,10 @@ export function createTag(name) {
   const trimmed = result.value.trim();
   if (!trimmed) {
     return { ok: false, error: 'validation_empty' };
+  }
+  // Dwa tagi o tej samej nazwie byłyby nierozróżnialne dla `#nazwa`
+  if (findTagByName(trimmed)) {
+    return { ok: false, error: 'validation_tagExists' };
   }
 
   const color = PALETTE[tagState.tags.length % PALETTE.length];
@@ -76,6 +105,11 @@ export function updateTag(id, name) {
   const trimmed = result.value.trim();
   if (!trimmed) {
     return { ok: false, error: 'validation_empty' };
+  }
+  // Zmiana samej wielkości liter własnego tagu jest dozwolona
+  const sameName = findTagByName(trimmed);
+  if (sameName && sameName.id !== id) {
+    return { ok: false, error: 'validation_tagExists' };
   }
 
   tag.name = trimmed;

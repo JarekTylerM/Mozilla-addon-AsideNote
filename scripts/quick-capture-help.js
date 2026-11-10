@@ -88,6 +88,10 @@ export const QUICK_CAPTURE_HELP = [
     tokens: [{ key: 'shortcuts_qc_ex_tag' }],
     desc: 'shortcuts_qc_tag',
   },
+  {
+    tokens: [{ key: 'shortcuts_qc_ex_quoted' }],
+    desc: 'shortcuts_qc_quoted',
+  },
 ];
 
 /**

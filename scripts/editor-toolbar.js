@@ -42,14 +42,166 @@ document.addEventListener('focusin', (e) => {
   }
 });
 
+/**
+ * Zachowanie rozwijanej listy przy split buttonie: otwieranie pod strzałką,
+ * strzałki w górę i w dół, Escape, zamykanie kliknięciem poza nią.
+ *
+ * @param {object} opts
+ * @param {string} opts.splitId kontener split buttona
+ * @param {string} opts.arrowId przycisk ze strzałką
+ * @param {string} opts.dropdownId lista
+ * @param {number} opts.width szerokość listy do wyliczenia pozycji
+ * @param {(item: HTMLElement) => void} opts.onSelect wybór pozycji
+ */
+function _bindDropdown({ splitId, arrowId, dropdownId, width, onSelect }) {
+  const split = document.getElementById(splitId);
+  const arrow = document.getElementById(arrowId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!split || !arrow || !dropdown) return;
+
+  const close = () => {
+    dropdown.classList.remove('is-open');
+    arrow.setAttribute('aria-expanded', 'false');
+  };
+
+  arrow.onclick = (e) => {
+    e.stopPropagation();
+    const open = dropdown.classList.contains('is-open');
+    close();
+    if (open) return;
+    // Pozycjonowanie: fixed relatywne do strzałki (omija overflow:hidden parentów)
+    const rect = arrow.getBoundingClientRect();
+    dropdown.style.top = `${rect.bottom + 4}px`;
+    dropdown.style.left = `${Math.max(4, rect.right - width)}px`;
+    dropdown.classList.add('is-open');
+    arrow.setAttribute('aria-expanded', 'true');
+    /** @type {HTMLElement|null} */ (dropdown.querySelector('.callout-dropdown__item'))?.focus();
+  };
+
+  dropdown.addEventListener('click', (e) => {
+    const item = /** @type {HTMLElement|null} */ (
+      (/** @type {Element|null} */ (e.target))?.closest('.callout-dropdown__item') ?? null
+    );
+    if (!item) return;
+    close();
+    onSelect(item);
+  });
+
+  dropdown.addEventListener('keydown', (e) => {
+    const items = /** @type {HTMLElement[]} */ ([...dropdown.querySelectorAll('.callout-dropdown__item')]);
+    const idx = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[(idx + 1) % items.length]?.focus();
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(idx - 1 + items.length) % items.length]?.focus();
+    }
+    if (e.key === 'Escape') {
+      // Bez stopPropagation globalny skrót Esc zamknąłby całą notatkę
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+      arrow.focus();
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      /** @type {HTMLElement|null} */ (document.activeElement)?.click();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const target = /** @type {Node|null} */ (e.target);
+    if (target && !split.contains(target)) close();
+  });
+}
+
+/** Style tekstu: komenda execCommand → ikona. Kolejność to priorytet ikony grupy. */
+const TEXT_STYLES = [
+  { cmd: 'bold', icon: 'icon--bold' },
+  { cmd: 'italic', icon: 'icon--italic' },
+  { cmd: 'underline', icon: 'icon--underline' },
+  { cmd: 'strikeThrough', icon: 'icon--strikethrough' },
+];
+
+/**
+ * Grupa stylów tekstu. Przy szerokim pasku split button jest niewidoczny,
+ * a cztery przyciski stoją wprost w pasku. Przy wąskim wysuwają się spod
+ * strzałki (editor.css). To te same przyciski, więc skróty, stan i obsługa
+ * nie zależą od szerokości panelu.
+ *
+ * Panel zostaje otwarty po kliknięciu, żeby dało się łączyć style.
+ */
+function _initTextStyleGroup() {
+  const split = document.getElementById('text-style-split');
+  const main = document.getElementById('text-style-main');
+  const arrow = document.getElementById('text-style-arrow');
+  const group = document.getElementById('text-style-group');
+  if (!split || !main || !arrow || !group) return;
+
+  const close = () => {
+    group.classList.remove('is-open');
+    arrow.setAttribute('aria-expanded', 'false');
+  };
+
+  // Fokus i zaznaczenie zostają w edytorze: bez tego stan stylów przestawałby
+  // się aktualizować (_updateToolbarState działa tylko przy fokusie w edytorze)
+  split.addEventListener('mousedown', (e) => e.preventDefault());
+
+  main.onclick = () => {
+    undo.checkpoint();
+    document.execCommand(main.dataset.cmd ?? 'bold');
+    editor.focus();
+    _updateToolbarState();
+  };
+
+  arrow.onclick = (e) => {
+    e.stopPropagation();
+    if (group.classList.contains('is-open')) {
+      close();
+      return;
+    }
+    group.classList.add('is-open');
+    arrow.setAttribute('aria-expanded', 'true');
+    const rect = arrow.getBoundingClientRect();
+    const left = Math.min(
+      rect.left,
+      window.innerWidth - group.offsetWidth - 4,
+    );
+    group.style.top = `${rect.bottom + 4}px`;
+    group.style.left = `${Math.max(4, left)}px`;
+  };
+
+  document.addEventListener('click', (e) => {
+    const target = /** @type {Node|null} */ (e.target);
+    if (target && !split.contains(target)) close();
+  });
+
+  // W fazie przechwytywania: fokus jest w edytorze, a tam Escape zamyka notatkę
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key !== 'Escape' || !group.classList.contains('is-open')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    },
+    true,
+  );
+
+  window.addEventListener('resize', close);
+}
+
 function _initToolbar() {
   document.querySelectorAll('#toolbar button').forEach((el) => {
     const btn = /** @type {HTMLButtonElement} */ (el);
+    if (btn.id === 'text-style-main') return;
+    if (btn.id === 'text-style-arrow') return;
     if (btn.id === 'code-btn') return;
     if (btn.id === 'link-btn') return;
     if (btn.id === 'undo-btn') return;
     if (btn.id === 'redo-btn') return;
-    if (btn.id === 'copy-md-btn') return;
     if (btn.id === 'checklist-btn') return;
     if (btn.id === 'blockquote-btn') return;
     if (btn.id === 'blockquote-arrow') return;
@@ -61,22 +213,16 @@ function _initToolbar() {
       undo.checkpoint();
       document.execCommand(btn.dataset.cmd ?? '', false, btn.dataset.value ?? undefined);
       editor.focus();
+      // Przy samym kursorze zaznaczenie się nie zmienia, więc selectionchange
+      // nie odświeżyłby stanu przycisku
+      _updateToolbarState();
     };
   });
 }
 
 function _initFormatBlockBtn() {
   const mainBtn = document.getElementById('format-block-main');
-  const arrowBtn = document.getElementById('format-block-arrow');
-  const dropdown = document.getElementById('format-block-dropdown');
-  if (!mainBtn || !arrowBtn || !dropdown) return;
-
-  const FORMATS = {
-    p: 'icon--paragraph',
-    h1: 'icon--h1',
-    h2: 'icon--h2',
-    h3: 'icon--h3',
-  };
+  if (!mainBtn) return;
 
   // Główny przycisk — zastosuj aktualny format (toggle p/h1)
   mainBtn.onclick = () => {
@@ -114,74 +260,17 @@ function _initFormatBlockBtn() {
     );
   });
 
-  // Strzałka — toggle dropdown
-  arrowBtn.onclick = (e) => {
-    e.stopPropagation();
-    const open = dropdown.classList.contains('is-open');
-    _closeFormatBlockDropdown();
-    if (!open) {
-      const rect = arrowBtn.getBoundingClientRect();
-      const dropW = 200;
-      const left = Math.max(4, rect.right - dropW);
-      dropdown.style.top = `${rect.bottom + 4}px`;
-      dropdown.style.left = `${left}px`;
-      dropdown.classList.add('is-open');
-      arrowBtn.setAttribute('aria-expanded', 'true');
-      /** @type {HTMLElement|null} */ (dropdown.querySelector('.callout-dropdown__item'))?.focus();
-    }
-  };
-
-  // Kliknięcie na item
-  dropdown.addEventListener('click', (e) => {
-    const item = /** @type {HTMLElement|null} */ (
-      (/** @type {Element|null} */ (e.target))?.closest('.callout-dropdown__item') ?? null
-    );
-    if (!item) return;
-    _closeFormatBlockDropdown();
-    const fmt = item.dataset.format;
-    undo.checkpoint();
-    document.execCommand('formatBlock', false, fmt);
-    editor.focus();
+  _bindDropdown({
+    splitId: 'format-block-split',
+    arrowId: 'format-block-arrow',
+    dropdownId: 'format-block-dropdown',
+    width: 200,
+    onSelect: (item) => {
+      undo.checkpoint();
+      document.execCommand('formatBlock', false, item.dataset.format);
+      editor.focus();
+    },
   });
-
-  // Klawiatura
-  dropdown.addEventListener('keydown', (e) => {
-    const items = /** @type {HTMLElement[]} */ ([...dropdown.querySelectorAll('.callout-dropdown__item')]);
-    const idx = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      items[(idx + 1) % items.length]?.focus();
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      items[(idx - 1 + items.length) % items.length]?.focus();
-    }
-    if (e.key === 'Escape') {
-      _closeFormatBlockDropdown();
-      arrowBtn.focus();
-    }
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      /** @type {HTMLElement|null} */ (document.activeElement)?.click();
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    const target = /** @type {Element|null} */ (e.target);
-    if (
-      target &&
-      !target.closest('#format-block-split') &&
-      !target.closest('#format-block-dropdown')
-    )
-      _closeFormatBlockDropdown();
-  });
-}
-
-function _closeFormatBlockDropdown() {
-  const dropdown = document.getElementById('format-block-dropdown');
-  const arrowBtn = document.getElementById('format-block-arrow');
-  if (dropdown) dropdown.classList.remove('is-open');
-  if (arrowBtn) arrowBtn.setAttribute('aria-expanded', 'false');
 }
 
 function _initCodeBtn() {
@@ -444,9 +533,7 @@ function _initToggleListBtn() {
 
 function _initCalloutBtn() {
   const mainBtn = document.getElementById('blockquote-btn');
-  const arrowBtn = document.getElementById('blockquote-arrow');
-  const dropdown = document.getElementById('callout-dropdown');
-  if (!mainBtn || !arrowBtn || !dropdown) return;
+  if (!mainBtn) return;
 
   // Lewy przycisk — plain blockquote lub toggle off
   mainBtn.onclick = () => {
@@ -454,82 +541,21 @@ function _initCalloutBtn() {
     editor.focus();
   };
 
-  // Prawy przycisk — toggle dropdown
-  arrowBtn.onclick = (e) => {
-    e.stopPropagation();
-    const open = dropdown.classList.contains('is-open');
-    _closeCalloutDropdown();
-    if (!open) {
-      // Pozycjonowanie: fixed relatywne do arrowBtn (omija overflow:hidden parentów)
-      const rect = arrowBtn.getBoundingClientRect();
-      const dropW = 220;
-      const left = Math.max(4, rect.right - dropW);
-      dropdown.style.top = `${rect.bottom + 4}px`;
-      dropdown.style.left = `${left}px`;
-      dropdown.classList.add('is-open');
-      arrowBtn.setAttribute('aria-expanded', 'true');
-      /** @type {HTMLElement|null} */ (dropdown.querySelector('.callout-dropdown__item'))?.focus();
-    }
-  };
-
-  // Kliknięcie na item dropdownu
-  dropdown.addEventListener('click', (e) => {
-    const item = /** @type {HTMLElement|null} */ (
-      (/** @type {Element|null} */ (e.target))?.closest('.callout-dropdown__item') ?? null
-    );
-    if (!item) return;
-    _closeCalloutDropdown();
-    _applyCallout(item.dataset.callout ?? '');
-    editor.focus();
+  _bindDropdown({
+    splitId: 'blockquote-split',
+    arrowId: 'blockquote-arrow',
+    dropdownId: 'callout-dropdown',
+    width: 220,
+    onSelect: (item) => {
+      _applyCallout(item.dataset.callout ?? '');
+      editor.focus();
+    },
   });
-
-  // Klawiatura w dropdownie — strzałki + Escape
-  dropdown.addEventListener('keydown', (e) => {
-    const items = /** @type {HTMLElement[]} */ ([...dropdown.querySelectorAll('.callout-dropdown__item')]);
-    const idx = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      items[(idx + 1) % items.length]?.focus();
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      items[(idx - 1 + items.length) % items.length]?.focus();
-    }
-    if (e.key === 'Escape') {
-      _closeCalloutDropdown();
-      arrowBtn.focus();
-    }
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      /** @type {HTMLElement|null} */ (document.activeElement)?.click();
-    }
-  });
-
-  // Kliknięcie poza — zamknij dropdown
-  document.addEventListener('click', (e) => {
-    const target = /** @type {Element|null} */ (e.target);
-    if (
-      target &&
-      !target.closest('#blockquote-split') &&
-      !target.closest('#callout-dropdown')
-    ) {
-      _closeCalloutDropdown();
-    }
-  });
-}
-
-function _closeCalloutDropdown() {
-  const dropdown = document.getElementById('callout-dropdown');
-  const arrowBtn = document.getElementById('blockquote-arrow');
-  if (dropdown) dropdown.classList.remove('is-open');
-  if (arrowBtn) arrowBtn.setAttribute('aria-expanded', 'false');
 }
 
 function _initListBtn() {
   const mainBtn = document.getElementById('list-main-btn');
-  const arrowBtn = document.getElementById('list-arrow');
-  const dropdown = document.getElementById('list-dropdown');
-  if (!mainBtn || !arrowBtn || !dropdown) return;
+  if (!mainBtn) return;
 
   mainBtn.onclick = () => {
     undo.checkpoint();
@@ -566,76 +592,27 @@ function _initListBtn() {
     );
   });
 
-  arrowBtn.onclick = (e) => {
-    e.stopPropagation();
-    const open = dropdown.classList.contains('is-open');
-    _closeListDropdown();
-    if (!open) {
-      const rect = arrowBtn.getBoundingClientRect();
-      const dropW = 220;
-      const left = Math.max(4, rect.right - dropW);
-      dropdown.style.top = `${rect.bottom + 4}px`;
-      dropdown.style.left = `${left}px`;
-      dropdown.classList.add('is-open');
-      arrowBtn.setAttribute('aria-expanded', 'true');
-      /** @type {HTMLElement|null} */ (dropdown.querySelector('.callout-dropdown__item'))?.focus();
-    }
-  };
-
-  dropdown.addEventListener('click', (e) => {
-    const item = /** @type {HTMLElement|null} */ (
-      (/** @type {Element|null} */ (e.target))?.closest('.callout-dropdown__item') ?? null
-    );
-    if (!item) return;
-    _closeListDropdown();
-    const type = item.dataset.listType;
-    undo.checkpoint();
-    if (type === 'bullet') {
-      document.execCommand('insertUnorderedList');
-    } else if (type === 'ordered') {
-      document.execCommand('insertOrderedList');
-    } else if (type === 'checklist') {
-      _toggleChecklist();
-    } else if (type === 'toggle') {
-      _createToggleList();
-      return;
-    }
-    editor.focus();
+  _bindDropdown({
+    splitId: 'list-split',
+    arrowId: 'list-arrow',
+    dropdownId: 'list-dropdown',
+    width: 220,
+    onSelect: (item) => {
+      const type = item.dataset.listType;
+      undo.checkpoint();
+      if (type === 'bullet') {
+        document.execCommand('insertUnorderedList');
+      } else if (type === 'ordered') {
+        document.execCommand('insertOrderedList');
+      } else if (type === 'checklist') {
+        _toggleChecklist();
+      } else if (type === 'toggle') {
+        _createToggleList();
+        return;
+      }
+      editor.focus();
+    },
   });
-
-  dropdown.addEventListener('keydown', (e) => {
-    const items = /** @type {HTMLElement[]} */ ([...dropdown.querySelectorAll('.callout-dropdown__item')]);
-    const idx = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      items[(idx + 1) % items.length]?.focus();
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      items[(idx - 1 + items.length) % items.length]?.focus();
-    }
-    if (e.key === 'Escape') {
-      _closeListDropdown();
-      arrowBtn.focus();
-    }
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      /** @type {HTMLElement|null} */ (document.activeElement)?.click();
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    const target = /** @type {Element|null} */ (e.target);
-    if (target && !target.closest('#list-split') && !target.closest('#list-dropdown'))
-      _closeListDropdown();
-  });
-}
-
-function _closeListDropdown() {
-  const dropdown = document.getElementById('list-dropdown');
-  const arrowBtn = document.getElementById('list-arrow');
-  if (dropdown) dropdown.classList.remove('is-open');
-  if (arrowBtn) arrowBtn.setAttribute('aria-expanded', 'false');
 }
 
 /** @param {string} type */
@@ -717,26 +694,8 @@ function _updateToolbarState() {
     // Tylko gdy fokus jest w edytorze
     if (document.activeElement?.id !== 'editor') return;
 
-    // Toggle buttons (bold/italic/underline/strikethrough)
-    const commands = {
-      bold: 'bold',
-      italic: 'italic',
-      underline: 'underline',
-      strikeThrough: 'strikeThrough',
-    };
+    _syncTextStyles();
 
-    Object.entries(commands).forEach(([cmd, queryCmd]) => {
-      const btn = document.querySelector(`#toolbar button[data-cmd="${cmd}"]`);
-      if (!btn) return;
-      try {
-        const isActive = document.queryCommandState(queryCmd);
-        btn.classList.toggle('is-active', isActive);
-      } catch {
-        // queryCommandState rzuca w niektórych edge casach
-      }
-    });
-
-    // Listy — uwzględnij checklist, który też jest <ul> ale nie bullet list
     const sel = window.getSelection();
     const node = sel?.rangeCount ? sel.getRangeAt(0).startContainer : null;
     const el = node
@@ -744,41 +703,6 @@ function _updateToolbarState() {
         ? node.parentElement
         : /** @type {Element} */ (node)
       : null;
-
-    // Sprawdź czy kursor jest w checkliście (ul[data-list="checklist"])
-    const inChecklist = !!el?.closest('ul[data-list="checklist"]');
-
-    // Bullet list: queryCommandState zwraca true dla KAŻDEGO <ul>,
-    // więc musimy wykluczyć checklist
-    const checklistBtn = document.getElementById('checklist-btn');
-    const bulletBtn = document.querySelector(
-      '#toolbar button[data-cmd="insertUnorderedList"]',
-    );
-    const orderedBtn = document.querySelector(
-      '#toolbar button[data-cmd="insertOrderedList"]',
-    );
-
-    if (checklistBtn) checklistBtn.classList.toggle('is-active', inChecklist);
-
-    if (bulletBtn) {
-      try {
-        const inAnyUl = document.queryCommandState('insertUnorderedList');
-        bulletBtn.classList.toggle('is-active', inAnyUl && !inChecklist);
-      } catch {
-        /* ignore */
-      }
-    }
-
-    if (orderedBtn) {
-      try {
-        orderedBtn.classList.toggle(
-          'is-active',
-          document.queryCommandState('insertOrderedList'),
-        );
-      } catch {
-        /* ignore */
-      }
-    }
 
     // formatBlock <select> sync — pokazuj aktualny block-element kursora
     const mainBtn = document.getElementById('format-block-main');
@@ -800,25 +724,24 @@ function _updateToolbarState() {
         mainBtn.dataset.current = fmt;
         mainBtn.className = `panel-icon ${ICONS[fmt]} toolbar-split__main`;
       }
+      mainBtn.classList.toggle('is-active', fmt !== 'p');
+      _markDropdownItems('format-block-dropdown', 'format', fmt);
     }
     // List main btn — śledź aktywny typ listy + aktualizuj ikonę
     const listMainBtn = document.getElementById('list-main-btn');
     if (listMainBtn) {
-      const inToggle = !!el?.closest('details');
-      const inChecklist2 = !!el?.closest('ul[data-list="checklist"]');
-      let listType = 'bullet';
-      if (inToggle) listType = 'toggle';
-      else if (inChecklist2) listType = 'checklist';
-      else {
-        try {
-          if (document.queryCommandState('insertOrderedList'))
-            listType = 'ordered';
-        } catch {
-          /* ignore */
-        }
-      }
-      if (listMainBtn.dataset.current !== listType) {
-        listMainBtn.dataset.current = listType;
+      // Najbliższa lista decyduje: kursor bywa w liście zagnieżdżonej w innej
+      const list = el?.closest('ul, ol') ?? null;
+      /** @type {string|null} */
+      let listType = null;
+      if (el?.closest('details')) listType = 'toggle';
+      else if (list?.tagName === 'OL') listType = 'ordered';
+      else if (list?.getAttribute('data-list') === 'checklist') listType = 'checklist';
+      else if (list) listType = 'bullet';
+
+      const shown = listType ?? 'bullet';
+      if (listMainBtn.dataset.current !== shown) {
+        listMainBtn.dataset.current = shown;
         if (!listMainBtn.matches(':hover')) {
           /** @type {Record<string, string>} */
           const LIST_ICONS = {
@@ -827,38 +750,94 @@ function _updateToolbarState() {
             checklist: 'icon--checklist',
             toggle: 'icon--toggle-list',
           };
-          listMainBtn.className = `panel-icon ${LIST_ICONS[listType]} toolbar-split__main`;
+          listMainBtn.className = `panel-icon ${LIST_ICONS[shown]} toolbar-split__main`;
         }
       }
+      listMainBtn.classList.toggle('is-active', listType !== null);
+      _markDropdownItems('list-dropdown', 'listType', listType);
     }
 
-    // Toggle list (details/summary) active state
-    const toggleListBtn = document.getElementById('toggle-list-btn');
-    if (toggleListBtn) {
-      const inDetails = !!el?.closest('details');
-      toggleListBtn.classList.toggle('is-active', inDetails);
-    }
     // Blockquote / callout active state
     const bqBtn = document.getElementById('blockquote-btn');
     if (bqBtn) {
       const bq = /** @type {HTMLElement|null} */ (el?.closest('blockquote') ?? null);
       bqBtn.classList.toggle('is-active', !!bq);
-      const calloutType = bq?.dataset.callout ?? '';
-      bqBtn.dataset.activeCallout = calloutType;
+      _markDropdownItems('callout-dropdown', 'callout', bq ? (bq.dataset.callout ?? '') : null);
     }
 
-    // Link active state
-    const linkBtn = document.getElementById('link-btn');
-    if (linkBtn) {
-      linkBtn.classList.toggle('is-active', !!el?.closest('a'));
-    }
+    // Link, kod i blok kodu
+    const inPre = !!el?.closest('pre');
+    document.getElementById('link-btn')?.classList.toggle('is-active', !!el?.closest('a'));
+    document.getElementById('code-btn')?.classList.toggle('is-active', !inPre && !!el?.closest('code'));
+    document.getElementById('codeblock-btn')?.classList.toggle('is-active', inPre);
   });
+}
+
+/**
+ * Stan czterech stylów i przycisku, który je zastępuje przy wąskim pasku:
+ * pokazuje pierwszy aktywny styl, a gdy aktywnych jest więcej, strzałka dostaje
+ * kropkę. Klik przełącza to, co widać.
+ */
+function _syncTextStyles() {
+  /** @type {{ cmd: string, icon: string, btn: HTMLElement }[]} */
+  const active = [];
+  /** @type {HTMLElement|null} */
+  let firstBtn = null;
+  for (const { cmd, icon } of TEXT_STYLES) {
+    const btn = /** @type {HTMLElement|null} */ (
+      document.querySelector(`#text-style-group [data-cmd="${cmd}"]`)
+    );
+    if (!btn) continue;
+    firstBtn ??= btn;
+    let isActive = false;
+    try {
+      isActive = document.queryCommandState(cmd);
+    } catch {
+      // queryCommandState rzuca w niektórych edge casach
+    }
+    btn.classList.toggle('is-active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
+    if (isActive) active.push({ cmd, icon, btn });
+  }
+
+  const main = document.getElementById('text-style-main');
+  if (!main || !firstBtn) return;
+  const shown = active[0] ?? {
+    ...TEXT_STYLES[0],
+    btn: firstBtn,
+  };
+  TEXT_STYLES.forEach(({ icon }) => main.classList.toggle(icon, icon === shown.icon));
+  main.dataset.cmd = shown.cmd;
+  main.classList.toggle('is-active', active.length > 0);
+  main.setAttribute('aria-pressed', String(active.length > 0));
+  main.setAttribute('aria-label', shown.btn.getAttribute('aria-label') ?? '');
+  main.dataset.tooltipContent = shown.btn.dataset.tooltipContent ?? '';
+  document
+    .getElementById('text-style-split')
+    ?.classList.toggle('has-multiple', active.length > 1);
+}
+
+/**
+ * Oznacza pozycję listy odpowiadającą stanowi kursora.
+ * @param {string} dropdownId
+ * @param {string} attr nazwa w dataset
+ * @param {string|null} value aktywna wartość, null = żadna
+ */
+function _markDropdownItems(dropdownId, attr, value) {
+  document
+    .getElementById(dropdownId)
+    ?.querySelectorAll('.callout-dropdown__item')
+    .forEach((el) => {
+      const item = /** @type {HTMLElement} */ (el);
+      item.classList.toggle('is-active', value !== null && item.dataset[attr] === value);
+    });
 }
 
 /* ── Inicjalizacja wszystkich komponentów toolbara ── */
 
 export function initToolbar() {
   _initToolbar();
+  _initTextStyleGroup();
   _initCodeBtn();
   _initCodeBlockBtn();
   _initToggleListBtn();
@@ -866,6 +845,8 @@ export function initToolbar() {
   _initCalloutBtn();
   _initListBtn();
   _initFormatBlockBtn();
-  // Sync active state przy każdej zmianie zaznaczenia
+  // Sync active state przy każdej zmianie zaznaczenia. keyup dla skrótów:
+  // Ctrl+B przy samym kursorze nie zmienia zaznaczenia.
   document.addEventListener('selectionchange', _updateToolbarState);
+  editor.addEventListener('keyup', _updateToolbarState);
 }

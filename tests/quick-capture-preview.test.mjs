@@ -10,7 +10,7 @@
 
 import { test, expect, results } from './_runner.mjs';
 import { describeCapture, formatCaptureDay } from './quick-capture-preview.mjs';
-import { buildItemFromCapture, wantsFocusSeed, extractCaptureTags } from './quick-capture-core.mjs';
+import { buildItemFromCapture, wantsFocusSeed } from './quick-capture-core.mjs';
 
 // ── Fake locale ───────────────────────────────────────────────────
 // Odwzorowuje _locales/en/messages.json. Brak klucza rzuca — literówka
@@ -30,6 +30,8 @@ const MESSAGES = {
   quickCapture_preview_flag_important: 'Important',
   quickCapture_preview_flag_inProgress: 'In progress',
   quickCapture_preview_flags: '$1 · $2',
+  quickCapture_preview_tag_new: '#$1 (new tag)',
+  quickCapture_preview_needTitle: 'Add a title',
   recurrence_daily: 'Daily',
   recurrence_weekly: 'Weekly',
   recurrence_monthly: 'Monthly',
@@ -176,9 +178,41 @@ test('zwykłe zadanie nie dostaje żadnej z tych flag', () => {
   expect(d.text).toBe('Adding task: check email');
 });
 
-test('cykliczność trafia do flag', () => {
+test('cykliczność trafia do flag, a bez daty dostaje termin dziś', () => {
   const d = describeCapture('!standup daily', EN);
-  expect(d.text).toBe('Adding task: standup · Daily');
+  expect(d.text).toBe('Adding task today: standup · Daily');
+});
+
+test('nowy tag jest oznaczony, żeby literówka nie przeszła niezauważona', () => {
+  const env = { ...EN, tags: [{ name: 'Work' }] };
+  expect(describeCapture('idea #Wrok', env).text).toBe('Adding note: idea · #Wrok (new tag)');
+});
+
+test('istniejący tag bez oznaczenia, bez względu na wielkość liter', () => {
+  const env = { ...EN, tags: [{ name: 'Work' }] };
+  expect(describeCapture('idea #work', env).text).toBe('Adding note: idea · #work');
+});
+
+test('tag pasuje mimo myślnika zamiast spacji', () => {
+  const env = { ...EN, tags: [{ name: 'Home office' }] };
+  expect(describeCapture('idea #home-office', env).text).toBe('Adding note: idea · #home-office');
+});
+
+test('tagi idą za flagami zadania', () => {
+  const env = { ...EN, tags: [{ name: 'home' }] };
+  expect(describeCapture('!walk weekly #home', env).text).toBe(
+    'Adding task today: walk · Weekly · #home',
+  );
+});
+
+test('sam tag: podgląd prosi o tytuł, bo Enter nic nie doda', () => {
+  expect(describeCapture('#work', EN).text).toBe('Add a title');
+  expect(describeCapture('!#work', EN).text).toBe('Add a title');
+  expect(describeCapture('!#work', EN).type).toBe('task');
+});
+
+test('bez listy tagów każdy wygląda na nowy', () => {
+  expect(describeCapture('x #a', EN).text).toBe('Adding note: x · #a (new tag)');
 });
 
 test('każdy rodzaj cykliczności ma swoją etykietę', () => {
@@ -297,65 +331,6 @@ test('tytuł w podglądzie jest tym samym tytułem, który zapisze builder', () 
   expect(describeCapture(raw, { ...EN, now: Date.now() }).text).toContain('ship it');
   expect(item.recurrence).toBe('daily');
   expect(item.time).toBe('08:00');
-});
-
-// ── #tag w quick capture ──────────────────────────────────────────
-
-console.log('\n#tag');
-
-const TAGS = [
-  { id: 't1', name: 'awaria' },
-  { id: 't2', name: 'Pomiary' },
-  { id: 't3', name: 'linia 3' },
-  { id: 't4', name: 'Łódź' },
-];
-
-test('#tag istniejący → zdjęty z tytułu i przypisany', () => {
-  expect(extractCaptureTags('Wymiana filtra #awaria', TAGS)).toEqual({ title: 'Wymiana filtra', tagIds: ['t1'] });
-});
-test('wielkość liter i polskie znaki bez znaczenia', () => {
-  expect(extractCaptureTags('Spotkanie #pomiary #lodz', TAGS).tagIds).toEqual(['t2', 't4']);
-});
-test('spacja w nazwie tagu zapisana jako - lub _', () => {
-  expect(extractCaptureTags('Uszczelki #linia-3', TAGS).tagIds).toEqual(['t3']);
-  expect(extractCaptureTags('Uszczelki #linia_3', TAGS).tagIds).toEqual(['t3']);
-});
-test('tag w środku tytułu — spacje sklejone', () => {
-  expect(extractCaptureTags('Filtr #awaria w K-2', TAGS).title).toBe('Filtr w K-2');
-});
-test('nieznany #token zostaje w tytule', () => {
-  expect(extractCaptureTags('Zadanie #nieznany', TAGS)).toEqual({ title: 'Zadanie #nieznany', tagIds: [] });
-});
-test('# w środku słowa (C#, nr#3) nie jest tagiem', () => {
-  expect(extractCaptureTags('Kurs C#awaria', TAGS).tagIds).toEqual([]);
-});
-test('powtórzony tag przypisany raz', () => {
-  expect(extractCaptureTags('X #awaria #Awaria', TAGS).tagIds).toEqual(['t1']);
-});
-test('sam tag bez tytułu → tytuł bez zmian, brak przypisania', () => {
-  expect(extractCaptureTags('#awaria', TAGS)).toEqual({ title: '#awaria', tagIds: [] });
-});
-test('bez listy tagów → nic nie zmienia', () => {
-  expect(extractCaptureTags('X #awaria', [])).toEqual({ title: 'X #awaria', tagIds: [] });
-});
-test('buildItemFromCapture: zadanie z datą i tagiem', () => {
-  const item = buildItemFromCapture('!Kalibracja jutro #pomiary', 'pl', TAGS);
-  expect(item.title).toBe('Kalibracja');
-  expect(item.tags).toEqual(['t2']);
-  expect(item.type).toBe('task');
-  if (!item.due) throw new Error('brak terminu');
-});
-test('buildItemFromCapture bez tagów — zgodność wstecz', () => {
-  expect(buildItemFromCapture('memo #awaria', 'pl').tags).toEqual([]);
-});
-test('podgląd notatki pokazuje tag', () => {
-  expect(describeCapture('Procedura #awaria', { ...PL, tags: TAGS }).text).toBe('Adding note: Procedura · #awaria');
-});
-test('podgląd zadania: tag po flagach', () => {
-  expect(describeCapture('!!Hotfix #awaria', { ...EN, tags: TAGS }).text).toContain('In progress · #awaria');
-});
-test('podgląd: nieznany tag nie jest obiecywany', () => {
-  expect(describeCapture('Procedura #xyz', { ...PL, tags: TAGS }).text).toBe('Adding note: Procedura #xyz');
 });
 
 await results();

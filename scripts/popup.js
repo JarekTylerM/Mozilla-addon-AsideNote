@@ -14,18 +14,12 @@ import {
   saveFocusId,
   loadUiSettings,
   loadTags,
+  saveTags,
 } from './storage.js';
+import { tagState, resolveTagNames } from './tags.js';
+import { applyBuildFlavor } from './build-flavor.js';
 
-/** Istniejące tagi — do rozpoznawania `#tag` w podglądzie i przy zapisie.
- *  Do czasu wczytania pusta lista: `#tag` zostaje wtedy w tytule. */
-/** @type {Tag[]} */
-let _tags = [];
-loadTags()
-  .then((tags) => {
-    _tags = tags;
-    _updatePreview();
-  })
-  .catch(() => {});
+applyBuildFlavor();
 
 // Elementy popupu są zawsze w popup.html — rzutujemy z pominięciem null.
 const input       = /** @type {HTMLInputElement} */ (document.getElementById('popup-input'));
@@ -184,6 +178,15 @@ input.addEventListener('input', () => {
 _updateTypeIndicator();
 _updatePreview();
 
+// Tagi do podglądu: bez nich każdy #tag wyglądałby na nowy. Przy zapisie i tak
+// czytamy je od nowa, bo panel boczny mógł je w tym czasie zmienić.
+loadTags()
+  .then((tags) => {
+    tagState.tags = tags;
+    _updatePreview();
+  })
+  .catch(() => {});
+
 // ── Help panel toggle ──────────────────────────
 
 helpBtn.addEventListener('click', () => {
@@ -200,7 +203,7 @@ function _updatePreview() {
   const description = describeCapture(input.value, {
     t,
     locale: browser.i18n.getUILanguage(),
-    tags: _tags,
+    tags: tagState.tags,
   });
 
   if (!description) {
@@ -243,7 +246,7 @@ input.addEventListener('keydown', async (e) => {
   const raw = input.value.trim();
   if (!raw) return;
 
-  const item = /** @type {Note | null} */ (buildItemFromCapture(raw, null, _tags));
+  const item = /** @type {Note | null} */ (buildItemFromCapture(raw));
   if (!item) return;
 
   // Flaga focus z parsera to jednorazowy seed — źródłem prawdy stanu
@@ -266,6 +269,18 @@ input.addEventListener('keydown', async (e) => {
     // dokłada normalizację/migrację, więc popup nie zapisuje z powrotem
     // niezmigrowanych ani zatrutych danych. saveNotes() rzuca przy błędzie →
     // catch niżej pokazuje komunikat i NIE zamyka popupu (tekst zostaje w polu).
+
+    // Tagi przed notatką, żeby wpis nigdy nie wskazywał na tag, którego nie ma.
+    // createTag zapisuje bez czekania, a window.close() mógłby ten zapis urwać,
+    // dlatego czekamy na własny saveTags.
+    const tagNames = /** @type {any} */ (item).tagNames;
+    delete (/** @type {any} */ (item).tagNames);
+    if (tagNames.length) {
+      tagState.tags = await loadTags();
+      item.tags = resolveTagNames(tagNames);
+      await saveTags(tagState.tags);
+    }
+
     const notes = await loadNotes();
     notes.unshift(item);
     await saveNotes(notes);

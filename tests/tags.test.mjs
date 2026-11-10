@@ -18,12 +18,65 @@ import {
   updateTag,
   deleteTag,
   updateTagColor,
+  findTagByName,
+  resolveTagNames,
 } from './tags.mjs';
 
 // Reset tagState przed każdą sekcją
 function resetTags() {
   tagState.tags = [];
 }
+
+// ── Nazwy tagów ───────────────────────────────────────────────────
+
+console.log('\n0. Nazwy tagów');
+
+test('findTagByName ignoruje wielkość liter i separatory', () => {
+  resetTags();
+  const { tag } = createTag('Praca dom');
+  expect(findTagByName('praca dom').id).toBe(tag.id);
+  expect(findTagByName('PRACA-DOM').id).toBe(tag.id);
+  expect(findTagByName('praca_dom').id).toBe(tag.id);
+  expect(findTagByName('inny')).toBeNull();
+});
+
+test('createTag odrzuca duplikat', () => {
+  resetTags();
+  createTag('Dom');
+  const r = createTag('dom');
+  expect(r.ok).toBe(false);
+  expect(r.error).toBe('validation_tagExists');
+  expect(tagState.tags.length).toBe(1);
+});
+
+test('updateTag odrzuca nazwę innego tagu, ale pozwala zmienić wielkość liter', () => {
+  resetTags();
+  const a = createTag('Dom').tag;
+  createTag('Praca');
+  expect(updateTag(a.id, 'praca').error).toBe('validation_tagExists');
+  expect(updateTag(a.id, 'DOM').ok).toBe(true);
+  expect(a.name).toBe('DOM');
+});
+
+test('resolveTagNames używa istniejącego i tworzy brakujący', () => {
+  resetTags();
+  const dom = createTag('Dom').tag;
+  const ids = resolveTagNames(['dom', 'Wellbefi']);
+  expect(ids.length).toBe(2);
+  expect(ids[0]).toBe(dom.id);
+  expect(getTag(ids[1]).name).toBe('Wellbefi');
+  expect(tagState.tags.length).toBe(2);
+});
+
+test('resolveTagNames nie zwraca powtórzeń', () => {
+  resetTags();
+  expect(resolveTagNames(['a', 'A', 'a']).length).toBe(1);
+});
+
+test('resolveTagNames pomija nazwę nie do utworzenia', () => {
+  resetTags();
+  expect(resolveTagNames(['x'.repeat(51), 'ok']).length).toBe(1);
+});
 
 // ── PALETTE ───────────────────────────────────────────────────────
 

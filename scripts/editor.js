@@ -551,6 +551,12 @@ function _initKeydown() {
       document.execCommand('insertLineBreak');
       return;
     }
+    // Ctrl+Enter należy do globalnego skrótu "ukończ zadanie" (app.js) —
+    // bez tego przy okazji rozbijałby akapit w miejscu kursora.
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'Enter') _handleEnter(e);
     if (e.key === ' ') _handleSpace(e);
     if (e.key === 'Tab') _handleTab(e);
@@ -2027,11 +2033,20 @@ function _handleCopy(e, isCut) {
   }
 }
 
-/* ── Kopiuj jako Markdown (toolbar + Alt+K) ────── */
+/* ── Kopiuj jako Markdown (menu notatki + Alt+K) ── */
 
 function _initCopyMarkdown() {
   const btn = _byBtn('copy-md-btn');
-  if (!btn) return;
+  const menuBtn = _byBtn('note-menu-btn');
+  const pinBtn = _byBtn('pin-copy');
+  if (!btn || !menuBtn || !pinBtn) return;
+
+  const resetFeedback = () => {
+    menuBtn.classList.remove('icon--check', 'is-copied');
+    menuBtn.classList.add('icon--dots-vertical');
+    pinBtn.classList.remove('icon--check', 'is-copied');
+    pinBtn.classList.add('icon--copy');
+  };
 
   /** @type {ReturnType<typeof setTimeout>|undefined} */
   let _feedbackTimer;
@@ -2054,14 +2069,16 @@ function _initCopyMarkdown() {
       ta.remove();
     }
 
-    // Feedback — ikona zmienia się na ✓ i wraca
+    // Feedback na tym, co widać: ikonie, gdy kopiowanie jest przypięte do
+    // nagłówka, inaczej na przycisku menu, bo sama pozycja jest już schowana.
+    // Ikona zmienia się na ✓ i wraca.
     clearTimeout(_feedbackTimer);
-    btn.classList.remove('icon--copy');
-    btn.classList.add('icon--check', 'is-copied');
-    _feedbackTimer = setTimeout(() => {
-      btn.classList.remove('icon--check', 'is-copied');
-      btn.classList.add('icon--copy');
-    }, 1200);
+    resetFeedback();
+    const pinned = !pinBtn.hidden;
+    const target = pinned ? pinBtn : menuBtn;
+    target.classList.remove(pinned ? 'icon--copy' : 'icon--dots-vertical');
+    target.classList.add('icon--check', 'is-copied');
+    _feedbackTimer = setTimeout(resetFeedback, 1200);
   });
 }
 

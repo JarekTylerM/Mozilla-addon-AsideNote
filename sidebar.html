@@ -7,6 +7,20 @@
 
   <body>
     <div id="main-view" role="main">
+      <!-- Tymczasowe załadowanie z głównym ID: to te same dane co w zainstalowanej
+           wersji. Wersja testowa z dist-dev tego komunikatu nie pokazuje. -->
+      <div
+        id="temp-build-banner"
+        class="save-error-banner"
+        role="alert"
+        hidden
+      >
+        <span class="save-error-banner__text" data-i18n="tempBuild_warning"
+          >Uwaga: ta wersja tymczasowa pracuje na tych samych notatkach co
+          zainstalowany dodatek. Do testów załaduj
+          dist-dev/manifest.json.</span
+        >
+      </div>
       <!-- Baner błędu zapisu — pokazywany przez app.js po storage:save-error -->
       <div id="save-error-banner" class="save-error-banner" role="alert" hidden>
         <span class="save-error-banner__text" data-i18n="saveError_text"
@@ -148,24 +162,6 @@
 
         <div class="notes-list-wrapper">
           <div id="notesList"></div>
-          <div class="new-item-inline">
-            <span data-i18n="newItemInline_prefix">Dodaj</span>
-            <button
-              id="new-note"
-              class="new-item-link"
-              data-i18n="newItemInline_note"
-            >
-              notatkę
-            </button>
-            <span data-i18n="newItemInline_or">lub</span>
-            <button
-              id="new-task"
-              class="new-item-link"
-              data-i18n="newItemInline_task"
-            >
-              zadanie
-            </button>
-          </div>
         </div>
       </div>
       <!-- /.main-view-padded (lista) -->
@@ -178,35 +174,162 @@
             data-i18n-attr="aria-label:back_ariaLabel;title:back_title"
             hidden
           ></button>
+          <!-- To samo miejsce przed tytułem: checkbox w zadaniu, ikona w notatce.
+               Tytuł nie przesuwa się przy zmianie typu. -->
           <button
-            id="convert-type"
-            class="icon-btn icon-btn--xs icon-btn--ghost"
-            data-type="note"
-            data-i18n-attr="aria-label:convertType_ariaLabel;title:convertType_toTask_title"
-            disabled
+            id="note-complete"
+            type="button"
+            class="note-checkbox note-header__check"
+            hidden
           ></button>
-          <label for="title" class="sr-only" data-i18n="title_label"
-            >Tytuł</label
+          <span
+            id="note-type-icon"
+            class="note-header__type icon--type-note"
+            aria-hidden="true"
+          ></span>
+          <div id="title-field" class="title-field">
+            <label for="title" class="sr-only" data-i18n="title_label"
+              >Tytuł</label
+            >
+            <input id="title" data-i18n-attr="placeholder:title_placeholder" />
+            <!-- Symbole są przyciskami obok pola, a nie częścią jego wartości:
+                 widać je tylko przy aktywnym stanie, a klik zdejmuje oznaczenie. -->
+            <button
+              id="status-important"
+              type="button"
+              class="icon-btn title-field__status icon--star"
+              data-i18n-attr="aria-label:important_remove_title;title:important_remove_title"
+              hidden
+            ></button>
+            <button
+              id="status-focus"
+              type="button"
+              class="icon-btn title-field__status icon--focus"
+              data-i18n-attr="aria-label:focus_remove_title;title:focus_remove_title"
+              hidden
+            ></button>
+          </div>
+          <!-- Działania wyjęte z menu w ustawieniach. Klik przekazują pozycji
+               menu, więc logika i skróty zostają w jednym miejscu. -->
+          <button
+            id="pin-important"
+            type="button"
+            class="icon-btn icon-btn--xs icon-btn--ghost note-header__pin icon--star"
+            data-note-pin="important-btn"
+            hidden
+          ></button>
+          <button
+            id="pin-focus"
+            type="button"
+            class="icon-btn icon-btn--xs icon-btn--ghost note-header__pin icon--focus"
+            data-note-pin="focus-btn"
+            hidden
+          ></button>
+          <button
+            id="pin-convert"
+            type="button"
+            class="icon-btn icon-btn--xs icon-btn--ghost note-header__pin icon--type-task"
+            data-note-pin="convert-type"
+            hidden
+          ></button>
+          <button
+            id="pin-copy"
+            type="button"
+            class="icon-btn icon-btn--xs icon-btn--ghost note-header__pin icon--copy"
+            data-note-pin="copy-md-btn"
+            data-i18n-attr="aria-label:noteMenu_copyMd;title:noteMenu_copyMd"
+            hidden
+          ></button>
+          <button
+            id="pin-delete"
+            type="button"
+            class="icon-btn icon-btn--xs icon-btn--ghost note-header__pin icon--bin"
+            data-note-pin="delete"
+            data-i18n-attr="aria-label:noteMenu_delete;title:noteMenu_delete"
+            hidden
+          ></button>
+          <button
+            id="note-menu-btn"
+            type="button"
+            class="icon-btn icon-btn--xs icon-btn--ghost icon--dots-vertical"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="note-menu"
+            data-i18n-attr="aria-label:noteMenu_ariaLabel;title:noteMenu_ariaLabel"
+          ></button>
+          <div
+            id="note-menu"
+            class="callout-dropdown note-menu"
+            role="menu"
+            data-i18n-attr="aria-label:noteMenu_ariaLabel"
           >
-          <input id="title" data-i18n-attr="placeholder:title_placeholder" />
-          <button
-            id="focus-btn"
-            class="icon-btn icon-btn--xs icon--focus"
-            data-i18n-attr="aria-label:focus_ariaLabel;title:focus_title"
-            hidden
-          ></button>
-          <button
-            id="important-btn"
-            class="icon-btn icon-btn--xs"
-            data-i18n-attr="aria-label:important_ariaLabel;title:important_title"
-            hidden
-          ></button>
-          <button
-            id="delete"
-            class="icon-btn icon-btn--xs icon-btn--ghost icon--bin"
-            data-i18n-attr="aria-label:delete_ariaLabel;title:delete_title"
-            disabled
-          ></button>
+            <button
+              id="important-btn"
+              type="button"
+              class="callout-dropdown__item"
+              role="menuitemcheckbox"
+              aria-checked="false"
+              hidden
+            >
+              <span class="callout-dropdown__icon note-menu__icon icon--star"></span>
+              <span data-i18n="noteMenu_important">Ważne</span>
+              <span class="note-menu__check" aria-hidden="true">✓</span>
+              <kbd class="callout-dropdown__kbd">Alt+I</kbd>
+            </button>
+            <button
+              id="focus-btn"
+              type="button"
+              class="callout-dropdown__item"
+              role="menuitemcheckbox"
+              aria-checked="false"
+              hidden
+            >
+              <span class="callout-dropdown__icon note-menu__icon icon--focus"></span>
+              <span data-i18n="noteMenu_inProgress">W trakcie</span>
+              <span class="note-menu__check" aria-hidden="true">✓</span>
+              <kbd class="callout-dropdown__kbd">Alt+W</kbd>
+            </button>
+            <button
+              id="convert-type"
+              type="button"
+              class="callout-dropdown__item"
+              role="menuitem"
+            >
+              <span
+                id="convert-type-icon"
+                class="callout-dropdown__icon note-menu__icon icon--type-task"
+              ></span>
+              <span id="convert-type-label" data-i18n="convertType_toTask_title"
+                >Zamień na zadanie</span
+              >
+            </button>
+            <button
+              id="copy-md-btn"
+              type="button"
+              class="callout-dropdown__item"
+              role="menuitem"
+            >
+              <span class="callout-dropdown__icon note-menu__icon icon--copy"></span>
+              <span data-i18n="noteMenu_copyMd">Kopiuj jako Markdown</span>
+              <kbd class="callout-dropdown__kbd">Alt+K</kbd>
+            </button>
+            <div
+              id="note-menu-separator"
+              class="note-menu__separator"
+              role="separator"
+              hidden
+            ></div>
+            <button
+              id="delete"
+              type="button"
+              class="callout-dropdown__item note-menu__item--danger"
+              role="menuitem"
+              hidden
+            >
+              <span class="callout-dropdown__icon note-menu__icon icon--bin"></span>
+              <span data-i18n="noteMenu_delete">Przenieś do kosza</span>
+            </button>
+          </div>
         </div>
 
         <div id="title-error" class="validation-error" hidden></div>
@@ -371,30 +494,65 @@
                 </button>
               </div>
             </div>
-            <button
-              tabindex="-1"
-              data-cmd="bold"
-              class="panel-icon icon--bold"
-              data-i18n-attr="aria-label:toolbar_bold;title:toolbar_bold_title"
-            ></button>
-            <button
-              tabindex="-1"
-              data-cmd="italic"
-              class="panel-icon icon--italic"
-              data-i18n-attr="aria-label:toolbar_italic;title:toolbar_italic_title"
-            ></button>
-            <button
-              tabindex="-1"
-              data-cmd="underline"
-              class="panel-icon icon--underline"
-              data-i18n-attr="aria-label:toolbar_underline;title:toolbar_underline_title"
-            ></button>
-            <button
-              tabindex="-1"
-              data-cmd="strikeThrough"
-              class="panel-icon icon--strikethrough"
-              data-i18n-attr="aria-label:toolbar_strikethrough;title:toolbar_strikethrough_title"
-            ></button>
+            <!-- Style tekstu. Przy szerokim pasku split button jest niewidoczny,
+                 a przyciski stoją wprost w pasku; przy wąskim wysuwają się spod
+                 strzałki (editor.css). Ten sam zestaw przycisków w obu układach. -->
+            <div class="toolbar-split" id="text-style-split">
+              <button
+                tabindex="-1"
+                type="button"
+                id="text-style-main"
+                class="panel-icon icon--bold toolbar-split__main"
+                aria-pressed="false"
+                data-i18n-attr="aria-label:toolbar_bold;title:toolbar_bold_title"
+              ></button>
+              <button
+                tabindex="-1"
+                type="button"
+                id="text-style-arrow"
+                class="toolbar-split__arrow"
+                aria-haspopup="true"
+                aria-expanded="false"
+                data-i18n-attr="aria-label:toolbar_textStyle_menu;title:toolbar_textStyle_menu"
+              >
+                <span class="toolbar-split__caret"></span>
+              </button>
+              <div
+                id="text-style-group"
+                class="toolbar-styles"
+                role="group"
+                data-i18n-attr="aria-label:toolbar_textStyle_menu"
+              >
+                <button
+                  tabindex="-1"
+                  data-cmd="bold"
+                  class="panel-icon icon--bold"
+                  aria-pressed="false"
+                  data-i18n-attr="aria-label:toolbar_bold;title:toolbar_bold_title"
+                ></button>
+                <button
+                  tabindex="-1"
+                  data-cmd="italic"
+                  class="panel-icon icon--italic"
+                  aria-pressed="false"
+                  data-i18n-attr="aria-label:toolbar_italic;title:toolbar_italic_title"
+                ></button>
+                <button
+                  tabindex="-1"
+                  data-cmd="underline"
+                  class="panel-icon icon--underline"
+                  aria-pressed="false"
+                  data-i18n-attr="aria-label:toolbar_underline;title:toolbar_underline_title"
+                ></button>
+                <button
+                  tabindex="-1"
+                  data-cmd="strikeThrough"
+                  class="panel-icon icon--strikethrough"
+                  aria-pressed="false"
+                  data-i18n-attr="aria-label:toolbar_strikethrough;title:toolbar_strikethrough_title"
+                ></button>
+              </div>
+            </div>
             <button
               tabindex="-1"
               data-cmd="removeFormat"
@@ -645,8 +803,8 @@
             ></button>
           </div>
 
-          <!-- Grupa: akcje -->
-          <div class="toolbar-group">
+          <!-- Grupa: historia -->
+          <div class="toolbar-group" id="toolbar-history">
             <button
               tabindex="-1"
               id="undo-btn"
@@ -658,12 +816,6 @@
               id="redo-btn"
               class="panel-icon icon--redo"
               data-i18n-attr="aria-label:toolbar_redo;title:toolbar_redo_title"
-            ></button>
-            <button
-              tabindex="-1"
-              id="copy-md-btn"
-              class="panel-icon icon--copy"
-              data-i18n-attr="aria-label:copyMd_ariaLabel;title:copyMd_title"
             ></button>
           </div>
         </div>
@@ -772,6 +924,14 @@
                 data-i18n="panel_zoom_label"
                 >Zoom interfejsu</label
               >
+              <button
+                id="panel-zoom-out"
+                type="button"
+                class="panel-zoom-row__step panel-zoom-row__step--before"
+                data-i18n-attr="aria-label:quickSettings_zoomOut;title:quickSettings_zoomOut"
+              >
+                −
+              </button>
               <select id="ui-zoom-select" class="panel-zoom-row__select">
                 <option value="80">80%</option>
                 <option value="90">90%</option>
@@ -779,6 +939,14 @@
                 <option value="110">110%</option>
                 <option value="120">120%</option>
               </select>
+              <button
+                id="panel-zoom-in"
+                type="button"
+                class="panel-zoom-row__step panel-zoom-row__step--after"
+                data-i18n-attr="aria-label:quickSettings_zoomIn;title:quickSettings_zoomIn"
+              >
+                +
+              </button>
             </div>
             <div class="panel-zoom-row">
               <label
@@ -806,6 +974,41 @@
                 <option value="lexend">Lexend</option>
               </select>
             </div>
+            <div class="panel-zoom-row">
+              <label
+                for="preview-icon-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_previewIcon_label"
+                >Ikona podglądu na liście</label
+              >
+              <select id="preview-icon-select" class="panel-zoom-row__select">
+                <option value="hover" selected data-i18n="panel_previewIcon_hover">
+                  Po najechaniu
+                </option>
+                <option value="always" data-i18n="panel_previewIcon_always">
+                  Zawsze
+                </option>
+                <option value="off" data-i18n="panel_previewIcon_off">
+                  Wyłączona
+                </option>
+              </select>
+            </div>
+            <div class="panel-zoom-row">
+              <label
+                for="section-add-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_sectionAdd_label"
+                >Przycisk + w sekcjach listy</label
+              >
+              <select id="section-add-select" class="panel-zoom-row__select">
+                <option value="always" selected data-i18n="panel_sectionAdd_always">
+                  Zawsze
+                </option>
+                <option value="hover" data-i18n="panel_sectionAdd_hover">
+                  Po najechaniu
+                </option>
+              </select>
+            </div>
           </section>
 
           <section class="panel-section">
@@ -819,8 +1022,7 @@
             <label class="panel-toggle">
               <input type="checkbox" id="toolbar-full-toggle" />
               <span data-i18n="panel_editor_toolbarFull"
-                >Pełny pasek: czyszczenie formatowania, separator,
-                cofnij/ponów</span
+                >Pełny pasek: separator, cofnij/ponów</span
               >
             </label>
             <label class="panel-toggle">
@@ -846,6 +1048,38 @@
                 >Poranne podsumowanie o 9:00</span
               >
             </label>
+          </section>
+
+          <section class="panel-section">
+            <h3 data-i18n="panel_noteMenu_title">Menu trzech kropek</h3>
+            <p class="panel-section__hint" data-i18n="panel_noteMenu_hint">
+              Zaznaczone działania są schowane w menu. Odznaczone widać jako
+              ikony w nagłówku notatki.
+            </p>
+            <div class="panel-toggle-list">
+              <label class="panel-toggle">
+                <input type="checkbox" data-note-action="important" checked />
+                <span data-i18n="noteMenu_important">Ważne</span>
+              </label>
+              <label class="panel-toggle">
+                <input type="checkbox" data-note-action="focus" checked />
+                <span data-i18n="noteMenu_inProgress">W trakcie</span>
+              </label>
+              <label class="panel-toggle">
+                <input type="checkbox" data-note-action="convert" checked />
+                <span data-i18n="panel_noteMenu_convert"
+                  >Zamiana notatki i zadania</span
+                >
+              </label>
+              <label class="panel-toggle">
+                <input type="checkbox" data-note-action="copy" checked />
+                <span data-i18n="noteMenu_copyMd">Kopiuj jako Markdown</span>
+              </label>
+              <label class="panel-toggle">
+                <input type="checkbox" data-note-action="delete" checked />
+                <span data-i18n="noteMenu_delete">Przenieś do kosza</span>
+              </label>
+            </div>
           </section>
 
           <section class="panel-section">
@@ -1144,6 +1378,24 @@
                 <code>Alt+K</code
                 ><span data-i18n="shortcuts_copyMd"
                   >→ kopiuj notatkę jako Markdown</span
+                >
+              </li>
+              <li>
+                <code>Alt+I</code
+                ><span data-i18n="shortcuts_important"
+                  >→ oznacz jako ważne</span
+                >
+              </li>
+              <li>
+                <code>Alt+W</code
+                ><span data-i18n="shortcuts_inProgress"
+                  >→ oznacz jako w trakcie</span
+                >
+              </li>
+              <li>
+                <code>Ctrl+Enter</code
+                ><span data-i18n="shortcuts_complete"
+                  >→ ukończ otwarte zadanie</span
                 >
               </li>
               <li>
@@ -1580,6 +1832,50 @@
       </button>
     </div>
     <div id="bottom-bar">
+      <!-- Skróty do ustawień z panelu. Stan i zapis obsługuje panel.js przez
+           te same kontrolki, więc panel i pasek zawsze pokazują to samo. -->
+      <div
+        id="quick-settings"
+        class="quick-settings"
+        role="group"
+        data-i18n-attr="aria-label:quickSettings_ariaLabel"
+      >
+        <button
+          id="quick-theme"
+          type="button"
+          class="icon-btn icon-btn--md icon--scheme-auto"
+        ></button>
+        <button
+          id="quick-tags"
+          type="button"
+          class="icon-btn icon-btn--md icon--panel-tags"
+          data-i18n-attr="aria-label:panel_tab_tags_title;title:panel_tab_tags_title"
+        ></button>
+        <button
+          id="quick-font"
+          type="button"
+          class="quick-settings__text"
+        >
+          Aa
+        </button>
+        <button
+          id="quick-zoom-out"
+          type="button"
+          class="quick-settings__text quick-settings__step"
+          data-i18n-attr="aria-label:quickSettings_zoomOut;title:quickSettings_zoomOut"
+        >
+          −
+        </button>
+        <span id="quick-zoom-value" class="quick-settings__value">100%</span>
+        <button
+          id="quick-zoom-in"
+          type="button"
+          class="quick-settings__text quick-settings__step"
+          data-i18n-attr="aria-label:quickSettings_zoomIn;title:quickSettings_zoomIn"
+        >
+          +
+        </button>
+      </div>
       <div id="security-btn-wrapper">
         <button
           id="security-btn"

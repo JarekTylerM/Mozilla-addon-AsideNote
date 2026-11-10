@@ -442,7 +442,9 @@ function _renderCalendar() {
   weekdaysMon.forEach((wd) => {
     const th = document.createElement("span");
     th.className = "date-picker-calendar__weekday";
-    th.textContent = wd;
+    // Najwyżej 3 litery, bez kropki skrótu: "niedz." nie mieściło się w
+    // kolumnie przy szerszym kroju (Lexend) i było ucinane.
+    th.textContent = wd.replace(/\.$/, "").slice(0, 3);
     grid.appendChild(th);
   });
 

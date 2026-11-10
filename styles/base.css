@@ -111,9 +111,3 @@ input:focus-visible,
   opacity: 1 !important;
 }
 
-/* Linki inline (Dodaj notatkę/zadanie) */
-.new-item-link:focus-visible {
-  outline: 2px solid var(--accent-border);
-  outline-offset: 2px;
-  border-radius: var(--radius-xs);
-}

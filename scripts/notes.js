@@ -14,7 +14,7 @@ import {
 } from "./storage.js";
 import * as undo from "./undo.js";
 import { debounce, foldText, queryTerms, matchesTerms } from "./utils.js";
-import { getTag, makeTagPill, tagState } from "./tags.js";
+import { getTag, makeTagPill, resolveTagNames, tagState } from "./tags.js";
 import { clearAlarm, scheduleAlarm, isAlarmable } from "./alarms.js";
 import { t, getUILocale, getShortWeekdays } from "./i18n.js";
 import {
@@ -37,6 +37,28 @@ import {
   isDiscardableNote,
 } from "./notes-trash.js";
 import { updateDueDisplay } from "./date-picker.js";
+import {
+  NOTE_ACTIONS,
+  normalizePinnedActions,
+  noteHeaderState,
+} from "./note-menu.js";
+import {
+  SECTION_ORDER,
+  alwaysVisibleSections,
+  bucketFor,
+  newItemForSection,
+} from "./note-sections.js";
+import { startStage } from "./onboarding.js";
+
+/** Działanie z nagłówka → id jego pozycji w menu ⋮ */
+const NOTE_ACTION_ITEMS = {
+  important: "important-btn",
+  focus: "focus-btn",
+  convert: "convert-type",
+  copy: "copy-md-btn",
+  delete: "delete",
+};
+
 /* ── State ────────────────────────────────────── */
 
 /**
@@ -54,7 +76,30 @@ import { updateDueDisplay } from "./date-picker.js";
  * @property {boolean} zenMode
  * @property {string[]} focusIds
  * @property {DeletedNote[]} deletedNotes
+ * @property {string[]} pinnedActions działania przypięte do nagłówka notatki
+ * @property {PendingMeta} pendingMeta termin zadania, które jeszcze nie powstało
  */
+
+/**
+ * Zadanie powstaje w storage dopiero przy pierwszym wpisanym znaku, a termin
+ * trzeba pamiętać wcześniej: nadaje go "+" w sekcji albo użytkownik wybiera
+ * go przed wpisaniem tytułu.
+ * @typedef {object} PendingMeta
+ * @property {number|null} due
+ * @property {string|null} time
+ * @property {number} reminder
+ * @property {string|null} recurrence
+ * @property {number[]|null} recurrenceDays
+ */
+
+/** @param {number|null} [due] @returns {PendingMeta} */
+const _newPendingMeta = (due = null) => ({
+  due,
+  time: null,
+  reminder: 0,
+  recurrence: null,
+  recurrenceDays: null,
+});
 
 /** @type {AppState} */
 export const state = {
@@ -71,6 +116,8 @@ export const state = {
   zenMode: false,
   focusIds: [],
   deletedNotes: [],
+  pinnedActions: [],
+  pendingMeta: _newPendingMeta(),
 };
 
 /* ── DOM refs ─────────────────────────────────── */
@@ -87,56 +134,9 @@ const _target = (e) => /** @type {Element|null} */ (e.target);
 
 /* ── Sekcje (buckety) ─────────────────────────── */
 
-const SECTION_ORDER = [
-  "overdue",
-  "today",
-  "tomorrow",
-  "week",
-  "month",
-  "later",
-  "unscheduled",
-  "notes",
-  "done",
-];
-
 /** @param {string} key */
 function _sectionLabel(key) {
   return t(`section_${key}`);
-}
-
-/** @param {Note} note */
-function _bucketFor(note) {
-  if (note.type === "note") return "notes";
-  if (note.completed) return "done";
-  if (!note.due) return "unscheduled";
-
-  const now = new Date();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).getTime();
-  const dayMs = 86400000;
-  const tomorrow = today + dayMs;
-
-  // Niedziela tego tygodnia jako koniec
-  const dayOfWeek = now.getDay() || 7;
-  const endOfWeek = today + (7 - dayOfWeek + 1) * dayMs;
-  const endOfMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-  ).getTime();
-
-  if (note.due < today) return "overdue";
-  if (note.due < tomorrow) return "today";
-  if (note.due < tomorrow + dayMs) return "tomorrow";
-  if (note.due < endOfWeek) return "week";
-  if (note.due < endOfMonth) return "month";
-  return "later";
 }
 
 /* ── Helpers ──────────────────────────────────── */
@@ -188,7 +188,7 @@ function _formatDueRelative(timestamp) {
    tekst, różnią się długością i tym, czy zachowują podział na linie. Wynik
    jest memoizowany po (id, content), bo renderList() przebudowuje listę przy
    każdym filtrze, toggle'u i zapisie, a treść zmienia się tylko dla notatki
-   edytowanej. Cache trzyma przycięte stringi (≤160 znaków), nie pełny tekst. */
+   edytowanej. Cache trzyma przycięte stringi (≤300 znaków), nie pełny tekst. */
 
 /** @typedef {{ src: string, short: string, title: string }} PreviewParts */
 
@@ -208,8 +208,11 @@ function _previewParts(note) {
   const text = htmlToPreviewText(src);
   const parts = {
     src,
-    // Wiersz listy jest jednoliniowy — łamania spłaszczamy do spacji
-    short: _clip(text.replace(/\n/g, " "), 30),
+    // Wiersz listy jest jednoliniowy — łamania spłaszczamy do spacji. Wielokropek
+    // stawia CSS (text-overflow) tam, gdzie kończy się miejsce, więc poszerzenie
+    // panelu odsłania więcej tekstu. Ten limit tylko pilnuje rozmiaru DOM przy
+    // długich notatkach i jest szerszy niż jakikolwiek wiersz.
+    short: text.replace(/\n/g, " ").slice(0, 300),
     // Tooltip ikony podglądu — blok wieloliniowy, łamania zachowane
     title: _clip(text, 160),
   };
@@ -250,12 +253,32 @@ export function isNoteEmpty() {
 
 /* ── State ops ────────────────────────────────── */
 
+/**
+ * Gdzie zapisać termin: otwarte zadanie albo zadanie, które dopiero powstanie.
+ * Dla drugiego wybór terminu wcześniej przepadał bez śladu.
+ * @returns {Note|PendingMeta|null}
+ */
+function _dueTarget() {
+  if (!state.activeId) {
+    return state.pendingType === "task" ? state.pendingMeta : null;
+  }
+  const note = state.notes.find((n) => n.id === state.activeId);
+  return note?.type === "task" ? note : null;
+}
+
+/**
+ * Zaczyna od nowa termin niezapisanego elementu.
+ * @param {number|null} [due]
+ */
+export function resetPendingMeta(due = null) {
+  state.pendingMeta = _newPendingMeta(due);
+}
+
 /** @param {string} value */
 export function setDueDate(value) {
-  if (!state.activeId) return;
-  const note = state.notes.find((n) => n.id === state.activeId);
-  if (!note || note.type !== "task") return;
-  note.due = _fromDateInputValue(value);
+  const target = _dueTarget();
+  if (!target) return;
+  target.due = _fromDateInputValue(value);
   saveNotes(state.notes);
   renderList();
 }
@@ -275,29 +298,26 @@ export function postponeToTomorrow(id) {
 
 /** @param {string} value */
 export function setDueTime(value) {
-  if (!state.activeId) return;
-  const note = state.notes.find((n) => n.id === state.activeId);
-  if (!note || note.type !== "task") return;
-  note.time = value || null;
+  const target = _dueTarget();
+  if (!target) return;
+  target.time = value || null;
   saveNotes(state.notes);
   renderList();
 }
 /** @param {number|string} value */
 export function setReminder(value) {
-  if (!state.activeId) return;
-  const note = state.notes.find((n) => n.id === state.activeId);
-  if (!note || note.type !== "task") return;
-  note.reminder = Number(value);
+  const target = _dueTarget();
+  if (!target) return;
+  target.reminder = Number(value);
   saveNotes(state.notes);
 }
 
 /** @param {string|null} value @param {number[]|null} [days] */
 export function setRecurrence(value, days = null) {
-  if (!state.activeId) return;
-  const note = state.notes.find((n) => n.id === state.activeId);
-  if (!note || note.type !== "task") return;
-  note.recurrence = value || null;
-  note.recurrenceDays =
+  const target = _dueTarget();
+  if (!target) return;
+  target.recurrence = value || null;
+  target.recurrenceDays =
     value === "custom" && Array.isArray(days) && days.length > 0 ? days : null;
   saveNotes(state.notes);
   updateDeleteState();
@@ -429,15 +449,15 @@ export function saveActiveNote() {
       tags: [],
       ...(state.pendingType === "task" && {
         completed: false,
-        due: null,
-        time: null,
-        reminder: 0,
+        ...state.pendingMeta,
       }),
     };
     state.notes.unshift(newNote);
     state.activeId = newNote.id;
     state.pendingType = "note";
+    resetPendingMeta();
     saveNotes(state.notes);
+    if (isAlarmable(newNote)) scheduleAlarm(newNote);
     renderList();
     return;
   }
@@ -616,10 +636,17 @@ export function toggleCompleted(id) {
       }
       delete note.spawnedNextId;
     }
+
+    // Ukończenie skasowało przypomnienie. Bez tego wracałoby dopiero po
+    // restarcie przeglądarki (rescheduleAll przy starcie).
+    if (isAlarmable(note)) scheduleAlarm(note);
   }
 
   saveNotes(state.notes);
   renderList();
+  // Checkbox stoi też w nagłówku otwartego zadania, a ukończenie zdejmuje
+  // "w trakcie" — nagłówek musi to pokazać od razu.
+  updateDeleteState();
 }
 
 /** @param {string} id */
@@ -694,50 +721,121 @@ export function updateDeleteState() {
   _syncRecurrenceBadge(activeNote);
 }
 
-/* Przyciski akcji edytora: delete / convert / focus / important */
+/* Nagłówek notatki: checkbox, symbole przy tytule i pozycje menu ⋮ */
 /** @param {Note|null} note */
 function _syncEditorActionButtons(note) {
-  const deleteBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("delete"));
-  // Warunkiem jest ISTNIENIE notatki, nie jej treść. Wcześniej dochodziło
+  const header = noteHeaderState({
+    note,
+    activeId: state.activeId,
+    pendingType: state.pendingType,
+    focusIds: state.focusIds,
+    pinnedActions: state.pinnedActions,
+  });
+
+  const completeBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("note-complete"));
+  if (completeBtn) {
+    completeBtn.hidden = !header.isTask;
+    completeBtn.disabled = !header.canComplete;
+    completeBtn.classList.toggle("note-checkbox--on", header.completed);
+    completeBtn.textContent = header.completed ? "✓" : "";
+    const label = t(header.completed ? "task_markIncomplete" : "task_markComplete");
+    completeBtn.setAttribute("aria-label", label);
+    completeBtn.title = label;
+  }
+
+  const typeIcon = document.getElementById("note-type-icon");
+  if (typeIcon) typeIcon.hidden = header.isTask;
+
+  document
+    .getElementById("title-field")
+    ?.classList.toggle("is-completed", header.completed);
+
+  const statusImportant = document.getElementById("status-important");
+  if (statusImportant) statusImportant.hidden = !header.showImportantSymbol;
+  const statusFocus = document.getElementById("status-focus");
+  if (statusFocus) statusFocus.hidden = !header.showFocusSymbol;
+
+  // Dostępność działania i jego miejsce to dwie osobne rzeczy: `hidden` na
+  // pozycji menu znaczy "teraz niedostępne" (patrzą na to też skróty w app.js),
+  // a is-pinned tylko "pokazane w nagłówku zamiast w menu".
+  // Warunkiem kosza jest ISTNIENIE notatki, nie jej treść. Wcześniej dochodziło
   // tu `|| isNoteEmpty()` i notatka bez tekstu, ale z tagiem (albo terminem,
   // gwiazdką) wpadała w pułapkę: discardEmptyActiveNote jej nie rusza, bo
   // tag to intencja, a kosz był wyłączony, bo nie ma tekstu. Nie dało się
   // jej usunąć z edytora — trzeba było wracać na listę.
-  if (deleteBtn) deleteBtn.disabled = !note;
-
-  const convertBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById("convert-type"));
-  if (convertBtn) {
-    convertBtn.disabled = false;
-    const type = state.activeId
-      ? (note?.type ?? "note")
-      : (state.pendingType ?? "note");
-    convertBtn.dataset.type = type;
-    convertBtn.title = t(
-      type === "note" ? "convertType_toTask_title" : "convertType_toNote_title",
-    );
+  for (const action of NOTE_ACTIONS) {
+    const pinned = header.isPinned(action);
+    const available = header.available[action];
+    const item = document.getElementById(NOTE_ACTION_ITEMS[action]);
+    if (item) {
+      item.hidden = !available;
+      item.classList.toggle("is-pinned", pinned);
+    }
+    const pin = document.getElementById(`pin-${action}`);
+    if (pin) pin.hidden = !available || !pinned;
   }
 
-  const focusBtn = document.getElementById("focus-btn");
-  if (focusBtn) {
-    const isFocusable =
-      !!state.activeId && !(note?.type === "task" && note?.completed);
-    focusBtn.hidden = !isFocusable;
-    const inFocus = state.focusIds.includes(state.activeId ?? "");
-    focusBtn.classList.toggle(
-      "is-active",
-      state.activeId !== null && inFocus,
-    );
-    focusBtn.title = t(inFocus ? "focus_remove_title" : "focus_title");
+  document
+    .getElementById("important-btn")
+    ?.setAttribute("aria-checked", String(header.important));
+  _syncTogglePin("pin-important", header.important, {
+    on: "important_remove_title",
+    off: "noteMenu_important",
+  });
+
+  document
+    .getElementById("focus-btn")
+    ?.setAttribute("aria-checked", String(header.inFocus));
+  _syncTogglePin("pin-focus", header.inFocus, {
+    on: "focus_remove_title",
+    off: "noteMenu_inProgress",
+  });
+
+  const convertText = t(
+    header.isTask ? "convertType_toNote_title" : "convertType_toTask_title",
+  );
+  const convertLabel = document.getElementById("convert-type-label");
+  if (convertLabel) convertLabel.textContent = convertText;
+  for (const id of ["convert-type-icon", "pin-convert"]) {
+    const icon = document.getElementById(id);
+    icon?.classList.toggle("icon--type-note", header.isTask);
+    icon?.classList.toggle("icon--type-task", !header.isTask);
+  }
+  const convertPin = document.getElementById("pin-convert");
+  if (convertPin) {
+    convertPin.title = convertText;
+    convertPin.setAttribute("aria-label", convertText);
   }
 
-  const importantBtn = document.getElementById("important-btn");
-  if (importantBtn) {
-    importantBtn.hidden = !state.activeId;
-    importantBtn.classList.toggle("is-active", !!note?.important);
-    importantBtn.title = t(
-      note?.important ? "important_remove_title" : "important_title",
-    );
-  }
+  const separator = document.getElementById("note-menu-separator");
+  if (separator) separator.hidden = !header.showMenuSeparator;
+  const menuBtn = document.getElementById("note-menu-btn");
+  if (menuBtn) menuBtn.hidden = header.menuEmpty;
+}
+
+/**
+ * Ikona przełącznika przypięta do nagłówka: stan i opis zależny od stanu.
+ * @param {string} id
+ * @param {boolean} active
+ * @param {{ on: string, off: string }} keys klucze locale opisu
+ */
+function _syncTogglePin(id, active, { on, off }) {
+  const pin = document.getElementById(id);
+  if (!pin) return;
+  const label = t(active ? on : off);
+  pin.classList.toggle("is-active", active);
+  pin.setAttribute("aria-pressed", String(active));
+  pin.title = label;
+  pin.setAttribute("aria-label", label);
+}
+
+/**
+ * Zmienia działania przypięte do nagłówka (Ustawienia → Menu trzech kropek).
+ * @param {unknown} actions
+ */
+export function setPinnedActions(actions) {
+  state.pinnedActions = normalizePinnedActions(actions);
+  updateDeleteState();
 }
 
 /* Metadane zadania: widoczność due-bar, pill alarmu, przycisk daty */
@@ -750,14 +848,17 @@ function _syncTaskMeta(note) {
   const noteMeta = document.getElementById("note-meta");
   if (noteMeta) noteMeta.hidden = !isTask;
   if (dueWrapper) dueWrapper.hidden = !isTask;
-  if (dueInput && !state.activeId) dueInput.value = "";
+  if (dueInput && !state.activeId) {
+    dueInput.value = _toDateInputValue(state.pendingMeta.due);
+  }
   updateDueDisplay();
 
   const timeInput = /** @type {HTMLInputElement|null} */ (document.getElementById("due-time"));
   const alarmPill = document.getElementById("due-alarm-pill");
   const alarmLabel = document.getElementById("alarm-label");
+  const reminderValue = (note ?? state.pendingMeta).reminder ?? 0;
   if (alarmPill) {
-    const reminder = note?.reminder ?? 0;
+    const reminder = reminderValue;
     const hasTime = !!timeInput?.value;
     alarmPill.hidden = !hasTime || reminder === 0;
     if (alarmLabel && hasTime && reminder > 0) {
@@ -775,14 +876,15 @@ function _syncTaskMeta(note) {
 
   document.dispatchEvent(
     new CustomEvent("reminderChanged", {
-      detail: { value: note?.reminder ?? 0 },
+      detail: { value: reminderValue },
     }),
   );
 }
 
 /* Badge cykliczności przy dacie + event dla date-pickera */
-/** @param {Note|null} note */
-function _syncRecurrenceBadge(note) {
+/** @param {Note|null} activeNote */
+function _syncRecurrenceBadge(activeNote) {
+  const note = /** @type {Note} */ (activeNote ?? state.pendingMeta);
   const badge = document.getElementById("due-recurrence-badge");
   if (badge) {
     badge.hidden = !note?.recurrence || !note?.due;
@@ -821,20 +923,6 @@ export function clearFilters() {
   saveFilterPrefs({ hideCompleted: false });
 
   renderList();
-}
-
-/* Podświetl ten przycisk ("notatkę" / "zadanie"), który pasuje do aktywnego filtra typu.
-   Gdy filterType=='all' lub zenMode (filtruje task) — żaden nie podświetlony, lub task. */
-function _updateNewItemHint() {
-  const noteBtn = document.getElementById("new-note");
-  const taskBtn = document.getElementById("new-task");
-  if (!noteBtn || !taskBtn) return;
-
-  // W zen mode filterType jest wymuszany na 'task' (patrz app.js handler type-toggle)
-  const activeType = state.zenMode ? "task" : state.filterType;
-
-  noteBtn.classList.toggle("is-active", activeType === "note");
-  taskBtn.classList.toggle("is-active", activeType === "task");
 }
 
 /** @param {number} due @param {string} recurrence @param {number[]|null} [recurrenceDays] @returns {number} */
@@ -946,58 +1034,8 @@ export function renderList() {
     !state.zenMode &&
     (state.notes.length === 0 || noFilters)
   ) {
-    const empty = document.createElement("div");
-    empty.className = "notes-empty";
-    const msg = document.createElement("span");
-    msg.className = "notes-empty__msg";
-    msg.textContent = t("list_empty");
-    // Pusta lista mówi, gdzie i co wpisać: wskazuje pole po jego napisie
-    // (tuż pod nim jest wyszukiwarka, więc "pole u góry" byłoby niejasne)
-    // i pokazuje dwa konkretne wpisy z wynikiem. `!` to prefiks wpisywany w
-    // tekst, nie klawisz — stąd przykład zamiast kafelka klawisza.
-    const lead = document.createElement("p");
-    lead.className = "notes-empty__lead";
-    lead.textContent = t("list_empty_lead");
-
-    const examples = document.createElement("ul");
-    examples.className = "notes-empty__examples";
-    for (const [exKey, resultKey] of [
-      ["list_empty_ex_note", "list_empty_ex_note_result"],
-      ["list_empty_ex_task", "list_empty_ex_task_result"],
-    ]) {
-      const li = document.createElement("li");
-      // Klik wstawia przykład do pola szybkiego dodawania (bez zapisu) —
-      // pod polem od razu pokazuje się podgląd, Enter dodaje
-      const ex = document.createElement("button");
-      ex.type = "button";
-      ex.className = "notes-empty__example";
-      ex.textContent = t(exKey);
-      ex.title = t("list_empty_ex_insert_title");
-      ex.addEventListener("click", () => {
-        const qc = /** @type {HTMLInputElement|null} */ (
-          document.getElementById("quick-capture")
-        );
-        if (!qc) return;
-        qc.value = t(exKey);
-        qc.focus();
-        qc.dispatchEvent(new Event("input", { bubbles: true }));
-      });
-      const result = document.createElement("span");
-      result.className = "notes-empty__result";
-      result.textContent = t(resultKey);
-      li.append(ex, result);
-      examples.appendChild(li);
-    }
-
-    // Trzecia droga — okienko z paska narzędzi, działa z dowolnej karty
-    const popupHint = document.createElement("p");
-    popupHint.className = "notes-empty__aside";
-    popupHint.textContent = t("list_empty_popup");
-
-    empty.append(msg, lead, examples, popupHint);
-    notesList.appendChild(empty);
+    notesList.appendChild(_buildStartScreen());
     updateDeleteState();
-    _updateNewItemHint();
     return;
   }
 
@@ -1036,10 +1074,18 @@ export function renderList() {
     };
 
     empty.appendChild(msg);
+    // Sam filtr typu: pasujący przycisk, żeby nie trzeba było go wyłączać,
+    // by dodać pierwszy element tego typu
+    if (onlyTypeFilter) {
+      empty.appendChild(
+        state.filterType === "note"
+          ? _newItemButton("notes", "list_empty_newNote")
+          : _newItemButton("unscheduled", "list_empty_newTask"),
+      );
+    }
     empty.appendChild(clearBtn);
     notesList.appendChild(empty);
     updateDeleteState();
-    _updateNewItemHint();
     return;
   }
 
@@ -1047,7 +1093,7 @@ export function renderList() {
   /** @type {Record<string, Note[]>} */
   const buckets = {};
   filtered.forEach((note) => {
-    const key = _bucketFor(note);
+    const key = bucketFor(note);
     (buckets[key] ||= []).push(note);
   });
 
@@ -1081,7 +1127,6 @@ export function renderList() {
       empty.appendChild(msg);
       notesList.appendChild(empty);
       updateDeleteState();
-      _updateNewItemHint();
       return;
     }
 
@@ -1106,7 +1151,6 @@ export function renderList() {
       empty.appendChild(zenSub);
       notesList.appendChild(empty);
       updateDeleteState();
-      _updateNewItemHint();
       return;
     }
 
@@ -1116,24 +1160,146 @@ export function renderList() {
     });
 
     updateDeleteState();
-    _updateNewItemHint();
     return;
   }
 
   // ── Normalny widok ────────────────────────────
+  const alwaysVisible = alwaysVisibleSections(state);
   SECTION_ORDER.forEach((key) => {
-    const items = buckets[key];
-    if (!items || items.length === 0) return;
+    const items = buckets[key] ?? [];
+    if (items.length === 0 && !alwaysVisible.includes(key)) return;
     _renderSection(key, items);
   });
 
   updateDeleteState();
-  _updateNewItemHint();
+}
+
+/**
+ * @param {string} tag
+ * @param {string} className
+ * @param {string} [text]
+ * @returns {HTMLElement}
+ */
+function _el(tag, className, text) {
+  const node = document.createElement(tag);
+  node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
+/**
+ * Podpisany przycisk tworzący element tak samo jak "+" w danej sekcji.
+ * @param {string} section
+ * @param {string} labelKey
+ * @returns {HTMLButtonElement}
+ */
+function _newItemButton(section, labelKey) {
+  const btn = /** @type {HTMLButtonElement} */ (
+    _el("button", "btn btn--icon-left notes-empty__new")
+  );
+  btn.type = "button";
+  btn.append(
+    _el("span", "btn__icon icon--add"),
+    _el("span", "", t(labelKey)),
+  );
+  btn.addEventListener("click", () => {
+    document.dispatchEvent(
+      new CustomEvent("newItemInSection", { detail: newItemForSection(section) }),
+    );
+  });
+  return btn;
+}
+
+/**
+ * Ekran pustej listy. Kolejność odpowiada pytaniom nowej osoby: jak dodać
+ * pierwszy wpis, jak wygląda szybkie dodawanie, gdzie się tego nauczyć.
+ *
+ * Bez pustych sekcji z licznikiem 0: na pustej liście wyglądały jak martwe
+ * wiersze, a nie sposób dodania wpisu. Tę rolę mają tu podpisane przyciski.
+ *
+ * Przykłady to klikalne karty: pokazują tekst do wpisania i to, co z niego
+ * powstanie. `!` to prefiks wpisywany w tekst, nie klawisz, więc przykład
+ * uczy go lepiej niż kafelek klawisza. Klik wstawia tekst do pola szybkiego
+ * dodawania bez zapisu: pod polem od razu widać podgląd, a Enter dodaje wpis.
+ *
+ * @returns {HTMLElement}
+ */
+function _buildStartScreen() {
+  const el = _el;
+
+  const screen = el("div", "notes-empty notes-empty--start");
+  screen.append(
+    el("h2", "notes-empty__title", t("list_empty")),
+    el("p", "notes-empty__lead", t("list_empty_lead")),
+  );
+
+  const actions = el("div", "notes-empty__actions");
+  actions.append(
+    _newItemButton("notes", "list_empty_newNote"),
+    _newItemButton("unscheduled", "list_empty_newTask"),
+  );
+  screen.append(
+    actions,
+    el("h3", "notes-empty__label", t("list_empty_examples_label")),
+  );
+
+  const examples = el("ul", "notes-empty__examples");
+  for (const [exKey, resultKey] of [
+    ["list_empty_ex_note", "list_empty_ex_note_result"],
+    ["list_empty_ex_task", "list_empty_ex_task_result"],
+  ]) {
+    const example = /** @type {HTMLButtonElement} */ (
+      el("button", "notes-empty__example")
+    );
+    example.type = "button";
+    example.title = t("list_empty_ex_insert_title");
+    example.append(
+      el("code", "notes-empty__example-text", t(exKey)),
+      el("span", "notes-empty__result", t(resultKey)),
+    );
+    example.addEventListener("click", () => {
+      const qc = /** @type {HTMLInputElement|null} */ (
+        document.getElementById("quick-capture")
+      );
+      if (!qc) return;
+      qc.value = t(exKey);
+      qc.focus();
+      qc.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const li = document.createElement("li");
+    li.appendChild(example);
+    examples.appendChild(li);
+  }
+  screen.appendChild(examples);
+
+  const tutorial = el("div", "notes-empty__tutorial");
+  const tutorialBtn = /** @type {HTMLButtonElement} */ (
+    el("button", "btn notes-empty__tutorial-btn", t("list_empty_tutorial_btn"))
+  );
+  tutorialBtn.type = "button";
+  tutorialBtn.addEventListener("click", () => startStage(1));
+  tutorial.append(
+    el("h3", "notes-empty__subtitle", t("list_empty_tutorial_title")),
+    el("p", "notes-empty__text", t("list_empty_tutorial_desc")),
+    tutorialBtn,
+  );
+  screen.appendChild(tutorial);
+
+  const tip = el("p", "notes-empty__tip");
+  tip.append(
+    el("kbd", "notes-empty__kbd", "Alt+Shift+S"),
+    document.createTextNode(` ${t("list_empty_popup")}`),
+  );
+  screen.appendChild(tip);
+
+  return screen;
 }
 
 /** @param {string} key @param {Note[]} items */
 function _renderSection(key, items) {
-  const isCollapsed = state.collapsedSections.includes(key);
+  const isEmpty = items.length === 0;
+  // Pusta sekcja nie ma czego zwijać, więc zapamiętane zwinięcie jej nie dotyczy
+  const isCollapsed = !isEmpty && state.collapsedSections.includes(key);
 
   let countLabel = `${items.length}`;
 
@@ -1156,14 +1322,19 @@ function _renderSection(key, items) {
   const header = document.createElement("button");
   header.className =
     "section-header" + (isCollapsed ? " section-header--collapsed" : "");
-  // Zaległe są domyślnie zwinięte (mniej presji), ale wtedy jedynym śladem
-  // jest licznik — wyróżniony, żeby przeterminowane zadanie nie umknęło
+  // "Do nadrobienia" jest domyślnie zwinięte (mniej presji), ale wtedy jedynym
+  // śladem jest licznik — wyróżniony, żeby przeterminowane zadanie nie umknęło
   if (key === "overdue" && items.length > 0)
     header.classList.add("section-header--alert");
   header.dataset.section = key;
   // Czytniki ekranu muszą wiedzieć że nagłówek zwija/rozwija sekcję —
   // sam chevron tekstowy (▸/▾) tego nie komunikuje
-  header.setAttribute("aria-expanded", String(!isCollapsed));
+  if (isEmpty) {
+    header.classList.add("section-header--empty");
+    header.disabled = true;
+  } else {
+    header.setAttribute("aria-expanded", String(!isCollapsed));
+  }
 
   const label = document.createElement("span");
   label.className = "section-header__label";
@@ -1183,12 +1354,28 @@ function _renderSection(key, items) {
   chevron.setAttribute("aria-hidden", "true");
 
   meta.appendChild(count);
-  meta.appendChild(chevron);
+  if (!isEmpty) meta.appendChild(chevron);
   header.appendChild(label);
   header.appendChild(meta);
 
-  // Klik obsługiwany przez delegację na #notesList (data-section)
-  notesList.appendChild(header);
+  // "+" jest obok nagłówka, nie w nim: nagłówek to <button>, a przycisk
+  // w przycisku to niepoprawny HTML. Pozycję w wierszu ustawia CSS.
+  const row = document.createElement("div");
+  row.className = "section-row" + (isEmpty ? " section-row--empty" : "");
+  row.appendChild(header);
+  if (newItemForSection(key)) {
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "section-add icon--add";
+    addBtn.dataset.addToSection = key;
+    const addLabel = t(`section_add_${key}`);
+    addBtn.title = addLabel;
+    addBtn.setAttribute("aria-label", addLabel);
+    row.appendChild(addBtn);
+  }
+
+  // Kliki obsługiwane przez delegację na #notesList
+  notesList.appendChild(row);
   if (!isCollapsed) items.forEach(_renderNoteItem);
 }
 
@@ -1265,19 +1452,20 @@ function _renderNoteItem(note) {
     div.appendChild(cb);
   }
 
-  // Tytuł + przycisk podglądu — tekst i tooltipy wypełnia _applyItemLabel
-  // (wspólne z aktualizacją in-place przy autosave)
-  const title = document.createElement("span");
-  title.className = "note-item__title";
-
+  // Przycisk podglądu + tytuł — tekst i tooltipy wypełnia _applyItemLabel
+  // (wspólne z aktualizacją in-place przy autosave). Ikona stoi przed tytułem:
+  // za nim zajmowała miejsce między wielokropkiem a resztą wiersza.
   const titleWrapper = document.createElement("div");
   titleWrapper.className = "note-item__title-wrap";
-  titleWrapper.appendChild(title);
 
   const previewBtn = document.createElement("button");
   previewBtn.className = "note-item__preview icon--preview";
   previewBtn.setAttribute("aria-label", t("note_preview_ariaLabel"));
   titleWrapper.appendChild(previewBtn);
+
+  const title = document.createElement("span");
+  title.className = "note-item__title";
+  titleWrapper.appendChild(title);
 
   // Tytuł i tagi dzielą jeden zawijany kontener: gdy się mieszczą, wiersz
   // ma jedną linię; tagi schodzą pod tytuł dopiero, gdy brakuje miejsca.
@@ -1395,6 +1583,17 @@ function _deleteAndMoveFocus(id, el) {
    eliminują koszt ponownego podpinania i churn GC przy każdym renderze. */
 
 notesList.addEventListener("click", (e) => {
+  const addBtn = /** @type {HTMLElement|null} */ (_target(e)?.closest(".section-add"));
+  if (addBtn) {
+    // Ekran notatki i formularz należą do app.js
+    document.dispatchEvent(
+      new CustomEvent("newItemInSection", {
+        detail: newItemForSection(addBtn.dataset.addToSection ?? ""),
+      }),
+    );
+    return;
+  }
+
   const header = /** @type {HTMLElement|null} */ (_target(e)?.closest(".section-header"));
   if (header?.dataset.section) {
     _toggleSection(header.dataset.section);
@@ -1484,9 +1683,18 @@ notesList.addEventListener("keydown", (e) => {
 /** @param {string} raw */
 export function quickCapture(raw) {
   const item = /** @type {Note|null} */ (
-    buildItemFromCapture(raw, null, tagState.tags)
+    buildItemFromCapture(raw)
   );
   if (!item) return null;
+
+  // Tagi przed notatką: lista renderowana niżej musi już znać nowe. Nazwy to
+  // jednorazowy seed (patrz buildItemFromCapture), nie pole notatki.
+  const tagCountBefore = tagState.tags.length;
+  item.tags = resolveTagNames(/** @type {any} */ (item).tagNames);
+  delete (/** @type {any} */ (item).tagNames);
+  if (tagState.tags.length !== tagCountBefore) {
+    document.dispatchEvent(new CustomEvent("tagsChanged"));
+  }
 
   state.notes.unshift(item);
   if (wantsFocusSeed(item)) {

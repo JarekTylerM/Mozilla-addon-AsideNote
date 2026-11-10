@@ -603,24 +603,69 @@
   margin-top: 12px;
 }
 
-.panel-zoom-row {
+.panel-section__hint {
+  margin: 0 0 8px;
+  font-size: var(--text-sm);
+  color: var(--text-3);
+}
+.panel-toggle-list {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Wiersz ustawienia: etykieta | pole przed listą | lista | pole za listą.
+   Te same kolumny w każdym wierszu trzymają listy jedna pod drugą, także gdy
+   tylko część wierszy ma coś obok listy (? przy kroju, − i + przy zoomie). */
+.panel-zoom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 9rem) 24px;
   align-items: center;
-  justify-content: space-between;
+  column-gap: 4px;
   margin-top: 10px;
 }
 
 .panel-zoom-row__label {
+  grid-column: 1;
   font-size: var(--text-md);
   color: var(--text-2);
 }
 
-/* Znacznik "?" z wyjaśnieniem w tooltipie. margin-right: auto — wiersz ma
-   justify-content: space-between, więc bez tego trzeci element rozbiłby
-   układ; tak ikona zostaje przy etykiecie, a select przy prawej krawędzi. */
+.panel-zoom-row__step {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+.panel-zoom-row__step:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.panel-zoom-row__step:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.panel-zoom-row__step--before {
+  grid-column: 2;
+}
+.panel-zoom-row__step--after {
+  grid-column: 4;
+}
+
+/* Znacznik "?" z wyjaśnieniem w tooltipie, tuż przed listą, której dotyczy */
 .panel-info-icon {
-  margin-inline: 6px auto;
-  flex-shrink: 0;
+  grid-column: 2;
+  justify-self: center;
   width: 15px;
   height: 15px;
   display: flex;
@@ -647,6 +692,9 @@
 }
 
 .panel-zoom-row__select {
+  grid-column: 3;
+  width: 100%;
+  min-width: 0;
   font-size: var(--text-md);
   font-family: inherit;
   color: var(--text);
