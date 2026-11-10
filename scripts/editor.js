@@ -2070,17 +2070,63 @@ function _initCopyMarkdown() {
 // getCursorOffset / setCursorOffset → editor-selection.js
 // (przeniesione, żeby notes.js nie importował z editor.js — cykl)
 
-const _saveCursorDebounced = debounce((activeId) => {
-  if (!activeId) return;
+/* Dwa stopnie, żeby nie zapisywać storage przy każdym ruchu karetki:
+   1. odczyt pozycji (300 ms po ostatnim selectionchange) trafia do pamięci,
+   2. do storage idzie dopiero po 3 s spokoju, przy przełączeniu notatki
+      albo przy zamknięciu panelu — i tylko gdy pozycja faktycznie się zmieniła.
+   Wcześniej każde zatrzymanie kursora na 800 ms czytało i nadpisywało całe
+   uiSettings (saveUiSettings to read-merge-write).
+
+   Odczyt pozycji bierze activeId z chwili ODCZYTU, nie z chwili zdarzenia —
+   dawniej debounce odpalał po przełączeniu notatki z id poprzedniej
+   i offsetem kursora z treści nowej. */
+
+/** @type {{ id: string, offset: number } | null} */
+let _pendingCursor = null;
+/** @type {Map<string, number>} */
+const _savedCursor = new Map();
+
+function _flushCursor() {
+  _flushCursorDebounced.cancel();
+  const pending = _pendingCursor;
+  _pendingCursor = null;
+  if (!pending || _savedCursor.get(pending.id) === pending.offset) return;
+  _savedCursor.set(pending.id, pending.offset);
+  saveUiSettings({ [`cursor_${pending.id}`]: pending.offset }).catch(() => {
+    // best-effort: przy błędzie spróbujemy przy kolejnym ruchu kursora
+    _savedCursor.delete(pending.id);
+  });
+}
+
+const _flushCursorDebounced = debounce(_flushCursor, 3000);
+
+const _captureCursorDebounced = debounce(() => {
+  const id = state.activeId;
+  if (!id || document.activeElement !== editor) return;
   const offset = getCursorOffset(editor);
   if (offset == null) return;
-  saveUiSettings({ [`cursor_${activeId}`]: offset });
-}, 800);
+  _pendingCursor = { id, offset };
+  _flushCursorDebounced();
+}, 300);
 
 function _initCursorResume() {
   document.addEventListener('selectionchange', () => {
     if (document.activeElement?.id !== 'editor') return;
-    // Pobierz activeId z state — importowane z notes.js
-    _saveCursorDebounced(state.activeId);
+    _captureCursorDebounced();
+  });
+  // Przełączenie notatki: zapisz pozycję poprzedniej, zanim ktoś do niej
+  // wróci (selectNote czyta cursor_<id> przy otwarciu). Oczekujący odczyt
+  // anulujemy — edytor ma już treść nowej notatki.
+  document.addEventListener('noteSelected', () => {
+    _captureCursorDebounced.cancel();
+    _flushCursor();
+  });
+  const flushAll = () => {
+    _captureCursorDebounced.flush();
+    _flushCursor();
+  };
+  window.addEventListener('pagehide', flushAll);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushAll();
   });
 }

@@ -68,8 +68,22 @@ export function clearAlarm(id) {
   browser.alarms.clear(id);
 }
 
+/**
+ * Nazwa alarmu porannego podsumowania (zadania bez godziny). Planuje go
+ * background.js — tu tylko pilnujemy, żeby przeplanowanie alarmów notatek
+ * go nie skasowało. KOPIA stałej w background.js (nie-ESM) — trzymaj w sync.
+ */
+export const DIGEST_ALARM = "__digest";
+
 /** @param {AlarmableNote[]} notes */
 export async function rescheduleAll(notes) {
-  await browser.alarms.clearAll();
+  // Nie clearAll(): to skasowałoby alarm podsumowania, który żyje w
+  // background.js i nie jest odtwarzany przy otwarciu sidebara.
+  const existing = await browser.alarms.getAll();
+  await Promise.all(
+    existing
+      .filter((a) => a.name !== DIGEST_ALARM)
+      .map((a) => browser.alarms.clear(a.name)),
+  );
   notes.filter(isAlarmable).forEach(scheduleAlarm);
 }

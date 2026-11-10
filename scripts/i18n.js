@@ -62,6 +62,13 @@ export function relativeDayLabel(timestamp) {
  * @param {ParentNode} [root=document] - scope; przydatne gdy wstrzykujesz fragment
  */
 export function applyStaticTranslations(root = document) {
+  // Język dokumentu = język, w którym faktycznie renderujemy teksty (są tylko
+  // pakiety pl i en; każdy inny UI dostaje en). Czytniki ekranu i dzielenie
+  // wyrazów polegają na lang — bez niego polski tekst czytany jest jak angielski.
+  if (root === document) {
+    document.documentElement.lang = getUILocale().startsWith('pl') ? 'pl' : 'en';
+  }
+
   for (const el of root.querySelectorAll('[data-i18n]')) {
     el.textContent = t(/** @type {HTMLElement} */ (el).dataset.i18n ?? '');
   }

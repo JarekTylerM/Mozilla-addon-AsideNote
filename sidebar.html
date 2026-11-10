@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="./styles/styles.css" />
@@ -833,6 +833,17 @@
               <input type="checkbox" id="editor-placeholder-toggle" checked />
               <span data-i18n="panel_editor_placeholder"
                 >Pokaż podpowiedź w pustej linii</span
+              >
+            </label>
+          </section>
+
+          <section class="panel-section">
+            <h3 data-i18n="panel_reminders_title">Przypomnienia</h3>
+            <!-- Czyta background.js przy alarmie "__digest" (uiSettings.morningDigest) -->
+            <label class="panel-toggle">
+              <input type="checkbox" id="morning-digest-toggle" checked />
+              <span data-i18n="panel_reminders_digest"
+                >Poranne podsumowanie o 9:00</span
               >
             </label>
           </section>

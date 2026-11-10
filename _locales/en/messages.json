@@ -3,7 +3,7 @@
     "message": "Reminder"
   },
   "back_ariaLabel": {
-    "message": "Wróć do listy"
+    "message": "Back to list"
   },
   "back_title": {
     "message": "Back to list · Esc"
@@ -1232,6 +1232,9 @@
   "shortcuts_qc_ex_plain": {
     "message": "buy milk"
   },
+  "shortcuts_qc_ex_tag": {
+    "message": "#work"
+  },
   "shortcuts_qc_ex_today": {
     "message": "today"
   },
@@ -1252,6 +1255,9 @@
   },
   "shortcuts_qc_recurrence": {
     "message": "→ repeats (also: monthly, yearly)"
+  },
+  "shortcuts_qc_tag": {
+    "message": "→ assign an existing tag (spaces in the name as -)"
   },
   "shortcuts_qc_task": {
     "message": "→ task instead of a note"
@@ -1689,5 +1695,38 @@
   },
   "note_postponeToTomorrow": {
     "message": "Postpone to tomorrow"
+  },
+  "notif_digest_overdue": {
+    "message": "Overdue: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "notif_digest_overdueOnly": {
+    "message": "AsideNotes: overdue tasks ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "notif_digest_title": {
+    "message": "AsideNotes: due today ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "panel_reminders_digest": {
+    "message": "Morning summary at 9:00 — today's tasks without a time, plus overdue"
+  },
+  "panel_reminders_title": {
+    "message": "Reminders"
   }
 }

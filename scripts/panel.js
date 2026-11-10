@@ -439,6 +439,10 @@ export function renderTagSelector() {
 
   const addBtn = document.createElement("button");
   addBtn.className = "tag-add-btn";
+  // Krótka wersja przycisku to samo "+" — bez etykiety czytnik ekranu
+  // odczytałby "plus", a tooltip nic by nie wyjaśniał.
+  addBtn.setAttribute("aria-label", t("tagSelector_addBtn_emptyTitle"));
+  addBtn.title = t("tagSelector_addBtn_emptyTitle");
 
   if (tagState.tags.length === 0) {
     addBtn.textContent = t("tagSelector_addBtn_long");
@@ -1014,6 +1018,17 @@ export function initUiSettings(settings) {
       document.documentElement.dataset.editorPlaceholder =
         placeholderToggle.checked ? "" : "off";
       saveUiSettings({ showEditorPlaceholder: placeholderToggle.checked });
+    };
+  }
+
+  // Poranne podsumowanie — zadania z samą datą (bez godziny) nie mają
+  // własnego alarmu; background.js zbiera je w jedno powiadomienie o 9:00.
+  // Ustawienie czyta background przy odpaleniu alarmu, więc wystarczy zapis.
+  const digestToggle = _byInput("morning-digest-toggle");
+  if (digestToggle) {
+    digestToggle.checked = settings.morningDigest ?? true;
+    digestToggle.onchange = () => {
+      saveUiSettings({ morningDigest: digestToggle.checked });
     };
   }
 

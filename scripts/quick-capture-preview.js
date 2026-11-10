@@ -20,7 +20,7 @@
    ══════════════════════════════════════════════════════════════ */
 
 import { parseCapture } from './parser.js';
-import { captureDue } from './quick-capture-core.js';
+import { captureDue, extractCaptureTags } from './quick-capture-core.js';
 
 /** Separator flag w opisie — także między opisem a flagami (patrz locale). */
 const FLAG_SEPARATOR = ' · ';
@@ -39,6 +39,8 @@ const RECURRENCE_KEYS = {
  * @property {string} locale UI locale — do Intl ORAZ do parseCapture
  *   (jawnie, nie autodetekcja: podgląd i zapis muszą parsować tak samo)
  * @property {number} [now] "teraz" — wstrzykiwalne dla testów
+ * @property {{ id: string, name: string }[]} [tags] istniejące tagi — podgląd
+ *   pokazuje, które `#tag` zostaną przypisane (ta sama reguła co zapis)
  */
 
 /**
@@ -93,16 +95,23 @@ export function formatCaptureDay(timestamp, env) {
 export function describeCapture(raw, env) {
   if (!raw || !raw.trim()) return null;
 
-  const { isTask, isUrgent, isInProgress, title, due, time, recurrence } =
-    parseCapture(raw, env.locale);
+  const parsed = parseCapture(raw, env.locale);
+  const { isTask, isUrgent, isInProgress, due, time, recurrence } = parsed;
+  // Tytuł i tagi dokładnie tak, jak policzy je buildItemFromCapture
+  const { title, tagIds } = extractCaptureTags(parsed.title, env.tags ?? []);
+  const tagFlags = tagIds
+    .map((id) => env.tags?.find((tag) => tag.id === id)?.name)
+    .filter(Boolean)
+    .map((name) => '#' + name);
 
   if (!isTask) {
-    return {
-      type: 'note',
-      text: title
-        ? env.t('quickCapture_preview_note_titled', [title])
-        : env.t('quickCapture_preview_note_empty'),
-    };
+    let text = title
+      ? env.t('quickCapture_preview_note_titled', [title])
+      : env.t('quickCapture_preview_note_empty');
+    if (tagFlags.length) {
+      text = env.t('quickCapture_preview_flags', [text, tagFlags.join(FLAG_SEPARATOR)]);
+    }
+    return { type: 'note', text };
   }
 
   // Ten sam termin, który dostanie zapisywane zadanie — łącznie z regułą
@@ -147,6 +156,7 @@ export function describeCapture(raw, env) {
       ? RECURRENCE_KEYS[/** @type {keyof typeof RECURRENCE_KEYS} */ (recurrence)]
       : null;
   if (recurrenceKey) flags.push(env.t(recurrenceKey));
+  flags.push(...tagFlags);
 
   if (flags.length) {
     text = env.t('quickCapture_preview_flags', [

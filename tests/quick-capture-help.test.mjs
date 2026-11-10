@@ -188,6 +188,9 @@ test('żaden przykład nie zostawia po sobie śmieci w tytule', () => {
   for (const lang of LANGS) {
     for (const r of QUICK_CAPTURE_HELP) {
       if (r.desc === 'shortcuts_qc_plain') continue; // notatka, nie składnia
+      // #tag rozpoznaje quick-capture-core (wymaga listy istniejących tagów),
+      // nie parser — pokryte w quick-capture-preview.test.mjs
+      if (r.desc === 'shortcuts_qc_tag') continue;
       for (const tok of r.tokens) {
         if (tok.key === undefined) continue; // prefiksy testowane wyżej
         const ex = example(lang, tok);

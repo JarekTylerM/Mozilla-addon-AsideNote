@@ -17,6 +17,54 @@
    ══════════════════════════════════════════════════════════════ */
 
 import { parseCapture } from './parser.js';
+import { foldText } from './utils.js';
+
+/**
+ * @typedef {{ id: string, name: string }} CaptureTag
+ */
+
+/**
+ * Wyciąga z tytułu odwołania `#tag` do ISTNIEJĄCYCH tagów.
+ *
+ * Reguły (spójne z parserem dat: czego nie rozumiemy, zostaje w tytule,
+ * żeby było widać, że nie zadziałało):
+ * - `#nazwa` pasuje do tagu bez względu na wielkość liter i polskie znaki
+ *   (`#linia3` ≠ `linia-3`, ale `#Awaria` = `awaria`, `#pomiar` ≠ `pomiary`);
+ *   spacje w nazwie tagu zapisuje się jako `-` albo `_` (`#linia-3`).
+ * - Nieznany `#token` zostaje w tytule — capture nie tworzy tagów w locie
+ *   (literówka nie może zaśmiecić listy tagów).
+ * - Gdy po zdjęciu tagów tytuł byłby pusty, tytuł zostaje bez zmian —
+ *   samo `#awaria` to wtedy po prostu treść wpisu.
+ *
+ * @param {string} title tytuł po parsowaniu daty/flag
+ * @param {CaptureTag[]} tags dostępne tagi
+ * @returns {{ title: string, tagIds: string[] }}
+ */
+export function extractCaptureTags(title, tags) {
+  if (!title || !Array.isArray(tags) || tags.length === 0 || !title.includes('#')) {
+    return { title, tagIds: [] };
+  }
+  /** @type {Map<string, string>} */
+  const byKey = new Map();
+  for (const tag of tags) {
+    if (!tag || typeof tag.name !== 'string' || typeof tag.id !== 'string') continue;
+    const key = foldText(tag.name.trim()).replace(/[\s_]+/g, '-');
+    if (key && !byKey.has(key)) byKey.set(key, tag.id);
+  }
+
+  /** @type {string[]} */
+  const tagIds = [];
+  const stripped = title.replace(/(^|\s)#([^\s#]+)/g, (match, lead, token) => {
+    const id = byKey.get(foldText(token).replace(/_+/g, '-'));
+    if (!id) return match;
+    if (!tagIds.includes(id)) tagIds.push(id);
+    return lead;
+  });
+
+  const cleanTitle = stripped.replace(/\s{2,}/g, ' ').trim();
+  if (!cleanTitle) return { title, tagIds: [] };
+  return { title: cleanTitle, tagIds };
+}
 
 /**
  * Generator ID notatki. Date.now() + krótki losowy suffix — eliminuje
@@ -76,13 +124,15 @@ export function wantsFocusSeed(item) {
  * Buduje obiekt notatki/zadania z surowego inputu quick capture.
  * @param {string} raw — tekst z pola capture
  * @param {string|null} [locale] przekazywany do parseCapture (testy)
+ * @param {CaptureTag[]} [tags] istniejące tagi — do rozpoznania `#tag`
  * @returns {object|null} obiekt notatki gotowy do zapisania, albo null
  *   gdy input nie daje sensownego tytułu
  */
-export function buildItemFromCapture(raw, locale = null) {
-  const { isTask, isUrgent, isInProgress, title, due, time, recurrence } =
-    parseCapture(raw, locale);
-  if (!title) return null;
+export function buildItemFromCapture(raw, locale = null, tags = []) {
+  const parsed = parseCapture(raw, locale);
+  const { isTask, isUrgent, isInProgress, due, time, recurrence } = parsed;
+  if (!parsed.title) return null;
+  const { title, tagIds } = extractCaptureTags(parsed.title, tags);
 
   return {
     id: newNoteId(),
@@ -90,7 +140,7 @@ export function buildItemFromCapture(raw, locale = null) {
     title,
     content: '',
     created: Date.now(),
-    tags: [],
+    tags: tagIds,
     ...(isTask && {
       completed: false,
       due: captureDue({ isUrgent, isInProgress, due }),

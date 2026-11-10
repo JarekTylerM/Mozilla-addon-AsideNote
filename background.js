@@ -17,6 +17,8 @@ async function rescheduleOnBoot() {
   const res = await browser.storage.local.get("notes");
   const notes = res.notes || [];
   await browser.alarms.clearAll();
+  // clearAll skasował też alarm podsumowania — zaplanuj go od nowa
+  await scheduleDigest();
   const now = Date.now();
   notes.forEach((/** @type {Note} */ note) => {
     // inwariant isAlarmable (kopia z alarms.js)
@@ -38,8 +40,105 @@ async function rescheduleOnBoot() {
 browser.runtime.onStartup.addListener(rescheduleOnBoot);
 browser.runtime.onInstalled.addListener(rescheduleOnBoot);
 
+/* ── Poranne podsumowanie ───────────────────────────────────────
+   Zadanie z samą datą (bez godziny) nie kwalifikuje się do własnego
+   alarmu (isAlarmable wymaga time). Zamiast N powiadomień o 9:00 —
+   jedno zbiorcze: zadania na dziś bez godziny + liczba zaległych.
+   Wyłączalne w ustawieniach (uiSettings.morningDigest, domyślnie on).
+
+   Alarm przeplanowywany co dzień jawnym `when` (nie periodInMinutes),
+   żeby zmiana czasu letni/zimowy nie przesuwała go o godzinę.
+   Gdy przeglądarka startuje po 9:00, a dzisiejszego podsumowania jeszcze
+   nie było (_lastDigestDay) — pokazujemy je minutę po starcie.
+
+   DIGEST_ALARM — KOPIA stałej z alarms.js (background nie jest ESM). */
+const DIGEST_ALARM = "__digest";
+const DIGEST_HOUR = 9;
+
+/** @param {Date} d */
+function _dayKey(d) {
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+async function scheduleDigest() {
+  const { _lastDigestDay } = await browser.storage.local.get("_lastDigestDay");
+  const now = new Date();
+  const todayAt = new Date(now);
+  todayAt.setHours(DIGEST_HOUR, 0, 0, 0);
+
+  let when;
+  if (now < todayAt) {
+    when = todayAt.getTime();
+  } else if (_lastDigestDay !== _dayKey(now)) {
+    when = Date.now() + 60_000; // spóźnione dzisiejsze podsumowanie
+  } else {
+    const tomorrowAt = new Date(todayAt);
+    tomorrowAt.setDate(tomorrowAt.getDate() + 1);
+    when = tomorrowAt.getTime();
+  }
+  browser.alarms.create(DIGEST_ALARM, { when });
+}
+
+async function showDigest() {
+  const now = new Date();
+  // Znacznik PRZED pokazaniem — nawet przy wyłączonym ustawieniu albo pustej
+  // liście ten dzień jest "obsłużony" i scheduleDigest wybierze jutro.
+  await browser.storage.local.set({ _lastDigestDay: _dayKey(now) });
+
+  const res = await browser.storage.local.get(["notes", "uiSettings"]);
+  if (res.uiSettings?.morningDigest === false) return;
+
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const start = startOfToday.getTime();
+  const end = start + 86400000;
+
+  const tasks = /** @type {Note[]} */ (Array.isArray(res.notes) ? res.notes : [])
+    .filter((n) => n && n.type === "task" && !n.completed && typeof n.due === "number");
+  /** @param {Note} n */
+  const dueOf = (n) => /** @type {number} */ (n.due);
+  const today = tasks.filter((n) => dueOf(n) >= start && dueOf(n) < end && !n.time);
+  const overdue = tasks.filter((n) => dueOf(n) < start);
+  if (today.length === 0 && overdue.length === 0) return;
+
+  const fallback = browser.i18n.getMessage("note_untitled") || "—";
+  const lines = today
+    .slice(0, 5)
+    .map((n) => "• " + ((typeof n.title === "string" && n.title.trim()) || fallback));
+  if (today.length > 5) lines.push(`… +${today.length - 5}`);
+  if (overdue.length > 0) {
+    lines.push(browser.i18n.getMessage("notif_digest_overdue", [String(overdue.length)]));
+  }
+
+  browser.notifications.create("digest", {
+    type: "basic",
+    iconUrl: browser.runtime.getURL(
+      "assets/icons/mdi--notebook-edit-outline-48.png",
+    ),
+    title: today.length > 0
+      ? browser.i18n.getMessage("notif_digest_title", [String(today.length)])
+      : browser.i18n.getMessage("notif_digest_overdueOnly", [String(overdue.length)]),
+    message: lines.join("\n"),
+  });
+}
+
+// Event page (persistent: false) — przy przebudzeniu bez onStartup alarm
+// podsumowania może nie istnieć (np. po aktualizacji bez restartu);
+// odtwórz go, jeśli go brakuje.
+browser.alarms.get(DIGEST_ALARM).then((a) => {
+  if (!a) scheduleDigest();
+});
+
 // Powiadomienie gdy alarm odpali
 browser.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === DIGEST_ALARM) {
+    try {
+      await showDigest();
+    } finally {
+      await scheduleDigest();
+    }
+    return;
+  }
   const res = await browser.storage.local.get("notes");
   const note = /** @type {Note[]} */ (res.notes || []).find(
     (n) => n.id === alarm.name,
@@ -67,7 +166,7 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
       "assets/icons/mdi--notebook-edit-outline-48.png",
     ),
     title:
-      "AsideNote: " +
+      "AsideNotes: " +
       (note?.title || browser.i18n.getMessage("notif_title_fallback")),
     message,
   });

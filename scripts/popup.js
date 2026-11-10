@@ -13,7 +13,19 @@ import {
   loadFocusId,
   saveFocusId,
   loadUiSettings,
+  loadTags,
 } from './storage.js';
+
+/** Istniejące tagi — do rozpoznawania `#tag` w podglądzie i przy zapisie.
+ *  Do czasu wczytania pusta lista: `#tag` zostaje wtedy w tytule. */
+/** @type {Tag[]} */
+let _tags = [];
+loadTags()
+  .then((tags) => {
+    _tags = tags;
+    _updatePreview();
+  })
+  .catch(() => {});
 
 // Elementy popupu są zawsze w popup.html — rzutujemy z pominięciem null.
 const input       = /** @type {HTMLInputElement} */ (document.getElementById('popup-input'));
@@ -148,10 +160,16 @@ loadUiSettings().then((settings) => {
 
 // ── Init ────────────────────────────────────────
 
+document.documentElement.lang =
+  browser.i18n.getUILanguage().startsWith('pl') ? 'pl' : 'en';
+document.title = t('popup_title');
 titleEl.textContent = t('popup_title');
 input.placeholder = t('popup_placeholder');
+// Placeholder znika po pierwszym znaku — pole potrzebuje trwałej nazwy
+input.setAttribute('aria-label', t('popup_title'));
 _setRichText(hint, t('popup_hint_main'));
 helpBtn.title = t('popup_help_title');
+helpBtn.setAttribute('aria-label', t('popup_help_title'));
 _setRichText(escHint, t('popup_esc_hint'));
 // Składnia idzie z quick-capture-help.js, nie z HTML-a w locale — panel
 // pomocy nie jest już powierzchnią, przez którą podmieniony messages.json
@@ -182,6 +200,7 @@ function _updatePreview() {
   const description = describeCapture(input.value, {
     t,
     locale: browser.i18n.getUILanguage(),
+    tags: _tags,
   });
 
   if (!description) {
@@ -224,7 +243,7 @@ input.addEventListener('keydown', async (e) => {
   const raw = input.value.trim();
   if (!raw) return;
 
-  const item = /** @type {Note | null} */ (buildItemFromCapture(raw));
+  const item = /** @type {Note | null} */ (buildItemFromCapture(raw, null, _tags));
   if (!item) return;
 
   // Flaga focus z parsera to jednorazowy seed — źródłem prawdy stanu

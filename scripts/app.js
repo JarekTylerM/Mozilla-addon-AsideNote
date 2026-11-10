@@ -670,7 +670,11 @@ const _qcPreview = /** @type {HTMLElement} */ (document.getElementById("quick-ca
 
 /** @param {string} raw */
 function _updateQcPreview(raw) {
-  const description = describeCapture(raw, { t, locale: getUILocale() });
+  const description = describeCapture(raw, {
+    t,
+    locale: getUILocale(),
+    tags: tagState.tags,
+  });
 
   if (!description) {
     _hideQcPreview();
@@ -912,7 +916,22 @@ document.addEventListener("keydown", (e) => {
 
   // e.key?.toLowerCase() we wszystkich skrótach Alt — bez tego skróty
   // przestają działać z włączonym CapsLockiem (e.key = "C" zamiast "c")
-  const altKey = e.altKey ? e.key?.toLowerCase() : null;
+  //
+  // Wyłącznie "goły" Alt+litera:
+  // - bez Shift — Alt+Shift+S to komenda manifestu (popup szybkiego
+  //   dodawania). Firefox najpierw daje zdarzenie panelowi; nasz
+  //   preventDefault dla "s" zjadał ją i przy fokusie w sidebarze zamiast
+  //   popupu otwierała się wyszukiwarka.
+  // - bez Ctrl/AltGr — na polskiej klawiaturze AltGr = Ctrl+Alt; AltGr+F/T/
+  //   P/K nie dają znaku, więc e.key to zwykła litera i skrót odpalał się
+  //   w trakcie pisania (np. AltGr+K kopiował notatkę jako Markdown).
+  const plainAlt =
+    e.altKey &&
+    !e.shiftKey &&
+    !e.ctrlKey &&
+    !e.metaKey &&
+    !e.getModifierState?.("AltGraph");
+  const altKey = plainAlt ? e.key?.toLowerCase() : null;
 
   // Skróty prowadzące do elementów ekranu listy działają też z ekranu
   // notatki — najpierw zamykają notatkę (autosave), inaczej fokus trafiałby

@@ -10,6 +10,7 @@
  */
 
 import { t } from "./i18n.js";
+import { foldText } from "./utils.js";
 import * as undo from "./undo.js";
 import { _getCurrentBlock } from "./editor-selection.js";
 import { debouncedSave } from "./notes.js";
@@ -147,8 +148,13 @@ function _selectRange(r) {
 /** @param {string} query @returns {Command[]} */
 function _filter(query) {
   if (!query) return [...COMMANDS];
-  const q = query.toLowerCase();
-  return COMMANDS.filter((cmd) => t(cmd.labelKey).toLowerCase().includes(q));
+  // Etykieta po polsku/angielsku bez znaczenia polskich znaków ("/wskazowka")
+  // oraz identyfikator komendy — "/note", "/warning", "/h2" działają w każdym
+  // języku interfejsu, także po przetłumaczeniu nazw calloutów.
+  const q = foldText(query);
+  return COMMANDS.filter(
+    (cmd) => foldText(t(cmd.labelKey)).includes(q) || cmd.id.includes(q),
+  );
 }
 
 /* ── Render ──────────────────────────────────── */

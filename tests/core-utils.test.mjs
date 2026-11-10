@@ -1,6 +1,6 @@
 import { test, testAsync, expect, results } from './_runner.mjs';
 import { newNoteId, buildItemFromCapture } from './quick-capture-core.mjs';
-import { debounce } from './utils.mjs';
+import { debounce, foldText, queryTerms, matchesTerms } from './utils.mjs';
 
 const PL = 'pl';
 const EN = 'en-US';
@@ -145,5 +145,17 @@ testAsync('po flush() timer nie odpala drugi raz', () => new Promise((resolve, r
     resolve();
   }, 60);
 }));
+
+
+// ── 5. wyszukiwanie: foldText / queryTerms / matchesTerms ─────────
+console.log('\n5. wyszukiwanie');
+test('foldText usuwa ogonki', () => { expect(foldText('Ciśnienie ŻÓŁĆ gęś')).toBe('cisnienie zolc ges'); });
+test('foldText: ł → l', () => { expect(foldText('Łódź')).toBe('lodz'); });
+test('foldText: null/undefined → ""', () => { expect(foldText(undefined)).toBe(''); });
+test('queryTerms dzieli po białych znakach', () => { expect(queryTerms('  Filtr   kompresor ')).toEqual(['filtr','kompresor']); });
+test('queryTerms: puste zapytanie → []', () => { expect(queryTerms('   ')).toEqual([]); });
+test('bez ogonków znajduje tekst z ogonkami', () => { expect(matchesTerms(foldText('Kalibracja czujnika ciśnienia'), queryTerms('cisnienia'))).toBe(true); });
+test('słowa w dowolnej kolejności', () => { expect(matchesTerms(foldText('Wymiana filtra w kompresorze'), queryTerms('kompresor filtr'))).toBe(true); });
+test('wszystkie słowa muszą pasować', () => { expect(matchesTerms(foldText('Wymiana filtra'), queryTerms('filtr pompa'))).toBe(false); });
 
 await results();

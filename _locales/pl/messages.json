@@ -9,22 +9,22 @@
     "message": "Wróć do listy · Esc"
   },
   "callout_caution": {
-    "message": "Caution"
+    "message": "Uwaga"
   },
   "callout_important": {
-    "message": "Important"
+    "message": "Ważne"
   },
   "callout_note": {
-    "message": "Note"
+    "message": "Notatka"
   },
   "callout_plain": {
     "message": "Cytat"
   },
   "callout_tip": {
-    "message": "Tip"
+    "message": "Wskazówka"
   },
   "callout_warning": {
-    "message": "Warning"
+    "message": "Ostrzeżenie"
   },
   "common_today": {
     "message": "dziś"
@@ -1014,7 +1014,7 @@
     "message": "Pogrubienie"
   },
   "shortcuts_formatting_bold_italic": {
-    "message": "→ Bold + Italic"
+    "message": "→ Pogrubienie + kursywa"
   },
   "shortcuts_formatting_captureOpen": {
     "message": "Shift+Enter w capture → dodaj i otwórz edytor"
@@ -1065,7 +1065,7 @@
     "message": "Skocz do pola szybkiego dodawania"
   },
   "shortcuts_general_captureTask": {
-    "message": "Quick capture — zadanie (!)"
+    "message": "Szybkie dodawanie — zadanie (!)"
   },
   "shortcuts_general_esc": {
     "message": "Wróć na listę / zamknij"
@@ -1143,19 +1143,19 @@
     "message": "Markdown — bloki"
   },
   "shortcuts_markdown_callout_caution": {
-    "message": ">[!CAUTION] + spacja → blok Caution"
+    "message": ">[!CAUTION] + spacja → blok Uwaga"
   },
   "shortcuts_markdown_callout_important": {
-    "message": ">[!IMPORTANT] + spacja → blok Important"
+    "message": ">[!IMPORTANT] + spacja → blok Ważne"
   },
   "shortcuts_markdown_callout_note": {
-    "message": ">[!NOTE] + spacja → blok Note"
+    "message": ">[!NOTE] + spacja → blok Notatka"
   },
   "shortcuts_markdown_callout_tip": {
-    "message": ">[!TIP] + spacja → blok Tip"
+    "message": ">[!TIP] + spacja → blok Wskazówka"
   },
   "shortcuts_markdown_callout_warning": {
-    "message": ">[!WARNING] + spacja → blok Warning"
+    "message": ">[!WARNING] + spacja → blok Ostrzeżenie"
   },
   "shortcuts_markdown_checklist": {
     "message": "Lista zadań (odznaczona)"
@@ -1188,7 +1188,7 @@
     "message": "Separator"
   },
   "shortcuts_markdown_inline": {
-    "message": "Markdown — inline"
+    "message": "Markdown — w linii"
   },
   "shortcuts_markdown_link": {
     "message": "Link"
@@ -1232,6 +1232,9 @@
   "shortcuts_qc_ex_plain": {
     "message": "kup mleko"
   },
+  "shortcuts_qc_ex_tag": {
+    "message": "#awaria"
+  },
   "shortcuts_qc_ex_today": {
     "message": "dziś"
   },
@@ -1253,6 +1256,9 @@
   "shortcuts_qc_recurrence": {
     "message": "→ powtarzanie (też: co miesiąc, co rok)"
   },
+  "shortcuts_qc_tag": {
+    "message": "→ przypisz istniejący tag (spacje w nazwie jako -)"
+  },
   "shortcuts_qc_task": {
     "message": "→ zadanie zamiast notatki"
   },
@@ -1272,7 +1278,7 @@
     "message": "→ najbliższy taki dzień"
   },
   "shortcuts_quickCapture": {
-    "message": "Quick capture"
+    "message": "Szybkie dodawanie"
   },
   "shortcuts_showAll": {
     "message": "Wszystkie skróty →"
@@ -1311,19 +1317,19 @@
     "message": "Lista punktowana"
   },
   "slash_cmd_callout_caution": {
-    "message": "Caution"
+    "message": "Uwaga"
   },
   "slash_cmd_callout_important": {
-    "message": "Important"
+    "message": "Ważne"
   },
   "slash_cmd_callout_note": {
-    "message": "Note"
+    "message": "Notatka"
   },
   "slash_cmd_callout_tip": {
-    "message": "Tip"
+    "message": "Wskazówka"
   },
   "slash_cmd_callout_warning": {
-    "message": "Warning"
+    "message": "Ostrzeżenie"
   },
   "slash_cmd_checklist": {
     "message": "Lista zadań"
@@ -1362,7 +1368,7 @@
     "message": "Bloki"
   },
   "slash_group_callout": {
-    "message": "Callout"
+    "message": "Wyróżnienia"
   },
   "slash_group_lists": {
     "message": "Listy"
@@ -1689,5 +1695,38 @@
   },
   "note_postponeToTomorrow": {
     "message": "Przesuń na jutro"
+  },
+  "notif_digest_overdue": {
+    "message": "Zaległe: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "notif_digest_overdueOnly": {
+    "message": "AsideNotes: zaległe zadania ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "notif_digest_title": {
+    "message": "AsideNotes: na dziś ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "panel_reminders_digest": {
+    "message": "Poranne podsumowanie o 9:00 — zadania na dziś bez godziny i zaległe"
+  },
+  "panel_reminders_title": {
+    "message": "Przypomnienia"
   }
 }

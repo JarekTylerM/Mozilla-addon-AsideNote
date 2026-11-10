@@ -10,7 +10,7 @@
 
 import { test, expect, results } from './_runner.mjs';
 import { describeCapture, formatCaptureDay } from './quick-capture-preview.mjs';
-import { buildItemFromCapture, wantsFocusSeed } from './quick-capture-core.mjs';
+import { buildItemFromCapture, wantsFocusSeed, extractCaptureTags } from './quick-capture-core.mjs';
 
 // ── Fake locale ───────────────────────────────────────────────────
 // Odwzorowuje _locales/en/messages.json. Brak klucza rzuca — literówka
@@ -297,6 +297,65 @@ test('tytuł w podglądzie jest tym samym tytułem, który zapisze builder', () 
   expect(describeCapture(raw, { ...EN, now: Date.now() }).text).toContain('ship it');
   expect(item.recurrence).toBe('daily');
   expect(item.time).toBe('08:00');
+});
+
+// ── #tag w quick capture ──────────────────────────────────────────
+
+console.log('\n#tag');
+
+const TAGS = [
+  { id: 't1', name: 'awaria' },
+  { id: 't2', name: 'Pomiary' },
+  { id: 't3', name: 'linia 3' },
+  { id: 't4', name: 'Łódź' },
+];
+
+test('#tag istniejący → zdjęty z tytułu i przypisany', () => {
+  expect(extractCaptureTags('Wymiana filtra #awaria', TAGS)).toEqual({ title: 'Wymiana filtra', tagIds: ['t1'] });
+});
+test('wielkość liter i polskie znaki bez znaczenia', () => {
+  expect(extractCaptureTags('Spotkanie #pomiary #lodz', TAGS).tagIds).toEqual(['t2', 't4']);
+});
+test('spacja w nazwie tagu zapisana jako - lub _', () => {
+  expect(extractCaptureTags('Uszczelki #linia-3', TAGS).tagIds).toEqual(['t3']);
+  expect(extractCaptureTags('Uszczelki #linia_3', TAGS).tagIds).toEqual(['t3']);
+});
+test('tag w środku tytułu — spacje sklejone', () => {
+  expect(extractCaptureTags('Filtr #awaria w K-2', TAGS).title).toBe('Filtr w K-2');
+});
+test('nieznany #token zostaje w tytule', () => {
+  expect(extractCaptureTags('Zadanie #nieznany', TAGS)).toEqual({ title: 'Zadanie #nieznany', tagIds: [] });
+});
+test('# w środku słowa (C#, nr#3) nie jest tagiem', () => {
+  expect(extractCaptureTags('Kurs C#awaria', TAGS).tagIds).toEqual([]);
+});
+test('powtórzony tag przypisany raz', () => {
+  expect(extractCaptureTags('X #awaria #Awaria', TAGS).tagIds).toEqual(['t1']);
+});
+test('sam tag bez tytułu → tytuł bez zmian, brak przypisania', () => {
+  expect(extractCaptureTags('#awaria', TAGS)).toEqual({ title: '#awaria', tagIds: [] });
+});
+test('bez listy tagów → nic nie zmienia', () => {
+  expect(extractCaptureTags('X #awaria', [])).toEqual({ title: 'X #awaria', tagIds: [] });
+});
+test('buildItemFromCapture: zadanie z datą i tagiem', () => {
+  const item = buildItemFromCapture('!Kalibracja jutro #pomiary', 'pl', TAGS);
+  expect(item.title).toBe('Kalibracja');
+  expect(item.tags).toEqual(['t2']);
+  expect(item.type).toBe('task');
+  if (!item.due) throw new Error('brak terminu');
+});
+test('buildItemFromCapture bez tagów — zgodność wstecz', () => {
+  expect(buildItemFromCapture('memo #awaria', 'pl').tags).toEqual([]);
+});
+test('podgląd notatki pokazuje tag', () => {
+  expect(describeCapture('Procedura #awaria', { ...PL, tags: TAGS }).text).toBe('Adding note: Procedura · #awaria');
+});
+test('podgląd zadania: tag po flagach', () => {
+  expect(describeCapture('!!Hotfix #awaria', { ...EN, tags: TAGS }).text).toContain('In progress · #awaria');
+});
+test('podgląd: nieznany tag nie jest obiecywany', () => {
+  expect(describeCapture('Procedura #xyz', { ...PL, tags: TAGS }).text).toBe('Adding note: Procedura #xyz');
 });
 
 await results();

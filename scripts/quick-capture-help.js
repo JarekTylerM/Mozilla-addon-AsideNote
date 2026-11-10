@@ -84,6 +84,10 @@ export const QUICK_CAPTURE_HELP = [
     ],
     desc: 'shortcuts_qc_recurrence',
   },
+  {
+    tokens: [{ key: 'shortcuts_qc_ex_tag' }],
+    desc: 'shortcuts_qc_tag',
+  },
 ];
 
 /**

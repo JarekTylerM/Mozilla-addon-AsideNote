@@ -13,8 +13,8 @@ import {
   MAX_DELETED,
 } from "./storage.js";
 import * as undo from "./undo.js";
-import { debounce } from "./utils.js";
-import { getTag, makeTagPill } from "./tags.js";
+import { debounce, foldText, queryTerms, matchesTerms } from "./utils.js";
+import { getTag, makeTagPill, tagState } from "./tags.js";
 import { clearAlarm, scheduleAlarm, isAlarmable } from "./alarms.js";
 import { t, getUILocale, getShortWeekdays } from "./i18n.js";
 import {
@@ -215,6 +215,33 @@ function _previewParts(note) {
   };
   _previewCache.set(note.id, parts);
   return parts;
+}
+
+/* Tekst do wyszukiwania: pełna treść (nie przycięta) po foldText, liczona
+   leniwie tylko gdy jest zapytanie i memoizowana po (id, content) — renderList
+   przy wyszukiwaniu odpala się na każdy znak, a treść zmienia się rzadko.
+   htmlToPreviewText dekoduje encje (&amp;, &nbsp;), których dawny
+   replace(/<[^>]+>/) nie ruszał, więc "a & b" nie było znajdowane. */
+
+/** @type {Map<string, { src: string, folded: string }>} */
+const _searchCache = new Map();
+
+/** @param {Note} note @returns {string} */
+function _searchText(note) {
+  const src = note.content || "";
+  const cached = _searchCache.get(note.id);
+  let body;
+  if (cached && cached.src === src) {
+    body = cached.folded;
+  } else {
+    body = foldText(htmlToPreviewText(src));
+    _searchCache.set(note.id, { src, folded: body });
+  }
+  // Nazwy tagów mogą się zmienić niezależnie od notatki — dokładane na bieżąco
+  const tagNames = (note.tags ?? [])
+    .map((id) => getTag(id)?.name ?? "")
+    .join(" ");
+  return foldText(note.title || "") + "\n" + foldText(tagNames) + "\n" + body;
 }
 
 export function isNoteEmpty() {
@@ -861,6 +888,7 @@ export function renderList() {
   // Zamiast sprzątać przy każdej ścieżce usuwania — kasuj cache, gdy urośnie
   // ponad rozmiar zbioru. Najbliższy render odbuduje go leniwie.
   if (_previewCache.size > state.notes.length + 128) _previewCache.clear();
+  if (_searchCache.size > state.notes.length + 128) _searchCache.clear();
 
   // Klasy zen / main-view — ustawiaj zawsze, niezależnie od zawartości listy
   notesList.classList.toggle("zen-active", state.zenMode);
@@ -868,15 +896,15 @@ export function renderList() {
     .getElementById("main-view")
     ?.classList.toggle("zen-mode", state.zenMode);
 
-  // Hoist poza pętlę filtra — toLowerCase raz, a strip HTML z treści tylko
-  // gdy faktycznie jest czego szukać (przy pustym q każda notatka pasuje).
-  const q = state.searchQuery.toLowerCase();
+  // Hoist poza pętlę filtra — zapytanie normalizowane raz, tekst notatki
+  // liczony tylko przy niepustym zapytaniu (_searchText, memoizowany).
+  // Każde słowo zapytania musi wystąpić (dowolna kolejność); wielkość liter
+  // i polskie znaki bez znaczenia; przeszukiwane: tytuł, treść, nazwy tagów.
+  const terms = queryTerms(state.searchQuery);
 
   const filtered = state.notes.filter((note) => {
     const matchesSearch =
-      !q ||
-      (note.title || "").toLowerCase().includes(q) ||
-      (note.content || "").replace(/<[^>]+>/g, "").toLowerCase().includes(q);
+      terms.length === 0 || matchesTerms(_searchText(note), terms);
     const matchesTags =
       state.filterTags.length === 0 ||
       state.filterTags.every((id) => note.tags?.includes(id));
@@ -1455,7 +1483,9 @@ notesList.addEventListener("keydown", (e) => {
 
 /** @param {string} raw */
 export function quickCapture(raw) {
-  const item = /** @type {Note|null} */ (buildItemFromCapture(raw));
+  const item = /** @type {Note|null} */ (
+    buildItemFromCapture(raw, null, tagState.tags)
+  );
   if (!item) return null;
 
   state.notes.unshift(item);

@@ -319,6 +319,7 @@ export async function loadUiSettings() {
     fullToolbar: false,
     uiZoom: 100,
     zenMode: false,
+    morningDigest: true,
     ...(res.uiSettings || {}),
   };
 }
