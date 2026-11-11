@@ -468,24 +468,15 @@
     "message": "Pomiń wszystko"
   },
   "ob_done_s1": {
-    "message": "To wystarczy, żeby zacząć notować. W następnej lekcji: jak formatować tekst. Wszystkie lekcje znajdziesz w ustawieniach (⚙ na dole) w sekcji Przewodnik."
+    "message": "To wystarczy, żeby zacząć notować. W następnej lekcji: szybkie dodawanie — termin, ranga i powtarzanie w jednej linijce tekstu. Wszystkie lekcje znajdziesz w ustawieniach (⚙ na dole) w sekcji Przewodnik."
   },
   "ob_done_s2": {
-    "message": "Formatowanie opanowane. Następna lekcja: zadania z terminami i przypomnieniami — znajdziesz ją w ustawieniach (⚙) w sekcji Przewodnik."
+    "message": "Znasz całą składnię szybkiego dodawania. Następna lekcja: notatka — formatowanie, bloki i linki. Znajdziesz ją w ustawieniach (⚙) w sekcji Przewodnik."
   },
   "ob_done_s3": {
-    "message": "Zadania i terminy za tobą. Następna lekcja: szybkie dodawanie — cała ta obsługa w jednej linijce tekstu."
+    "message": "Formatowanie opanowane. Została ostatnia lekcja: porządek i dane — tryb zen, skróty w całej przeglądarce i kopia zapasowa."
   },
   "ob_done_s4": {
-    "message": "Znasz całą składnię szybkiego dodawania. Następna lekcja: tryby skupienia — mniej rozpraszaczy, gdy chcesz się skoncentrować."
-  },
-  "ob_done_s5": {
-    "message": "Tryby skupienia opanowane: Alt+Z wycisza listę, a otwarta notatka zawsze ma cały panel dla siebie — Esc wraca na listę. Następna lekcja: porządek w notatkach — szukanie, filtry i tagi."
-  },
-  "ob_done_s6": {
-    "message": "Porządek opanowany. Została ostatnia lekcja: twoje dane, kopie zapasowe i skróty klawiaturowe."
-  },
-  "ob_done_s7": {
     "message": "Przewodnik ukończony — znasz już całe AsideNotes. Każdą lekcję możesz powtórzyć w ustawieniach. Dobrego notowania!"
   },
   "ob_panel_title": {
@@ -495,7 +486,7 @@
     "message": "To pole szybkiego dodawania. Wpisz cokolwiek — np. pomysł na weekend. Pod polem od razu widzisz, co powstanie. Enter dodaje wpis."
   },
   "ob_s1_2": {
-    "message": "Każdy wpis trafia na tę listę. Kliknij swój, żeby go otworzyć."
+    "message": "Każdy wpis trafia na tę listę. Kliknij swój, żeby go otworzyć. Na przyszłość: Shift+Enter w polu dodawania od razu otwiera nowy wpis — bez tego klikania."
   },
   "ob_s1_2_empty": {
     "message": "Lista jest jeszcze pusta. Wróć do poprzedniego kroku (←), wpisz coś w polu u góry i wciśnij Enter."
@@ -504,69 +495,24 @@
     "message": "To edytor — tu rozwijasz myśl, a wyżej zmieniasz tytuł. Wszystko zapisuje się samo w trakcie pisania; nie ma przycisku Zapisz. Pomyłkę cofniesz przez Ctrl+Z."
   },
   "ob_s1_4": {
-    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kółko do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !kawa ze znajomym. Zadaniu ustawisz też termin z przypomnieniem, ale o tym w lekcji Zadania i terminy."
+    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kółko do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !kawa ze znajomym. Zadaniu ustawisz też termin z przypomnieniem — o tym w lekcji Szybkie dodawanie."
   },
   "ob_s1_convert": {
     "message": "Tutaj zamienisz otwartą notatkę w zadanie i z powrotem — nic nie tracisz, odhaczenie wraca po ponownej zmianie. Przydaje się, gdy luźna myśl okazuje się jednak czymś do zrobienia."
   },
   "ob_s2_1": {
-    "message": "Otwórz dowolną notatkę z listy — na niej poćwiczymy formatowanie."
-  },
-  "ob_s2_1_empty": {
-    "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
-  },
-  "ob_s2_2": {
-    "message": "Pasek narzędzi działa jak w edytorze tekstu: zaznacz fragment i kliknij ikonę — pogrubienie, kursywa, nagłówki, listy, cytaty. W wąskim panelu style tekstu są pod strzałką obok pogrubienia. Alt+E chowa i przywraca pasek."
-  },
-  "ob_s2_3": {
-    "message": "Wpisz / w pustej linii edytora — otworzy się menu wszystkich bloków: listy zadań, bloki kodu, kolorowe ramki i inne."
-  },
-  "ob_s2_4": {
-    "message": "Wolisz nie odrywać rąk od klawiatury? Działają skróty tekstowe (Markdown): # i spacja daje nagłówek, - i spacja listę, **tekst** pogrubienie. Nie musisz ich znać — pasek robi to samo."
-  },
-  "ob_s2_5": {
-    "message": "Tutaj skopiujesz też całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K. Działa to też w drugą stronę: wklejony tutaj Markdown sam zamienia się w formatowanie."
-  },
-  "ob_s2_link": {
-    "message": "Zaznacz fragment tekstu i kliknij tę ikonę (albo wciśnij Ctrl+K), żeby wstawić link. Kliknięcie gotowego linku w notatce otwiera go w nowej karcie."
-  },
-  "ob_s3_1": {
-    "message": "Wpisz: !kino z przyjaciółmi jutro 18:00 i wciśnij Enter. Znak ! tworzy zadanie, a słowa jutro i 18:00 same zamieniają się w termin z przypomnieniem."
-  },
-  "ob_s3_2": {
-    "message": "Zadanie ma kółko do odhaczenia i termin pod tytułem. Kliknij swoje zadanie, żeby je otworzyć."
-  },
-  "ob_s3_2_empty": {
-    "message": "Nie masz jeszcze zadań. Wróć do poprzedniego kroku (←) — wpisz !coś w polu u góry i wciśnij Enter."
-  },
-  "ob_s3_3": {
-    "message": "Kliknij pole terminu — w jednym miejscu ustawisz datę, godzinę i przypomnienie."
-  },
-  "ob_s3_4": {
-    "message": "Na dole włączysz powtarzanie: codziennie, co tydzień, co miesiąc, co rok albo w wybrane dni — np. joga w każdy poniedziałek."
-  },
-  "ob_s3_5": {
-    "message": "Lista sama grupuje zadania: Do nadrobienia, Dziś, Jutro, Ten tydzień… Odhaczone zadanie przenosi się do Ukończonych."
-  },
-  "ob_s3_focus": {
-    "message": "Tutaj oznaczysz zadanie jako w trakcie — do tego, czym zajmujesz się teraz. Skrót: Alt+W."
-  },
-  "ob_s3_important": {
-    "message": "Tutaj oznaczysz zadanie jako ważne — wskakuje wtedy na górę listy i można po tym filtrować. Skrót: Alt+I."
-  },
-  "ob_s4_1": {
     "message": "Cała lekcja dzieje się w tym jednym polu. Wpisz: !!bilety na koncert jutro 9:00 i wciśnij Enter. Zanim to zrobisz, spójrz pod pole — podgląd mówi, co dokładnie powstanie."
   },
-  "ob_s4_dates": {
+  "ob_s2_dates": {
     "message": "Termin wpisujesz zwykłymi słowami: dziś, jutro, pojutrze, za 3 dni, w środę, na piątek (bierze najbliższy taki dzień) albo data 15.06 — z rokiem, jeśli chcesz: 15.06.2030. Godzina to 14:30 lub o 14:30 i od razu ustawia przypomnienie."
   },
-  "ob_s4_priority": {
+  "ob_s2_priority": {
     "message": "Znaki na początku ustawiają rangę: ! tworzy zadanie, !! zadanie ważne i od razu w trakcie, !> zadanie w trakcie. To te same stany, które ustawisz w menu notatki, tyle że tam każdy osobno."
   },
-  "ob_s4_recurrence": {
+  "ob_s2_recurrence": {
     "message": "Powtarzanie też działa tekstem: codziennie, co tydzień, co miesiąc, co rok, co wtorek. Czego parser nie zrozumie, zostawia w tytule — jeśli więc widzisz swój tekst w podglądzie zamiast terminu, znaczy że nie został rozpoznany. A tekst w cudzysłowie zawsze zostaje dosłowny."
   },
-  "ob_s4_shortcuts": {
+  "ob_s2_shortcuts": {
     "message": "Do pola trafisz bez myszy: Alt+C stawia w nim kursor, Alt+T od razu z prefiksem zadania. A $POPUP$ otwiera to samo pole w małym okienku nad dowolną stroną — ta sama składnia, a przycisk ? pokazuje ją w całości.",
     "placeholders": {
       "popup": {
@@ -575,37 +521,52 @@
       }
     }
   },
-  "ob_s5_1": {
-    "message": "Tryb zen wycisza wszystko poza tym, co ważne dziś. Kliknij tę ikonę albo wciśnij Alt+Z."
+  "ob_s3_1": {
+    "message": "Otwórz dowolną notatkę z listy — na niej poćwiczymy formatowanie."
   },
-  "ob_s5_2": {
-    "message": "Interfejs przygasł, a lista pokazuje tylko dzisiejsze sprawy. Ten sam przycisk (albo Alt+Z) wraca do normalnego widoku — wypróbuj."
-  },
-  "ob_s5_3": {
-    "message": "Otwarta notatka zajmuje cały panel — lista chowa się, żeby nic nie rozpraszało. Otwórz dowolną notatkę z listy."
-  },
-  "ob_s5_3_empty": {
+  "ob_s3_1_empty": {
     "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
   },
-  "ob_s5_4": {
+  "ob_s3_2": {
+    "message": "Pasek narzędzi działa jak w edytorze tekstu: zaznacz fragment i kliknij ikonę — pogrubienie, kursywa, nagłówki, listy, cytaty. W wąskim panelu style tekstu są pod strzałką obok pogrubienia. Alt+E chowa i przywraca pasek."
+  },
+  "ob_s3_3": {
+    "message": "Wpisz / w pustej linii edytora — otworzy się menu wszystkich bloków: listy zadań, bloki kodu, kolorowe ramki i inne."
+  },
+  "ob_s3_4": {
+    "message": "Wolisz nie odrywać rąk od klawiatury? Działają skróty tekstowe (Markdown): # i spacja daje nagłówek, - i spacja listę, **tekst** pogrubienie. Nie musisz ich znać — pasek robi to samo."
+  },
+  "ob_s3_5": {
+    "message": "Tutaj skopiujesz też całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K. Działa to też w drugą stronę: wklejony tutaj Markdown sam zamienia się w formatowanie."
+  },
+  "ob_s3_link": {
+    "message": "Zaznacz fragment tekstu i kliknij tę ikonę (albo wciśnij Ctrl+K), żeby wstawić link. Kliknięcie gotowego linku w notatce otwiera go w nowej karcie."
+  },
+  "ob_s4_1": {
+    "message": "Tryb zen wycisza wszystko poza tym, co ważne dziś. Kliknij tę ikonę albo wciśnij Alt+Z."
+  },
+  "ob_s4_2": {
+    "message": "Interfejs przygasł, a lista pokazuje tylko dzisiejsze sprawy. Ten sam przycisk (albo Alt+Z) wraca do normalnego widoku — wypróbuj."
+  },
+  "ob_s4_3": {
+    "message": "Otwarta notatka zajmuje cały panel — lista chowa się, żeby nic nie rozpraszało. Otwórz dowolną notatkę z listy."
+  },
+  "ob_s4_3_empty": {
+    "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
+  },
+  "ob_s4_4": {
     "message": "Do listy wracasz strzałką ← obok tytułu albo klawiszem Esc. Wszystko zapisuje się samo — wypróbuj teraz."
   },
-  "ob_s6_1": {
-    "message": "Wyszukiwarka przeszukuje tytuły i treść wszystkich notatek. Skrót: Alt+S."
+  "ob_s4_backup": {
+    "message": "Twoje notatki są tylko na tym komputerze — bez chmury i bez śledzenia. W ustawieniach zrobisz kopię zapasową (Eksportuj dane), a usunięte notatki poczekają w Niedawno usuniętych."
   },
-  "ob_s6_2": {
-    "message": "Ten przełącznik zawęża listę do samych notatek albo samych zadań."
+  "ob_s4_privacy": {
+    "message": "Ważne na koniec: notatki nie są szyfrowane — odczyta je każdy, kto ma dostęp do tego profilu przeglądarki. Nie zapisuj w nich haseł ani numerów kart."
   },
-  "ob_s6_3": {
-    "message": "Kliknij ikonę lejka — rozwiną się filtry listy."
+  "ob_s4_settings": {
+    "message": "Pod ikoną ⚙ znajdziesz ustawienia: motyw, rozmiar interfejsu i pełną listę skrótów klawiaturowych (zakładka Skróty)."
   },
-  "ob_s6_4": {
-    "message": "Filtry można łączyć: status zadania, ważne, termin, tagi. Aktywne filtry widać nad listą i jednym kliknięciem je wyczyścisz."
-  },
-  "ob_s6_5": {
-    "message": "Tag to kolorowa etykieta, np. praca albo dom. Przypinasz je pod edytorem (+ dodaj tag) albo od razu przy dodawaniu, wpisując #praca. Nazwy i kolory zmieniasz w ustawieniach. Jedna notatka może mieć kilka tagów."
-  },
-  "ob_s7_1": {
+  "ob_s4_shortcuts": {
     "message": "AsideNotes działa z każdej karty przeglądarki: $TOGGLE$ otwiera i zamyka ten panel, a $POPUP$ wywołuje okienko szybkiego dodawania — notujesz bez przerywania pracy.",
     "placeholders": {
       "toggle": {
@@ -618,35 +579,17 @@
       }
     }
   },
-  "ob_s7_2": {
-    "message": "Pod ikoną ⚙ znajdziesz ustawienia: motyw, rozmiar interfejsu i pełną listę skrótów klawiaturowych (zakładka Skróty)."
-  },
-  "ob_s7_3": {
-    "message": "Twoje notatki są tylko na tym komputerze — bez chmury i bez śledzenia. W ustawieniach zrobisz kopię zapasową (Eksportuj dane), a usunięte notatki poczekają w Niedawno usuniętych."
-  },
-  "ob_s7_4": {
-    "message": "Ważne na koniec: notatki nie są szyfrowane — odczyta je każdy, kto ma dostęp do tego profilu przeglądarki. Nie zapisuj w nich haseł ani numerów kart."
-  },
   "ob_stage1_label": {
     "message": "Start"
   },
   "ob_stage2_label": {
-    "message": "Formatowanie"
-  },
-  "ob_stage3_label": {
-    "message": "Zadania i terminy"
-  },
-  "ob_stage4_label": {
     "message": "Szybkie dodawanie"
   },
-  "ob_stage5_label": {
-    "message": "Tryby skupienia"
+  "ob_stage3_label": {
+    "message": "Notatka"
   },
-  "ob_stage6_label": {
-    "message": "Porządek w notatkach"
-  },
-  "ob_stage7_label": {
-    "message": "Dane i skróty"
+  "ob_stage4_label": {
+    "message": "Porządek i dane"
   },
   "panelBtn_ariaLabel": {
     "message": "Otwórz panel personalizacji"
@@ -1747,6 +1690,9 @@
   },
   "shortcuts_inProgress": {
     "message": "→ oznacz jako w trakcie"
+  },
+  "shortcuts_titleEnter": {
+    "message": "→ z tytułu do treści"
   },
   "shortcuts_complete": {
     "message": "→ ukończ otwarte zadanie"

@@ -277,16 +277,13 @@ test('krok typu try ma na co czekać', () => {
 
 console.log('\n5. Pokrycie');
 
-test('tour pokazuje, jak nadać każdy stan, po którym da się filtrować', () => {
-  // Lekcja 5 uczy filtrów "ważne" i "tylko w trakcie". Jeśli przewodnik
-  // nie pokazuje przycisków nadających te stany, uczy filtrować po czymś,
-  // czego użytkownik nie umie ustawić.
-  // Te stany nadaje się z nagłówka: z menu ⋮ albo z ikony przypiętej w
-  // ustawieniach. Każda akcja musi mieć własny krok, pozycję w menu i ikonę.
+test('kroki celujące w akcje nagłówka mają ikonę i pozycję w menu', () => {
+  // Stany "ważne" i "w trakcie" tour nadaje składnią (!! oraz !> w lekcji
+  // Szybkie dodawanie — osobny test niżej), ale konwersja typu wciąż ma
+  // własny krok celujący w nagłówek: z menu ⋮ albo z przypiętej ikony.
+  // Taki krok musi mieć i ikonę, i pozycję w menu — inaczej celuje w nic.
   const cases = [
     { key: 'ob_s1_convert', pin: 'pin-convert', item: 'convert-type' },
-    { key: 'ob_s3_important', pin: 'pin-important', item: 'important-btn' },
-    { key: 'ob_s3_focus', pin: 'pin-focus', item: 'focus-btn' },
   ];
   const menu = HTML.slice(HTML.indexOf('id="note-menu"'), HTML.indexOf('id="title-error"'));
   for (const { key, pin, item } of cases) {
@@ -310,8 +307,7 @@ test('przykłady składni z tekstów naprawdę się parsują', () => {
   for (const lang of LANGS) {
     const cases = [
       { key: 'list_empty_ex_task', text: MESSAGES[lang].list_empty_ex_task.message, time: '10:00' },
-      { key: 'ob_s3_1', text: typed(MESSAGES[lang].ob_s3_1.message), time: '18:00' },
-      { key: 'ob_s4_1', text: typed(MESSAGES[lang].ob_s4_1.message), time: '09:00' },
+      { key: 'ob_s2_1', text: typed(MESSAGES[lang].ob_s2_1.message), time: '09:00' },
     ];
     for (const { key, text, time } of cases) {
       if (!text) throw new Error(`${lang}/${key}: nie znaleziono przykładu w tekście`);

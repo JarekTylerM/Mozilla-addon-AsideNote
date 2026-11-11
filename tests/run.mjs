@@ -87,7 +87,8 @@ for (const file of files) {
 
   // Wypisz stdout pliku testowego
   if (result.stdout) process.stdout.write(result.stdout);
-  if (result.stderr && result.exitCode !== 0) process.stderr.write(result.stderr);
+  // spawnSync nie ma pola exitCode — kod wyjścia to result.status
+  if (result.stderr && result.status !== 0) process.stderr.write(result.stderr);
 
   // Parsuj wyniki z ostatniej linii "Wyniki: X/Y"
   const match = result.stdout?.match(/Wyniki: (\d+)\/(\d+) ✓\s+\|\s+(\d+) ✗[^|]*\|\s+(\d+)/);

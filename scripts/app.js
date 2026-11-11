@@ -86,6 +86,7 @@ import { initOnboarding, initOnboardingPanel } from "./onboarding.js";
 import { initNoteMenu } from "./note-menu.js";
 import { applyBuildFlavor } from "./build-flavor.js";
 import { applyCommandShortcuts, loadCommandShortcuts } from "./command-shortcuts.js";
+import { setCursorOffset } from "./editor-selection.js";
 
 applyBuildFlavor();
 
@@ -450,6 +451,25 @@ titleInput.addEventListener("input", () => {
   }
 
   debouncedSave();
+});
+
+// Enter w tytule → początek treści (tytuł ma jedną linię, więc Enter nie ma
+// tu innej roboty). Tylko goły Enter: Ctrl+Enter to "ukończ zadanie", a
+// Enter zatwierdzający kompozycję IME nie może przeskakiwać.
+titleInput.addEventListener("keydown", (e) => {
+  if (
+    e.key !== "Enter" ||
+    e.isComposing ||
+    e.shiftKey ||
+    e.ctrlKey ||
+    e.altKey ||
+    e.metaKey
+  ) {
+    return;
+  }
+  e.preventDefault();
+  editor.focus();
+  setCursorOffset(editor, 0);
 });
 
 /* ── Edytor: limit długości treści ────────────────────────────────
