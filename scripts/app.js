@@ -86,6 +86,7 @@ import { initOnboarding, initOnboardingPanel } from "./onboarding.js";
 import { initNoteMenu } from "./note-menu.js";
 import { applyBuildFlavor } from "./build-flavor.js";
 import { applyCommandShortcuts, loadCommandShortcuts } from "./command-shortcuts.js";
+import { initShortcutEditor, refreshShortcutEditor } from "./shortcut-editor.js";
 import { setCursorOffset } from "./editor-selection.js";
 
 applyBuildFlavor();
@@ -108,11 +109,18 @@ const _detail = (e) => /** @type {CustomEvent} */ (e).detail;
 
 applyStaticTranslations();
 // Skróty Alt+Shift+… z Firefoksa, nie z manifestu: wersja testowa ma inne,
-// a użytkownik może je zmienić w about:addons. Odświeżane po powrocie do
-// panelu, bo zmiana w about:addons nie wysyła żadnego zdarzenia.
+// a użytkownik może je zmienić — w panelu Skróty (shortcut-editor.js) albo
+// w about:addons. Odświeżane po powrocie do panelu, bo zmiana poza
+// rozszerzeniem nie wysyła żadnego zdarzenia.
 const _refreshCommandShortcuts = () =>
-  loadCommandShortcuts().then(() => applyCommandShortcuts());
+  loadCommandShortcuts().then(() => {
+    applyCommandShortcuts();
+    refreshShortcutEditor();
+  });
 applyCommandShortcuts();
+// Przyciski zmiany skrótu w panelu Skróty — po applyStaticTranslations,
+// bo podmieniają etykiety tych samych przycisków.
+initShortcutEditor();
 _refreshCommandShortcuts();
 window.addEventListener("focus", _refreshCommandShortcuts);
 // Wiersze składni quick capture nie mają data-i18n (są generowane), więc

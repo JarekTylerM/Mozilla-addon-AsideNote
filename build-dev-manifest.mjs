@@ -28,7 +28,7 @@ export const DEV_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 
  * ze skrótem dodatku (Alt+Shift+W otwierało "Widok" w polskim Firefoksie).
  * Zajęte litery pilnuje MENU_ACCESS_KEYS w tests/dev-build.test.mjs.
  */
-const DEV_SHORTCUTS = {
+export const DEV_SHORTCUTS = {
   'toggle-sidebar': 'Alt+Shift+D',
   _execute_browser_action: 'Alt+Shift+A',
 };

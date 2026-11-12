@@ -47,6 +47,10 @@ const MIRRORED = [
   'list-focus',
   'last-export',
   'onboarding-stages',
+  'i18n',
+  'command-shortcuts',
+  'shortcut-keys',
+  'shortcut-editor',
 ];
 
 function syncMirrors() {

@@ -2,6 +2,8 @@
 dist/
 dist-dev/
 dist-self/
+dist-chromium/
+dist-chromium-dev/
 *.zip
 *.xpi
 
@@ -30,6 +32,10 @@ tests/onboarding-stages.mjs
 tests/build-flavor.mjs
 tests/quick-capture-preview.mjs
 tests/quick-capture-help.mjs
+tests/i18n.mjs
+tests/command-shortcuts.mjs
+tests/shortcut-keys.mjs
+tests/shortcut-editor.mjs
 
 # System
 .DS_Store

@@ -957,6 +957,9 @@
   "security_tooltip_text": {
     "message": "Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do profilu Firefox."
   },
+  "shortcuts_editable_note": {
+    "message": "Dwa pierwsze skróty działają w całej przeglądarce. Jeśli kolidują z inną aplikacją, naciśnij „Zmień” i wciśnij własną kombinację, np. Alt+Shift+Q."
+  },
   "shortcuts_formatting": {
     "message": "Formatowanie"
   },
@@ -1823,11 +1826,65 @@
   "tempBuild_warning": {
     "message": "Uwaga: ta wersja tymczasowa pracuje na tych samych notatkach co zainstalowany dodatek. Do testów załaduj dist-dev/manifest.json."
   },
+  "shortcut_capture_cancel": {
+    "message": "Anuluj"
+  },
+  "shortcut_capture_hint": {
+    "message": "Przytrzymaj Ctrl lub Alt (⌘ lub ⌥ na Macu) i naciśnij klawisz, np. Alt+Shift+Q. Esc anuluje."
+  },
+  "shortcut_capture_prompt": {
+    "message": "Naciśnij kombinację…"
+  },
+  "shortcut_edit_browser_hint": {
+    "message": "Chrome i Edge zmieniają skróty tylko na własnej stronie: chrome://extensions/shortcuts (Chrome) lub edge://extensions/shortcuts (Edge) — wklej ten adres w pasek adresu."
+  },
+  "shortcut_edit_btn": {
+    "message": "Zmień"
+  },
+  "shortcut_err_duplicate": {
+    "message": "Ten skrót jest już przypisany do: $1.",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcut_err_needsModifier": {
+    "message": "Skrót musi zawierać Ctrl lub Alt, np. Alt+Shift+Q."
+  },
+  "shortcut_err_rejected": {
+    "message": "Przeglądarka nie przyjęła tego skrótu. Spróbuj innej kombinacji, np. Alt+Shift+Y."
+  },
+  "shortcut_err_tooManyModifiers": {
+    "message": "Za dużo modyfikatorów — skrót to najwyżej dwa (np. Alt+Shift) plus klawisz."
+  },
+  "shortcut_err_unsupportedKey": {
+    "message": "Tego klawisza nie da się użyć w skrócie. Wybierz literę, cyfrę albo F1–F12."
+  },
+  "shortcut_reset_btn": {
+    "message": "Domyślny"
+  },
+  "shortcut_reset_title": {
+    "message": "Przywróć domyślny skrót $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcut_saved": {
+    "message": "Zapisano: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
   "shortcut_unassigned": {
     "message": "nie ustawiony"
   },
   "shortcut_unassigned_hint": {
-    "message": "Firefox nie przypisał tego skrótu (może używa go już inny dodatek). Ustaw go w about:addons → ⚙ → Zarządzaj skrótami rozszerzeń."
+    "message": "Przeglądarka nie przypisała tego skrótu (może używa go już inny dodatek). Ustaw własny: panel Skróty → przycisk „Zmień”."
   },
   "shortcut_unassigned_inline": {
     "message": "skrót ustawiany w about:addons"

@@ -1299,18 +1299,74 @@
         <div class="panel-shortcuts" id="shortcuts-pane-general">
           <div class="panel-shortcuts__section">
             <b data-i18n="shortcuts_sidebar">Sidebar</b>
+            <p class="panel-shortcuts__note" data-i18n="shortcuts_editable_note">
+              Dwa pierwsze skróty działają w całej przeglądarce. Jeśli kolidują
+              z inną aplikacją, naciśnij „Zmień” i wciśnij własną kombinację,
+              np. Alt+Shift+Q.
+            </p>
             <ul>
-              <li>
+              <li class="shortcut-row" data-shortcut-row="toggle-sidebar">
                 <code data-command="toggle-sidebar">Alt+Shift+Q</code
                 ><span data-i18n="shortcuts_general_toggle"
                   >→ otwórz / zamknij sidebar</span
                 >
+                <button
+                  type="button"
+                  class="shortcut-row__btn"
+                  data-shortcut-edit
+                  aria-pressed="false"
+                  data-i18n="shortcut_edit_btn"
+                >
+                  Zmień
+                </button>
+                <button
+                  type="button"
+                  class="shortcut-row__btn shortcut-row__btn--ghost"
+                  data-shortcut-reset
+                  hidden
+                  data-i18n="shortcut_reset_btn"
+                >
+                  Domyślny
+                </button>
+                <span
+                  class="shortcut-row__status"
+                  data-shortcut-status
+                  role="status"
+                  hidden
+                ></span>
               </li>
-              <li>
+              <li
+                class="shortcut-row"
+                data-shortcut-row="_execute_browser_action"
+              >
                 <code data-command="_execute_browser_action">Alt+Shift+S</code
                 ><span data-i18n="shortcuts_general_popup"
                   >→ popup szybkiego dodawania</span
                 >
+                <button
+                  type="button"
+                  class="shortcut-row__btn"
+                  data-shortcut-edit
+                  aria-pressed="false"
+                  data-i18n="shortcut_edit_btn"
+                >
+                  Zmień
+                </button>
+                <button
+                  type="button"
+                  class="shortcut-row__btn shortcut-row__btn--ghost"
+                  data-shortcut-reset
+                  hidden
+                  data-i18n="shortcut_reset_btn"
+                >
+                  Domyślny
+                </button>
+                <span
+                  class="shortcut-row__status"
+                  data-shortcut-status
+                  role="status"
+                  hidden
+                ></span>
               </li>
               <li>
                 <code>Alt+C</code

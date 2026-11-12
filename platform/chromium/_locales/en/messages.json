@@ -1,0 +1,14 @@
+{
+  "security_tooltip_text": {
+    "message": "Notes are not encrypted and are visible to anyone with access to this browser profile."
+  },
+  "shortcut_unassigned_hint": {
+    "message": "The browser did not assign this shortcut (another extension may already use it). Set it on the extensions shortcuts page: chrome://extensions/shortcuts (Chrome) or edge://extensions/shortcuts (Edge)."
+  },
+  "shortcut_unassigned_inline": {
+    "message": "a shortcut you set on the extensions shortcuts page"
+  },
+  "shortcuts_editable_note": {
+    "message": "The first two shortcuts work everywhere in the browser. If they clash with another app, change them on the extensions shortcuts page: chrome://extensions/shortcuts (Chrome) or edge://extensions/shortcuts (Edge)."
+  }
+}

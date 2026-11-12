@@ -1,0 +1,14 @@
+{
+  "security_tooltip_text": {
+    "message": "Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do tego profilu przeglądarki."
+  },
+  "shortcut_unassigned_hint": {
+    "message": "Przeglądarka nie przypisała tego skrótu (może używa go już inne rozszerzenie). Ustaw go na stronie skrótów rozszerzeń: chrome://extensions/shortcuts (Chrome) lub edge://extensions/shortcuts (Edge)."
+  },
+  "shortcut_unassigned_inline": {
+    "message": "skrót ustawiany na stronie skrótów rozszerzeń"
+  },
+  "shortcuts_editable_note": {
+    "message": "Dwa pierwsze skróty działają w całej przeglądarce. Jeśli kolidują z inną aplikacją, zmień je na stronie skrótów rozszerzeń: chrome://extensions/shortcuts (Chrome) lub edge://extensions/shortcuts (Edge)."
+  }
+}

@@ -4,7 +4,9 @@
     "typecheck": "tsc",
     "build": "node build.mjs",
     "build:dev": "node build.mjs --dev",
-    "build:self": "node build.mjs --self"
+    "build:self": "node build.mjs --self",
+    "build:chromium": "node build.mjs --target=chromium",
+    "build:chromium:dev": "node build.mjs --target=chromium --dev"
   },
   "devDependencies": {
     "@types/firefox-webext-browser": "^143.0.0",

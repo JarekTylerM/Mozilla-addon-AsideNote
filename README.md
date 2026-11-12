@@ -89,6 +89,8 @@ node build.mjs      # → dist/ and asidenotes-<version>.zip
 
 Requires **Firefox 120+** (`strict_min_version`).
 
+**Chrome and Edge** (Manifest V3, Chrome/Edge 116+): `npm run build:chromium` → `dist-chromium/` and `asidenotes-chromium-<version>.zip`. The code is shared; browser differences live in [platform/chromium/](platform/chromium/README.md), which also covers publishing to Chrome Web Store and Edge Add-ons.
+
 ---
 
 ## Keyboard shortcuts
@@ -103,6 +105,8 @@ Requires **Firefox 120+** (`strict_min_version`).
 | `Ctrl+K` | Insert link |
 | `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo / redo |
 | `Ctrl+S` | Save now (autosave runs anyway) |
+
+The first two work browser-wide, so they can clash with another app or add-on. Change them in the sidebar: **Shortcuts** panel → **Change** → press the new combination (**Default** puts `Alt+Shift+Q` back). In Chrome and Edge, use `chrome://extensions/shortcuts`.
 
 In quick capture, `Enter` adds the item; `Shift+Enter` adds it **and** opens it in the sidebar.
 
@@ -257,6 +261,8 @@ Paczka do dystrybucji: `npm install && node build.mjs`.
 
 Wymaga **Firefoksa 120+**.
 
+**Chrome i Edge** (Manifest V3, Chrome/Edge 116+): `npm run build:chromium` → `dist-chromium/` i `asidenotes-chromium-<wersja>.zip`. Kod jest wspólny; różnice przeglądarek są w [platform/chromium/](platform/chromium/README.md), tam też publikacja w Chrome Web Store i Edge Add-ons.
+
 ## Skróty klawiszowe
 
 | Skrót | Działanie |
@@ -269,6 +275,8 @@ Wymaga **Firefoksa 120+**.
 | `Ctrl+K` | Wstaw link |
 | `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Cofnij / ponów / ponów |
 | `Ctrl+S` | Zapisz teraz (autozapis i tak działa) |
+
+Dwa pierwsze działają w całej przeglądarce, więc mogą kolidować z inną aplikacją albo dodatkiem. Zmienisz je w panelu: **Skróty** → **Zmień** → naciśnij nową kombinację (**Domyślny** przywraca `Alt+Shift+Q`). W Chrome i Edge służy do tego `chrome://extensions/shortcuts`.
 
 W szybkim dodawaniu `Enter` dodaje element, a `Shift+Enter` dodaje **i** otwiera go w panelu.
 

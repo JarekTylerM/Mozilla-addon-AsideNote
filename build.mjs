@@ -12,6 +12,11 @@
  * Wersja testowa do podpisania w AMO ("Na własną rękę"): node build.mjs --self
  * Output:         dist-self/ + asidenotes-dev-X.Y.Z.zip + updates/asidenotes-dev.json
  *
+ * Chrome i Edge (Manifest V3): node build.mjs --target=chromium
+ * Output:         dist-chromium/ + asidenotes-chromium-X.Y.Z.zip
+ *                 (--dev: dist-chromium-dev/ bez minifikacji i bez ZIP-a)
+ *                 Adapter przeglądarki: platform/chromium/ (patrz README tam).
+ *
 
  * Co robi:
  *   - Minifikuje JS  (usuwa komentarze, whitespace, puste linie)
@@ -43,19 +48,39 @@ import {
   DEV_ICON_SVG,
   DEV_UPDATE_URL,
   DEV_UPDATES_FILE,
+  DEV_NAME,
+  DEV_SHORTCUTS,
 } from './build-dev-manifest.mjs';
+import { toChromiumManifest, COMMAND_RENAMES, CHROMIUM_DEV_SHORTCUT_OVERRIDES } from './platform/chromium/manifest.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 const IS_SELF = process.argv.includes('--self');
 const IS_DEV = IS_SELF || process.argv.includes('--dev');
-const DIST = join(ROOT, IS_SELF ? 'dist-self' : IS_DEV ? 'dist-dev' : 'dist');
 
 /** @param {string} name wartość z --name=wartość */
 function argValue(name) {
   const arg = process.argv.find(a => a.startsWith(`--${name}=`));
   return arg ? arg.slice(name.length + 3) : undefined;
 }
+
+// Przeglądarka docelowa. Kod wspólny leży w korzeniu repo; to, co różni
+// przeglądarki, siedzi w platform/<cel>/ i jest doklejane tylko tu, w buildzie.
+const TARGET = argValue('target') ?? 'firefox';
+if (!['firefox', 'chromium'].includes(TARGET)) {
+  console.error(`Nieznany --target=${TARGET} (dostępne: firefox, chromium)`);
+  process.exit(1);
+}
+const IS_CHROMIUM = TARGET === 'chromium';
+if (IS_CHROMIUM && IS_SELF) {
+  console.error('--self dotyczy podpisywania w AMO — dla Chromium użyj --dev albo zwykłego builda');
+  process.exit(1);
+}
+const PLATFORM_DIR = join(ROOT, 'platform', TARGET);
+const DIST_NAME = IS_CHROMIUM
+  ? (IS_DEV ? 'dist-chromium-dev' : 'dist-chromium')
+  : (IS_SELF ? 'dist-self' : IS_DEV ? 'dist-dev' : 'dist');
+const DIST = join(ROOT, DIST_NAME);
 
 // Tylko --self: wersja paczki testowej niezależna od wersji głównej z AMO,
 // np. node build.mjs --self --version=1.0.1.1 --version-name=1.0.1a
@@ -271,7 +296,15 @@ function processFile(srcPath, relPath) {
   totalOrig += origSize;
 
   let minified;
-  if (IS_DEV) {
+  if (IS_CHROMIUM) {
+    const adapted = adaptForChromium(relPath, original);
+    minified = IS_DEV || ext === '.json' ? adapted
+      : ext === '.js'   ? minifyJS(adapted)
+      : ext === '.css'  ? minifyCSS(adapted)
+      : ext === '.html' ? minifyHTML(adapted)
+      : adapted;
+  }
+  else if (IS_DEV) {
     // Czytelne źródła ułatwiają debugowanie. Sam manifest dostaje własne ID.
     const toManifest = IS_SELF
       ? (/** @type {any} */ m) => toSelfDistributedManifest(m, SELF_OVERRIDE)
@@ -295,12 +328,65 @@ function processFile(srcPath, relPath) {
   write(destPath, minified);
 }
 
+// ── Chromium: różnice względem Firefoksa ─────────────────────────
+//   manifest.json            → platform/chromium/manifest.mjs (MV3)
+//   *.html                   → <script src="browser-shim.js"> jako pierwszy skrypt
+//   _locales/*/messages.json → nadpisania z platform/chromium/_locales
+//   --dev                    → nazwa "AsideNotes DEV", żeby nie pomylić z wydaniem
+
+const SHIM_TAG = '<script src="browser-shim.js"></script>';
+
+/**
+ * @param {string} relPath ścieżka względem korzenia
+ * @param {string} text zawartość pliku wspólnego
+ */
+function adaptForChromium(relPath, text) {
+  const rel = relPath.split(/[\\/]/).join('/');
+  if (rel === 'manifest.json') {
+    const m = toChromiumManifest(JSON.parse(text));
+    if (IS_DEV) {
+      m.name = DEV_NAME;
+      m.action.default_title = DEV_NAME;
+      // Inne skróty niż w wydaniu (jak w Firefoksie). Przy tych samych
+      // Chromium przydziela sugerowany skrót
+      // tylko wtedy, gdy nikt go nie zajął w chwili instalacji, i nie
+      // przydziela go później sam — DEV i wydanie obok siebie (albo stara
+      // wersja wgrana wcześniej) zostawiały "nie ustawiony".
+      const devKeys = { ...DEV_SHORTCUTS, ...CHROMIUM_DEV_SHORTCUT_OVERRIDES };
+      for (const [name, key] of Object.entries(devKeys)) {
+        const cmd = m.commands[COMMAND_RENAMES[name] ?? name];
+        if (cmd) cmd.suggested_key = { default: key };
+      }
+    }
+    return JSON.stringify(m, null, 2);
+  }
+  if (rel.endsWith('.html')) {
+    if (!text.includes('</head>')) throw new Error(`${rel}: brak </head> dla shimu`);
+    return text.replace('</head>', `  ${SHIM_TAG}\n  </head>`);
+  }
+  const loc = rel.match(/^_locales\/([^/]+)\/messages\.json$/);
+  if (loc) {
+    const overridePath = join(PLATFORM_DIR, '_locales', loc[1], 'messages.json');
+    if (existsSync(overridePath)) {
+      const base = JSON.parse(text);
+      const over = JSON.parse(read(overridePath));
+      for (const key of Object.keys(over)) {
+        if (!(key in base)) throw new Error(`${overridePath}: klucza ${key} nie ma we wspólnym _locales`);
+      }
+      return JSON.stringify({ ...base, ...over }, null, 2);
+    }
+  }
+  return text;
+}
+
 // Pomijamy: node_modules, dist, tests, .git, build pliki, features.css (zastąpiony),
 // pliki deweloperskie (README, tsconfig, sync.bat) — nie należą do rozszerzenia.
 // LICENSE świadomie NIE jest tu wymieniony: MPL-2.0 §3.1 wymaga, żeby tekst
 // licencji towarzyszył dystrybuowanym źródłom.
 const IGNORE = new Set([
   'node_modules', 'dist', 'dist-dev', 'dist-self', 'updates', 'tests', '.git', 'docs',
+  'dist-chromium', 'dist-chromium-dev',
+  'platform',       // adaptery przeglądarek — dokładane niżej tylko dla swojego celu
   'build.mjs', 'build.js', 'build-dev-manifest.mjs',
   'package.json', 'package-lock.json',
   'features.css',   // zastąpiony przez 7 plików tematycznych
@@ -328,7 +414,13 @@ function buildDir(dir) {
 
 buildDir(ROOT);
 
-if (IS_DEV) write(join(DIST, DEV_ICON_PATH), DEV_ICON_SVG);
+// Pliki wykonywalne adaptera (shim, service worker) lądują w korzeniu paczki
+if (IS_CHROMIUM) {
+  const runtimeDir = join(PLATFORM_DIR, 'runtime');
+  readdirSync(runtimeDir).forEach(f => processFile(join(runtimeDir, f), f));
+}
+
+if (IS_DEV && !IS_CHROMIUM) write(join(DIST, DEV_ICON_PATH), DEV_ICON_SVG);
 
 // ── ZIP ──────────────────────────────────────────────────────────
 
@@ -336,7 +428,8 @@ if (IS_DEV) write(join(DIST, DEV_ICON_PATH), DEV_ICON_SVG);
 // PowerShell 5.1 Compress-Archive zapisuje backslashe → zasoby (np. assets\...)
 // nie ładują się, a linter AMO odrzuca paczkę. Pakujemy Pythonem (zipfile zawsze
 // daje '/'), z fallbackiem na Info-ZIP; Compress-Archive tylko w ostateczności.
-const zipName = IS_SELF ? `asidenotes-dev-${version}.zip` : `asidenotes-${version}.zip`;
+const zipName = IS_CHROMIUM ? `asidenotes-chromium-${version}.zip`
+  : IS_SELF ? `asidenotes-dev-${version}.zip` : `asidenotes-${version}.zip`;
 const zipPath = join(ROOT, zipName);
 
 function _findPython() {
@@ -414,8 +507,11 @@ const saved    = totalOrig - totalMin;
 const savedPct = ((saved / totalOrig) * 100).toFixed(1);
 console.log('─'.repeat(60));
 console.log(`  Łącznie: ${size(totalOrig)} → ${size(totalMin)}  (oszczędność: ${size(saved)} / ${savedPct}%)`);
-console.log(`\n  Output: ${IS_SELF ? 'dist-self/' : IS_DEV ? 'dist-dev/' : 'dist/'}`);
-if (IS_SELF) {
+console.log(`\n  Output: ${DIST_NAME}/`);
+if (IS_CHROMIUM) {
+  if (IS_DEV) console.log('  Załaduj: chrome://extensions lub edge://extensions → Tryb dewelopera → Załaduj rozpakowane → dist-chromium-dev/');
+  else console.log(`  Do wysłania: Chrome Web Store i Edge Add-ons — ${zipName} (patrz platform/chromium/README.md)`);
+} else if (IS_SELF) {
   const updatesPath = join(ROOT, DEV_UPDATES_FILE);
   const existing = existsSync(updatesPath) ? JSON.parse(read(updatesPath)) : null;
   write(updatesPath, JSON.stringify(withUpdateEntry(existing, version), null, 2) + '\n');

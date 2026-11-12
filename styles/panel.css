@@ -573,6 +573,75 @@
   font-size: var(--text-sm);
 }
 
+/* ── Zmiana skrótu komendy (wiersz z przyciskiem „Zmień”) ──
+   Wiersz zawija się (flex-wrap z li wyżej): w wąskim sidebarze przyciski
+   i komunikat schodzą do kolejnej linii zamiast wypychać opis. */
+.shortcut-row__btn {
+  font-family: inherit;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  padding: 2px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    color var(--transition),
+    background var(--transition),
+    border-color var(--transition);
+}
+.shortcut-row__btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.shortcut-row__btn[aria-pressed='true'] {
+  border-color: var(--accent-border);
+  color: var(--text);
+}
+.shortcut-row__btn--ghost {
+  border-color: transparent;
+  background: none;
+}
+.shortcut-row__btn[hidden] {
+  display: none;
+}
+
+/* Nagrywanie: pole skrótu miga obwódką, żeby było widać, że czeka
+   na kombinację klawiszy. */
+.panel-shortcuts__section code.is-capturing {
+  border-color: var(--accent-border);
+  border-style: dashed;
+  color: var(--text-3);
+  animation: shortcut-capture-pulse 1.4s ease-in-out infinite;
+}
+@keyframes shortcut-capture-pulse {
+  50% {
+    border-color: var(--accent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel-shortcuts__section code.is-capturing {
+    animation: none;
+  }
+}
+
+.panel-shortcuts__section .shortcut-row__status {
+  flex-basis: 100%;
+  font-size: var(--text-xs);
+  line-height: var(--lh-base);
+  color: var(--text-3);
+}
+.panel-shortcuts__section .shortcut-row__status--error {
+  color: var(--danger);
+}
+.panel-shortcuts__section .shortcut-row__status--ok {
+  color: var(--success);
+}
+.shortcut-row__status[hidden] {
+  display: none;
+}
+
 .shortcuts-subtabs {
   display: flex;
   gap: 2px;

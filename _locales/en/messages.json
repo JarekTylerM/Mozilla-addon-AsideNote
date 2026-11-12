@@ -957,6 +957,9 @@
   "security_tooltip_text": {
     "message": "Notes are not encrypted and are visible to anyone with access to this Firefox profile."
   },
+  "shortcuts_editable_note": {
+    "message": "The first two shortcuts work everywhere in the browser. If they clash with another app, press “Change” and type your own combination, e.g. Alt+Shift+Q."
+  },
   "shortcuts_formatting": {
     "message": "Formatting"
   },
@@ -1823,11 +1826,65 @@
   "tempBuild_warning": {
     "message": "Warning: this temporary build works on the same notes as the installed add-on. For testing, load dist-dev/manifest.json."
   },
+  "shortcut_capture_cancel": {
+    "message": "Cancel"
+  },
+  "shortcut_capture_hint": {
+    "message": "Hold Ctrl or Alt (⌘ or ⌥ on a Mac) and press a key, e.g. Alt+Shift+Q. Esc cancels."
+  },
+  "shortcut_capture_prompt": {
+    "message": "Press keys…"
+  },
+  "shortcut_edit_browser_hint": {
+    "message": "Chrome and Edge change shortcuts only on their own page: chrome://extensions/shortcuts (Chrome) or edge://extensions/shortcuts (Edge) — paste that address into the address bar."
+  },
+  "shortcut_edit_btn": {
+    "message": "Change"
+  },
+  "shortcut_err_duplicate": {
+    "message": "This shortcut is already used by: $1.",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcut_err_needsModifier": {
+    "message": "A shortcut needs Ctrl or Alt, e.g. Alt+Shift+Q."
+  },
+  "shortcut_err_rejected": {
+    "message": "The browser rejected this shortcut. Try another combination, e.g. Alt+Shift+Y."
+  },
+  "shortcut_err_tooManyModifiers": {
+    "message": "Too many modifiers — a shortcut takes at most two (e.g. Alt+Shift) plus a key."
+  },
+  "shortcut_err_unsupportedKey": {
+    "message": "This key can't be used in a shortcut. Pick a letter, a digit or F1–F12."
+  },
+  "shortcut_reset_btn": {
+    "message": "Default"
+  },
+  "shortcut_reset_title": {
+    "message": "Restore the default shortcut $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcut_saved": {
+    "message": "Saved: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
   "shortcut_unassigned": {
     "message": "not set"
   },
   "shortcut_unassigned_hint": {
-    "message": "Firefox did not assign this shortcut (another add-on may already use it). Set it in about:addons → ⚙ → Manage Extension Shortcuts."
+    "message": "The browser did not assign this shortcut (another add-on may already use it). Set your own: Shortcuts panel → “Change” button."
   },
   "shortcut_unassigned_inline": {
     "message": "a shortcut you set in about:addons"
