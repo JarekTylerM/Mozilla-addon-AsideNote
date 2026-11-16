@@ -26,7 +26,10 @@ global.NodeFilter = _dom.window.NodeFilter;
 global.DOMParser = _dom.window.DOMParser;
 
 import { test, expect, results } from './_runner.mjs';
-import { normalizePastedHTML } from '../scripts/editor-paste-normalize.js';
+import {
+  normalizePastedHTML,
+  restoreCopiedListContext,
+} from '../scripts/editor-paste-normalize.js';
 import { insertPastedHTML } from '../scripts/editor-paste-insert.js';
 import { sanitizeHTML } from '../scripts/sanitize.js';
 
@@ -270,6 +273,82 @@ test('checklista, callout, kod i toggle przechodzą bez zmian', () => {
   expect(clean(own)).toBe(own);
 });
 
+/* Zaznaczenie punktów listy daje w schowku same <li> — bez <ul>/<ol> nad nimi.
+   Taki schowek musi wrócić jako lista TEGO SAMEGO rodzaju. */
+
+/** Kopiuje zaznaczenie z edytora tak, jak robi to _handleCopy w editor.js. */
+function copySelection(setup, selector, fromIdx, toIdx) {
+  const ed = editor();
+  ed.innerHTML = setup;
+  const items = ed.querySelectorAll(selector);
+  const range = document.createRange();
+  range.setStartBefore(items[fromIdx]);
+  range.setEndAfter(items[toIdx]);
+  const wrap = document.createElement('div');
+  wrap.appendChild(range.cloneContents());
+  const startEl =
+    range.startContainer.nodeType === 1
+      ? range.startContainer
+      : range.startContainer.parentElement;
+  restoreCopiedListContext(wrap, startEl?.closest('li') ?? items[fromIdx]);
+  return wrap.innerHTML;
+}
+
+test('kopiowanie punktów listy numerowanej → schowek niesie <ol>', () => {
+  const html = copySelection('<ol><li>a</li><li>b</li><li>c</li></ol>', 'li', 0, 1);
+  expect(html).toBe('<ol><li>a</li><li>b</li></ol>');
+});
+
+test('kopiowanie od drugiego punktu → <ol start="2">', () => {
+  const html = copySelection('<ol><li>a</li><li>b</li><li>c</li></ol>', 'li', 1, 2);
+  expect(html).toBe('<ol start="2"><li>b</li><li>c</li></ol>');
+});
+
+test('kopiowanie punktów checklisty → schowek niesie checklistę', () => {
+  const html = copySelection(
+    '<ul data-list="checklist"><li data-checked="true">a</li><li data-checked="false">b</li></ul>',
+    'li',
+    0,
+    1,
+  );
+  expect(html).toBe(
+    '<ul data-list="checklist"><li data-checked="true">a</li><li data-checked="false">b</li></ul>',
+  );
+});
+
+test('gołe <li> ze schowka wracają jako lista, nie akapity', () => {
+  expect(clean('<li>a</li><li>b</li>')).toBe('<ul><li>a</li><li>b</li></ul>');
+});
+
+test('gołe <li> z numeracją wracają jako <ol> z numerem startowym', () => {
+  expect(
+    clean('<li data-list-type="ordered" value="3">a</li><li data-list-type="ordered" value="4">b</li>'),
+  ).toBe('<ol start="3"><li>a</li><li>b</li></ol>');
+});
+
+test('wklejona numerowana lista nie zamienia się w punktowaną', () => {
+  const out = paste('<ul><li>A</li></ul>', '<ol><li>1</li><li>2</li></ol>', ['li', 1]);
+  expect(out).toBe('<ul><li>A</li></ul><ol><li>1</li><li>2</li></ol>');
+});
+
+test('numerowana lista wklejona w środek punktowanej rozcina ją', () => {
+  const out = paste(
+    '<ul><li>A</li><li>B</li></ul>',
+    '<ol><li>1</li></ol>',
+    ['li', 1],
+  );
+  expect(out).toBe('<ul><li>A</li></ul><ol><li>1</li></ol><ul><li>B</li></ul>');
+});
+
+test('punktowana wklejona w środek numerowanej → druga połowa liczy dalej', () => {
+  const out = paste(
+    '<ol><li>A</li><li>B</li></ol>',
+    '<ul><li>x</li></ul>',
+    ['li', 1],
+  );
+  expect(out).toBe('<ol><li>A</li></ol><ul><li>x</li></ul><ol start="2"><li>B</li></ol>');
+});
+
 /* ── sanitizeHTML: rozpakowanie zamiast spłaszczenia ──────────── */
 
 console.log('\n5. sanitizeHTML');
@@ -369,9 +448,52 @@ test('checklista wklejona do zwykłej listy gubi stan checkboxa', () => {
   expect(out).toBe('<ul><li>A</li><li>B</li></ul>');
 });
 
-test('lista w akapit cytatu → za cytatem (nie rozbija logiki cytatu)', () => {
-  const out = paste('<blockquote><p>cytat</p></blockquote>', '<ul><li>a</li></ul>', ['p', 5]);
-  expect(out).toBe('<blockquote><p>cytat</p></blockquote><ul><li>a</li></ul>');
+/* Cytat składa się tylko z akapitów (tak działa w nim Enter), więc wklejka
+   zostaje W cytacie jako akapity — wcześniej lądowała za nim. */
+
+test('lista w cytat → linie „• …” w cytacie, nie lista za cytatem', () => {
+  const out = paste('<blockquote><p>cytat</p></blockquote>', '<ul><li>a</li><li>b</li></ul>', ['p', 5]);
+  expect(out).toBe('<blockquote><p>cytat</p><p>• a</p><p>• b</p></blockquote>');
+});
+
+test('dwa akapity w środek zdania cytatu → rozcięcie w cytacie', () => {
+  const out = paste('<blockquote><p>Ala kota</p></blockquote>', '<p>ma</p><p>i psa</p>', ['p', 4]);
+  expect(out).toBe('<blockquote><p>Ala ma</p><p>i psakota</p></blockquote>');
+});
+
+test('nagłówek w cytacie staje się osobnym akapitem cytatu (nie skleja się)', () => {
+  const out = paste('<blockquote><p>x</p></blockquote>', '<h2>Tytuł</h2><p>tekst</p>', 'end');
+  expect(out).toBe('<blockquote><p>x</p><p>Tytuł</p><p>tekst</p></blockquote>');
+});
+
+test('cytat bez akapitów (sama treść) → wklejka nadal w cytacie', () => {
+  const out = paste('<blockquote>cytat</blockquote>', '<p>A</p><p>B</p>', ['blockquote', 5]);
+  expect(out).toBe('<blockquote><p>cytatA</p><p>B</p></blockquote>');
+});
+
+test('lista numerowana i podlista → numery i wcięcie w liniach cytatu', () => {
+  const out = paste(
+    '<blockquote><p><br></p></blockquote>',
+    '<ol><li>raz<ul><li>pod</li></ul></li><li>dwa</li></ol>',
+    ['p', 0],
+  );
+  expect(out).toBe(
+    '<blockquote><p>1. raz</p><p>&nbsp;&nbsp;• pod</p><p>2. dwa</p></blockquote>',
+  );
+});
+
+test('blok kodu w cytacie → każda linia kodu osobno', () => {
+  const out = paste('<blockquote><p><br></p></blockquote>', '<pre><code>a = 1\nb = 2</code></pre>', ['p', 0]);
+  expect(out).toBe('<blockquote><p><code>a = 1</code></p><p><code>b = 2</code></p></blockquote>');
+});
+
+test('callout też trzyma wklejkę w środku', () => {
+  const out = paste(
+    '<blockquote data-callout="tip"><p>rada</p></blockquote>',
+    '<ul><li>a</li></ul>',
+    ['p', 4],
+  );
+  expect(out).toBe('<blockquote data-callout="tip"><p>rada</p><p>• a</p></blockquote>');
 });
 
 test('kursor po wklejce stoi na końcu wklejonej treści', () => {

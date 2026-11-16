@@ -2,6 +2,102 @@
    editor.css — due date bar, toolbar, editor, callout blocks
    ══════════════════════════════════════════════════════════════ */
 
+
+/* ── Znajdź w notatce (Ctrl+F) ─────────────────────────────────
+   Pasek stoi pod toolbarem, w #editor-container — toolbar nie skacze, a pole
+   jest tuż nad szukanym tekstem. Wygląda jak drugi rząd toolbara (to samo tło
+   i kreska), a pole jak wyszukiwarka listy (lupa w środku), żeby nie tworzyć
+   „ramki w ramce". Licznik siedzi w polu, przyciski to ikony z rodziny
+   toolbara. Obsługa: editor.js. */
+#find-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#find-bar[hidden] {
+  display: none;
+}
+.find-bar__field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 24px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  transition: border-color var(--transition);
+}
+.find-bar__field::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 7px;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 13px;
+  background-color: var(--text-3);
+  mask-image: var(--icon-search-mask);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+.find-bar__field:focus-within {
+  border-color: var(--border-strong);
+}
+/* Wpisane, ale nic nie znaleziono — ramka mówi to bez czytania licznika */
+.find-bar__field:has(#find-input.is-empty) {
+  border-color: var(--danger-border);
+}
+#find-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px 4px 0;
+  border: none;
+  outline: none;
+  background: #fff0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-md);
+}
+#find-input::placeholder {
+  color: var(--text-3);
+}
+.find-bar__count {
+  flex: none;
+  padding-right: 8px;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-3);
+}
+.find-bar__count:empty {
+  display: none;
+}
+#find-input.is-empty ~ .find-bar__count {
+  color: var(--danger);
+}
+#find-bar .panel-icon {
+  width: 22px;
+  height: 22px;
+  mask-size: 16px;
+}
+#find-bar .panel-icon:not(:disabled, :hover) {
+  opacity: 0.7;
+}
+
+/* Podświetlenie bez dotykania treści notatki (CSS Custom Highlight API).
+   Starszy Firefox tego nie zna — tam editor.js zaznacza trafienie. */
+::highlight(find-match) {
+  background-color: var(--find-match-bg);
+}
+::highlight(find-current) {
+  background-color: var(--find-current-bg);
+}
 /* ── Due date bar ─────────────────────────── */
 
 .due-wrapper {
@@ -917,4 +1013,82 @@ blockquote[data-callout].is-editing-label::before {
   margin: 0;
   line-height: 1;
   width: calc(100% - 46px);
+}
+
+/* ── Uchwyt ⠿ do przenoszenia bloków (editor-drag-handle.js) ──────
+   Siedzi w lewym marginesie edytora: 8 px paddingu #editor mieści 2 kolumny
+   kropek, więc odstępy notatki się nie zmieniają. Pole kliknięcia ma pełną
+   wysokość linii (padding), widać tylko 6 kropek. Leży poza polem edycji,
+   więc nie trafia do zapisanej treści. */
+.block-handle {
+  position: absolute;
+  z-index: 2;
+  /* Pole chwytania 8 px (cały margines), ale kropki tylko w lewych 6 px:
+     prawy padding 2 px to odstęp od tekstu, inaczej kropki stykały się
+     z pierwszą literą. */
+  width: 6px;
+  height: 12px;
+  padding: 4px 2px 4px 0;
+  box-sizing: content-box;
+  transform: translateY(-50%);
+  /* W spoczynku stonowane (kolor ramek) — pełny kolor dopiero pod kursorem */
+  background-image: radial-gradient(circle, var(--border-strong) 0.9px, transparent 1.2px);
+  background-size: 3px 4px;
+  background-origin: content-box;
+  background-clip: content-box;
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  touch-action: none;
+  transition: background-color var(--transition);
+  /* Łagodne pojawienie się zamiast nagłego mignięcia. Animacja rusza tylko
+     przy pokazaniu (z display:none), nie przy przejściu do innego wiersza. */
+  animation: block-handle-in 140ms ease-out;
+}
+@keyframes block-handle-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .block-handle {
+    animation: none;
+  }
+}
+.block-handle:hover {
+  background-color: var(--surface-hover);
+  background-image: radial-gradient(circle, var(--text-2) 1px, transparent 1.3px);
+}
+.block-handle[hidden] {
+  display: none;
+}
+/* Wyłączony w Ustawieniach → Wygląd → Edytor (panel.js: data-block-handle) */
+:root[data-block-handle="off"] .block-handle,
+:root[data-block-handle="off"] .block-drop-indicator {
+  display: none;
+}
+/* Bez myszy (dotyk) uchwyt nie ma sensu — zostaje Alt+↑/↓ */
+@media (hover: none) {
+  .block-handle {
+    display: none;
+  }
+}
+body.is-block-dragging,
+body.is-block-dragging .block-handle {
+  cursor: grabbing;
+  user-select: none;
+}
+#editor .is-dragging {
+  opacity: 0.4;
+}
+/* Kreska: tu wyląduje blok po puszczeniu */
+.block-drop-indicator {
+  position: absolute;
+  z-index: 2;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  pointer-events: none;
+}
+.block-drop-indicator[hidden] {
+  display: none;
 }

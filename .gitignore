@@ -19,6 +19,8 @@ tests/quick-capture-core.mjs
 tests/utils.mjs
 tests/editor-url.mjs
 tests/editor-pattern.mjs
+tests/editor-find.mjs
+tests/editor-drag-handle.mjs
 tests/editor-block-analyzer.mjs
 tests/editor-selection.mjs
 tests/notes-trash.mjs

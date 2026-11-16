@@ -302,14 +302,17 @@ function _position(anchor) {
     _el.classList.add('arrow-down');      // strzałka w dół (tooltip powyżej)
   }
 
-  // Środek poziomy anchora z clampem żeby nie wychodzić za panel
-  const mid    = rect.left + rect.width / 2;
-  const left   = Math.max(tw / 2 + 4, Math.min(mid, window.innerWidth - tw / 2 - 4));
+  // Pozycjonujemy LEWĄ krawędź, nie środek. Przy środku (left + translateX(-50%))
+  // element dostawał od przeglądarki tylko tyle miejsca, ile zostawało od `left`
+  // do prawej krawędzi okna: tooltip przycisku w prawym rogu paska (Ustawienia,
+  // Aa) zawijał się na dwie linie i siadał obok przycisku zamiast nad nim.
+  const mid  = rect.left + rect.width / 2;
+  const left = Math.min(Math.max(4, mid - tw / 2), window.innerWidth - tw - 4);
 
   _el.style.left = `${left}px`;
   _el.style.top  = `${top}px`;
 
-  // Przesuń strzałkę jeśli tooltip był clampowany
-  const offset = mid - left;
-  _el.style.setProperty('--arrow-offset', `${50 + (offset / (tw / 2)) * 50}%`);
+  // Strzałka celuje w środek kotwicy, ale nie wychodzi poza zaokrąglone rogi
+  const arrow = Math.min(90, Math.max(10, ((mid - left) / tw) * 100));
+  _el.style.setProperty('--arrow-offset', `${arrow}%`);
 }

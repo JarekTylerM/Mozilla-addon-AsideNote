@@ -7,6 +7,7 @@ import {
   tagState,
   getTag,
   createTag,
+  findTagByName,
   updateTag,
   deleteTag,
   makeTagPill,
@@ -66,6 +67,10 @@ const tagsList = _byId("tags-list");
 const tagDropdown = _byId("tag-dropdown");
 const tagOptions = _byId("tag-options");
 const selectorPills = _byId("tag-selector-pills");
+const tagSearchInput = _byInput("tag-search-input");
+const tagCreateBtn = _byId("tag-create-btn");
+const tagDropdownHint = _byId("tag-dropdown-hint");
+const tagDropdownError = _byId("tag-dropdown-error");
 
 /* ══ Panel personalizacji ═══════════════════════ */
 
@@ -397,12 +402,86 @@ export function initAddTagForm() {
   });
 }
 
-/* ══ Tag selector (w edytorze) ══════════════════ */
+/* ══ Filtr skrótów ══════════════════════════════
+
+   Skrótów jest ~60 w dwóch podzakładkach — szukanie wzrokiem było
+   najwolniejszą częścią tej zakładki. Pole filtruje OBIE podzakładki naraz:
+   pasujące wiersze zostają, sekcje bez trafień znikają, a na czas szukania
+   pokazujemy obie listy (inaczej trafienie z drugiej podzakładki byłoby
+   niewidoczne i wyglądało jak brak wyniku).
+   ══════════════════════════════════════════════ */
+
+export function initShortcutsFilter() {
+  const input = _byInput("shortcuts-filter-input");
+  const empty = _byId("shortcuts-filter-empty");
+  const subtabs = /** @type {HTMLElement|null} */ (
+    document.querySelector(".shortcuts-subtabs")
+  );
+  if (!input) return;
+
+  const panes = /** @type {HTMLElement[]} */ ([
+    _byId("shortcuts-pane-general"),
+    _byId("shortcuts-pane-editor"),
+  ]);
+
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLocaleLowerCase();
+    const searching = query.length > 0;
+    let hits = 0;
+
+    // Którą podzakładkę przywrócić po wyczyszczeniu filtra — mówi o tym
+    // przycisk podzakładki (app.js nadaje mu is-active)
+    const activeTab =
+      /** @type {HTMLElement|null} */ (
+        document.querySelector(".shortcuts-subtab.is-active")
+      )?.dataset.shortcutsTab ?? "general";
+
+    for (const pane of panes) {
+      // Podczas szukania obie listy są widoczne — inaczej trafienie z drugiej
+      // podzakładki wyglądałoby jak brak wyniku
+      pane.hidden = searching ? false : pane.id !== `shortcuts-pane-${activeTab}`;
+
+      for (const section of pane.querySelectorAll(".panel-shortcuts__section")) {
+        let sectionHits = 0;
+        for (const row of section.querySelectorAll("li")) {
+          const li = /** @type {HTMLElement} */ (row);
+          const match =
+            !searching || (li.textContent ?? "").toLocaleLowerCase().includes(query);
+          li.hidden = !match;
+          if (match && searching) sectionHits++;
+        }
+        /** @type {HTMLElement} */ (section).hidden = searching && sectionHits === 0;
+        hits += sectionHits;
+      }
+    }
+
+    if (subtabs) subtabs.hidden = searching;
+    empty.hidden = !searching || hits > 0;
+  });
+
+  // Esc w polu: najpierw czyści filtr, dopiero puste pole oddaje Esc dalej
+  input.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !input.value) return;
+    e.preventDefault();
+    e.stopPropagation();
+    input.value = "";
+    input.dispatchEvent(new Event("input"));
+  });
+}
+
+/* ══ Tag selector (w edytorze) ══════════════════
+
+   Dropdown ma jedno pole tekstowe, które robi za wyszukiwarkę I za nazwę
+   nowego tagu. Wcześniej jedyną drogą do nowego tagu był panel ustawień —
+   w trakcie pisania notatki oznaczało to porzucenie klawiatury i tekstu.
+   Teraz: Alt+G otwiera, wpisujesz nazwę, Enter (albo „+") tworzy tag i od
+   razu przypina go do notatki, strzałki chodzą po liście, Esc zamyka.
+   ══════════════════════════════════════════════ */
 
 export function initTagSelector() {
   document.addEventListener("click", (e) => {
     const sel = _byId("tag-selector");
-    if (!sel?.contains(/** @type {Node} */ (e.target))) tagDropdown.hidden = true;
+    if (!sel?.contains(/** @type {Node} */ (e.target))) closeTagDropdown(false);
   });
 
   // Esc zamyka dropdown gdy fokus jest w środku
@@ -413,14 +492,20 @@ export function initTagSelector() {
     e.preventDefault();
     // Immediate — patrz date-picker.js: globalny Esc zamknąłby notatkę
     e.stopImmediatePropagation();
-    tagDropdown.hidden = true;
-    // Wróć fokus na addBtn (tam skąd dropdown został otwarty)
-    const addBtn = /** @type {HTMLElement|null} */ (document.querySelector("#tag-selector-pills .tag-add-btn"));
-    if (addBtn) addBtn.focus();
+    closeTagDropdown();
   });
 
+  // Strzałki: pole → lista → pole. Enter w polu tworzy tag (albo przypina
+  // istniejący o tej nazwie), Enter na pozycji listy przełącza ją — bez myszy.
+  tagDropdown.addEventListener("keydown", _onTagDropdownKeydown);
+  tagSearchInput.addEventListener("input", () => {
+    _hideTagDropdownError();
+    _syncTagDropdown();
+  });
+  tagCreateBtn.onclick = () => _createTagFromSearch();
+
   _byId("goto-panel").onclick = () => {
-    tagDropdown.hidden = true;
+    closeTagDropdown(false);
     openPanel();
     switchPanelTab("tags");
   };
@@ -430,17 +515,135 @@ export function initTagSelector() {
   document.addEventListener("tagsChanged", () => {
     _renderTagsPanel();
     renderTagSelector();
+    if (!tagDropdown.hidden) _syncTagDropdown();
     if (!_byId("filter-bar").hidden) _renderFilterOptions(_byId("filter-options"));
   });
+}
+
+/** Tagi przypięte do otwartej notatki. */
+function _activeTagIds() {
+  const note = state.activeId
+    ? state.notes.find((n) => n.id === state.activeId)
+    : null;
+  return note?.tags ?? [];
+}
+
+/** Otwiera dropdown z kursorem w polu — wejście dla Alt+G i dla „+ dodaj tag". */
+export function openTagDropdown() {
+  tagDropdown.hidden = false;
+  tagSearchInput.value = "";
+  _hideTagDropdownError();
+  _syncTagDropdown();
+  tagSearchInput.focus();
+}
+
+/**
+ * @param {boolean} [focusBack=true] oddaj fokus przyciskowi „+ dodaj tag"
+ *   (po Esc — żeby ręce zostały na klawiaturze; po kliknięciu obok — nie)
+ */
+export function closeTagDropdown(focusBack = true) {
+  if (tagDropdown.hidden) return;
+  tagDropdown.hidden = true;
+  _hideTagDropdownError();
+  if (!focusBack) return;
+  const addBtn = /** @type {HTMLElement|null} */ (
+    document.querySelector("#tag-selector-pills .tag-add-btn")
+  );
+  addBtn?.focus();
+}
+
+function _toggleTagDropdown() {
+  if (tagDropdown.hidden) openTagDropdown();
+  else closeTagDropdown();
+}
+
+/** Pozycje, po których chodzą strzałki. */
+function _tagDropdownStops() {
+  return [
+    tagSearchInput,
+    .../** @type {HTMLElement[]} */ ([
+      ...tagOptions.querySelectorAll(".tag-option-item"),
+    ]),
+  ];
+}
+
+/** @param {KeyboardEvent} e */
+function _onTagDropdownKeydown(e) {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const stops = _tagDropdownStops();
+    if (stops.length < 2) return;
+    const here = stops.indexOf(
+      /** @type {HTMLElement} */ (document.activeElement),
+    );
+    const step = e.key === "ArrowDown" ? 1 : -1;
+    // Zawijanie: z końca listy wracamy do pola, z pola schodzimy na koniec
+    const next = (here === -1 ? 0 : here + step + stops.length) % stops.length;
+    e.preventDefault();
+    stops[next].focus();
+    return;
+  }
+
+  if (e.key === "Enter" && document.activeElement === tagSearchInput) {
+    e.preventDefault();
+    const name = tagSearchInput.value.trim();
+    if (!name) return;
+    // Nazwa istniejącego tagu — Enter przypina go, zamiast zgłaszać duplikat
+    const existing = findTagByName(name);
+    if (existing) {
+      _toggleTag(existing.id);
+      tagSearchInput.value = "";
+      _syncTagDropdown();
+      return;
+    }
+    _createTagFromSearch();
+  }
+}
+
+/** Tworzy tag z tego, co wpisano, i przypina go do notatki. */
+function _createTagFromSearch() {
+  const name = tagSearchInput.value.trim();
+  if (!name) return;
+
+  const result = createTag(name);
+  if (!result.ok || !result.tag) {
+    _showTagDropdownError(t(result.error ?? "validation_empty"));
+    return;
+  }
+  _hideTagDropdownError();
+  // Nowy tag od razu trafia na notatkę — po to się go tu tworzy
+  _toggleTag(result.tag.id);
+  _renderTagsPanel();
+  tagSearchInput.value = "";
+  _syncTagDropdown();
+  tagSearchInput.focus();
+}
+
+/** @param {string} msg */
+function _showTagDropdownError(msg) {
+  tagDropdownError.textContent = msg;
+  tagDropdownError.hidden = false;
+}
+
+function _hideTagDropdownError() {
+  tagDropdownError.hidden = true;
+}
+
+/** Lista, podpowiedź i „+" zgodne z tym, co stoi w polu. */
+function _syncTagDropdown() {
+  const query = tagSearchInput.value.trim();
+  _renderTagOptions(_activeTagIds(), query);
+
+  const exists = query ? findTagByName(query) : null;
+  const canCreate = !!query && !exists;
+  tagCreateBtn.toggleAttribute("disabled", !canCreate);
+  tagDropdownHint.hidden = !canCreate;
+  if (canCreate) tagDropdownHint.textContent = t("tagSelector_create_hint", query);
 }
 
 export function renderTagSelector() {
   selectorPills.innerHTML = "";
 
-  const note = state.activeId
-    ? state.notes.find((n) => n.id === state.activeId)
-    : null;
-  const activeTags = note?.tags ?? [];
+  const activeTags = _activeTagIds();
 
   /** @type {Tag[]} */ ([...activeTags].map((id) => getTag(id)).filter(Boolean))
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -456,35 +659,24 @@ export function renderTagSelector() {
   // Krótka wersja przycisku to samo "+" — bez etykiety czytnik ekranu
   // odczytałby "plus", a tooltip nic by nie wyjaśniał.
   addBtn.setAttribute("aria-label", t("tagSelector_addBtn_emptyTitle"));
-  addBtn.title = t("tagSelector_addBtn_emptyTitle");
-
-  if (tagState.tags.length === 0) {
-    addBtn.textContent = t("tagSelector_addBtn_long");
-    addBtn.title = t("tagSelector_addBtn_emptyTitle");
-    addBtn.onclick = (e) => {
-      e.stopPropagation();
-      const willOpen = tagDropdown.hidden;
-      tagDropdown.hidden = !tagDropdown.hidden;
-      if (willOpen) _renderTagOptions(activeTags);
-    };
-  } else {
-    addBtn.textContent =
-      activeTags.length === 0
-        ? t("tagSelector_addBtn_long")
-        : t("tagSelector_addBtn_short");
-    addBtn.onclick = (e) => {
-      e.stopPropagation();
-      const willOpen = tagDropdown.hidden;
-      tagDropdown.hidden = !tagDropdown.hidden;
-      if (willOpen) _renderTagOptions(activeTags);
-    };
-  }
+  addBtn.title = t("tagSelector_addBtn_title");
+  addBtn.textContent =
+    activeTags.length === 0
+      ? t("tagSelector_addBtn_long")
+      : t("tagSelector_addBtn_short");
+  addBtn.onclick = (e) => {
+    e.stopPropagation();
+    _toggleTagDropdown();
+  };
 
   selectorPills.appendChild(addBtn);
 }
 
-/** @param {string[]} activeTags */
-function _renderTagOptions(activeTags) {
+/**
+ * @param {string[]} activeTags tagi przypięte do notatki
+ * @param {string} [query] filtr z pola wyszukiwania
+ */
+function _renderTagOptions(activeTags, query = "") {
   tagOptions.innerHTML = "";
 
   if (tagState.tags.length === 0) {
@@ -495,13 +687,29 @@ function _renderTagOptions(activeTags) {
     return;
   }
 
-  tagState.tags.forEach((tag) => {
+  const wanted = query.toLocaleLowerCase();
+  const matching = wanted
+    ? tagState.tags.filter((tag) =>
+        tag.name.toLocaleLowerCase().includes(wanted),
+      )
+    : tagState.tags;
+
+  if (matching.length === 0) {
+    const msg = document.createElement("div");
+    msg.className = "tag-option-empty";
+    msg.textContent = t("tagSelector_options_noMatch");
+    tagOptions.appendChild(msg);
+    return;
+  }
+
+  matching.forEach((tag) => {
     const isActive = activeTags.includes(tag.id);
     const item = document.createElement("button");
     item.type = "button";
-    item.className =
-      "tag-option-item" + (isActive ? " is-active" : "");
+    item.className = "tag-option-item" + (isActive ? " is-active" : "");
     item.dataset.tagId = tag.id;
+    item.setAttribute("role", "option");
+    item.setAttribute("aria-selected", isActive ? "true" : "false");
 
     const check = document.createElement("span");
     check.className = "tag-option-check";
@@ -513,6 +721,7 @@ function _renderTagOptions(activeTags) {
       _toggleTag(tag.id);
       // In-place toggle — zachowuje fokus klawiatury, dropdown zostaje otwarty
       const nowActive = item.classList.toggle("is-active");
+      item.setAttribute("aria-selected", nowActive ? "true" : "false");
       check.textContent = nowActive ? "✓" : "";
     };
 
@@ -1034,27 +1243,39 @@ export function initUiSettings(settings) {
     };
   }
 
-  // Toolbar tooltips toggle
-  const tooltipsToggle = _byInput("toolbar-tooltips-toggle");
-  if (tooltipsToggle) {
-    tooltipsToggle.checked = settings.showToolbarTooltips ?? true;
-    _applyToolbarTooltips(tooltipsToggle.checked);
-    tooltipsToggle.onchange = () => {
-      _applyToolbarTooltips(tooltipsToggle.checked);
-      saveUiSettings({ showToolbarTooltips: tooltipsToggle.checked });
+  // Wskazówki — opisy ikon paska i podpowiedź w pustej linii. Kiedyś dwa
+  // osobne pola; obie rzeczy służą temu samemu (pomoc na start), więc jedno.
+  // Zapisane osobno ustawienia stosujemy tak, jak były — pole jest zaznaczone,
+  // gdy obie wskazówki są włączone, a zmiana ustawia obie naraz.
+  const hintsToggle = _byInput("editor-hints-toggle");
+  const tooltipsOn = settings.showToolbarTooltips ?? true;
+  const placeholderOn = settings.showEditorPlaceholder ?? true;
+  _applyToolbarTooltips(tooltipsOn);
+  _applyEditorPlaceholder(placeholderOn);
+  if (hintsToggle) {
+    hintsToggle.checked = tooltipsOn && placeholderOn;
+    hintsToggle.onchange = () => {
+      const on = hintsToggle.checked;
+      _applyToolbarTooltips(on);
+      _applyEditorPlaceholder(on);
+      saveUiSettings({ showToolbarTooltips: on, showEditorPlaceholder: on });
     };
   }
 
-  // Editor placeholder toggle
-  const placeholderToggle = _byInput("editor-placeholder-toggle");
-  if (placeholderToggle) {
-    placeholderToggle.checked = settings.showEditorPlaceholder ?? true;
-    document.documentElement.dataset.editorPlaceholder =
-      placeholderToggle.checked ? "" : "off";
-    placeholderToggle.onchange = () => {
-      document.documentElement.dataset.editorPlaceholder =
-        placeholderToggle.checked ? "" : "off";
-      saveUiSettings({ showEditorPlaceholder: placeholderToggle.checked });
+  // Uchwyt ⠿ do przeciągania bloków — da się wyłączyć (np. przy wrażliwości
+  // na bodźce). CSS chowa go po atrybucie na <html> (editor.css:
+  // data-block-handle); Alt+↑/↓ działa dalej.
+  const blockHandleToggle = _byInput("block-handle-toggle");
+  if (blockHandleToggle) {
+    /** @param {boolean} on */
+    const apply = (on) => {
+      document.documentElement.dataset.blockHandle = on ? "" : "off";
+    };
+    blockHandleToggle.checked = settings.blockHandle ?? true;
+    apply(blockHandleToggle.checked);
+    blockHandleToggle.onchange = () => {
+      apply(blockHandleToggle.checked);
+      saveUiSettings({ blockHandle: blockHandleToggle.checked });
     };
   }
 
@@ -1085,24 +1306,14 @@ export function initUiSettings(settings) {
       saveUiSettings({ fullToolbar: fullToolbarToggle.checked });
     };
   }
+  _initToolbarMode();
 
-  // Menu ⋮ — zaznaczone działanie zostaje w menu, odznaczone staje się ikoną
-  // w nagłówku. Zapisujemy listę przypiętych: pusta (domyślna) to pełne menu.
+  // Nagłówek notatki — wciśnięte działanie jest ikoną w nagłówku, reszta
+  // zostaje w menu ⋮. Zapisujemy listę przypiętych: pusta (domyślna) to
+  // pełne menu.
   const pinned = normalizePinnedActions(settings.pinnedNoteActions);
   setPinnedActions(pinned);
-  const actionToggles = /** @type {HTMLInputElement[]} */ (
-    [...document.querySelectorAll("input[data-note-action]")]
-  );
-  for (const input of actionToggles) {
-    input.checked = !pinned.includes(input.dataset.noteAction ?? "");
-    input.onchange = () => {
-      const next = actionToggles
-        .filter((el) => !el.checked)
-        .map((el) => el.dataset.noteAction);
-      setPinnedActions(next);
-      saveUiSettings({ pinnedNoteActions: next });
-    };
-  }
+  _initHeaderActions(pinned);
 
   // Ikona podglądu na liście: po najechaniu (domyślnie), zawsze albo wyłączona.
   // Widoczność robi CSS po atrybucie na <html> (list.css: data-preview-icon).
@@ -1181,22 +1392,20 @@ const QUICK_THEME_ORDER = ["auto", "dark", "light"];
 function _initQuickSettings() {
   const themeBtn = _byId("quick-theme");
   const fontBtn = _byId("quick-font");
-  // Zoom zmieniają dwie pary przycisków: w dolnym pasku i przy liście w panelu
-  const zoomOutBtns = /** @type {HTMLButtonElement[]} */ ([
-    _byId("quick-zoom-out"),
-    _byId("panel-zoom-out"),
-  ]);
-  const zoomInBtns = /** @type {HTMLButtonElement[]} */ ([
-    _byId("quick-zoom-in"),
-    _byId("panel-zoom-in"),
-  ]);
+  // Kroki −/+ są tylko w dolnym pasku; panel ma samą listę
+  const zoomOutBtns = /** @type {HTMLButtonElement[]} */ (
+    [_byId("quick-zoom-out")].filter(Boolean)
+  );
+  const zoomInBtns = /** @type {HTMLButtonElement[]} */ (
+    [_byId("quick-zoom-in")].filter(Boolean)
+  );
   const zoomValue = _byId("quick-zoom-value");
   const fontSelect = /** @type {HTMLSelectElement} */ (_byId("ui-font-select"));
   const zoomSelect = /** @type {HTMLSelectElement} */ (_byId("ui-zoom-select"));
   const zoomSteps = [...zoomSelect.options].map((o) => o.value);
 
   const currentScheme = () =>
-    /** @type {HTMLElement|null} */ (document.querySelector(".scheme-btn.is-active"))
+    /** @type {HTMLElement|null} */ (document.querySelector(".scheme-btn[data-scheme].is-active"))
       ?.dataset.scheme ?? "auto";
 
   /** @param {HTMLSelectElement} select @param {string} value */
@@ -1264,6 +1473,113 @@ function _initQuickSettings() {
   sync();
 }
 
+/**
+ * Pasek formatowania: Ukryty / Podstawowy / Pełny. Przełącznik nie ma
+ * własnego stanu — ustawia dwa ukryte checkboxy (#toolbar-toggle czytają też
+ * Alt+E i zen w app.js) i odpala ich change, a zapis robią ich handlery.
+ * „Ukryty” nie rusza pola „pełny”, więc Alt+E przywraca poprzedni wariant.
+ */
+function _initToolbarMode() {
+  const group = document.getElementById("toolbar-mode");
+  const show = _byInput("toolbar-toggle");
+  const full = _byInput("toolbar-full-toggle");
+  if (!group || !show || !full) return;
+  const buttons = /** @type {HTMLButtonElement[]} */ (
+    [...group.querySelectorAll("[data-toolbar-mode]")]
+  );
+  const current = () => (!show.checked ? "off" : full.checked ? "full" : "basic");
+
+  const sync = () => {
+    const mode = current();
+    for (const btn of buttons) {
+      const on = btn.dataset.toolbarMode === mode;
+      btn.classList.toggle("is-active", on);
+      btn.setAttribute("aria-checked", String(on));
+      btn.tabIndex = on ? 0 : -1;
+    }
+  };
+
+  /** @param {HTMLInputElement} input @param {boolean} value */
+  const set = (input, value) => {
+    if (input.checked === value) return;
+    input.checked = value;
+    input.dispatchEvent(new Event("change"));
+  };
+
+  /** @param {string|undefined} mode */
+  const choose = (mode) => {
+    if (mode !== "off") set(full, mode === "full");
+    set(show, mode !== "off");
+    sync();
+  };
+
+  buttons.forEach((btn, i) => {
+    btn.onclick = () => choose(btn.dataset.toolbarMode);
+    // Strzałki jak w każdej grupie radio: wybór idzie za fokusem
+    btn.onkeydown = (e) => {
+      const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1
+        : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      const next = buttons[(i + step + buttons.length) % buttons.length];
+      choose(next.dataset.toolbarMode);
+      next.focus();
+    };
+  });
+  show.addEventListener("change", sync);
+  full.addEventListener("change", sync);
+  sync();
+}
+
+/**
+ * Działania w nagłówku notatki: przycisk wciśnięty = ikona w nagłówku, reszta
+ * w menu ⋮. Podgląd nad przyciskami pokazuje skutek od razu.
+ * @param {string[]} initial
+ */
+function _initHeaderActions(initial) {
+  const buttons = /** @type {HTMLButtonElement[]} */ (
+    [...document.querySelectorAll("button[data-note-action]")]
+  );
+  const previewIcons = /** @type {HTMLElement[]} */ (
+    [...document.querySelectorAll("[data-preview-action]")]
+  );
+  let pinned = [...initial];
+
+  const sync = () => {
+    for (const btn of buttons) {
+      btn.setAttribute(
+        "aria-pressed",
+        String(pinned.includes(btn.dataset.noteAction ?? "")),
+      );
+    }
+    for (const icon of previewIcons) {
+      icon.hidden = !pinned.includes(icon.dataset.previewAction ?? "");
+    }
+  };
+
+  for (const btn of buttons) {
+    btn.onclick = () => {
+      const id = btn.dataset.noteAction ?? "";
+      const next = new Set(pinned);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      // Kolejność jak w nagłówku, nie kolejność klikania
+      pinned = buttons
+        .map((b) => b.dataset.noteAction ?? "")
+        .filter((a) => next.has(a));
+      setPinnedActions(pinned);
+      saveUiSettings({ pinnedNoteActions: pinned });
+      sync();
+    };
+  }
+  sync();
+}
+
+/** @param {boolean} on */
+function _applyEditorPlaceholder(on) {
+  document.documentElement.dataset.editorPlaceholder = on ? "" : "off";
+}
+
 /** @param {boolean} show */
 function _applyToolbar(show) {
   _byId("toolbar").hidden = !show;
@@ -1314,7 +1630,7 @@ function _applyColorScheme(scheme) {
 /** @param {string} activeScheme */
 function _initSchemeToggle(activeScheme) {
   const btns = /** @type {NodeListOf<HTMLElement>} */ (
-    document.querySelectorAll(".scheme-btn")
+    document.querySelectorAll(".scheme-btn[data-scheme]")
   );
   if (!btns.length) return;
 

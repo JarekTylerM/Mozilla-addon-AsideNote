@@ -46,9 +46,26 @@ import {
   MD_LINK_RX,
 } from './editor-pattern.js';
 import { isClickUpHTML, preprocessClickUp } from './editor-paste-clickup.js';
-import { normalizePastedHTML } from './editor-paste-normalize.js';
-import { insertPastedHTML } from './editor-paste-insert.js';
+import {
+  normalizePastedHTML,
+  restoreCopiedListContext,
+} from './editor-paste-normalize.js';
+import { insertPastedHTML, blocksToQuoteLines } from './editor-paste-insert.js';
 import { initSlashMenu } from './editor-slash-menu.js';
+import {
+  initDragHandle,
+  findDragTarget,
+  isQuoteLine,
+  selectionGroup,
+  dragSiblings,
+} from './editor-drag-handle.js';
+import {
+  foldForFind,
+  findMatches,
+  buildFindIndex,
+  rangeAt,
+  matchAtOrAfter,
+} from './editor-find.js';
 import {
   htmlToMarkdown,
   markdownToHtml,
@@ -267,6 +284,8 @@ export function initEditor() {
   _initUndoRedoBtns();
   initToolbar();
   _initKeydown();
+  _initFind();
+  _initInlineExit();
   _initPaste();
   _initCopy();
   _initCopyMarkdown();
@@ -276,6 +295,7 @@ export function initEditor() {
   initLinkButton();
   initLinkModal();
   initSlashMenu();
+  _initDragHandle();
   editor.addEventListener('input', debouncedSave);
 
   // Wyłącz spellcheck w istniejących blokach kodu, i linkach
@@ -297,6 +317,44 @@ export function initEditor() {
     );
   }).observe(editor, { childList: true, subtree: true });
   _initLinkTooltip();
+}
+
+/* Uchwyt ⠿ w lewym marginesie — przenoszenie bloków myszą (to samo co
+   Alt+↑/↓). Krok cofania przed i po, a zdarzenie input uruchamia zwykły
+   zapis i odświeża przyciski Cofnij/Ponów. */
+function _initDragHandle() {
+  const container = document.getElementById('editor-container');
+  if (!container) return;
+  initDragHandle(editor, container, {
+    title: (kind) =>
+      t(
+        kind === 'list'
+          ? 'editor_dragHandle_list'
+          : kind === 'item'
+            ? 'editor_dragHandle_item'
+            : kind === 'line'
+              ? 'editor_dragHandle_line'
+              : 'editor_dragHandle_title',
+      ),
+    toQuoteLines: (blocks) => blocksToQuoteLines(blocks),
+    beforeMove: () => undo.checkpoint(),
+    afterMove: (
+      /** @type {HTMLElement[]} */ items,
+      /** @type {Range|null} */ selection,
+    ) => {
+      undo.checkpoint();
+      // Przeniesiona grupa zostaje zaznaczona — można ją przesunąć dalej
+      if (selection) {
+        editor.focus();
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(selection);
+      } else {
+        _restoreCursorTo(items[0]);
+      }
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+  });
 }
 
 function _initUndoRedoBtns() {
@@ -519,10 +577,138 @@ function _tryInlineMarkdown(e) {
   r.collapse(true);
   sel.removeAllRanges();
   sel.addRange(r);
+  // Pusty węzeł tekstowy za elementem nie wystarczy: przeglądarka i tak dokleja
+  // pierwszy wpisany znak DO ŚRODKA elementu (`kod` + "dalej" = <code>koddalej
+  // </code>) i z klawiatury nie dało się z formatowania wyjść. Przejmujemy
+  // więc ten jeden znak — patrz _initInlineExit.
+  _pendingInlineExit = { el, afterNode, offset: 0 };
 
   undo.checkpoint();
   document.dispatchEvent(new Event('forceSave'));
   return true;
+}
+
+/* ── Wyjście z właśnie utworzonego formatowania ─────────────────
+   Dotyczy tylko PIERWSZEGO znaku po konwersji `kod`, **pogrubienia**, linku
+   z [tekst](url) i autolinku. Potem kursor stoi w zwykłym węźle tekstowym
+   i nic nie trzeba robić.
+
+   Dwa zachowania przeglądarki, które trzeba wyprzedzić:
+   1. pusty węzeł tekstowy za elementem nie trzyma kursora — pierwszy znak
+      wpada DO ŚRODKA elementu (`kod` + "dalej" = <code>koddalej</code>),
+   2. końcowa spacja za linkiem jest „nieznacząca" i Chromium PODMIENIA ją
+      na wpisany znak — po [tekst](url) + spacja + "dalej" wychodziło
+      „tekstdalej" bez odstępu.
+   W obu wypadkach przejmujemy ten jeden znak i wstawiamy go sami. */
+
+/** @type {{ el: Element, afterNode: Text, offset: number } | null} */
+let _pendingInlineExit = null;
+
+/**
+ * Czy kursor stoi na samym końcu zawartości elementu.
+ * @param {Element} el @param {Range} range
+ */
+function _caretAtEndOf(el, range) {
+  const probe = document.createRange();
+  probe.selectNodeContents(el);
+  probe.setStart(range.startContainer, range.startOffset);
+  return probe.toString() === '';
+}
+
+function _initInlineExit() {
+  editor.addEventListener('beforeinput', (e) => {
+    const pending = _pendingInlineExit;
+    if (!pending) {
+      _typeOutOfClonedCode(e);
+      return;
+    }
+    _pendingInlineExit = null;
+
+    if (e.inputType !== 'insertText' || typeof e.data !== 'string') return;
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    if (!range.collapsed) return;
+    if (!pending.afterNode.isConnected || !pending.el.isConnected) return;
+
+    // Kursor musi stać tam, gdzie go zostawiliśmy — w węźle "po" albo (gdy
+    // przeglądarka wciągnęła go z powrotem) na końcu samego elementu
+    const inAfterNode =
+      range.startContainer === pending.afterNode &&
+      range.startOffset === pending.offset;
+    const atElEnd =
+      pending.el.contains(range.startContainer) &&
+      _caretAtEndOf(pending.el, range);
+    if (!inAfterNode && !atElEnd) return;
+
+    e.preventDefault();
+    const text = pending.afterNode.textContent ?? '';
+    const at = Math.min(pending.offset, text.length);
+    pending.afterNode.textContent = text.slice(0, at) + e.data + text.slice(at);
+    const r = document.createRange();
+    r.setStart(pending.afterNode, at + e.data.length);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    debouncedSave();
+  });
+}
+
+/**
+ * Ten sam pusty klon <code>, ale gdy użytkownik pisze SZYBCIEJ niż zdąży się
+ * wykonać sprzątanie z requestAnimationFrame. Znak wstawiamy wtedy sami —
+ * obok kodu, nie w nim.
+ *
+ * @param {InputEvent} e
+ */
+function _typeOutOfClonedCode(e) {
+  if (e.inputType !== 'insertText' || typeof e.data !== 'string') return;
+  const sel = window.getSelection();
+  if (!sel?.rangeCount || !sel.getRangeAt(0).collapsed) return;
+
+  const code = _elOf(sel.getRangeAt(0).startContainer)?.closest('code');
+  if (!code || code.closest('pre')) return;
+  if ((code.textContent ?? '').length) return;
+  const block = code.parentElement;
+  if (!block || block === editor || block.firstElementChild !== code) return;
+
+  e.preventDefault();
+  const text = document.createTextNode(e.data);
+  code.replaceWith(text);
+  const r = document.createRange();
+  r.setStart(text, e.data.length);
+  r.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(r);
+  debouncedSave();
+}
+
+/**
+ * Po Enterze na końcu inline'owego `kodu` przeglądarka zaczyna nowy akapit
+ * pustym <code> — i dalej pisze się w kodzie, bez wyjścia z klawiatury
+ * (jedyną drogą była mysz albo Ctrl+\\). Pusty klon rozpakowujemy.
+ *
+ * Tylko PUSTY i tylko na początku bloku: kod z treścią to świadomy wybór
+ * użytkownika, a <pre> w ogóle tu nie wchodzi (to osobny blok).
+ */
+function _dropClonedInlineCode() {
+  const sel = window.getSelection();
+  if (!sel?.rangeCount) return;
+  const block = _getCurrentBlock();
+  if (!block || block === editor || block.closest('pre')) return;
+
+  const first = block.firstElementChild;
+  if (!first || first.tagName !== 'CODE') return;
+  if ((first.textContent ?? '').length) return;
+
+  first.replaceWith(...Array.from(first.childNodes));
+  if (!block.firstChild) block.appendChild(document.createElement('br'));
+
+  const r = document.createRange();
+  r.setStart(block, 0);
+  r.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(r);
 }
 
 /* ── Keydown ──────────────────────────────────── */
@@ -557,6 +743,15 @@ function _initKeydown() {
       e.preventDefault();
       return;
     }
+    // Esc przy otwartym pasku Znajdź zamyka pasek, nie notatkę — tak jak
+    // w przeglądarce. Dopiero drugi Esc wraca na listę (app.js).
+    if (e.key === 'Escape' && !_findBar()?.hidden) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeFindBar(true);
+      return;
+    }
+
     if (e.key === 'Enter') _handleEnter(e);
     if (e.key === ' ') _handleSpace(e);
     if (e.key === 'Tab') _handleTab(e);
@@ -664,6 +859,11 @@ function _placeCaretAtMergeSeam(prev, seam, selection) {
 function _handleEnter(e) {
   const sel = /** @type {Selection} */ (window.getSelection());
   if (!sel.rangeCount) return;
+
+  // Enter na końcu `kodu`: przeglądarka klonuje <code> do nowego akapitu
+  // i dalej pisze się w kodzie. Sprzątamy to po podziale — patrz
+  // _dropClonedInlineCode.
+  requestAnimationFrame(_dropClonedInlineCode);
 
   // Shift+Enter w liście — soft break wewnątrz <li>
   if (e.shiftKey) {
@@ -1193,6 +1393,10 @@ function _tryConvertMarkdownLink(e) {
   r.collapse(true);
   sel.removeAllRanges();
   sel.addRange(r);
+  // Ta spacja jest na końcu akapitu, więc przeglądarka uważa ją za
+  // nieznaczącą i podmieniłaby ją na pierwszy wpisany znak — patrz
+  // _initInlineExit
+  _pendingInlineExit = { el: a, afterNode: spaceNode, offset: 1 };
 
   return true;
 }
@@ -1245,27 +1449,92 @@ function _tryAutolinkWord(e) {
   r.collapse(true);
   sel.removeAllRanges();
   sel.addRange(r);
+  _pendingInlineExit = { el: a, afterNode: space, offset: 1 };
   document.dispatchEvent(new Event('forceSave'));
   return true;
 }
 // BLOCKED_SCHEMES, looksLikeUrl → editor-url.js
+
+/**
+ * Zdejmuje z bloku znacznik markdown stojący przed kursorem ("-", "1.", "#").
+ * Kursor ląduje na początku bloku, tuż przed treścią, która w wierszu została.
+ *
+ * @param {Element|null} block
+ * @returns {boolean} false, gdy wiersz nie ma własnego wrappera (tekst leży
+ *   wprost w #editor) — wtedy zostaje stare czyszczenie całego bloku
+ */
+function _dropTriggerMarker(block) {
+  const sel = window.getSelection();
+  if (!block || block === editor || !sel?.rangeCount) return false;
+  const caret = sel.getRangeAt(0);
+  if (!block.contains(caret.startContainer)) return false;
+
+  const marker = document.createRange();
+  marker.setStart(block, 0);
+  marker.setEnd(caret.startContainer, caret.startOffset);
+  marker.deleteContents();
+
+  const r = document.createRange();
+  r.setStart(block, 0);
+  r.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(r);
+  return true;
+}
+
+/**
+ * Wyjmuje z bloku treść, która została po zdjęciu znacznika — to ona wjeżdża
+ * do nowego punktu listy / nagłówka. Blok zostaje pusty.
+ *
+ * @param {Element} block
+ * @returns {DocumentFragment}
+ */
+function _takeBlockRest(block) {
+  const r = document.createRange();
+  r.selectNodeContents(block);
+  return r.extractContents();
+}
+
+/**
+ * Treść wiersza (bez znacznika) wkładana do nowego punktu listy.
+ * @param {Element|null} block @param {HTMLElement} li
+ */
+function _fillFromBlock(block, li) {
+  if (block && block !== editor && _dropTriggerMarker(block)) {
+    const rest = _takeBlockRest(block);
+    if ((rest.textContent ?? '').trim() || rest.querySelector?.('br, img, a')) {
+      li.innerHTML = '';
+      li.appendChild(rest);
+    }
+  }
+  if (!li.firstChild) li.innerHTML = '<br>';
+}
 
 /** @param {KeyboardEvent} e */
 function _handleSpace(e) {
   const block = _getCurrentBlock();
   const blockText = block ? block.textContent : '';
 
-  // Zbierz textBefore (dla callout trigger — dokładniejszy niż blockText)
+  // Tekst od początku bloku do kursora — na nim stoi cała detekcja znaczników.
+  // Liczymy go zakresem, a nie z samego węzła tekstowego: w wierszu z pogrubieniem
+  // czy linkiem węzeł przy kursorze nie zaczyna się tam, gdzie wiersz.
   let textBefore = blockText;
   const _sel = window.getSelection();
   if (_sel?.rangeCount) {
     const _range = _sel.getRangeAt(0);
     if (_range.collapsed) {
-      const _tn = _range.startContainer;
-      textBefore =
-        _tn.nodeType === Node.TEXT_NODE
-          ? (_tn.textContent ?? "").slice(0, _range.startOffset)
-          : blockText;
+      if (block && block !== editor) {
+        const _before = document.createRange();
+        _before.setStart(block, 0);
+        _before.setEnd(_range.startContainer, _range.startOffset);
+        textBefore = _before.toString();
+      } else {
+        const _tn = _range.startContainer;
+        textBefore =
+          _tn.nodeType === Node.TEXT_NODE
+            ? (_tn.textContent ?? "").slice(0, _range.startOffset)
+            : blockText;
+      }
     }
   }
 
@@ -1317,7 +1586,7 @@ function _handleSpace(e) {
         ul.setAttribute('data-list', 'checklist');
         const li = document.createElement('li');
         li.setAttribute('data-checked', trigger.checked ? 'true' : 'false');
-        li.innerHTML = '<br>';
+        _fillFromBlock(block, li);
         _placeListItem('checklist', li, ul);
         return;
       }
@@ -1325,7 +1594,8 @@ function _handleSpace(e) {
       case 'heading': {
         e.preventDefault();
         undo.checkpoint();
-        _clearBlock(block);
+        // Znacznik znika, reszta wiersza zostaje i staje się treścią nagłówka
+        if (!_dropTriggerMarker(block)) _clearBlock(block);
         document.execCommand('formatBlock', false, `h${trigger.level}`);
         return;
       }
@@ -1340,7 +1610,7 @@ function _handleSpace(e) {
         // z listy, do której dołącza. Pozycja wygrywa z liczbą.
         if (startNum !== 1) ol.setAttribute('start', String(startNum));
         const li = document.createElement('li');
-        li.innerHTML = '<br>';
+        _fillFromBlock(block, li);
         _placeListItem('ordered', li, ol);
         return;
       }
@@ -1350,7 +1620,7 @@ function _handleSpace(e) {
         undo.checkpoint();
         const ulb = document.createElement('ul');
         const lib = document.createElement('li');
-        lib.innerHTML = '<br>';
+        _fillFromBlock(block, lib);
         _placeListItem('bullet', lib, ulb);
         return;
       }
@@ -1358,7 +1628,7 @@ function _handleSpace(e) {
       case 'callout': {
         e.preventDefault();
         undo.checkpoint();
-        _clearBlock(block);
+        if (!_dropTriggerMarker(block)) _clearBlock(block);
         document.execCommand('formatBlock', false, 'blockquote');
         requestAnimationFrame(() => {
           const s = /** @type {Selection} */ (window.getSelection());
@@ -1388,12 +1658,17 @@ function _handleSpace(e) {
       case 'code-block': {
         e.preventDefault();
         undo.checkpoint();
-        _clearBlock(block);
+        // W bloku kodu liczy się sam tekst — formatowanie i tak tam nie wchodzi
+        const restCode =
+          block && block !== editor && _dropTriggerMarker(block)
+            ? (_takeBlockRest(block).textContent ?? '')
+            : (_clearBlock(block), '');
         const pre = document.createElement('pre');
         pre.spellcheck = false;
         const code = document.createElement('code');
         code.spellcheck = false;
-        code.innerHTML = '<br>';
+        if (restCode.trim()) code.textContent = restCode;
+        else code.innerHTML = '<br>';
         if (trigger.language) code.dataset.language = trigger.language;
         pre.appendChild(code);
         const cur = _getCurrentBlock();
@@ -1414,18 +1689,25 @@ function _handleSpace(e) {
       case 'blockquote': {
         e.preventDefault();
         undo.checkpoint();
-        _clearBlock(block);
+        if (!_dropTriggerMarker(block)) _clearBlock(block);
         document.execCommand('formatBlock', false, 'blockquote');
         return;
       }
       case 'toggle-list': {
         e.preventDefault();
         undo.checkpoint();
-        _clearBlock(block);
+        const restSummary =
+          block && block !== editor && _dropTriggerMarker(block)
+            ? _takeBlockRest(block)
+            : (_clearBlock(block), null);
         const details = document.createElement('details');
         details.open = true;
         const summary = document.createElement('summary');
-        summary.innerHTML = '<br>';
+        if (restSummary && (restSummary.textContent ?? '').trim()) {
+          summary.appendChild(restSummary);
+        } else {
+          summary.innerHTML = '<br>';
+        }
         summary.dataset.placeholder = t('editor_summary_placeholder');
         const content = document.createElement('p');
         content.innerHTML = '<br>';
@@ -1476,47 +1758,57 @@ function _handleAltArrow(e) {
   const el = _elOf(node);
   const dir = e.key === 'ArrowUp' ? 'up' : 'down';
 
-  // ── Element listy — ale nie gdy jesteśmy wewnątrz details
-  // (Alt+↑/↓ w details przesuwa cały blok, nie element listy wewnątrz)
-  const li = el?.closest('li');
-  const inDetails = !!el?.closest('details');
-  if (li && !inDetails) {
+  // ── Zaznaczenie przez kilka bloków / elementów listy — przesuwa całą
+  // grupę, tak jak uchwyt ⠿ (editor-drag-handle.js: selectionGroup).
+  // Przestawiamy SĄSIADA na drugą stronę grupy: zaznaczone węzły stoją
+  // w miejscu, więc zaznaczenie zostaje i można naciskać dalej.
+  const group = selectionGroup(sel.getRangeAt(0), editor);
+  if (group) {
     e.preventDefault();
-    const sibling =
-      dir === 'up' ? li.previousElementSibling : li.nextElementSibling;
-    if (!sibling) return;
+    const first = group[0];
+    const last = group[group.length - 1];
+    const parent = first.parentElement;
+    const siblings = dragSiblings(first);
+    const neighbor =
+      dir === 'up'
+        ? siblings[siblings.indexOf(first) - 1]
+        : siblings[siblings.indexOf(last) + 1];
+    if (!neighbor || !parent) return;
     undo.checkpoint();
-    const liParent = li.parentNode;
-    if (!liParent) return;
-    if (dir === 'up') {
-      liParent.insertBefore(li, sibling);
-    } else {
-      liParent.insertBefore(sibling, li);
-    }
-    _restoreCursorTo(li);
+    if (dir === 'up') parent.insertBefore(neighbor, last.nextSibling);
+    else parent.insertBefore(neighbor, first);
+    undo.checkpoint();
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
     return;
   }
 
-  // ── Blok najwyższego poziomu w edytorze ───────────
-  // Znajdź bezpośrednie dziecko editora
-  let block = el;
-  while (block && block.parentElement !== editor) {
-    block = block.parentElement;
+  // ── Jeden blok albo element listy — te same reguły co uchwyt ⠿
+  // (findDragTarget): element listy w swojej liście, jedyny element listy
+  // przenosi całą listę, lista w details przenosi całą sekcję.
+  const target = findDragTarget(el, editor);
+  if (!target) return;
+  const parent = target.parentElement;
+  const siblings = dragSiblings(target);
+  const at = siblings.indexOf(target);
+  const neighbor = siblings[dir === 'up' ? at - 1 : at + 1];
+  if (!neighbor || !parent) {
+    // Na brzegu listy / cytatu nie przepuszczamy skrótu dalej (przeglądarka
+    // przesunęłaby kursor) — linia nie wyskakuje z cytatu niechcący
+    if (target.tagName === 'LI' || isQuoteLine(target, editor)) e.preventDefault();
+    return;
   }
-  if (!block || block === editor) return;
-
-  const sibling =
-    dir === 'up' ? block.previousElementSibling : block.nextElementSibling;
-  if (!sibling) return;
 
   e.preventDefault();
+  // Stan przed i po — inaczej Ctrl+Z cofał też to, co było przed przeniesieniem
   undo.checkpoint();
   if (dir === 'up') {
-    editor.insertBefore(block, sibling);
+    parent.insertBefore(target, neighbor);
   } else {
-    editor.insertBefore(sibling, block);
+    parent.insertBefore(neighbor, target);
   }
-  _restoreCursorTo(block);
+  _restoreCursorTo(target);
+  undo.checkpoint();
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 // _restoreCursorTo → editor-selection.js
@@ -1877,9 +2169,30 @@ function _handleCtrl(e) {
       debouncedSave();
       _updateUndoRedoStateGlobal();
       break;
+    case 'f':
+      // Ctrl+F przeglądarki szuka w stronie pod panelem, nie w notatce —
+      // przejmujemy go, żeby w ogóle dało się znaleźć zdanie w długim tekście
+      if (!e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        openFindBar();
+      }
+      break;
     case 'k':
       e.preventDefault();
       openLinkModal();
+      break;
+    // Ctrl+Shift+V — wklej jako czysty tekst. Zdarzenie paste nie niesie
+    // informacji o Shifcie, więc zapamiętujemy zamiar tutaj; handler paste
+    // zdejmuje flagę. Timeout na wypadek, gdyby wklejenie nie doszło
+    // (np. pusty schowek) — inaczej następne zwykłe Ctrl+V byłoby czyste.
+    case 'v':
+      if (e.shiftKey) {
+        _plainPasteArmed = true;
+        clearTimeout(_plainPasteTimer);
+        _plainPasteTimer = setTimeout(() => {
+          _plainPasteArmed = false;
+        }, 1000);
+      }
       break;
     // Ctrl+\ — wyczyść formatowanie (jak w Google Docs / Notion). Przycisk
     // Tx jest w podstawowym toolbarze schowany, więc skrót jest główną drogą.
@@ -1892,7 +2205,235 @@ function _handleCtrl(e) {
   }
 }
 
+/* ── Znajdź w notatce (Ctrl+F) ─────────────────
+   Ctrl+F przeglądarki działa na dokumencie STRONY, nie na panelu bocznym,
+   a wyszukiwarka nad listą (Alt+S) wybiera notatkę, zamiast pokazać miejsce
+   w jej treści. Stąd własny pasek: liczy trafienia, skacze między nimi
+   (Enter / F3 / strzałki), podświetla je i nie rusza treści notatki —
+   podświetlenie idzie przez CSS Custom Highlight API, a tam gdzie go nie ma
+   (starszy Firefox), trafienie jest po prostu zaznaczane.
+
+   Pasek NIE zapisuje nic do notatki: żadnych <mark>, żadnych atrybutów. */
+
+/** @type {{ start: number, end: number }[]} */
+let _findMatches = [];
+let _findCurrent = -1;
+/** @type {ReturnType<typeof setTimeout>|undefined} */
+let _findTimer;
+/** @type {import('./editor-find.js').FindIndex|null} */
+let _findIndex = null;
+
+const _findBar = () => _byId('find-bar');
+const _findInput = () => /** @type {HTMLInputElement} */ (_byId('find-input'));
+
+/** Czy przeglądarka umie podświetlać bez dotykania treści. */
+const _hasHighlightApi = () =>
+  typeof CSS !== 'undefined' && !!(/** @type {any} */ (CSS).highlights);
+
+function _initFind() {
+  const bar = _findBar();
+  const input = _findInput();
+  if (!bar || !input) return;
+
+  input.addEventListener('input', () => {
+    clearTimeout(_findTimer);
+    _findTimer = setTimeout(() => _runFind(true), 120);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      _stepFind(e.shiftKey ? -1 : 1);
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      closeFindBar(true);
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      _stepFind(e.key === 'ArrowDown' ? 1 : -1);
+    }
+  });
+
+  _byBtn('find-next')?.addEventListener('click', () => _stepFind(1));
+  _byBtn('find-prev')?.addEventListener('click', () => _stepFind(-1));
+  _byBtn('find-close')?.addEventListener('click', () => closeFindBar(true));
+
+  // F3 działa też z fokusem w edytorze — tak jak w przeglądarce
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'F3' || _findBar()?.hidden) return;
+    e.preventDefault();
+    _stepFind(e.shiftKey ? -1 : 1);
+  });
+
+  // Zmiana treści unieważnia pozycje trafień
+  editor.addEventListener('input', () => {
+    if (_findBar()?.hidden) return;
+    clearTimeout(_findTimer);
+    _findTimer = setTimeout(() => _runFind(false), 200);
+  });
+}
+
+/**
+ * Otwiera pasek. Zaznaczony fragment notatki wchodzi do pola jako zapytanie —
+ * tak działa Ctrl+F wszędzie indziej.
+ */
+export function openFindBar() {
+  const bar = _findBar();
+  const input = _findInput();
+  if (!bar || !input) return;
+
+  const sel = window.getSelection();
+  const picked = sel && !sel.isCollapsed ? sel.toString().trim() : '';
+  if (picked && picked.length <= 100 && !picked.includes('\n')) {
+    input.value = picked;
+  }
+
+  bar.hidden = false;
+  input.focus();
+  input.select();
+  _runFind(true);
+}
+
+/**
+ * Wkłada frazę do pola szukania, nie otwierając paska. Używane przy otwarciu
+ * notatki z listy filtrowanej wyszukiwarką (Alt+S): Ctrl+F ma wtedy od razu
+ * to, czego użytkownik szukał przed chwilą — bez przepisywania.
+ *
+ * @param {string} query
+ */
+export function prefillFind(query) {
+  const input = _findInput();
+  if (!input) return;
+  const clean = String(query ?? '').trim();
+  if (clean) input.value = clean;
+}
+
+/**
+ * @param {boolean} [focusEditor=false] oddaj fokus treści na bieżącym trafieniu
+ */
+export function closeFindBar(focusEditor = false) {
+  const bar = _findBar();
+  if (!bar || bar.hidden) return;
+  bar.hidden = true;
+  _clearFindHighlights();
+  _findMatches = [];
+  _findCurrent = -1;
+  _findIndex = null;
+  if (focusEditor) editor.focus();
+}
+
+/**
+ * Przelicza trafienia i (opcjonalnie) skacze do pierwszego od kursora.
+ * @param {boolean} jump
+ */
+function _runFind(jump) {
+  const input = _findInput();
+  const query = foldForFind(input.value.trim());
+  _findIndex = buildFindIndex(editor);
+  _findMatches = query ? findMatches(_findIndex.text, query) : [];
+
+  if (!_findMatches.length) {
+    _findCurrent = -1;
+    _clearFindHighlights();
+    _renderFindCount();
+    input.classList.toggle('is-empty', !!input.value.trim());
+    return;
+  }
+  input.classList.remove('is-empty');
+
+  if (jump || _findCurrent < 0 || _findCurrent >= _findMatches.length) {
+    _findCurrent = matchAtOrAfter(_findMatches, _caretPosInFindIndex());
+  }
+  _showFindMatch(false);
+}
+
+/** Pozycja kursora w indeksie — żeby „następne" liczyło się od kursora. */
+function _caretPosInFindIndex() {
+  const sel = window.getSelection();
+  if (!sel?.rangeCount || !_findIndex) return -1;
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.startContainer)) return -1;
+  const at = _findIndex.nodes.indexOf(
+    /** @type {Text} */ (range.startContainer),
+  );
+  if (at === -1) return -1;
+  return _findIndex.starts[at] + range.startOffset;
+}
+
+/** @param {number} step */
+function _stepFind(step) {
+  if (!_findMatches.length) {
+    _runFind(true);
+    if (!_findMatches.length) return;
+  }
+  _findCurrent =
+    (_findCurrent + step + _findMatches.length) % _findMatches.length;
+  _showFindMatch(true);
+}
+
+/** @param {boolean} scroll */
+function _showFindMatch(scroll) {
+  if (!_findIndex || _findCurrent < 0) return;
+  const current = rangeAt(_findIndex, _findMatches[_findCurrent]);
+  if (!current) return;
+
+  if (_hasHighlightApi()) {
+    const all = /** @type {Range[]} */ (
+      _findMatches
+        .map((m) => rangeAt(/** @type {any} */ (_findIndex), m))
+        .filter(Boolean)
+    );
+    const api = /** @type {any} */ (window);
+    /** @type {any} */ (CSS).highlights.set('find-match', new api.Highlight(...all));
+    /** @type {any} */ (CSS).highlights.set('find-current', new api.Highlight(current));
+  } else {
+    // Starszy Firefox: zaznaczenie zamiast podświetlenia — widać gdzie jest
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(current.cloneRange());
+  }
+
+  // Zawsze dociągamy widok: także przy przeliczeniu po wpisaniu znaku
+  // (scroll mówi tylko, czy to skok użytkownika)
+  void scroll;
+  current.startContainer.parentElement?.scrollIntoView({ block: 'nearest' });
+  _renderFindCount();
+}
+
+function _renderFindCount() {
+  const count = _byId('find-count');
+  if (!count) return;
+  const input = _findInput();
+  // Strzałki przygaszone, gdy nie ma do czego skakać — widać to bez licznika
+  for (const id of ['find-prev', 'find-next']) {
+    const btn = _byBtn(id);
+    if (btn) btn.disabled = !_findMatches.length;
+  }
+  if (!input.value.trim()) {
+    count.textContent = '';
+    return;
+  }
+  count.textContent = _findMatches.length
+    ? `${_findCurrent + 1}/${_findMatches.length}`
+    : t('find_noMatch');
+}
+
+function _clearFindHighlights() {
+  if (!_hasHighlightApi()) return;
+  /** @type {any} */ (CSS).highlights.delete('find-match');
+  /** @type {any} */ (CSS).highlights.delete('find-current');
+}
+
 /* ── Paste ────────────────────────────────────── */
+
+/** Ctrl+Shift+V — najbliższe wklejenie idzie jako czysty tekst. */
+let _plainPasteArmed = false;
+/** @type {ReturnType<typeof setTimeout>|undefined} */
+let _plainPasteTimer;
 
 function _initPaste() {
   editor.addEventListener('paste', (e) => {
@@ -1904,6 +2445,20 @@ function _initPaste() {
     if (!cd) return;
     const html = cd.getData('text/html');
     const plain = cd.getData('text/plain');
+
+    // Ctrl+Shift+V — pomijamy całą ścieżkę HTML i markdown: użytkownik
+    // poprosił o goły tekst, nie o „inteligentne" rozpoznanie formatu
+    const plainOnly = _plainPasteArmed;
+    _plainPasteArmed = false;
+    clearTimeout(_plainPasteTimer);
+    if (plainOnly) {
+      document.execCommand(
+        'insertText',
+        false,
+        plain.length > MAX_PASTE ? plain.slice(0, MAX_PASTE) : plain,
+      );
+      return;
+    }
 
     // W bloku kodu wklejamy zawsze czysty tekst — formatowanie nie ma tam sensu
     if (html && !_caretInCodeBlock()) {
@@ -2012,6 +2567,13 @@ function _handleCopy(e, isCut) {
   // Usuń klasy edytora — inne aplikacje ich nie rozumieją
   wrap.querySelectorAll('[class]').forEach((el) => el.removeAttribute('class'));
   wrap.normalize();
+  // Zaznaczenie w liście daje same <li> — bez <ul>/<ol> nad nimi.
+  // Oddajemy im listę, z której pochodzą (rodzaj + numer pierwszego punktu).
+  const _startEl =
+    range.startContainer.nodeType === Node.ELEMENT_NODE
+      ? /** @type {Element} */ (range.startContainer)
+      : range.startContainer.parentElement;
+  restoreCopiedListContext(wrap, _startEl?.closest('li') ?? null);
 
   const cd = e.clipboardData;
   if (!cd) return;

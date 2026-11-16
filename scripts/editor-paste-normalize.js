@@ -89,6 +89,7 @@ export function normalizePastedHTML(html) {
   const root = doc.body;
 
   _removeJunk(root);
+  wrapOrphanListItems(root, doc);
   _convertWordLists(root, doc);
   _applyInlineStyles(root, doc);
   _simplifyInline(root, doc);
@@ -122,6 +123,97 @@ function _removeJunk(root) {
       el.remove();
     }
   });
+}
+
+/* ── Punkty bez listy ─────────────────────────────────────────── */
+
+/**
+ * <li> bez <ul>/<ol> nad sobą — tak wygląda schowek, gdy zaznaczenie obejmuje
+ * punkty listy, ale nie cały jej blok (zarówno przy kopiowaniu z notatki, jak
+ * i ze stron WWW). Bez tego kroku _blockify robił z nich akapity i lista po
+ * wklejeniu przestawała być listą.
+ *
+ * Rodzaj listy odtwarzamy z tego, co punkty same o sobie niosą:
+ *   data-checked        → checklista (tak oznacza je edytor),
+ *   value= / data-list-type="ordered" → lista numerowana (start = value),
+ *   inaczej             → punktowana.
+ * Edytor dokłada te wskazówki przy kopiowaniu (editor.js: _onCopy), więc
+ * wewnątrz notatki numeracja przeżywa kopiuj-wklej.
+ *
+ * @param {Element} root @param {Document} doc
+ */
+export function wrapOrphanListItems(root, doc) {
+  /** @type {Element[]} */
+  const orphans = [];
+  root.querySelectorAll('li').forEach((li) => {
+    const parent = li.parentElement;
+    if (!parent || /^(UL|OL)$/.test(parent.tagName)) return;
+    orphans.push(li);
+  });
+  if (!orphans.length) return;
+
+  while (orphans.length) {
+    // Zbierz ciąg sąsiadujących <li> — jeden ciąg to jedna lista
+    /** @type {Element[]} */
+    const run = [orphans.shift() ?? root];
+    while (orphans.length && run[run.length - 1].nextElementSibling === orphans[0]) {
+      run.push(/** @type {Element} */ (orphans.shift()));
+    }
+
+    const checklist = run.some((li) => li.hasAttribute('data-checked'));
+    const ordered =
+      !checklist &&
+      run.some(
+        (li) =>
+          li.getAttribute('data-list-type') === 'ordered' || li.hasAttribute('value'),
+      );
+    const list = doc.createElement(ordered ? 'ol' : 'ul');
+    if (checklist) list.setAttribute('data-list', 'checklist');
+    if (ordered) {
+      const first = parseInt(run[0].getAttribute('value') ?? '', 10);
+      if (Number.isFinite(first) && first > 1) list.setAttribute('start', String(first));
+    }
+
+    run[0].before(list);
+    run.forEach((li) => {
+      li.removeAttribute('value');
+      li.removeAttribute('data-list-type');
+      list.appendChild(li);
+    });
+  }
+}
+
+/**
+ * Przygotowuje kopię zaznaczenia do schowka: punktom bez listy nad nimi
+ * dokłada wskazówki o liście, z której pochodzą, i opakowuje je z powrotem.
+ *
+ * cloneContents() na zaznaczeniu w liście zwraca same <li>. Taki schowek gubił
+ * rodzaj listy — numerowana wracała przy wklejeniu jako punktowana albo jako
+ * zwykłe akapity, a Markdown w text/plain numerował od nowa.
+ *
+ * @param {Element} wrap kopia zaznaczenia (kontener)
+ * @param {Element|null} srcLi punkt, w którym zaczyna się zaznaczenie
+ */
+export function restoreCopiedListContext(wrap, srcLi) {
+  const tops = Array.from(wrap.children);
+  if (!tops.some((el) => el.tagName === 'LI')) return;
+
+  const srcList = srcLi?.parentElement ?? null;
+  if (srcList && srcList.tagName === 'OL') {
+    const start = parseInt(srcList.getAttribute('start') ?? '1', 10) || 1;
+    const offset = srcLi
+      ? Math.max(0, Array.from(srcList.children).indexOf(srcLi))
+      : 0;
+    let n = start + offset;
+    for (const el of tops) {
+      if (el.tagName !== 'LI') continue;
+      el.setAttribute('data-list-type', 'ordered');
+      el.setAttribute('value', String(n++));
+    }
+  }
+  // Checklista niesie rodzaj w samych punktach (data-checked), punktowana jest
+  // domyślna — wrapOrphanListItems rozpozna wszystkie trzy rodzaje.
+  wrapOrphanListItems(wrap, wrap.ownerDocument);
 }
 
 /* ── Listy z Worda / Outlooka ─────────────────────────────────── */

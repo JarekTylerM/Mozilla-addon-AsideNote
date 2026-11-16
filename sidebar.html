@@ -831,6 +831,40 @@
             ></button>
           </div>
         </div>
+        <!-- Znajdź w notatce (Ctrl+F). Ctrl+F przeglądarki szuka w stronie,
+             nie w panelu bocznym, więc przejmujemy go u siebie — obsługa
+             w editor.js (_initFind). Pod toolbarem, a nie nad nim: pasek
+             formatowania nie skacze, a pole stoi tuż nad szukanym tekstem. -->
+        <div id="find-bar" hidden>
+          <div class="find-bar__field">
+            <input
+              id="find-input"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              data-i18n-attr="placeholder:find_placeholder;aria-label:find_placeholder"
+            />
+            <span id="find-count" class="find-bar__count" role="status"></span>
+          </div>
+          <button
+            id="find-prev"
+            type="button"
+            class="panel-icon icon--chevron-up"
+            data-i18n-attr="title:find_prev;aria-label:find_prev"
+          ></button>
+          <button
+            id="find-next"
+            type="button"
+            class="panel-icon icon--chevron-down"
+            data-i18n-attr="title:find_next;aria-label:find_next"
+          ></button>
+          <button
+            id="find-close"
+            type="button"
+            class="panel-icon icon--x"
+            data-i18n-attr="title:find_close;aria-label:find_close"
+          ></button>
+        </div>
         <div
           id="editor"
           contenteditable="true"
@@ -848,8 +882,38 @@
 
       <div id="tag-selector">
         <div id="tag-selector-pills"></div>
+        <!-- Dropdown tagów: jedno pole robi za wyszukiwarkę I za nazwę nowego
+             tagu (jak w Notion). Enter albo „+" tworzy tag i od razu przypina
+             go do notatki — bez wyprawy do ustawień. Strzałki chodzą po
+             liście, Esc zamyka. Obsługa: panel.js (initTagSelector). -->
         <div id="tag-dropdown" hidden>
-          <div id="tag-options"></div>
+          <div class="tag-dropdown__search">
+            <input
+              id="tag-search-input"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              maxlength="40"
+              data-i18n-attr="placeholder:tagSelector_search_placeholder;aria-label:tagSelector_search_placeholder"
+            />
+            <button
+              id="tag-create-btn"
+              type="button"
+              class="tag-dropdown__create"
+              disabled
+              data-i18n-attr="title:tagSelector_create_title;aria-label:tagSelector_create_title"
+            >
+              +
+            </button>
+          </div>
+          <div id="tag-options" role="listbox"></div>
+          <p id="tag-dropdown-hint" class="tag-dropdown__hint" hidden></p>
+          <p
+            id="tag-dropdown-error"
+            class="tag-dropdown__error"
+            role="alert"
+            hidden
+          ></p>
           <button id="goto-panel" data-i18n="tagSelector_managePanel">
             → Zarządzaj tagami
           </button>
@@ -859,7 +923,7 @@
 
     <div id="panel" hidden>
       <div class="panel-header">
-        <h2 data-i18n="panel_title">Personalizacja</h2>
+        <h2 data-i18n="panel_title">Ustawienia</h2>
         <button
           id="close-panel"
           data-i18n-attr="aria-label:panel_close_ariaLabel"
@@ -867,7 +931,10 @@
           ✕
         </button>
       </div>
-      <!-- Taby -->
+      <!-- Taby. Każda zakładka to jeden rodzaj rzeczy — dzięki temu żadnej
+           sekcji nie trzeba zwijać. W wąskim panelu nieaktywne zakładki
+           pokazują samą ikonę (panel.css: container query na .panel-tabs);
+           podpis zostaje w drzewie dostępności, więc czytnik ekranu go czyta. -->
       <div class="panel-tabs" role="tablist">
         <button
           type="button"
@@ -879,7 +946,19 @@
           data-i18n-attr="title:panel_tab_general_title"
         >
           <span class="panel-tab__icon icon--panel-general"></span>
-          <span data-i18n="panel_tab_general">Ogólne</span>
+          <span class="panel-tab__label" data-i18n="panel_tab_general">Ogólne</span>
+        </button>
+        <button
+          type="button"
+          class="panel-tab"
+          id="panel-tab-appearance"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-pane-appearance"
+          data-i18n-attr="title:panel_tab_appearance_title"
+        >
+          <span class="panel-tab__icon icon--color-palette"></span>
+          <span class="panel-tab__label" data-i18n="panel_tab_appearance">Wygląd</span>
         </button>
         <button
           type="button"
@@ -891,7 +970,7 @@
           data-i18n-attr="title:panel_tab_tags_title"
         >
           <span class="panel-tab__icon icon--panel-tags"></span>
-          <span data-i18n="panel_tab_tags">Tagi</span>
+          <span class="panel-tab__label" data-i18n="panel_tab_tags">Tagi</span>
         </button>
         <button
           type="button"
@@ -903,198 +982,16 @@
           data-i18n-attr="title:panel_tab_shortcuts_title"
         >
           <span class="panel-tab__icon icon--panel-shortcuts"></span>
-          <span data-i18n="panel_tab_shortcuts">Skróty</span>
+          <span class="panel-tab__label" data-i18n="panel_tab_shortcuts">Skróty</span>
         </button>
       </div>
-      <!-- Tab: Ogólne -->
+      <!-- Tab: Ogólne — bezpieczeństwo, dane, przypomnienia, przewodnik, kosz -->
       <div class="panel-pane" id="panel-pane-general" role="tabpanel">
         <div class="panel-body">
-          <section class="panel-section">
-            <h3 data-i18n="panel_appearance_title">Wygląd</h3>
-            <div class="scheme-toggle" role="group" aria-label="Tryb kolorów">
-              <button type="button" class="scheme-btn" data-scheme="dark">
-                <span class="scheme-btn__icon icon--scheme-dark"></span>
-                <span data-i18n="panel_appearance_dark">Ciemny</span>
-              </button>
-              <button
-                type="button"
-                class="scheme-btn is-active"
-                data-scheme="auto"
-              >
-                <span class="scheme-btn__icon icon--scheme-auto"></span>
-                <span data-i18n="panel_appearance_auto">Auto</span>
-              </button>
-              <button type="button" class="scheme-btn" data-scheme="light">
-                <span class="scheme-btn__icon icon--scheme-light"></span>
-                <span data-i18n="panel_appearance_light">Jasny</span>
-              </button>
-            </div>
-            <div class="panel-zoom-row">
-              <label
-                for="ui-zoom-select"
-                class="panel-zoom-row__label"
-                data-i18n="panel_zoom_label"
-                >Zoom interfejsu</label
-              >
-              <button
-                id="panel-zoom-out"
-                type="button"
-                class="panel-zoom-row__step panel-zoom-row__step--before"
-                data-i18n-attr="aria-label:quickSettings_zoomOut;title:quickSettings_zoomOut"
-              >
-                −
-              </button>
-              <select id="ui-zoom-select" class="panel-zoom-row__select">
-                <option value="80">80%</option>
-                <option value="90">90%</option>
-                <option value="100" selected>100%</option>
-                <option value="110">110%</option>
-                <option value="120">120%</option>
-              </select>
-              <button
-                id="panel-zoom-in"
-                type="button"
-                class="panel-zoom-row__step panel-zoom-row__step--after"
-                data-i18n-attr="aria-label:quickSettings_zoomIn;title:quickSettings_zoomIn"
-              >
-                +
-              </button>
-            </div>
-            <div class="panel-zoom-row">
-              <label
-                for="ui-font-select"
-                class="panel-zoom-row__label"
-                data-i18n="panel_font_label"
-                >Krój pisma</label
-              >
-              <!-- Wyjaśnienie idzie przez data-tooltip-content, nie title —
-                   tekst jest długi, więc korzysta z blokowego wariantu
-                   tooltipa. Wariant "info", nie "preview": ten drugi ucina
-                   po 6 linijkach, co przy wyjaśnieniu nie ma sensu. -->
-              <span
-                class="panel-info-icon"
-                tabindex="0"
-                role="note"
-                data-tooltip-variant="info"
-                data-i18n-attr="data-tooltip-content:panel_font_info;aria-label:panel_font_info"
-                >?</span
-              >
-              <select id="ui-font-select" class="panel-zoom-row__select">
-                <option value="system" selected data-i18n="panel_font_system">
-                  Systemowy
-                </option>
-                <option value="lexend">Lexend</option>
-              </select>
-            </div>
-            <div class="panel-zoom-row">
-              <label
-                for="preview-icon-select"
-                class="panel-zoom-row__label"
-                data-i18n="panel_previewIcon_label"
-                >Ikona podglądu na liście</label
-              >
-              <select id="preview-icon-select" class="panel-zoom-row__select">
-                <option value="hover" selected data-i18n="panel_previewIcon_hover">
-                  Po najechaniu
-                </option>
-                <option value="always" data-i18n="panel_previewIcon_always">
-                  Zawsze
-                </option>
-                <option value="off" data-i18n="panel_previewIcon_off">
-                  Wyłączona
-                </option>
-              </select>
-            </div>
-            <div class="panel-zoom-row">
-              <label
-                for="section-add-select"
-                class="panel-zoom-row__label"
-                data-i18n="panel_sectionAdd_label"
-                >Przycisk + w sekcjach listy</label
-              >
-              <select id="section-add-select" class="panel-zoom-row__select">
-                <option value="always" selected data-i18n="panel_sectionAdd_always">
-                  Zawsze
-                </option>
-                <option value="hover" data-i18n="panel_sectionAdd_hover">
-                  Po najechaniu
-                </option>
-              </select>
-            </div>
-          </section>
-
-          <section class="panel-section">
-            <h3 data-i18n="panel_editor_title">Edytor</h3>
-            <label class="panel-toggle">
-              <input type="checkbox" id="toolbar-toggle" checked />
-              <span data-i18n="panel_editor_toolbarToggle"
-                >Pokaż toolbar formatowania</span
-              >
-            </label>
-            <label class="panel-toggle">
-              <input type="checkbox" id="toolbar-full-toggle" />
-              <span data-i18n="panel_editor_toolbarFull"
-                >Pełny pasek: separator, cofnij/ponów</span
-              >
-            </label>
-            <label class="panel-toggle">
-              <input type="checkbox" id="toolbar-tooltips-toggle" checked />
-              <span data-i18n="panel_editor_toolbarTooltips"
-                >Pokaż podpowiedzi ikon toolbara</span
-              >
-            </label>
-            <label class="panel-toggle">
-              <input type="checkbox" id="editor-placeholder-toggle" checked />
-              <span data-i18n="panel_editor_placeholder"
-                >Pokaż podpowiedź w pustej linii</span
-              >
-            </label>
-          </section>
-
-          <section class="panel-section">
-            <h3 data-i18n="panel_reminders_title">Przypomnienia</h3>
-            <!-- Czyta background.js przy alarmie "__digest" (uiSettings.morningDigest) -->
-            <label class="panel-toggle">
-              <input type="checkbox" id="morning-digest-toggle" checked />
-              <span data-i18n="panel_reminders_digest"
-                >Poranne podsumowanie o 9:00</span
-              >
-            </label>
-          </section>
-
-          <section class="panel-section">
-            <h3 data-i18n="panel_noteMenu_title">Menu trzech kropek</h3>
-            <p class="panel-section__hint" data-i18n="panel_noteMenu_hint">
-              Zaznaczone działania są schowane w menu. Odznaczone widać jako
-              ikony w nagłówku notatki.
-            </p>
-            <div class="panel-toggle-list">
-              <label class="panel-toggle">
-                <input type="checkbox" data-note-action="important" checked />
-                <span data-i18n="noteMenu_important">Ważne</span>
-              </label>
-              <label class="panel-toggle">
-                <input type="checkbox" data-note-action="focus" checked />
-                <span data-i18n="noteMenu_inProgress">W trakcie</span>
-              </label>
-              <label class="panel-toggle">
-                <input type="checkbox" data-note-action="convert" checked />
-                <span data-i18n="panel_noteMenu_convert"
-                  >Zamiana notatki i zadania</span
-                >
-              </label>
-              <label class="panel-toggle">
-                <input type="checkbox" data-note-action="copy" checked />
-                <span data-i18n="noteMenu_copyMd">Kopiuj jako Markdown</span>
-              </label>
-              <label class="panel-toggle">
-                <input type="checkbox" data-note-action="delete" checked />
-                <span data-i18n="noteMenu_delete">Przenieś do kosza</span>
-              </label>
-            </div>
-          </section>
-
-          <section class="panel-section">
+          <!-- Pierwsza i zawsze rozwinięta: to jedyne miejsce, które mówi, że
+               notatki nie są szyfrowane. Wcześniej była zwinięta pod czterema
+               sekcjami wyglądu. -->
+          <section class="panel-section" id="panel-security">
             <h3 data-i18n="panel_security_title">
               Prywatność i bezpieczeństwo
             </h3>
@@ -1116,13 +1013,13 @@
             <label class="panel-toggle panel-toggle--mt">
               <input type="checkbox" id="security-acknowledge-toggle" />
               <span data-i18n="panel_security_acknowledge">
-                Zapoznałem się z ryzykiem — ukryj ikonę ostrzeżenia
+                Rozumiem — ukryj ostrzeżenie
               </span>
             </label>
           </section>
 
           <section class="panel-section">
-            <h3 data-i18n="panel_data_title">Dane</h3>
+            <h3 data-i18n="panel_data_title">Kopia zapasowa i dane</h3>
             <div class="storage-usage" id="storage-usage">
               <div class="storage-usage__bar-wrap">
                 <div class="storage-usage__bar" id="storage-bar"></div>
@@ -1157,6 +1054,18 @@
               <p id="undo-import-info" class="panel-empty"></p>
             </div>
           </section>
+
+          <section class="panel-section">
+            <h3 data-i18n="panel_reminders_title">Przypomnienia</h3>
+            <!-- Czyta background.js przy alarmie "__digest" (uiSettings.morningDigest) -->
+            <label class="panel-toggle">
+              <input type="checkbox" id="morning-digest-toggle" checked />
+              <span data-i18n="panel_reminders_digest"
+                >Poranne podsumowanie o 9:00</span
+              >
+            </label>
+          </section>
+
           <section class="panel-section">
             <h3 data-i18n="ob_panel_title">Przewodnik</h3>
             <div id="onboarding-panel-stages">
@@ -1245,7 +1154,214 @@
         </div>
         <!-- koniec panel-body -->
       </div>
-      <!-- koniec panel-pane-settings -->
+      <!-- Tab: Wygląd — motyw, lista, edytor, nagłówek notatki. Tu trafiają
+           kolejne opcje personalizacji widoków, żeby nie wydłużały „Ogólnych”. -->
+      <div
+        class="panel-pane panel-pane--hidden"
+        id="panel-pane-appearance"
+        role="tabpanel"
+      >
+        <div class="panel-body">
+          <section class="panel-section">
+            <h3 data-i18n="panel_theme_title">Motyw i tekst</h3>
+            <div
+              class="scheme-toggle"
+              role="group"
+              data-i18n-attr="aria-label:panel_theme_title"
+            >
+              <button type="button" class="scheme-btn" data-scheme="dark">
+                <span class="scheme-btn__icon icon--scheme-dark"></span>
+                <span data-i18n="panel_appearance_dark">Ciemny</span>
+              </button>
+              <button
+                type="button"
+                class="scheme-btn is-active"
+                data-scheme="auto"
+              >
+                <span class="scheme-btn__icon icon--scheme-auto"></span>
+                <span data-i18n="panel_appearance_auto">Auto</span>
+              </button>
+              <button type="button" class="scheme-btn" data-scheme="light">
+                <span class="scheme-btn__icon icon--scheme-light"></span>
+                <span data-i18n="panel_appearance_light">Jasny</span>
+              </button>
+            </div>
+            <!-- Sama lista: kroki −/+ są w dolnym pasku (szybkie ustawienia) -->
+            <div class="panel-zoom-row">
+              <label
+                for="ui-zoom-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_zoom_label"
+                >Zoom interfejsu</label
+              >
+              <select id="ui-zoom-select" class="panel-zoom-row__select">
+                <option value="80">80%</option>
+                <option value="90">90%</option>
+                <option value="100" selected>100%</option>
+                <option value="110">110%</option>
+                <option value="120">120%</option>
+              </select>
+            </div>
+            <div class="panel-zoom-row">
+              <label
+                for="ui-font-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_font_label"
+                >Krój pisma</label
+              >
+              <!-- Wyjaśnienie idzie przez data-tooltip-content, nie title —
+                   tekst jest długi, więc korzysta z blokowego wariantu
+                   tooltipa. Wariant "info", nie "preview": ten drugi ucina
+                   po 6 linijkach, co przy wyjaśnieniu nie ma sensu. -->
+              <span
+                class="panel-info-icon"
+                tabindex="0"
+                role="note"
+                data-tooltip-variant="info"
+                data-i18n-attr="data-tooltip-content:panel_font_info;aria-label:panel_font_info"
+                >?</span
+              >
+              <select id="ui-font-select" class="panel-zoom-row__select">
+                <option value="system" selected data-i18n="panel_font_system">
+                  Systemowy
+                </option>
+                <option value="lexend">Lexend</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <h3 data-i18n="panel_list_title">Lista notatek</h3>
+            <div class="panel-zoom-row panel-zoom-row--first">
+              <label
+                for="preview-icon-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_previewIcon_label"
+                >Ikona podglądu na liście</label
+              >
+              <select id="preview-icon-select" class="panel-zoom-row__select">
+                <option value="hover" selected data-i18n="panel_previewIcon_hover">
+                  Po najechaniu
+                </option>
+                <option value="always" data-i18n="panel_previewIcon_always">
+                  Zawsze
+                </option>
+                <option value="off" data-i18n="panel_previewIcon_off">
+                  Wyłączona
+                </option>
+              </select>
+            </div>
+            <div class="panel-zoom-row">
+              <label
+                for="section-add-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_sectionAdd_label"
+                >Przycisk + w sekcjach listy</label
+              >
+              <select id="section-add-select" class="panel-zoom-row__select">
+                <option value="always" selected data-i18n="panel_sectionAdd_always">
+                  Zawsze
+                </option>
+                <option value="hover" data-i18n="panel_sectionAdd_hover">
+                  Po najechaniu
+                </option>
+              </select>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <h3 data-i18n="panel_editor_title">Edytor</h3>
+            <!-- Jeden przełącznik zamiast dwóch pól: „pełny pasek" przy
+                 ukrytym pasku nie miał sensu. Stan dalej trzymają dwa ukryte
+                 checkboxy — czyta je Alt+E i zen (app.js), zapisuje panel.js. -->
+            <span class="panel-field-label" id="toolbar-mode-label" data-i18n="panel_editor_toolbarLabel"
+              >Pasek formatowania</span
+            >
+            <div
+              class="scheme-toggle"
+              id="toolbar-mode"
+              role="radiogroup"
+              aria-labelledby="toolbar-mode-label"
+            >
+              <button type="button" class="scheme-btn" role="radio" data-toolbar-mode="off" data-i18n="panel_editor_toolbarOff">
+                Ukryty
+              </button>
+              <button type="button" class="scheme-btn" role="radio" data-toolbar-mode="basic" data-i18n="panel_editor_toolbarBasic">
+                Podstawowy
+              </button>
+              <button type="button" class="scheme-btn" role="radio" data-toolbar-mode="full" data-i18n="panel_editor_toolbarFullShort">
+                Pełny
+              </button>
+            </div>
+            <p class="panel-section__hint panel-section__hint--below" data-i18n="panel_editor_toolbarHint">
+              Pełny dodaje czyszczenie formatowania oraz Cofnij i Ponów.
+              Alt+E szybko pokazuje i chowa pasek.
+            </p>
+            <input type="checkbox" id="toolbar-toggle" checked hidden />
+            <input type="checkbox" id="toolbar-full-toggle" hidden />
+            <label class="panel-toggle panel-toggle--mt">
+              <input type="checkbox" id="editor-hints-toggle" checked />
+              <span data-i18n="panel_editor_hints"
+                >Pokazuj wskazówki: opisy ikon paska i podpowiedź w pustej
+                linii</span
+              >
+            </label>
+            <!-- Uchwyt ⠿ (editor-drag-handle.js). Wyłączenie zostawia Alt+↑/↓ -->
+            <label class="panel-toggle panel-toggle--mt">
+              <input type="checkbox" id="block-handle-toggle" checked />
+              <span data-i18n="panel_editor_blockHandle"
+                >Uchwyt ⠿ do przeciągania bloków przy lewej krawędzi notatki
+                (bez niego: Alt+↑/↓)</span
+              >
+            </label>
+          </section>
+
+          <section class="panel-section">
+            <h3 data-i18n="panel_noteMenu_title">Nagłówek notatki</h3>
+            <p class="panel-section__hint" data-i18n="panel_noteMenu_hint">
+              Kliknij działanie, żeby przypiąć je jako ikonę w nagłówku.
+              Pozostałe są w menu ⋮.
+            </p>
+            <!-- Podgląd na żywo: te same ikony co w prawdziwym nagłówku
+                 (sidebar.html: #pin-*), żeby było widać skutek kliknięcia -->
+            <div class="note-header-preview" aria-hidden="true">
+              <span
+                class="note-header-preview__title"
+                data-i18n="panel_noteMenu_previewTitle"
+                >Przykładowa notatka</span
+              >
+              <span class="note-header-preview__icon icon--star" data-preview-action="important" hidden></span>
+              <span class="note-header-preview__icon icon--focus" data-preview-action="focus" hidden></span>
+              <span class="note-header-preview__icon icon--type-task" data-preview-action="convert" hidden></span>
+              <span class="note-header-preview__icon icon--copy" data-preview-action="copy" hidden></span>
+              <span class="note-header-preview__icon icon--bin" data-preview-action="delete" hidden></span>
+              <span class="note-header-preview__icon icon--dots-vertical"></span>
+            </div>
+            <div class="header-actions" role="group" data-i18n-attr="aria-label:panel_noteMenu_title">
+              <button type="button" class="header-action" data-note-action="important" aria-pressed="false">
+                <span class="header-action__icon icon--star"></span>
+                <span data-i18n="noteMenu_important">Ważne</span>
+              </button>
+              <button type="button" class="header-action" data-note-action="focus" aria-pressed="false">
+                <span class="header-action__icon icon--focus"></span>
+                <span data-i18n="noteMenu_inProgress">W trakcie</span>
+              </button>
+              <button type="button" class="header-action" data-note-action="convert" aria-pressed="false">
+                <span class="header-action__icon icon--type-task"></span>
+                <span data-i18n="panel_noteMenu_convert">Zamiana notatki i zadania</span>
+              </button>
+              <button type="button" class="header-action" data-note-action="copy" aria-pressed="false">
+                <span class="header-action__icon icon--copy"></span>
+                <span data-i18n="noteMenu_copyMd">Kopiuj jako Markdown</span>
+              </button>
+              <button type="button" class="header-action" data-note-action="delete" aria-pressed="false">
+                <span class="header-action__icon icon--bin"></span>
+                <span data-i18n="noteMenu_delete">Przenieś do kosza</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
       <!-- Tab tagi -->
       <div
         class="panel-pane panel-pane--hidden"
@@ -1278,6 +1394,25 @@
         id="panel-pane-shortcuts"
         role="tabpanel"
       >
+        <!-- Filtr: skrótów jest ~60, szukanie ich wzrokiem po sekcjach było
+             najwolniejszą częścią tej zakładki. Pole przeszukuje OBIE
+             podzakładki naraz (panel.js: initShortcutsFilter). -->
+        <div class="shortcuts-filter">
+          <input
+            id="shortcuts-filter-input"
+            type="search"
+            autocomplete="off"
+            data-i18n-attr="placeholder:shortcuts_filter_placeholder;aria-label:shortcuts_filter_placeholder"
+          />
+        </div>
+        <p
+          id="shortcuts-filter-empty"
+          class="panel-shortcuts__note"
+          data-i18n="shortcuts_filter_empty"
+          hidden
+        >
+          Brak pasującego skrótu
+        </p>
         <div class="shortcuts-subtabs">
           <button
             class="shortcuts-subtab is-active"
@@ -1298,7 +1433,7 @@
         <!-- Zakładka: Ogólne -->
         <div class="panel-shortcuts" id="shortcuts-pane-general">
           <div class="panel-shortcuts__section">
-            <b data-i18n="shortcuts_sidebar">Sidebar</b>
+            <b data-i18n="shortcuts_global">Globalne</b>
             <p class="panel-shortcuts__note" data-i18n="shortcuts_editable_note">
               Dwa pierwsze skróty działają w całej przeglądarce. Jeśli kolidują
               z inną aplikacją, naciśnij „Zmień” i wciśnij własną kombinację,
@@ -1368,108 +1503,121 @@
                   hidden
                 ></span>
               </li>
+            </ul>
+          </div>
+
+          <div class="panel-shortcuts__section">
+            <b data-i18n="shortcuts_navigation">Nawigacja</b>
+            <ul>
               <li>
-                <code>Alt+C</code
-                ><span data-i18n="shortcuts_general_capture"
+                <code>Alt+C</code><span data-i18n="shortcuts_general_capture"
                   >→ fokus na quick capture</span
                 >
               </li>
               <li>
-                <code>Alt+T</code
-                ><span data-i18n="shortcuts_general_captureTask"
+                <code>Alt+T</code><span data-i18n="shortcuts_general_captureTask"
                   >→ quick capture zadania (!)</span
                 >
               </li>
               <li>
-                <code>Alt+S</code
-                ><span data-i18n="shortcuts_general_search"
+                <code>Alt+S</code><span data-i18n="shortcuts_general_search"
                   >→ fokus na wyszukiwarkę</span
                 >
               </li>
               <li>
-                <code>Alt+F</code
-                ><span data-i18n="shortcuts_general_filter">→ filtry</span>
+                <code>Alt+F</code><span data-i18n="shortcuts_general_filter"
+                  >→ filtry</span
+                >
               </li>
               <li>
-                <code>Alt+L</code
-                ><span data-i18n="shortcuts_general_list"
+                <code>Alt+L</code><span data-i18n="shortcuts_general_list"
                   >→ fokus na listę</span
                 >
               </li>
               <li>
-                <code>Alt+Z</code
-                ><span data-i18n="shortcuts_zenMode">→ tryb zen</span>
-              </li>
-              <li>
-                <code>Alt+E</code
-                ><span data-i18n="shortcuts_toolbarToggle"
-                  >→ pokaż/ukryj toolbar</span
-                >
-              </li>
-              <li>
-                <code>Alt+K</code
-                ><span data-i18n="shortcuts_copyMd"
-                  >→ kopiuj notatkę jako Markdown</span
-                >
-              </li>
-              <li>
-                <code>Alt+I</code
-                ><span data-i18n="shortcuts_important"
-                  >→ oznacz jako ważne</span
-                >
-              </li>
-              <li>
-                <code>Alt+W</code
-                ><span data-i18n="shortcuts_inProgress"
-                  >→ oznacz jako w trakcie</span
-                >
-              </li>
-              <li>
-                <code>Enter</code
-                ><span data-i18n="shortcuts_titleEnter"
-                  >→ z tytułu do treści</span
-                >
-              </li>
-              <li>
-                <code>Ctrl+Enter</code
-                ><span data-i18n="shortcuts_complete"
-                  >→ ukończ otwarte zadanie</span
-                >
-              </li>
-              <li>
-                <code>Ctrl+V</code
-                ><span data-i18n="shortcuts_pasteMd"
-                  >→ wklejony Markdown staje się formatowaniem</span
-                >
-              </li>
-              <li>
-                <code>Ctrl+S</code
-                ><span data-i18n="shortcuts_general_save"
-                  >→ zapisz natychmiast</span
-                >
-              </li>
-              <li>
-                <code>Alt+P</code
-                ><span data-i18n="shortcuts_general_panel"
+                <code>Alt+P</code><span data-i18n="shortcuts_general_panel"
                   >→ panel personalizacji</span
                 >
               </li>
               <li>
-                <code>Tab</code
-                ><span data-i18n="shortcuts_general_tab"
+                <code>Tab</code><span data-i18n="shortcuts_general_tab"
                   >→ następny element</span
                 >
               </li>
               <li>
-                <code>Shift+Tab</code
-                ><span data-i18n="shortcuts_general_shiftTab"
+                <code>Shift+Tab</code><span data-i18n="shortcuts_general_shiftTab"
                   >→ poprzedni element</span
                 >
               </li>
               <li>
-                <code>Esc</code
-                ><span data-i18n="shortcuts_general_esc"
+                <code>Esc</code><span data-i18n="shortcuts_general_esc"
                   >→ wróć na listę / wyczyść capture</span
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel-shortcuts__section">
+            <b data-i18n="shortcuts_note">Otwarta notatka</b>
+            <ul>
+              <li>
+                <code>Enter</code><span data-i18n="shortcuts_titleEnter"
+                  >→ z tytułu do treści</span
+                >
+              </li>
+              <li>
+                <code>Ctrl+F</code><span data-i18n="shortcuts_general_find"
+                  >→ znajdź w notatce</span
+                >
+              </li>
+              <li>
+                <code>Alt+G</code><span data-i18n="shortcuts_general_tags"
+                  >→ tagi notatki</span
+                >
+              </li>
+              <li>
+                <code>Alt+I</code><span data-i18n="shortcuts_important"
+                  >→ oznacz jako ważne</span
+                >
+              </li>
+              <li>
+                <code>Alt+W</code><span data-i18n="shortcuts_inProgress"
+                  >→ oznacz jako w trakcie</span
+                >
+              </li>
+              <li>
+                <code>Ctrl+Enter</code><span data-i18n="shortcuts_complete"
+                  >→ ukończ otwarte zadanie</span
+                >
+              </li>
+              <li>
+                <code>Alt+Z</code><span data-i18n="shortcuts_zenMode"
+                  >→ tryb zen</span
+                >
+              </li>
+              <li>
+                <code>Alt+E</code><span data-i18n="shortcuts_toolbarToggle"
+                  >→ pokaż/ukryj toolbar</span
+                >
+              </li>
+              <li>
+                <code>Alt+K</code><span data-i18n="shortcuts_copyMd"
+                  >→ kopiuj notatkę jako Markdown</span
+                >
+              </li>
+              <li>
+                <code>Ctrl+S</code><span data-i18n="shortcuts_general_save"
+                  >→ zapisz natychmiast</span
+                >
+              </li>
+              <li>
+                <code>Ctrl+V</code><span data-i18n="shortcuts_pasteMd"
+                  >→ wklejony Markdown staje się formatowaniem</span
+                >
+              </li>
+              <li>
+                <code>Ctrl+Shift+V</code><span data-i18n="shortcuts_formatting_pastePlain"
+                  >→ wklej bez formatowania</span
                 >
               </li>
             </ul>
@@ -1914,190 +2062,208 @@
           +
         </button>
       </div>
-      <!-- Widoczny tylko w wersji testowej (data-build="dev", tokens.css) -->
-      <span
-        class="dev-badge"
-        id="dev-badge"
-        data-i18n-attr="title:devBadge_title;aria-label:devBadge_title"
-        role="note"
-        >DEV</span
-      >
-      <div id="security-btn-wrapper">
-        <button
-          id="security-btn"
-          class="icon-btn icon-btn--md icon--security"
-          data-i18n-attr="aria-label:security_btn_ariaLabel;title:security_btn_title"
-        ></button>
-        <div id="security-tooltip" class="security-tooltip" hidden>
-          <p data-i18n="security_tooltip_text">
-            Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do
-            profilu Firefox.
-          </p>
+      <!-- Ikony paska trzymamy w jednej grupie: gdy w wąskim panelu wszystko
+           nie mieści się w jednym wierszu, do górnego rzędu idą CAŁE szybkie
+           ustawienia, a te ikony zostają razem przy dolnej krawędzi — nie
+           rozsypują się po dwóch wierszach i nie uciekają spod kursora. -->
+      <div class="bottom-bar__icons">
+        <!-- Widoczny tylko w wersji testowej (data-build="dev", tokens.css) -->
+        <span
+          class="dev-badge"
+          id="dev-badge"
+          data-i18n-attr="title:devBadge_title;aria-label:devBadge_title"
+          role="note"
+          >DEV</span
+        >
+        <div id="security-btn-wrapper">
           <button
-            id="security-tooltip-goto"
-            class="security-tooltip__btn"
-            data-i18n="security_tooltip_goto"
-          >
-            Przejdź do ustawień →
-          </button>
-        </div>
-      </div>
-      <div id="shortcut-tooltip-wrapper">
-        <button
-          id="toggle-shortcuts"
-          class="icon-btn icon-btn--md icon--keyboard"
-          data-i18n-attr="aria-label:shortcuts_toggle_ariaLabel;title:shortcuts_toggle_title"
-          aria-expanded="false"
-        ></button>
-        <div id="shortcut-tooltip" role="tooltip">
-          <div class="tooltip-content">
-            <h4 data-i18n="shortcuts_title">Skróty</h4>
-
-            <div class="tooltip-section">
-              <ul>
-                <li>
-                  <code data-command="toggle-sidebar">Alt+Shift+Q</code
-                  ><span data-i18n="shortcuts_general_toggle"
-                    >→ otwórz / zamknij</span
-                  >
-                </li>
-                <li>
-                  <code data-command="_execute_browser_action">Alt+Shift+S</code
-                  ><span data-i18n="shortcuts_general_popup"
-                    >→ szybkie dodawanie (popup)</span
-                  >
-                </li>
-                <li>
-                  <code>Alt+C</code
-                  ><span data-i18n="shortcuts_general_capture"
-                    >→ quick capture</span
-                  >
-                </li>
-                <li>
-                  <code>Alt+S</code
-                  ><span data-i18n="shortcuts_general_search"
-                    >→ wyszukiwarka</span
-                  >
-                </li>
-                <li>
-                  <code>Alt+F</code
-                  ><span data-i18n="shortcuts_general_filter">→ filtry</span>
-                </li>
-                <li>
-                  <code>Alt+L</code
-                  ><span data-i18n="shortcuts_general_list"
-                    >→ fokus na listę</span
-                  >
-                </li>
-                <li>
-                  <code>Ctrl+S</code
-                  ><span data-i18n="shortcuts_general_save"
-                    >→ zapisz natychmiast</span
-                  >
-                </li>
-                <li>
-                  <code>Tab</code
-                  ><span data-i18n="shortcuts_general_tab"
-                    >→ następny element</span
-                  >
-                </li>
-                <li>
-                  <code>Shift+Tab</code
-                  ><span data-i18n="shortcuts_general_shiftTab"
-                    >→ poprzedni element</span
-                  >
-                </li>
-              </ul>
-            </div>
-
-            <div class="tooltip-section">
-              <b data-i18n="shortcuts_markdown">Markdown</b>
-              <ul>
-                <li>
-                  <code>#</code
-                  ><span data-i18n="shortcuts_markdown_h1">→ H1</span>
-                </li>
-                <li>
-                  <code>##</code
-                  ><span data-i18n="shortcuts_markdown_h2">→ H2</span>
-                </li>
-                <li>
-                  <code>###</code
-                  ><span data-i18n="shortcuts_markdown_h3">→ H3</span>
-                </li>
-                <li>
-                  <code>-</code
-                  ><span data-i18n="shortcuts_markdown_list">→ Lista</span>
-                </li>
-                <li>
-                  <code>1.</code
-                  ><span data-i18n="shortcuts_markdown_ordered"
-                    >→ Lista numerowana</span
-                  >
-                </li>
-                <li>
-                  <code>-[ ]</code
-                  ><span data-i18n="shortcuts_markdown_checklist"
-                    >→ Lista zadań</span
-                  >
-                </li>
-                <li>
-                  <code>-[x]</code
-                  ><span data-i18n="shortcuts_markdown_checklist_done"
-                    >→ zaznaczone</span
-                  >
-                </li>
-                <li>
-                  <code>&gt;</code
-                  ><span data-i18n="shortcuts_markdown_quote">→ Cytat</span>
-                </li>
-                <li>
-                  <code>---</code
-                  ><span data-i18n="shortcuts_markdown_hr">→ Separator</span>
-                </li>
-                <li>
-                  <code>[tekst](url)</code
-                  ><span data-i18n="shortcuts_markdown_link">→ Link</span>
-                </li>
-                <li>
-                  <code>`kod`</code
-                  ><span data-i18n="shortcuts_markdown_code">→ Kod inline</span>
-                </li>
-                <li>
-                  <code>&gt;[!NOTE]</code
-                  ><span data-i18n="shortcuts_markdown_callout_note"
-                    >→ Note</span
-                  >
-                </li>
-                <li>
-                  <code>&gt;[!TIP]</code
-                  ><span data-i18n="shortcuts_markdown_callout_tip">→ Tip</span>
-                </li>
-                <li>
-                  <code>&gt;[!WARNING]</code
-                  ><span data-i18n="shortcuts_markdown_callout_warning"
-                    >→ Warning</span
-                  >
-                </li>
-              </ul>
-            </div>
-
+            id="security-btn"
+            class="icon-btn icon-btn--md icon--security"
+            data-i18n-attr="aria-label:security_btn_ariaLabel;title:security_btn_title"
+          ></button>
+          <div id="security-tooltip" class="security-tooltip" hidden>
+            <p data-i18n="security_tooltip_text">
+              Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do
+              profilu Firefox.
+            </p>
             <button
-              type="button"
-              class="tooltip-all-shortcuts-btn"
-              id="tooltip-all-shortcuts-btn"
-              data-i18n="shortcuts_showAll"
+              id="security-tooltip-goto"
+              class="security-tooltip__btn"
+              data-i18n="security_tooltip_goto"
             >
-              Wszystkie skróty →
+              Przejdź do ustawień →
             </button>
           </div>
         </div>
+        <div id="shortcut-tooltip-wrapper">
+          <button
+            id="toggle-shortcuts"
+            class="icon-btn icon-btn--md icon--keyboard"
+            data-i18n-attr="aria-label:shortcuts_toggle_ariaLabel;title:shortcuts_toggle_title"
+            aria-expanded="false"
+          ></button>
+          <div id="shortcut-tooltip" role="tooltip">
+            <div class="tooltip-content">
+              <h4 data-i18n="shortcuts_title">Skróty</h4>
+
+              <div class="tooltip-section">
+                <ul>
+                  <li>
+                    <code data-command="toggle-sidebar">Alt+Shift+Q</code
+                    ><span data-i18n="shortcuts_general_toggle"
+                      >→ otwórz / zamknij</span
+                    >
+                  </li>
+                  <li>
+                    <code data-command="_execute_browser_action">Alt+Shift+S</code
+                    ><span data-i18n="shortcuts_general_popup"
+                      >→ szybkie dodawanie (popup)</span
+                    >
+                  </li>
+                  <li>
+                    <code>Alt+C</code
+                    ><span data-i18n="shortcuts_general_capture"
+                      >→ quick capture</span
+                    >
+                  </li>
+                  <li>
+                    <code>Alt+S</code
+                    ><span data-i18n="shortcuts_general_search"
+                      >→ wyszukiwarka</span
+                    >
+                  </li>
+                  <li>
+                    <code>Alt+F</code
+                    ><span data-i18n="shortcuts_general_filter">→ filtry</span>
+                  </li>
+                  <li>
+                    <code>Alt+L</code
+                    ><span data-i18n="shortcuts_general_list"
+                      >→ fokus na listę</span
+                    >
+                  </li>
+                  <li>
+                    <code>Alt+G</code
+                    ><span data-i18n="shortcuts_general_tags"
+                      >→ tagi notatki</span
+                    >
+                  </li>
+                  <li>
+                    <code>Ctrl+F</code
+                    ><span data-i18n="shortcuts_general_find"
+                      >→ znajdź w notatce</span
+                    >
+                  </li>
+                  <li>
+                    <code>Ctrl+S</code
+                    ><span data-i18n="shortcuts_general_save"
+                      >→ zapisz natychmiast</span
+                    >
+                  </li>
+                  <li>
+                    <code>Tab</code
+                    ><span data-i18n="shortcuts_general_tab"
+                      >→ następny element</span
+                    >
+                  </li>
+                  <li>
+                    <code>Shift+Tab</code
+                    ><span data-i18n="shortcuts_general_shiftTab"
+                      >→ poprzedni element</span
+                    >
+                  </li>
+                </ul>
+              </div>
+
+              <div class="tooltip-section">
+                <b data-i18n="shortcuts_markdown">Markdown</b>
+                <ul>
+                  <li>
+                    <code>#</code
+                    ><span data-i18n="shortcuts_markdown_h1">→ H1</span>
+                  </li>
+                  <li>
+                    <code>##</code
+                    ><span data-i18n="shortcuts_markdown_h2">→ H2</span>
+                  </li>
+                  <li>
+                    <code>###</code
+                    ><span data-i18n="shortcuts_markdown_h3">→ H3</span>
+                  </li>
+                  <li>
+                    <code>-</code
+                    ><span data-i18n="shortcuts_markdown_list">→ Lista</span>
+                  </li>
+                  <li>
+                    <code>1.</code
+                    ><span data-i18n="shortcuts_markdown_ordered"
+                      >→ Lista numerowana</span
+                    >
+                  </li>
+                  <li>
+                    <code>-[ ]</code
+                    ><span data-i18n="shortcuts_markdown_checklist"
+                      >→ Lista zadań</span
+                    >
+                  </li>
+                  <li>
+                    <code>-[x]</code
+                    ><span data-i18n="shortcuts_markdown_checklist_done"
+                      >→ zaznaczone</span
+                    >
+                  </li>
+                  <li>
+                    <code>&gt;</code
+                    ><span data-i18n="shortcuts_markdown_quote">→ Cytat</span>
+                  </li>
+                  <li>
+                    <code>---</code
+                    ><span data-i18n="shortcuts_markdown_hr">→ Separator</span>
+                  </li>
+                  <li>
+                    <code>[tekst](url)</code
+                    ><span data-i18n="shortcuts_markdown_link">→ Link</span>
+                  </li>
+                  <li>
+                    <code>`kod`</code
+                    ><span data-i18n="shortcuts_markdown_code">→ Kod inline</span>
+                  </li>
+                  <li>
+                    <code>&gt;[!NOTE]</code
+                    ><span data-i18n="shortcuts_markdown_callout_note"
+                      >→ Note</span
+                    >
+                  </li>
+                  <li>
+                    <code>&gt;[!TIP]</code
+                    ><span data-i18n="shortcuts_markdown_callout_tip">→ Tip</span>
+                  </li>
+                  <li>
+                    <code>&gt;[!WARNING]</code
+                    ><span data-i18n="shortcuts_markdown_callout_warning"
+                      >→ Warning</span
+                    >
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                class="tooltip-all-shortcuts-btn"
+                id="tooltip-all-shortcuts-btn"
+                data-i18n="shortcuts_showAll"
+              >
+                Wszystkie skróty →
+              </button>
+            </div>
+          </div>
+        </div>
+        <button
+          id="panel-btn"
+          class="icon-btn icon-btn--md icon--settings"
+          data-i18n-attr="aria-label:panelBtn_ariaLabel;title:panelBtn_title"
+        ></button>
       </div>
-      <button
-        id="panel-btn"
-        class="icon-btn icon-btn--md icon--settings"
-        data-i18n-attr="aria-label:panelBtn_ariaLabel;title:panelBtn_title"
-      ></button>
     </div>
 
     <!-- Date picker popover -->

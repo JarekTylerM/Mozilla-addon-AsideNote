@@ -4,12 +4,16 @@
     {
       "name": "sidebar-preview",
       "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "C:/Users/JAROSA~1/AppData/Local/Temp/claude/350d8c3d2f2ce08d/0fe21d3c-50de-4bfd-819f-d206cbd177a4/scratchpad/preview/server.mjs",
-        ".",
-        "5199"
-      ],
-      "port": 5199
+      "runtimeArgs": ["tools/preview-server.mjs", ".", "5199"],
+      "port": 5199,
+      "url": "http://localhost:5199"
+    },
+    {
+      "name": "sidebar-preview-alt",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/preview-server.mjs", ".", "5200"],
+      "port": 5200,
+      "url": "http://localhost:5200"
     }
   ]
 }

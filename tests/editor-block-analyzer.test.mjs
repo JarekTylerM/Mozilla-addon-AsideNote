@@ -65,6 +65,27 @@ test('99. → ordered', () => {
   expect(detectSpaceTrigger('99.', '99.')?.trigger).toBe('ordered');
 });
 
+console.log('\n3b. detectSpaceTrigger — wiersz, który ma już treść');
+
+test('"1." na początku wiersza z tekstem → ordered', () => {
+  // blockText: "1.zakupy", kursor zaraz za "1."
+  const r = detectSpaceTrigger('1.zakupy', '1.');
+  expect(r?.trigger).toBe('ordered');
+  expect(r?.start).toBe(1);
+});
+test('"-" na początku wiersza z tekstem → bullet', () => {
+  expect(detectSpaceTrigger('-zakupy', '-')?.trigger).toBe('bullet');
+});
+test('"##" na początku wiersza z tekstem → heading', () => {
+  expect(detectSpaceTrigger('##Tytuł', '##')?.level).toBe(2);
+});
+test('znacznik w środku zdania → null', () => {
+  expect(detectSpaceTrigger('ala - ma kota', 'ala -')).toBe(null);
+});
+test('spacja na końcu gotowego punktu → null', () => {
+  expect(detectSpaceTrigger('1. zakupy', '1. zakupy')).toBe(null);
+});
+
 console.log('\n4. detectSpaceTrigger — callout blocks');
 
 test('>[!NOTE] → callout note', () => {

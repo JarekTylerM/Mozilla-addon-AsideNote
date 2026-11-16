@@ -9,6 +9,8 @@
 
 AsideNotes lives in the Firefox sidebar. Everything you write stays in `browser.storage.local` on your own machine. The extension declares `data_collection_permissions: ["none"]` and requests exactly three permissions: `storage`, `alarms`, `notifications`.
 
+What changed in each version, in plain words: [CHANGELOG.md](CHANGELOG.md) (Polish).
+
 ---
 
 ## Features
@@ -99,16 +101,25 @@ Requires **Firefox 120+** (`strict_min_version`).
 |---|---|
 | `Alt+Shift+Q` | Toggle the sidebar |
 | `Alt+Shift+S` | Open quick capture |
+| `Alt+G` | Note tags — search, toggle, or create one without leaving the keyboard |
+| `Ctrl+F` | Find in the open note (`Enter` / `Shift+Enter` or `F3` walk the matches, `Esc` closes) |
 | `Ctrl+B` / `Ctrl+I` / `Ctrl+U` | Bold / italic / underline |
 | `Ctrl+Shift+X` | Strikethrough |
 | ``Ctrl+` `` | Inline code |
 | `Ctrl+K` | Insert link |
 | `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo / redo |
+| `Ctrl+V` / `Ctrl+Shift+V` | Paste (Markdown becomes formatting) / paste as plain text |
 | `Ctrl+S` | Save now (autosave runs anyway) |
 
 The first two work browser-wide, so they can clash with another app or add-on. Change them in the sidebar: **Shortcuts** panel → **Change** → press the new combination (**Default** puts `Alt+Shift+Q` back). In Chrome and Edge, use `chrome://extensions/shortcuts`.
 
 In quick capture, `Enter` adds the item; `Shift+Enter` adds it **and** opens it in the sidebar.
+
+The full list lives in the sidebar: **Shortcuts** panel, with a search box that filters both tabs at once.
+
+**Find in the note.** The browser's own `Ctrl+F` searches the page behind the sidebar, not the note, so the sidebar takes that shortcut over: a find bar above the toolbar counts the matches, walks them with `Enter` / `Shift+Enter` (or `F3`), and highlights them without touching the note — highlights go through the CSS Custom Highlight API, and where it is missing the current match is simply selected. Accents and case are ignored, so `lodz` finds `Łódź`. The search box above the list (`Alt+S`) stays what it was: it picks the note (title, body and tag names), while `Ctrl+F` finds the place inside it.
+
+**Tags from the note.** `Alt+G` (or the `+ add tag` chip) opens one field that both searches and names: type, and the list narrows; press `Enter` on a name that does not exist yet and the tag is created and attached to the note on the spot. Arrows walk the list, `Enter` toggles a tag, `Esc` closes and hands focus back.
 
 ---
 
@@ -125,6 +136,16 @@ node build.mjs     # minify + package
 ```
 
 `tests/run.mjs` regenerates the `tests/*.mjs` mirrors from `scripts/*.js` on every run, so the suite always exercises current source. Those mirrors are gitignored — never edit them by hand.
+
+### Previewing the sidebar outside Firefox
+
+The sidebar needs `browser.*`, so opening `sidebar.html` as a file gives a blank screen. `tools/preview-server.mjs` serves the project and assembles `/preview-harness.html` on the fly: the same `sidebar.html` plus a stub for `browser.*` (storage in `localStorage`, strings from `_locales/pl`). Nothing is written to disk, so the package never sees it.
+
+```bash
+node tools/preview-server.mjs . 5199   # → http://localhost:5199/preview-harness.html
+```
+
+Layout, panels and editor behaviour are real; alarms, commands and anything else behind the stubbed API are not. Firefox remains the place to verify the extension itself.
 
 ### Layout
 
@@ -198,6 +219,8 @@ The bundled **Lexend** typeface is © 2018 The Lexend Project Authors and is dis
 **Lekki notatnik w panelu bocznym przeglądarki.** Notatki i zadania z formatowaniem, zawsze o jeden skrót klawiszowy stąd — bez konta, bez serwera, bez telemetrii.
 
 Wszystko, co napiszesz, zostaje w `browser.storage.local` na Twoim komputerze. Rozszerzenie deklaruje `data_collection_permissions: ["none"]` i prosi dokładnie o trzy uprawnienia: `storage`, `alarms`, `notifications`.
+
+Co się zmieniło w kolejnych wersjach, zwykłymi słowami: [CHANGELOG.md](CHANGELOG.md).
 
 ## Funkcje
 

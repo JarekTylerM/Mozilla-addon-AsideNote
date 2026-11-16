@@ -4,20 +4,14 @@
 
 /* ── Tags & tag selector ──────────────────── */
 
-/* Wiersz tagów siedzi teraz przy samej dolnej krawędzi, na jednej linii
-   z pływającym #bottom-bar. padding-right trzyma pigułki po lewej stronie
-   paska — bez tego wjeżdżałyby pod przyciski i stawały się nieklikalne. */
+/* Wiersz tagów siedzi przy dolnej krawędzi treści, a pasek ikon (#bottom-bar)
+   stoi w osobnym wierszu POD nim. Pigułki mają więc całą szerokość — rezerwa
+   z prawej (--bottom-bar-reserve) zniknęła razem z pływającym paskiem. */
 #tag-selector {
   position: relative;
-  padding: 4px var(--bottom-bar-reserve) 6px 8px;
+  padding: 4px 8px 6px;
   margin-bottom: 2px;
   flex-shrink: 0;
-}
-/* Security ukryty → pasek węższy o jeden przycisk, oddajemy 38px tagom.
-   Ten sam wzorzec co body:has(#main-view.zen-mode) w modes.css. Gdy :has()
-   nie zadziała, zostaje szersza rezerwa — nadmiar miejsca, nie kolizja. */
-body:has(#security-btn-wrapper[hidden]) #tag-selector {
-  padding-right: var(--bottom-bar-reserve-narrow);
 }
 #tag-selector-pills {
   display: flex;
@@ -123,6 +117,76 @@ button.tag-pill {
   min-width: 160px;
   overflow: hidden;
   box-shadow: var(--shadow-md);
+}
+
+/* Pole robi za wyszukiwarkę I za nazwę nowego tagu — stąd „+" obok niego.
+   Dropdown jest wąski (min-width 160px), więc pole dostaje całą szerokość,
+   a przycisk tylko tyle, ile potrzebuje. */
+.tag-dropdown__search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-bottom: 1px solid var(--border);
+}
+#tag-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 7px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-md);
+}
+#tag-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.tag-dropdown__create {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--text-base);
+  line-height: 1;
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+.tag-dropdown__create:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+.tag-dropdown__create:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* Podpowiedź („Enter tworzy tag …") i błąd walidacji — ten sam wiersz pod
+   listą, więc dropdown nie skacze na wysokość przy przełączaniu między nimi. */
+.tag-dropdown__hint,
+.tag-dropdown__error {
+  margin: 0;
+  padding: 5px 10px;
+  font-size: var(--text-xs);
+  line-height: var(--lh-tight);
+  border-top: 1px solid var(--border);
+}
+.tag-dropdown__hint {
+  color: var(--text-3);
+}
+.tag-dropdown__error {
+  color: var(--danger);
+}
+.tag-dropdown__hint[hidden],
+.tag-dropdown__error[hidden] {
+  display: none;
 }
 
 #tag-options {

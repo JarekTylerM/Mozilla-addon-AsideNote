@@ -385,6 +385,7 @@ function adaptForChromium(relPath, text) {
 // licencji towarzyszył dystrybuowanym źródłom.
 const IGNORE = new Set([
   'node_modules', 'dist', 'dist-dev', 'dist-self', 'updates', 'tests', '.git', 'docs',
+  'tools',          // skrypty dev (podgląd sidebara poza Firefoksem)
   'dist-chromium', 'dist-chromium-dev',
   'platform',       // adaptery przeglądarek — dokładane niżej tylko dla swojego celu
   'build.mjs', 'build.js', 'build-dev-manifest.mjs',

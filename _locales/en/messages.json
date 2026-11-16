@@ -254,6 +254,21 @@
   "filter_title": {
     "message": "Filters · Alt+F"
   },
+  "find_placeholder": {
+    "message": "Find in note"
+  },
+  "find_next": {
+    "message": "Next match · Enter"
+  },
+  "find_prev": {
+    "message": "Previous match · Shift+Enter"
+  },
+  "find_close": {
+    "message": "Close find · Esc"
+  },
+  "find_noMatch": {
+    "message": "0"
+  },
   "focus_remove_title": {
     "message": "In progress — remove mark"
   },
@@ -564,7 +579,7 @@
     "message": "One last thing: notes are not encrypted — anyone with access to this browser profile can read them. Don't store passwords or card numbers in them."
   },
   "ob_s4_settings": {
-    "message": "Under the ⚙ icon you'll find settings: theme, interface size and the full list of keyboard shortcuts (Shortcuts tab)."
+    "message": "Under the ⚙ icon you will find settings: privacy and backup (General tab), theme and interface size (Appearance tab) and the full list of keyboard shortcuts (Shortcuts tab)."
   },
   "ob_s4_shortcuts": {
     "message": "AsideNotes works from any browser tab: $TOGGLE$ opens and closes this panel, and $POPUP$ brings up the quick add window — you jot things down without interrupting your work.",
@@ -592,7 +607,7 @@
     "message": "Order and your data"
   },
   "panelBtn_ariaLabel": {
-    "message": "Open personalization panel"
+    "message": "Open settings"
   },
   "panelBtn_title": {
     "message": "Settings · Alt+P"
@@ -617,9 +632,6 @@
   },
   "panel_zoom_label": {
     "message": "Interface zoom"
-  },
-  "panel_appearance_title": {
-    "message": "Appearance"
   },
   "panel_close_ariaLabel": {
     "message": "Close panel"
@@ -649,7 +661,7 @@
     }
   },
   "panel_data_title": {
-    "message": "Data"
+    "message": "Backup and data"
   },
   "panel_data_undoImport": {
     "message": "Undo last import"
@@ -672,20 +684,8 @@
   "panel_deletedNotes_title": {
     "message": "Recently Deleted"
   },
-  "panel_editor_placeholder": {
-    "message": "Show hint in empty line"
-  },
   "panel_editor_title": {
     "message": "Editor"
-  },
-  "panel_editor_toolbarToggle": {
-    "message": "Show editor toolbar · Alt+E"
-  },
-  "panel_editor_toolbarFull": {
-    "message": "Full toolbar: separator, undo/redo"
-  },
-  "panel_editor_toolbarTooltips": {
-    "message": "Show toolbar tooltips"
   },
   "panel_security_acknowledge": {
     "message": "I acknowledge the risk — hide the warning icon"
@@ -706,7 +706,7 @@
     "message": "General"
   },
   "panel_tab_general_title": {
-    "message": "General settings"
+    "message": "General: privacy, backup, reminders, guide and trash"
   },
   "panel_tab_settings": {
     "message": "Settings"
@@ -763,7 +763,7 @@
     "message": "Tags"
   },
   "panel_title": {
-    "message": "Personalization"
+    "message": "Settings"
   },
   "popup_added_note": {
     "message": "✓ Note added"
@@ -960,6 +960,12 @@
   "shortcuts_editable_note": {
     "message": "The first two shortcuts work everywhere in the browser. If they clash with another app, press “Change” and type your own combination, e.g. Alt+Shift+Q."
   },
+  "shortcuts_filter_placeholder": {
+    "message": "Search shortcuts"
+  },
+  "shortcuts_filter_empty": {
+    "message": "No matching shortcut"
+  },
   "shortcuts_formatting": {
     "message": "Formatting"
   },
@@ -999,6 +1005,9 @@
   "shortcuts_formatting_outdent": {
     "message": "Outdent"
   },
+  "shortcuts_formatting_pastePlain": {
+    "message": "paste without formatting"
+  },
   "shortcuts_formatting_redo": {
     "message": "Redo"
   },
@@ -1010,6 +1019,15 @@
   },
   "shortcuts_formatting_underline": {
     "message": "Underline"
+  },
+  "shortcuts_global": {
+    "message": "Global"
+  },
+  "shortcuts_navigation": {
+    "message": "Navigation"
+  },
+  "shortcuts_note": {
+    "message": "Open note"
   },
   "shortcuts_formatting_undo": {
     "message": "Undo"
@@ -1024,7 +1042,10 @@
     "message": "Back to list / close"
   },
   "shortcuts_general_filter": {
-    "message": "Open / close filters"
+    "message": "Open / close filters (in a note: find in note)"
+  },
+  "shortcuts_general_find": {
+    "message": "find in note"
   },
   "shortcuts_general_list": {
     "message": "Focus the notes list"
@@ -1049,6 +1070,9 @@
   },
   "shortcuts_general_toggle": {
     "message": "Open / close sidebar"
+  },
+  "shortcuts_general_tags": {
+    "message": "note tags"
   },
   "shortcuts_general_toolbar": {
     "message": "→ show / hide toolbar (also in zen mode)"
@@ -1355,6 +1379,21 @@
   "tagSelector_addBtn_short": {
     "message": "+"
   },
+  "tagSelector_addBtn_title": {
+    "message": "Note tags · Alt+G"
+  },
+  "tagSelector_create_hint": {
+    "message": "Enter creates tag “$name$”",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "work"
+      }
+    }
+  },
+  "tagSelector_create_title": {
+    "message": "Create tag (Enter)"
+  },
   "tagSelector_managePanel": {
     "message": "Manage tags →"
   },
@@ -1362,10 +1401,16 @@
     "message": "Create a note to add a tag."
   },
   "tagSelector_options_empty": {
-    "message": "No tags yet. Add one in settings."
+    "message": "No tags yet — type a name and press Enter"
+  },
+  "tagSelector_options_noMatch": {
+    "message": "No matching tag"
   },
   "tagSelector_pill_removeTitle": {
     "message": "Remove tag"
+  },
+  "tagSelector_search_placeholder": {
+    "message": "Search or add tag"
   },
   "tag_delete_cancel": {
     "message": "Cancel"
@@ -1701,10 +1746,10 @@
     "message": "→ complete the open task"
   },
   "panel_noteMenu_title": {
-    "message": "Three-dot menu"
+    "message": "Note header"
   },
   "panel_noteMenu_hint": {
-    "message": "Checked actions stay in the menu. Unchecked ones appear as icons in the note header."
+    "message": "Click an action to pin it as an icon in the note header. The rest stay in the ⋮ menu."
   },
   "panel_noteMenu_convert": {
     "message": "Switch between note and task"
@@ -1888,5 +1933,53 @@
   },
   "shortcut_unassigned_inline": {
     "message": "a shortcut you set in about:addons"
+  },
+  "panel_tab_appearance": {
+    "message": "Appearance"
+  },
+  "panel_tab_appearance_title": {
+    "message": "Appearance: theme, list, editor and note header"
+  },
+  "panel_theme_title": {
+    "message": "Theme and text"
+  },
+  "panel_list_title": {
+    "message": "Note list"
+  },
+  "panel_editor_toolbarLabel": {
+    "message": "Formatting toolbar"
+  },
+  "panel_editor_toolbarOff": {
+    "message": "Hidden"
+  },
+  "panel_editor_toolbarBasic": {
+    "message": "Basic"
+  },
+  "panel_editor_toolbarFullShort": {
+    "message": "Full"
+  },
+  "panel_editor_toolbarHint": {
+    "message": "Full adds clear formatting plus Undo and Redo. Alt+E quickly shows and hides the toolbar."
+  },
+  "panel_editor_hints": {
+    "message": "Show hints: toolbar icon labels and the empty-line hint"
+  },
+  "panel_noteMenu_previewTitle": {
+    "message": "Sample note"
+  },
+  "editor_dragHandle_title": {
+    "message": "Drag to move the block — also into a quote · Alt+↑/↓"
+  },
+  "panel_editor_blockHandle": {
+    "message": "⠿ handle for dragging blocks at the note's left edge (without it: Alt+↑/↓)"
+  },
+  "editor_dragHandle_list": {
+    "message": "Drag to move the whole list"
+  },
+  "editor_dragHandle_item": {
+    "message": "Drag to move this item · Alt+↑/↓. Grab the whole list with the handle at the note's very edge"
+  },
+  "editor_dragHandle_line": {
+    "message": "Drag to move this line — within the quote or out of it · Alt+↑/↓. Grab the whole quote with the handle at the note's very edge"
   }
 }

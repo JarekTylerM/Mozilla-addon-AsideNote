@@ -43,15 +43,15 @@
 .undo-toast {
   position: fixed;
   left: 10px;
-  bottom: 10px;
+  /* Pasek ikon nie pływa już nad treścią — stoi w zwykłym przepływie pod
+     wierszem tagów (#bottom-bar). Toast staje więc NAD nim i bierze całą
+     szerokość; nie ma już rezerwy poziomej do omijania. */
+  bottom: calc(var(--bottom-bar-clear) + 4px);
   z-index: var(--z-bar);
   display: flex;
   align-items: center;
   gap: 10px;
-  /* Nie nachodź na bottom-bar (fixed po prawej). Rezerwa z tokenu, nie
-     z liczby: stałe 120px było za małe dla paska z trzema przyciskami
-     i toast wjeżdżał pod niego o 14px. 10px to własny odstęp od lewej. */
-  max-width: calc(100% - var(--bottom-bar-reserve) - 10px);
+  max-width: calc(100% - 20px);
   padding: 6px 12px;
   background: var(--bar-bg);
   border: 1px solid var(--border);
@@ -102,55 +102,58 @@
   }
 }
 
-/* Security ukryty → pasek węższy, toast może być szerszy (ten sam wzorzec
-   co wiersz tagów w tags.css) */
-body:has(#security-btn-wrapper[hidden]) .undo-toast {
-  max-width: calc(100% - var(--bottom-bar-reserve-narrow) - 10px);
-}
-/* W wąskim panelu obok paska zostaje ~140px — za mało na "Przeniesiono do
-   kosza" i przycisk Cofnij. Toast staje wtedy nad paskiem i bierze całą
-   szerokość. */
-@media (max-width: 340px) {
-  .undo-toast,
-  body:has(#security-btn-wrapper[hidden]) .undo-toast {
-    bottom: calc(var(--bottom-bar-clear) + 4px);
-    max-width: calc(100% - 20px);
-  }
-}
-
 /* ── Bottom bar & tooltip skrótów ────────── */
 
-/* Dokładasz/usuwasz przycisk? Popraw --bottom-bar-reserve w tokens.css —
-   to na nim opiera się padding wiersza tagów, który nie pozwala pigułkom
-   wjechać pod ten pasek. */
+/* Pasek stoi w zwykłym przepływie — ostatni wiersz <body>, tuż pod wierszem
+   tagów. Wcześniej pływał (position: fixed) nad treścią jako ciemna pigułka
+   w prawym rogu: trzeba było pod niego rezerwować miejsce w wierszu tagów,
+   w liście i w panelu, a szybkie ustawienia nie mieściły się w jednej linii
+   i zawijały na drugi rząd. Teraz ma do dyspozycji całą szerokość panelu,
+   więc mieszczą się obok ikon i nic nie trzeba rezerwować.
+   Dokładasz przycisk? Nic poza tym plikiem nie wymaga poprawki. */
 #bottom-bar {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
+  flex: none;
   display: flex;
   align-items: center;
   gap: 6px;
-  z-index: var(--z-bar);
-  background: var(--bar-bg);
-  border-radius: var(--radius-lg);
-  padding: 3px;
-  flex-wrap: wrap;
   justify-content: flex-end;
-  max-width: calc(100vw - 20px);
+  /* Drugi rząd dopiero wtedy, gdy coś naprawdę nie mieści się w linii —
+     decyduje samo zawijanie flexa, nie próg w @media. Wcześniej próg stał
+     sztywno na 440px i pasek rozbijał się na dwa wiersze także przy
+     szerokościach, na których spokojnie się mieścił (to była ta „rozsypka”),
+     a przy innym zoomie UI mylił się w drugą stronę.
+     Zawijają się CAŁE szybkie ustawienia, bo ikony są osobną grupą
+     (.bottom-bar__icons); pasek rośnie wtedy w górę, więc ikony zostają
+     dokładnie tam, gdzie były — nie uciekają spod kursora. */
+  flex-wrap: wrap;
+  padding: 0 8px;
+  min-height: 34px;
 }
 #shortcut-tooltip-wrapper {
   position: relative;
 }
 
-/* Szybkie ustawienia: widoczne po najechaniu na pasek i przy pracy klawiaturą.
+/* Ikony paska jako jedna grupa (sidebar.html). Dzięki temu zawijanie dzieli
+   pasek wyłącznie w jednym miejscu — między szybkimi ustawieniami a ikonami —
+   i nigdy nie zrzuca pojedynczej ikony do osobnego wiersza. */
+.bottom-bar__icons {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Szybkie ustawienia: rozwijają się w tej samej linii po najechaniu gdziekolwiek
+   na pasek — także na jego pustą część po lewej — i przy pracy klawiaturą.
    :focus-visible, nie :focus-within: po kliknięciu fokus zostaje na przycisku
    i pasek nie zwijałby się po odjechaniu myszą. */
 .quick-settings {
   display: none;
   align-items: center;
   gap: 2px;
-  padding-right: 4px;
-  border-right: 1px solid var(--border);
+  /* Oddech między grupami zamiast kreski: kreska przy zawinięciu zostawała
+     samotnie na końcu górnego wiersza. */
+  margin-right: 4px;
 }
 #bottom-bar:is(:hover, :has(:focus-visible)) .quick-settings {
   display: flex;
@@ -164,18 +167,6 @@ body:has(#security-btn-wrapper[hidden]) .undo-toast {
 @media (prefers-reduced-motion: reduce) {
   #bottom-bar:is(:hover, :has(:focus-visible)) .quick-settings {
     animation: none;
-  }
-}
-/* W wąskim panelu szybkie ustawienia dostają cały rząd nad przyciskami i pasek
-   rośnie w górę. Bez pełnej szerokości część głównych ikon przeskakiwałaby do
-   górnego rzędu, czyli uciekałaby spod kursora. */
-@media (max-width: 439.98px) {
-  .quick-settings {
-    flex: 0 0 100%;
-    justify-content: flex-end;
-    padding: 0 0 3px;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
   }
 }
 .quick-settings .icon-btn {

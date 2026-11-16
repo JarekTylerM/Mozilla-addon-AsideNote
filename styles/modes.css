@@ -244,17 +244,12 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
   min-height: 0;
 }
 
-/* W tym trybie #tag-selector jest ukryty, więc nic nie stoi w jednej linii
-   z pływającym #bottom-bar — ramka listy kończy się NAD paskiem, a pasek
-   ma własny pas u dołu. Wcześniej lista sięgała samego dołu i pasek
-   nachodził na róg ramki.
-     body padding-bottom (base.css):     29px
-     + ten padding:   52 + 6 − 29     =  29px
-     = dół ramki 58px nad krawędzią okna, pasek kończy się na 50,5px */
+/* Pasek ikon stoi pod #main-view we własnym wierszu, więc nie nachodzi już na
+   ramkę listy — zostaje tylko oddech między ramką a paskiem. */
 #main-view.list-expanded .notes-list-wrapper {
   flex: 1;
   min-height: 0;
-  padding-bottom: calc(var(--bottom-bar-clear) + 6px - 29px);
+  padding-bottom: 6px;
 }
 
 #main-view.list-expanded #notesList {
@@ -297,9 +292,8 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
             │    ├─ #toolbar  (shrink: 0)
             │    └─ #editor   (flex: 1)
             └─ #tag-selector  (shrink: 0)
-   #bottom-bar jest position: fixed; wiersz tagów stoi z nim w jednej linii
-   i odsuwa się w bok przez padding-right: var(--bottom-bar-reserve)
-   (tags.css). Dolny padding body (base.css) liczy ten układ. */
+   Pod #main-view stoi jeszcze #bottom-bar — pasek ikon w zwykłym przepływie,
+   ostatni wiersz <body>, na całą szerokość (chrome.css). */
 
 body.is-editing .quick-capture,
 body.is-editing .quick-capture-preview,

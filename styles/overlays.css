@@ -53,7 +53,8 @@
 #shortcut-tooltip {
   display: none;
   position: fixed;
-  bottom: 52px;
+  /* Nad paskiem ikon — ten sam token co toast „Cofnij” */
+  bottom: calc(var(--bottom-bar-clear) + 6px);
   right: 4px;
   width: min(240px, 100vw - 8px);
   background: var(--tooltip-bg);
@@ -138,14 +139,16 @@
   pointer-events: none;
   box-shadow: var(--shadow-md);
   opacity: 0;
-  transform: translateX(-50%) translateY(3px);
+  /* Bez translateX: tooltip.js ustawia LEWĄ krawędź (patrz _position) —
+     przy środkowaniu przeglądarka ściskała tooltip przy prawej krawędzi okna. */
+  transform: translateY(3px);
   transition:
     opacity 0.12s ease,
     transform 0.12s ease;
 }
 #app-tooltip.visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 /* Strzałka w górę (tooltip poniżej elementu) */
 #app-tooltip::before {

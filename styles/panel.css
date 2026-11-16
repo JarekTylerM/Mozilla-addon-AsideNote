@@ -10,7 +10,9 @@
      przestrzeń bez magic-number (wcześniej 98vh) */
   flex: 1;
   min-height: 0;
-  padding-bottom: 52px;
+  /* Pasek ikon stoi pod panelem we własnym wierszu — nie trzeba już robić
+     miejsca pod pływającą pigułką (było 52px). */
+  padding-bottom: 6px;
   overflow: hidden;
 }
 #panel:not([hidden]) {
@@ -46,6 +48,7 @@
 }
 
 .panel-tabs {
+  container-type: inline-size;
   display: flex;
   border-bottom: 1.5px solid var(--border);
   margin-bottom: 0;
@@ -90,8 +93,28 @@
   transition: background-color var(--transition);
   flex-shrink: 0;
 }
-.panel-tab span:last-child {
+.panel-tab__label {
   font-size: var(--text-xs);
+  white-space: nowrap;
+}
+/* Wąski panel: wszystkie zakładki pokazują samą ikonę — przy kolejnych
+   zakładkach podpisy ścisnęłyby się do nieczytelnych. Aktywną widać po
+   podkreśleniu i pełnym kolorze ikony; nazwa jest w podpowiedzi (title).
+   Podpis chowamy wizualnie, nie display:none — zostaje nazwą zakładki dla
+   czytnika ekranu. */
+@container (max-width: 320px) {
+  .panel-tab {
+    justify-content: center;
+    min-height: 34px;
+  }
+  .panel-tab__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 .panel-tab:hover .panel-tab__icon {
   background-color: var(--text-2);
@@ -122,6 +145,9 @@
 .panel-section {
   display: flex;
   flex-direction: column;
+  /* scrollIntoView (np. „Przejdź do ustawień” z ostrzeżenia) zostawia ten sam
+     odstęp co padding .panel-body — inaczej nagłówek sekcji jest przycięty */
+  scroll-margin-top: 12px;
 }
 .panel-section + .panel-section {
   margin-top: 20px;
@@ -642,6 +668,34 @@
   display: none;
 }
 
+/* Filtr skrótów — stoi nad podzakładkami i przeszukuje obie naraz
+   (panel.js: initShortcutsFilter). W trakcie szukania podzakładki znikają,
+   bo wyniki i tak przychodzą z obu list. */
+.shortcuts-filter {
+  padding: 10px 14px 0;
+  flex-shrink: 0;
+}
+#shortcuts-filter-input {
+  width: 100%;
+  padding: 5px 9px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-md);
+}
+#shortcuts-filter-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#shortcuts-filter-empty {
+  padding: 10px 14px 0;
+}
+#shortcuts-filter-empty[hidden] {
+  display: none;
+}
+
 .shortcuts-subtabs {
   display: flex;
   gap: 2px;
@@ -685,58 +739,118 @@
   font-size: var(--text-sm);
   color: var(--text-3);
 }
+.panel-section__hint--below {
+  margin: 6px 0 0;
+}
+/* Etykieta nad kontrolką, która nie jest polem formularza (grupa przycisków) */
+.panel-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
+
+/* ── Nagłówek notatki: podgląd + przyciski przypinania ─────── */
+.note-header-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+}
+.note-header-preview__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
+.note-header-preview__icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  background-color: var(--text-2);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+.note-header-preview__icon[hidden] {
+  display: none;
+}
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
+}
+.header-action:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.header-action[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--accent-bg, var(--surface-hover));
+  border-color: var(--accent);
+}
+.header-action__icon {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+.header-action:focus-visible,
+#toolbar-mode .scheme-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 .panel-toggle-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-/* Wiersz ustawienia: etykieta | pole przed listą | lista | pole za listą.
+/* Wiersz ustawienia: etykieta | pole przed listą | lista.
    Te same kolumny w każdym wierszu trzymają listy jedna pod drugą, także gdy
-   tylko część wierszy ma coś obok listy (? przy kroju, − i + przy zoomie). */
+   tylko część wierszy ma coś przed listą (? przy kroju). */
 .panel-zoom-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 9rem) 24px;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 9rem);
   align-items: center;
   column-gap: 4px;
   margin-top: 10px;
+}
+.panel-zoom-row--first {
+  margin-top: 0;
 }
 
 .panel-zoom-row__label {
   grid-column: 1;
   font-size: var(--text-md);
   color: var(--text-2);
-}
-
-.panel-zoom-row__step {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--text-2);
-  font: inherit;
-  font-size: var(--text-base);
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    background-color var(--transition),
-    color var(--transition);
-}
-.panel-zoom-row__step:hover:not(:disabled) {
-  background: var(--surface-hover);
-  color: var(--text);
-}
-.panel-zoom-row__step:disabled {
-  cursor: default;
-  opacity: 0.35;
-}
-.panel-zoom-row__step--before {
-  grid-column: 2;
-}
-.panel-zoom-row__step--after {
-  grid-column: 4;
 }
 
 /* Znacznik "?" z wyjaśnieniem w tooltipie, tuż przed listą, której dotyczy */

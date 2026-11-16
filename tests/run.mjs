@@ -36,6 +36,8 @@ const MIRRORED = [
   'utils',
   'editor-url',
   'editor-pattern',
+  'editor-find',
+  'editor-drag-handle',
   'editor-block-analyzer',
   'editor-selection',
   'notes-trash',

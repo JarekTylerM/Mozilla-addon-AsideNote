@@ -11,7 +11,10 @@
  *    tekstu za kursorem (jak w Google Docs / Wordzie),
  *  - w punkcie listy: wklejone punkty (i akapity) stają się kolejnymi
  *    punktami TEJ listy, na tym samym poziomie,
- *  - pojedynczy akapit wklejamy jak tekst — w zdanie, bez nowej linii.
+ *  - pojedynczy akapit wklejamy jak tekst — w zdanie, bez nowej linii,
+ *  - w cytacie: wklejka zostaje W cytacie. Cytat składa się tylko z akapitów
+ *    (tak działa Enter w cytacie), więc nagłówki, listy i kod zamieniają się
+ *    na akapity — punkt listy to linia „• …”, linia kodu to linia kodu.
  *
  * Moduł bez zależności od storage/notes — testowalny w jsdom.
  */
@@ -82,11 +85,21 @@ export function insertPastedHTML(editor, html) {
   const li = startEl?.closest('li') ?? null;
 
   if (li && editor.contains(li)) {
-    if (blocks.every((n) => LIST_MERGEABLE.has(n.tagName))) {
-      _insertIntoList(li, range, blocks, sel);
-    } else {
+    if (!blocks.every((n) => LIST_MERGEABLE.has(n.tagName))) {
       _insertAfterTopLevel(editor, range, blocks, sel);
+    } else if (_pastesForeignList(li, blocks)) {
+      // Inny rodzaj listy niż docelowa — wstawiamy ją obok, nie wtapiamy
+      _insertListBeside(li, range, blocks, sel);
+    } else {
+      _insertIntoList(li, range, blocks, sel);
     }
+    return true;
+  }
+
+  // Cytat (także callout) — wklejka zostaje w środku, nie ląduje za nim
+  const quote = startEl?.closest('blockquote') ?? null;
+  if (quote && editor.contains(quote) && !startEl?.closest('pre, summary')) {
+    _insertIntoQuote(quote, range, blocks, sel);
     return true;
   }
 
@@ -145,7 +158,13 @@ function _insertInline(editor, range, nodes, sel) {
  *
  * @param {Element} block @param {Range} range @param {Element[]} nodes @param {Selection} sel
  */
-function _insertSplitting(block, range, nodes, sel) {
+function _insertSplitting(
+  block,
+  range,
+  nodes,
+  sel,
+  mergeable = (/** @type {Element} */ n) => n.tagName === 'P',
+) {
   const tail = _splitBlockAtCaret(block, range, block.tagName.toLowerCase());
   const headEmpty = _isEmptyBlock(block);
   const tailEmpty = _isEmptyBlock(tail);
@@ -159,7 +178,7 @@ function _insertSplitting(block, range, nodes, sel) {
 
   const queue = [...nodes];
   const first = queue[0];
-  if (!headEmpty && first?.tagName === 'P') {
+  if (!headEmpty && first && mergeable(first)) {
     _dropTrailingBr(block);
     while (first.firstChild) block.appendChild(first.firstChild);
     first.remove();
@@ -169,7 +188,7 @@ function _insertSplitting(block, range, nodes, sel) {
   /** @type {Node|null} */
   let seam = null;
   const last = queue[queue.length - 1];
-  if (!tailEmpty && last?.tagName === 'P') {
+  if (!tailEmpty && last && mergeable(last)) {
     const moved = Array.from(last.childNodes);
     tail.prepend(...moved);
     last.remove();
@@ -186,6 +205,145 @@ function _insertSplitting(block, range, nodes, sel) {
     const end = queue[queue.length - 1] ?? (tailEmpty ? null : tail) ?? block;
     if (end.isConnected) _caretAtEnd(end, sel);
   }
+}
+
+/**
+ * Wklejka do cytatu: bloki zamienione na akapity cytatu, wstawione w miejscu
+ * kursora. Brzegowe akapity (z akapitu albo nagłówka) doklejają się do tekstu
+ * przed/za kursorem, jak w zwykłym akapicie; linie z listy czy kodu zostają
+ * osobnymi liniami — „cytat• punkt” w jednej linii nie miałby sensu.
+ *
+ * @param {Element} quote @param {Range} range @param {Element[]} blocks @param {Selection} sel
+ */
+function _insertIntoQuote(quote, range, blocks, sel) {
+  /** @type {Set<Element>} */
+  const separate = new Set();
+  const lines = _quoteLines(blocks, separate);
+  if (!lines.length) return;
+
+  const sc = range.startContainer;
+  const so = range.startOffset;
+
+  /** Akapit cytatu z kursorem. @type {Element|null} */
+  let block = null;
+  if (sc === quote) {
+    // Kursor między dziećmi cytatu (np. na samym końcu) — bierzemy akapit
+    // obok i stawiamy kursor na jego początku albo końcu
+    const after = quote.childNodes[so];
+    const before = quote.childNodes[so - 1];
+    if (after && _isEl(after) && SPLITTABLE.has(after.tagName)) {
+      block = after;
+      range.setStart(after, 0);
+    } else if (before && _isEl(before) && SPLITTABLE.has(before.tagName)) {
+      block = before;
+      range.setStart(before, before.childNodes.length);
+    }
+    range.collapse(true);
+  } else {
+    for (let el = _elOf(sc); el && el !== quote; el = el.parentElement) {
+      if (el.parentElement === quote) block = el;
+    }
+    if (block && !SPLITTABLE.has(block.tagName)) block = null;
+  }
+
+  if (!block) {
+    // Cytat bez akapitów (sama treść) — owijamy w <p>, tak jak robi Enter
+    // w cytacie. Przeniesienie węzłów resetuje żywy Range, więc kursor
+    // odtwarzamy z zapamiętanego punktu.
+    const wrapper = document.createElement('p');
+    while (quote.firstChild) wrapper.appendChild(quote.firstChild);
+    quote.appendChild(wrapper);
+    if (sc === quote) range.setStart(wrapper, Math.min(so, wrapper.childNodes.length));
+    else if (wrapper.contains(sc)) range.setStart(sc, so);
+    else range.setStart(wrapper, wrapper.childNodes.length);
+    range.collapse(true);
+    block = wrapper;
+  }
+
+  _insertSplitting(block, range, lines, sel, (n) => !separate.has(n));
+}
+
+/**
+ * Bloki wklejki → akapity, które może zawierać cytat.
+ * @param {Element[]} blocks
+ * @param {Set<Element>} separate akapity, które mają zostać osobną linią
+ * @param {string} [indent] wcięcie podlisty
+ * @returns {Element[]}
+ */
+function _quoteLines(blocks, separate, indent = '') {
+  /** @type {Element[]} */
+  const out = [];
+  /** @param {Node[]} children @param {boolean} [own] */
+  const para = (children, own = false) => {
+    const p = document.createElement('p');
+    p.append(...children);
+    _dropTrailingBr(p);
+    if (!(p.textContent ?? '').trim() && !p.querySelector('img')) return;
+    if (own) separate.add(p);
+    out.push(p);
+  };
+
+  for (const b of blocks) {
+    const tag = b.tagName;
+    if (tag === 'HR') continue;
+    if (tag === 'UL' || tag === 'OL') {
+      const checklist = b.getAttribute('data-list') === 'checklist';
+      let n = 0;
+      for (const li of Array.from(b.children)) {
+        if (li.tagName !== 'LI') continue;
+        n++;
+        const marker = checklist
+          ? li.getAttribute('data-checked') === 'true'
+            ? '☑ '
+            : '☐ '
+          : tag === 'OL'
+            ? `${n}. `
+            : '• ';
+        const nested = Array.from(li.children).filter((c) => /^(UL|OL)$/.test(c.tagName));
+        nested.forEach((c) => c.remove());
+        para([document.createTextNode(indent + marker), ...Array.from(li.childNodes)], true);
+        out.push(..._quoteLines(nested, separate, indent + '  '));
+      }
+    } else if (tag === 'PRE') {
+      for (const line of (b.textContent ?? '').replace(/\n$/, '').split('\n')) {
+        if (!line.trim()) continue;
+        const code = document.createElement('code');
+        code.textContent = line;
+        para([code], true);
+      }
+    } else if (tag === 'BLOCKQUOTE' || tag === 'DETAILS') {
+      // Cytat w cytacie / sekcja rozwijana — ich linie stają się liniami cytatu
+      const inner = Array.from(b.childNodes);
+      const innerBlocks = /** @type {Element[]} */ (
+        inner.filter((c) => _isEl(c) && (BLOCK.has(c.tagName) || c.tagName === 'SUMMARY'))
+      ).map((c) => (c.tagName === 'SUMMARY' ? _asP(c) : c));
+      if (innerBlocks.length) out.push(..._quoteLines(innerBlocks, separate, indent));
+      else para(inner);
+    } else {
+      // P, DIV, H1–H3 i inne — treść w akapit (nagłówek w cytacie to akapit).
+      // Nagłówek zostaje osobną linią, jak przy wklejce w zwykły akapit —
+      // tam też nie skleja się z tekstem przed kursorem.
+      para(Array.from(b.childNodes), /^H[1-6]$/.test(tag));
+    }
+  }
+  return out;
+}
+
+/**
+ * Bloki → linie cytatu (akapity). Te same reguły co przy wklejaniu do
+ * cytatu — używa ich też przeciąganie bloku do cytatu (editor-drag-handle).
+ * @param {Element[]} blocks
+ * @returns {Element[]}
+ */
+export function blocksToQuoteLines(blocks) {
+  return _quoteLines(blocks, new Set());
+}
+
+/** @param {Element} el @returns {Element} */
+function _asP(el) {
+  const p = document.createElement('p');
+  p.append(...Array.from(el.childNodes));
+  return p;
 }
 
 /**
@@ -234,6 +392,78 @@ function _insertIntoList(li, range, nodes, sel) {
   }
 
   _caretAtEnd(items[items.length - 1], sel);
+}
+
+/**
+ * Czy wklejka niesie listę o innej NUMERACJI niż ta, w której stoi kursor?
+ *
+ * Punkty z wklejki domyślnie przejmują rodzaj listy docelowej (Google Docs
+ * robi tak samo): akapity stają się punktami, a checklista i lista punktowana
+ * wymieniają się checkboxami. Przy numeracji ta zamiana gubi jednak treść —
+ * wklejone "1. 2. 3." wracało jako punktory i numerów nie dało się odtworzyć.
+ * Listę o innej numeracji wstawiamy więc obok, z zachowaniem jej rodzaju.
+ *
+ * Listy zagnieżdżone zostawiamy staremu wtapianiu: rozcinanie podlisty
+ * rozjechałoby strukturę punktu nadrzędnego.
+ *
+ * @param {Element} li punkt z kursorem @param {Element[]} blocks
+ */
+function _pastesForeignList(li, blocks) {
+  const list = li.parentElement;
+  if (!list || list.parentElement?.tagName === 'LI') return false;
+  const targetOrdered = list.tagName === 'OL';
+  return blocks.some(
+    (b) => /^(UL|OL)$/.test(b.tagName) && (b.tagName === 'OL') !== targetOrdered,
+  );
+}
+
+/**
+ * Wklejona lista ląduje jako osobna lista: dzielimy listę docelową w miejscu
+ * kursora i wkładamy wklejkę między obie połówki. Druga połówka listy
+ * numerowanej dostaje start= tak, żeby numeracja szła dalej.
+ *
+ * @param {Element} li @param {Range} range @param {Element[]} blocks @param {Selection} sel
+ */
+function _insertListBeside(li, range, blocks, sel) {
+  const list = /** @type {Element} */ (li.parentElement);
+  const nested = li.querySelector(':scope > ul, :scope > ol');
+  const liEmpty = !nested && !_ownText(li).trim();
+
+  /** @type {Element|null} */
+  let tailStart = null;
+  if (!liEmpty && _hasOwnTextAfter(li, range, nested)) {
+    tailStart = _splitListItemKeepingNested(li, range);
+  } else {
+    tailStart = li.nextElementSibling;
+  }
+  if (liEmpty) li.remove();
+
+  if (tailStart) {
+    const rest = document.createElement(list.tagName);
+    const kind = list.getAttribute('data-list');
+    if (kind) rest.setAttribute('data-list', kind);
+    if (list.tagName === 'OL') {
+      const start = parseInt(list.getAttribute('start') ?? '1', 10) || 1;
+      const before = Array.from(list.children).indexOf(tailStart);
+      const next = start + (before < 0 ? 0 : before);
+      if (next > 1) rest.setAttribute('start', String(next));
+    }
+    /** @type {Element|null} */
+    let move = tailStart;
+    while (move) {
+      /** @type {Element|null} */
+      const after = move.nextElementSibling;
+      rest.appendChild(move);
+      move = after;
+    }
+    list.after(rest);
+    rest.before(...blocks);
+  } else {
+    list.after(...blocks);
+  }
+
+  if (!list.children.length) list.remove();
+  _caretAtEnd(blocks[blocks.length - 1], sel);
 }
 
 /**

@@ -50,11 +50,18 @@ import {
 import { nextFocusId } from "./list-focus.js";
 
 import { tagState } from "./tags.js";
-import { initEditor } from "./editor.js";
+import {
+  initEditor,
+  openFindBar,
+  closeFindBar,
+  prefillFind,
+} from "./editor.js";
 import {
   openPanel,
   closePanel,
   initTagSelector,
+  initShortcutsFilter,
+  openTagDropdown,
   initAddTagForm,
   initFilter,
   renderTagSelector,
@@ -289,6 +296,7 @@ browser.storage.onChanged.addListener((changes, area) => {
 
 initEditor();
 initTagSelector();
+initShortcutsFilter();
 initAddTagForm();
 initFilter();
 initDataActions();
@@ -380,6 +388,9 @@ function _focusListRow(id) {
 }
 
 function _collapseEditor() {
+  // Pasek Znajdź należy do otwartej notatki — przy powrocie na listę nie ma
+  // już czego szukać, a zostawiony wracałby przy następnej notatce
+  closeFindBar();
   const prevId = state.activeId;
   // Kolejność: najpierw sprzątanie, potem zapis. Odwrotnie zapisalibyśmy
   // pustą notatkę tylko po to, żeby ją zaraz usunąć.
@@ -924,6 +935,11 @@ const _PANEL_TABS = [
     pane: document.getElementById("panel-pane-general"),
   },
   {
+    id: "appearance",
+    tab: document.getElementById("panel-tab-appearance"),
+    pane: document.getElementById("panel-pane-appearance"),
+  },
+  {
     id: "tags",
     tab: document.getElementById("panel-tab-tags"),
     pane: document.getElementById("panel-pane-tags"),
@@ -983,6 +999,11 @@ document.querySelectorAll(".shortcuts-subtab").forEach((el) => {
 
 // Otwarcie notatki (klik, Enter, Shift+Enter w capture, popup) = ekran notatki
 document.addEventListener("noteSelected", () => {
+  // Inna notatka = inne trafienia; pasek z poprzedniej notatki nie zostaje
+  closeFindBar();
+  // Notatka otwarta z listy zawężonej wyszukiwarką: Ctrl+F dostaje tę samą
+  // frazę gotową w polu — lista mówi KTÓRA notatka, Ctrl+F pokazuje GDZIE
+  prefillFind(state.searchQuery);
   _showEditorScreen();
   renderTagSelector();
 });
@@ -1103,8 +1124,10 @@ document.addEventListener("keydown", (e) => {
 
   // Skróty prowadzące do elementów ekranu listy działają też z ekranu
   // notatki — najpierw zamykają notatkę (autosave), inaczej fokus trafiałby
-  // w schowane pole i skrót nic by nie robił.
-  if (altKey && ["c", "t", "s", "f", "l"].includes(altKey) && _isEditorScreen()) {
+  // w schowane pole i skrót nic by nie robił. Bez Alt+F: filtry listy w
+  // trakcie pisania nic nie dają, a przypadkowe wciśnięcie wyrzucało z notatki.
+  // W notatce Alt+F szuka w treści (niżej).
+  if (altKey && ["c", "t", "s", "l"].includes(altKey) && _isEditorScreen()) {
     _collapseEditor();
     // Alt+L: _collapseEditor już ustawił fokus na wierszu, z którego
     // przyszliśmy — dokładnie tam, gdzie Alt+L ma prowadzić
@@ -1142,9 +1165,14 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Alt+F — toggle filter bar + fokus na pierwszy element
+  // Alt+F — na liście: filtry (toggle + fokus na pierwszy element).
+  // W notatce: znajdź w notatce, jak Ctrl+F — notatka zostaje otwarta.
   if (altKey === "f") {
     e.preventDefault();
+    if (_isEditorScreen()) {
+      openFindBar();
+      return;
+    }
     _byId("filter-btn").click();
     const filterBar = _byId("filter-bar");
     if (!filterBar.hidden) {
@@ -1173,6 +1201,32 @@ document.addEventListener("keydown", (e) => {
   if (altKey === "p") {
     e.preventDefault();
     togglePanel();
+    return;
+  }
+
+  // Ctrl+F — znajdź w notatce. W edytorze przejmuje go editor.js; tutaj
+  // dla reszty ekranu notatki (tytuł, nagłówek), żeby skrót działał wszędzie
+  // tam, gdzie notatka jest otwarta. Ctrl+F przeglądarki i tak szuka w
+  // stronie pod panelem, nie w niej.
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    !e.shiftKey &&
+    !e.altKey &&
+    e.key?.toLowerCase() === "f" &&
+    !e.defaultPrevented &&
+    _isEditorScreen()
+  ) {
+    e.preventDefault();
+    openFindBar();
+    return;
+  }
+
+  // Alt+G — tagi notatki: dropdown otwiera się z kursorem w polu, więc tag
+  // (także nowy) da się przypiąć bez sięgania po mysz. Tylko na ekranie
+  // notatki — na liście nie ma do czego przypiąć tagu.
+  if (altKey === "g" && _isEditorScreen()) {
+    e.preventDefault();
+    openTagDropdown();
     return;
   }
 
@@ -1287,9 +1341,10 @@ function _initSecurityBtn() {
     if (document.getElementById("panel")?.hidden !== false) togglePanel();
     switchPanelTab("general");
     setTimeout(() => {
-      ackToggle
-        ?.closest(".panel-toggle")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Sekcja jest pierwsza w „Ogólnych”, ale panel mógł być przewinięty
+      document
+        .getElementById("panel-security")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
   });
 

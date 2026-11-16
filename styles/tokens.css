@@ -108,27 +108,21 @@
      bywa łatwiejsze w odbiorze przy dysleksji i słabszym wzroku. */
   --font-ui: system-ui, -apple-system, sans-serif;
 
-  /* ── Pływający #bottom-bar ────────────────────────────────────
-     Pasek jest position: fixed, więc nie rezerwuje sobie miejsca sam —
-     treść pod nim musi zrobić to za niego. Te dwie liczby są jedynym
-     źródłem prawdy; wcześniej rezerwa siedziała zaszyta w padding-bottom
-     body i rozjechała się z komentarzem w modes.css (52 vs 60 px).
+  /* Znajdź w notatce — trafienia i to aktywne. Żółć czytelna w obu
+     motywach; aktywne trafienie mocniejsze, żeby oko wiedziało gdzie jest. */
+  --find-match-bg: light-dark(rgb(255 196 0 / 0.32), rgb(255 196 0 / 0.26));
+  --find-current-bg: light-dark(rgb(255 162 0 / 0.65), rgb(255 176 0 / 0.55));
 
-     Pasek ma DWIE szerokości: #security-btn-wrapper znika, gdy użytkownik
-     potwierdzi notkę o bezpieczeństwie (app.js: securityAcknowledged), i
-     wraca po jej odznaczeniu. Jedna stała rezerwa myliłaby się w obie
-     strony — albo marnowała 38px, albo wpuszczała pigułki pod przycisk.
-     Wariant wąski wybiera reguła :has() w tags.css.
+  /* ── #bottom-bar ─────────────────────────────────────────────
+     Pasek ikon nie pływa już nad treścią — jest ostatnim wierszem <body>,
+     tuż pod wierszem tagów, i miejsce rezerwuje sobie sam. Rezerwy poziome
+     (--bottom-bar-reserve / -narrow) zniknęły razem z pływaniem; zniknął
+     też podwójny wariant „z security / bez security”.
 
-     3 przyciski: 3×32 + 2×6 + 2×3 = 114px  (zmierzone: 114)
-     2 przyciski: 2×32 + 1×6 + 2×3 =  76px  (zmierzone:  76)
-     + right:10px + 8px luzu
-
-     Zmieniasz liczbę lub rozmiar przycisków? Popraw obie liczby — także
-     wariant wersji testowej (:root[data-build='dev'], +38px na .dev-badge). */
-  --bottom-bar-reserve: 132px;        /* poziomo, 3 przyciski */
-  --bottom-bar-reserve-narrow: 94px;  /* poziomo, security ukryty */
-  --bottom-bar-clear: 52px;           /* pionowo: ile odsłonić pod treścią */
+     Zostaje jedna liczba: wysokość tego wiersza razem z dolnym paddingiem
+     body (34 + 6 px). Potrzebują jej elementy fixed, które mają stanąć NAD
+     paskiem — toast „Cofnij” i tooltip skrótów. */
+  --bottom-bar-clear: 40px;
 
   /* Icon masks — współdzielone między sidebar i popup (tokens.css to
      jedyny plik CSS ładowany przez oba konteksty) */
@@ -300,9 +294,6 @@
   padding: 2px 4px;
   vertical-align: 1px;
 }
-/* Znacznik dokłada do #bottom-bar jedno miejsce (32px + gap 6px) — rezerwa
-   wiersza tagów rośnie o tyle samo (patrz --bottom-bar-reserve wyżej). */
-:root[data-build='dev'] {
-  --bottom-bar-reserve: 170px;
-  --bottom-bar-reserve-narrow: 132px;
-}
+/* Znacznik dokłada do #bottom-bar jedno miejsce (32px + gap 6px) — o tyle samo
+   przesuwa się próg, od którego szybkie ustawienia idą do własnego wiersza
+   (chrome.css, @media max-width: 397.98px). */

@@ -14,8 +14,15 @@
  *
  * Wykrywa markdown trigger wyzwalany spacją.
  *
- * @param {string} blockText   textContent bieżącego bloku
- * @param {string} textBefore  tekst w text node przed kursorem
+ * Liczy się WYŁĄCZNIE tekst przed kursorem. Dzięki temu znacznik działa też
+ * w wierszu, który ma już treść: stajesz na początku linii „zakupy", piszesz
+ * „1." + spacja i linia staje się punktem listy z zachowanym tekstem.
+ * Wcześniej warunkiem był cały blok („1." i nic więcej), więc w zapisanym
+ * już wierszu nie działało nic poza wpisaniem znacznika w pustej linii.
+ *
+ * @param {string} blockText   textContent bieżącego bloku (już nieużywany —
+ *                             zostaje dla zgodności wywołań)
+ * @param {string} textBefore  tekst od początku bloku do kursora
  * @returns {{ trigger: string, ...params } | null}
  *
  * Triggery:
@@ -29,7 +36,7 @@
  */
 /** @param {string} blockText @param {string} textBefore */
 export function detectSpaceTrigger(blockText, textBefore) {
-  const text = blockText.trim();
+  const text = textBefore.trim();
 
   // Checklist: -[ ] lub -[x]/-[X]
   if (/^-\[ \]$/.test(text)) return { trigger: 'checklist', checked: false };
@@ -47,10 +54,8 @@ export function detectSpaceTrigger(blockText, textBefore) {
   if (orderedMatch)
     return { trigger: 'ordered', start: parseInt(orderedMatch[1], 10) };
 
-  // Callout blocks: >[!NOTE] itp. (używa textBefore — dokładniejsze niż blockText)
-  const calloutMatch = textBefore
-    .trim()
-    .match(/^>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/i);
+  // Callout blocks: >[!NOTE] itp.
+  const calloutMatch = text.match(/^>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/i);
   if (calloutMatch)
     return { trigger: 'callout', type: calloutMatch[1].toLowerCase() };
 

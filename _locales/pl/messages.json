@@ -254,6 +254,21 @@
   "filter_title": {
     "message": "Filtry · Alt+F"
   },
+  "find_placeholder": {
+    "message": "Znajdź w notatce"
+  },
+  "find_next": {
+    "message": "Następne trafienie · Enter"
+  },
+  "find_prev": {
+    "message": "Poprzednie trafienie · Shift+Enter"
+  },
+  "find_close": {
+    "message": "Zamknij szukanie · Esc"
+  },
+  "find_noMatch": {
+    "message": "0"
+  },
   "focus_remove_title": {
     "message": "W trakcie — usuń oznaczenie"
   },
@@ -564,7 +579,7 @@
     "message": "Ważne na koniec: notatki nie są szyfrowane — odczyta je każdy, kto ma dostęp do tego profilu przeglądarki. Nie zapisuj w nich haseł ani numerów kart."
   },
   "ob_s4_settings": {
-    "message": "Pod ikoną ⚙ znajdziesz ustawienia: motyw, rozmiar interfejsu i pełną listę skrótów klawiaturowych (zakładka Skróty)."
+    "message": "Pod ikoną ⚙ znajdziesz ustawienia: prywatność i kopię zapasową (zakładka Ogólne), motyw i rozmiar interfejsu (zakładka Wygląd) oraz pełną listę skrótów klawiaturowych (zakładka Skróty)."
   },
   "ob_s4_shortcuts": {
     "message": "AsideNotes działa z każdej karty przeglądarki: $TOGGLE$ otwiera i zamyka ten panel, a $POPUP$ wywołuje okienko szybkiego dodawania — notujesz bez przerywania pracy.",
@@ -592,7 +607,7 @@
     "message": "Porządek i dane"
   },
   "panelBtn_ariaLabel": {
-    "message": "Otwórz panel personalizacji"
+    "message": "Otwórz ustawienia"
   },
   "panelBtn_title": {
     "message": "Ustawienia · Alt+P"
@@ -617,9 +632,6 @@
   },
   "panel_zoom_label": {
     "message": "Zoom interfejsu"
-  },
-  "panel_appearance_title": {
-    "message": "Wygląd"
   },
   "panel_close_ariaLabel": {
     "message": "Zamknij panel"
@@ -649,7 +661,7 @@
     }
   },
   "panel_data_title": {
-    "message": "Dane"
+    "message": "Kopia zapasowa i dane"
   },
   "panel_data_undoImport": {
     "message": "Cofnij ostatni import"
@@ -672,20 +684,8 @@
   "panel_deletedNotes_title": {
     "message": "Niedawno usunięte"
   },
-  "panel_editor_placeholder": {
-    "message": "Pokaż podpowiedź w pustej linii"
-  },
   "panel_editor_title": {
     "message": "Edytor"
-  },
-  "panel_editor_toolbarToggle": {
-    "message": "Pokaż toolbar edytora · Alt+E"
-  },
-  "panel_editor_toolbarFull": {
-    "message": "Pełny pasek: separator, cofnij/ponów"
-  },
-  "panel_editor_toolbarTooltips": {
-    "message": "Pokaż podpowiedzi w toolbarze"
   },
   "panel_security_acknowledge": {
     "message": "Rozumiem — ukryj ostrzeżenie"
@@ -706,7 +706,7 @@
     "message": "Ogólne"
   },
   "panel_tab_general_title": {
-    "message": "Ustawienia ogólne"
+    "message": "Ogólne: prywatność, kopia zapasowa, przypomnienia, przewodnik i kosz"
   },
   "panel_tab_settings": {
     "message": "Ustawienia"
@@ -763,7 +763,7 @@
     "message": "Tagi"
   },
   "panel_title": {
-    "message": "Personalizacja"
+    "message": "Ustawienia"
   },
   "popup_added_note": {
     "message": "✓ Notatka dodana"
@@ -960,6 +960,12 @@
   "shortcuts_editable_note": {
     "message": "Dwa pierwsze skróty działają w całej przeglądarce. Jeśli kolidują z inną aplikacją, naciśnij „Zmień” i wciśnij własną kombinację, np. Alt+Shift+Q."
   },
+  "shortcuts_filter_placeholder": {
+    "message": "Szukaj skrótu"
+  },
+  "shortcuts_filter_empty": {
+    "message": "Brak pasującego skrótu"
+  },
   "shortcuts_formatting": {
     "message": "Formatowanie"
   },
@@ -999,6 +1005,9 @@
   "shortcuts_formatting_outdent": {
     "message": "Cofnij wcięcie"
   },
+  "shortcuts_formatting_pastePlain": {
+    "message": "wklej bez formatowania"
+  },
   "shortcuts_formatting_redo": {
     "message": "Ponów"
   },
@@ -1010,6 +1019,15 @@
   },
   "shortcuts_formatting_underline": {
     "message": "Podkreślenie"
+  },
+  "shortcuts_global": {
+    "message": "Globalne"
+  },
+  "shortcuts_navigation": {
+    "message": "Nawigacja"
+  },
+  "shortcuts_note": {
+    "message": "Otwarta notatka"
   },
   "shortcuts_formatting_undo": {
     "message": "Cofnij"
@@ -1024,7 +1042,10 @@
     "message": "Wróć na listę / zamknij"
   },
   "shortcuts_general_filter": {
-    "message": "Otwórz / zamknij filtry"
+    "message": "Otwórz / zamknij filtry (w notatce: znajdź w notatce)"
+  },
+  "shortcuts_general_find": {
+    "message": "znajdź w notatce"
   },
   "shortcuts_general_list": {
     "message": "Fokus na listę notatek"
@@ -1049,6 +1070,9 @@
   },
   "shortcuts_general_toggle": {
     "message": "Otwórz / zamknij sidebar"
+  },
+  "shortcuts_general_tags": {
+    "message": "tagi notatki"
   },
   "shortcuts_general_toolbar": {
     "message": "→ pokaż / ukryj toolbar (też w trybie zen)"
@@ -1355,6 +1379,21 @@
   "tagSelector_addBtn_short": {
     "message": "+"
   },
+  "tagSelector_addBtn_title": {
+    "message": "Tagi notatki · Alt+G"
+  },
+  "tagSelector_create_hint": {
+    "message": "Enter tworzy tag „$name$”",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "praca"
+      }
+    }
+  },
+  "tagSelector_create_title": {
+    "message": "Utwórz tag (Enter)"
+  },
   "tagSelector_managePanel": {
     "message": "Zarządzaj tagami →"
   },
@@ -1362,10 +1401,16 @@
     "message": "Utwórz notatkę żeby dodać tag."
   },
   "tagSelector_options_empty": {
-    "message": "Brak tagów. Dodaj tag w ustawieniach."
+    "message": "Brak tagów — wpisz nazwę i naciśnij Enter"
+  },
+  "tagSelector_options_noMatch": {
+    "message": "Brak pasującego tagu"
   },
   "tagSelector_pill_removeTitle": {
     "message": "Usuń tag"
+  },
+  "tagSelector_search_placeholder": {
+    "message": "Szukaj lub dodaj tag"
   },
   "tag_delete_cancel": {
     "message": "Anuluj"
@@ -1701,10 +1746,10 @@
     "message": "→ ukończ otwarte zadanie"
   },
   "panel_noteMenu_title": {
-    "message": "Menu trzech kropek"
+    "message": "Nagłówek notatki"
   },
   "panel_noteMenu_hint": {
-    "message": "Zaznaczone działania są schowane w menu. Odznaczone widać jako ikony w nagłówku notatki."
+    "message": "Kliknij działanie, żeby przypiąć je jako ikonę w nagłówku notatki. Pozostałe są w menu ⋮."
   },
   "panel_noteMenu_convert": {
     "message": "Zamiana notatki i zadania"
@@ -1888,5 +1933,53 @@
   },
   "shortcut_unassigned_inline": {
     "message": "skrót ustawiany w about:addons"
+  },
+  "panel_tab_appearance": {
+    "message": "Wygląd"
+  },
+  "panel_tab_appearance_title": {
+    "message": "Wygląd: motyw, lista, edytor i nagłówek notatki"
+  },
+  "panel_theme_title": {
+    "message": "Motyw i tekst"
+  },
+  "panel_list_title": {
+    "message": "Lista notatek"
+  },
+  "panel_editor_toolbarLabel": {
+    "message": "Pasek formatowania"
+  },
+  "panel_editor_toolbarOff": {
+    "message": "Ukryty"
+  },
+  "panel_editor_toolbarBasic": {
+    "message": "Podstawowy"
+  },
+  "panel_editor_toolbarFullShort": {
+    "message": "Pełny"
+  },
+  "panel_editor_toolbarHint": {
+    "message": "Pełny dodaje czyszczenie formatowania oraz Cofnij i Ponów. Alt+E szybko pokazuje i chowa pasek."
+  },
+  "panel_editor_hints": {
+    "message": "Pokazuj wskazówki: opisy ikon paska i podpowiedź w pustej linii"
+  },
+  "panel_noteMenu_previewTitle": {
+    "message": "Przykładowa notatka"
+  },
+  "editor_dragHandle_title": {
+    "message": "Przeciągnij, aby przenieść blok — także do środka cytatu · Alt+↑/↓"
+  },
+  "panel_editor_blockHandle": {
+    "message": "Uchwyt ⠿ do przeciągania bloków przy lewej krawędzi notatki (bez niego: Alt+↑/↓)"
+  },
+  "editor_dragHandle_list": {
+    "message": "Przeciągnij, aby przenieść całą listę"
+  },
+  "editor_dragHandle_item": {
+    "message": "Przeciągnij, aby przenieść ten element · Alt+↑/↓. Całą listę złapiesz uchwytem przy samej krawędzi notatki"
+  },
+  "editor_dragHandle_line": {
+    "message": "Przeciągnij, aby przenieść tę linię — w cytacie albo poza niego · Alt+↑/↓. Cały cytat złapiesz uchwytem przy samej krawędzi notatki"
   }
 }
