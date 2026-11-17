@@ -9,7 +9,7 @@
                             powtarzanie, podgląd, skróty, popup
      3. Notatka           — toolbar, slash menu, markdown, linki,
                             kopiuj jako Markdown
-     4. Porządek i dane   — zen, ekran notatki, skróty globalne,
+     4. Skupienie i Twoje dane   — zen, ekran notatki, skróty globalne,
                             backup, prywatność
 
    Dlaczego capture zaraz po Starcie: lekcja 1 kończy się pojęciami
@@ -257,7 +257,7 @@ const STEPS = [
     side: 'bottom',
   },
 
-  // ── Lekcja 4: Porządek i dane — zen, ekran notatki, backup ──
+  // ── Lekcja 4: Skupienie i Twoje dane — zen, ekran notatki, backup ──
   // Klasa zen-mode żyje na #main-view (nie na body) — patrz notes.js renderList
   {
     stage: 4, idx: 0,

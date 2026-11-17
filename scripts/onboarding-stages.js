@@ -10,7 +10,7 @@
      2 → 7 lekcji: Start, Formatowanie, Zadania i terminy, Szybkie
          dodawanie, Tryby skupienia, Porządek w notatkach, Dane i skróty
      3 → 4 lekcje (wydanie 1.1): Start, Szybkie dodawanie, Notatka,
-         Porządek i dane
+         Skupienie i Twoje dane
 
    Najważniejsza własność: kto ukończył lekcję 1, ma ją ukończoną także po
    migracji. Od tego znacznika (i od onboardingDismissed, którego ten moduł
@@ -62,7 +62,7 @@ function _v1ToV2(stages) {
  *   1 Start             ← 1 Start
  *   2 Szybkie dodawanie ← 4 Szybkie dodawanie
  *   3 Notatka           ← 2 Formatowanie
- *   4 Porządek i dane   ← 5 Tryby skupienia + 7 Dane i skróty
+ *   4 Skupienie i Twoje dane ← 5 Tryby skupienia + 7 Dane i skróty
  * Dawne lekcje 3 (Zadania i terminy) i 6 (Porządek w notatkach) nie mają
  * następcy: ich treść była oczywista z interfejsu i wypadła.
  * @param {Record<number, boolean>} stages

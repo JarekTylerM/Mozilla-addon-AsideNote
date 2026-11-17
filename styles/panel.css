@@ -574,15 +574,27 @@
   flex-direction: column;
   gap: 4px;
 }
-/* flex-wrap: opisy z kontekstem ("→ zadanie ważne, termin dziś") nie mieszczą
-   się obok chipa w wąskim sidebarze — bez zawijania wychodziły poza panel. */
+/* Opis po lewej, klawisze przy prawej krawędzi: wszystkie opisy zaczynają
+   się w jednej linii, a oko czyta najpierw „co”, potem „czym”. W HTML
+   klawisz stoi przed opisem (czytnik ekranu czyta „Alt+C, Przejdź do…”),
+   kolejność wizualną odwraca `order`. Długi opis zawija się we własnym
+   polu; gdy klawisze się nie mieszczą, schodzą niżej — dalej do prawej. */
 .panel-shortcuts__section li {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 4px;
   font-size: var(--text-sm);
   color: var(--text-2);
+}
+.panel-shortcuts__section li > span {
+  order: 0;
+  flex: 1 1 10em;
+  min-width: 0;
+}
+.panel-shortcuts__section li > code {
+  order: 1;
 }
 .panel-shortcuts__section code {
   font-size: var(--text-xs);
@@ -632,22 +644,18 @@
 .shortcut-row__btn[hidden] {
   display: none;
 }
-/* Przyciski w jednej kolumnie przy prawej krawędzi: opis zajmuje wolne
-   miejsce i w razie potrzeby zawija się we własnym polu, zamiast spychać
-   „Zmień” w inne miejsce w każdym wierszu. „Zmień” zawsze skrajnie po
-   prawej, „Przywróć” (gdy się pojawi) przed nim — nic nie przeskakuje. */
-.shortcut-row > span {
-  flex: 1 1 8em;
-  min-width: 0;
-}
+/* Wiersz ze skrótem do zmiany: opis | klawisz | Przywróć | Zmień.
+   „Zmień” zawsze skrajnie po prawej, więc przyciski stoją w jednej
+   kolumnie, a „Przywróć” (gdy się pojawi) wchodzi przed nim — nic nie
+   przeskakuje. Komunikat zajmuje osobną linię pod spodem. */
 .shortcut-row__btn[data-shortcut-reset] {
-  order: 1;
-}
-.shortcut-row__btn[data-shortcut-edit] {
   order: 2;
 }
-.panel-shortcuts__section .shortcut-row__status {
+.shortcut-row__btn[data-shortcut-edit] {
   order: 3;
+}
+.panel-shortcuts__section .shortcut-row__status {
+  order: 4;
 }
 
 /* Nagrywanie: pole skrótu miga obwódką, żeby było widać, że czeka

@@ -486,22 +486,22 @@
     "message": "Skip all"
   },
   "ob_done_s1": {
-    "message": "That's enough to start taking notes. Next lesson: quick capture — due date, rank and recurrence in a single line of text. You'll find all lessons in settings (⚙ at the bottom), in the Guide section."
+    "message": "That's enough to get started. Next lesson: Quick capture — due date, priority and repeating in one line. All lessons are in settings (⚙ at the bottom), in the Guide section."
   },
   "ob_done_s2": {
-    "message": "You know the whole quick capture syntax. Next lesson: your note — formatting, blocks and links. Find it in settings (⚙), in the Guide section."
+    "message": "Quick capture done. Next lesson: Your note — formatting, blocks and links. Find it in settings (⚙), in the Guide section."
   },
   "ob_done_s3": {
-    "message": "Formatting mastered. One lesson left: order and your data — zen mode, browser-wide shortcuts and backups."
+    "message": "Formatting done. One lesson left: Focus and your data — zen mode, global shortcuts and backups."
   },
   "ob_done_s4": {
-    "message": "Guide complete — you now know all of AsideNotes. You can replay any lesson from settings. Happy note-taking!"
+    "message": "Guide complete. You can replay any lesson from settings. Enjoy!"
   },
   "ob_panel_title": {
     "message": "Guide"
   },
   "ob_s1_1": {
-    "message": "This is the quick capture field. Type anything — say a weekend idea. Right below the field you can see what you are about to create. Enter adds it."
+    "message": "This is the quick capture field. Type anything, e.g. a weekend idea. Right below the field you can see what you'll get. Enter adds it."
   },
   "ob_s1_2": {
     "message": "Every entry lands on this list. Click yours to open it."
@@ -510,28 +510,28 @@
     "message": "The list is still empty. Go back one step (←), type something in the field above and press Enter."
   },
   "ob_s1_3": {
-    "message": "This is the editor — where you expand the thought; the title is above. Everything saves itself as you type; there is no Save button. Undo a slip with Ctrl+Z."
+    "message": "Here you write the content, and above it you change the title. Everything saves automatically and locally, on this computer — there is no Save button. Undo a slip with Ctrl+Z."
   },
   "ob_s1_4": {
-    "message": "AsideNotes has two kinds of entries. A note is a loose piece of information. A task has a box to check off — create one by starting with !, e.g. !coffee with a friend. A task can also get a due date with a reminder — the Quick capture lesson covers that."
+    "message": "An entry can be a note or a task. A task has a checkbox — create one by starting the entry with !, e.g. !client meeting."
   },
   "ob_s1_convert": {
-    "message": "Here you can turn the open note into a task and back — nothing is lost, the checkbox state returns if you switch again. Handy when a loose thought turns out to be something to do."
+    "message": "Here you turn the note into a task and back. Nothing gets lost."
   },
   "ob_s2_1": {
-    "message": "This whole lesson happens in one field. Type: !!concert tickets tomorrow 9:00 and press Enter. Before you do, look below the field — the preview tells you exactly what you are about to get."
+    "message": "This lesson happens in one field. Type: !!concert tickets tomorrow 9:00. Below the field you'll see what you'll get. Then press Enter."
   },
   "ob_s2_dates": {
-    "message": "You write the due date in plain words: today, tomorrow, in 3 days, on friday or 06/15. A time like 14:30 sets a reminder right away."
+    "message": "You write the due date in plain words: today, tomorrow, in 3 days, on friday or 06/15. Add a time, e.g. 14:30, and you get a reminder."
   },
   "ob_s2_priority": {
-    "message": "Marks at the start set the rank: ! makes a task, !! an important task, !> a task in progress, and !!> both at once. These are the same states you can set from the note menu."
+    "message": "Marks at the start say what the entry is: ! is a task, !! an important task, and !> a task in progress, e.g. !>client report. !!> means both."
   },
   "ob_s2_recurrence": {
-    "message": "Repetition works as words too: daily, weekly, every tuesday. If the preview shows your text instead of a due date, it was not recognised and stays in the title."
+    "message": "Repeating works with words too: daily, weekly, every tuesday. If you don't see a due date below the field, write it differently, e.g. tomorrow or 06/15."
   },
   "ob_s2_shortcuts": {
-    "message": "You can reach the field without the mouse: Alt+C puts the cursor in it, Alt+T does it with the task prefix. And $POPUP$ opens the same field in a small window over any page — same syntax, and the ? button shows all of it.",
+    "message": "You can reach the field without the mouse: Alt+C. $POPUP$ opens it in a separate window over any page.",
     "placeholders": {
       "popup": {
         "content": "$2",
@@ -540,52 +540,52 @@
     }
   },
   "ob_s3_1": {
-    "message": "Open any note from the list — we'll practice formatting on it."
+    "message": "Open any note from the list — you'll practise on it."
   },
   "ob_s3_1_empty": {
     "message": "The list is empty. Add a note in the field above (type something and press Enter), then click it on the list."
   },
   "ob_s3_2": {
-    "message": "The toolbar works like a text editor: select some text and click an icon — bold, italic, headings, lists, quotes. In a narrow panel the text styles sit behind the arrow next to bold. Alt+E hides and restores the bar."
+    "message": "This bar works like in Word: select some text and click an icon, e.g. bold or a list. Alt+E hides and shows the bar."
   },
   "ob_s3_3": {
-    "message": "Type / on an empty line in the editor — a menu opens with every block type: task lists, code blocks, colored callouts and more."
+    "message": "Type / on an empty line — a block menu opens: task lists, code blocks, colored callouts and more."
   },
   "ob_s3_4": {
-    "message": "Prefer keeping your hands on the keyboard? Text shortcuts (Markdown) work too: # and space makes a heading, - and space a list, **text** bold. No need to learn them — the toolbar does the same."
+    "message": "Prefer the keyboard? Markdown shortcuts work: # and space make a heading, - and space a list, **text** bold. You don't need them — the bar does the same."
   },
   "ob_s3_5": {
-    "message": "Here you can also copy the whole note as Markdown text, ready to paste anywhere — an email, a document, a chat. Shortcut: Alt+K. It works the other way too: Markdown pasted in here turns into formatting by itself."
+    "message": "Here you can copy the whole note as Markdown and paste it into an email, a document or a chat. Shortcut: Alt+K."
   },
   "ob_s3_link": {
-    "message": "Select some text and click this icon (or press Ctrl+K) to insert a link. Clicking a finished link in a note opens it in a new tab."
+    "message": "Select some text and click this icon (or Ctrl+K) to add a link. A clicked link opens in a new tab."
   },
   "ob_s4_1": {
-    "message": "Zen mode quiets everything except what matters today. Click this icon or press Alt+Z."
+    "message": "Zen mode hides everything except today's things. Click this icon or press Alt+Z."
   },
   "ob_s4_2": {
-    "message": "The interface dimmed and the list shows only today's items. The same button (or Alt+Z) returns to the normal view — try it."
+    "message": "The rest dimmed, and the list shows only today's things. The same button (or Alt+Z) goes back to the normal view — try it."
   },
   "ob_s4_3": {
-    "message": "An open note takes the whole panel — the list steps aside so nothing distracts you. Open any note from the list."
+    "message": "An open note takes the whole panel and the list hides, so nothing distracts you. Open any note from the list."
   },
   "ob_s4_3_empty": {
     "message": "The list is empty. Add a note in the field above (type something and press Enter), then click it on the list."
   },
   "ob_s4_4": {
-    "message": "Get back to the list with the ← arrow next to the title or the Esc key. Everything saves automatically — try it now."
+    "message": "Go back to the list with the ← arrow next to the title or the Esc key. Everything saves itself — try it now."
   },
   "ob_s4_backup": {
-    "message": "Your notes live only on this computer — no cloud, no tracking. In settings you can make a backup (Export data), and deleted notes wait in Recently deleted."
+    "message": "Your notes are only on this computer, we don't send them anywhere. In settings you can make a backup (Export data). Deleted notes wait in “Recently deleted”."
   },
   "ob_s4_privacy": {
-    "message": "One last thing: notes are not encrypted — anyone with access to this browser profile can read them. Don't store passwords or card numbers in them."
+    "message": "Important: notes are not encrypted. Anyone with access to this browser on this computer can read them. Don't store passwords or card numbers in them."
   },
   "ob_s4_settings": {
-    "message": "Under the ⚙ icon you will find settings: privacy and backup (General tab), theme and interface size (Appearance tab) and the full list of keyboard shortcuts (Shortcuts tab)."
+    "message": "Settings are under the ⚙ icon. There you can change the look, make a copy of your notes and see all shortcuts."
   },
   "ob_s4_shortcuts": {
-    "message": "AsideNotes works from any browser tab: $TOGGLE$ opens and closes this panel, and $POPUP$ brings up the quick add window — you jot things down without interrupting your work.",
+    "message": "AsideNotes works from any tab: $TOGGLE$ opens and closes this panel, and $POPUP$ opens the quick capture window.",
     "placeholders": {
       "toggle": {
         "content": "$1",
@@ -607,7 +607,7 @@
     "message": "Your note"
   },
   "ob_stage4_label": {
-    "message": "Order and your data"
+    "message": "Focus and your data"
   },
   "panelBtn_ariaLabel": {
     "message": "Open settings"
@@ -1006,7 +1006,7 @@
     "message": "Notes are not encrypted and are visible to anyone with access to this Firefox profile."
   },
   "shortcuts_editable_note": {
-    "message": "The first two shortcuts work everywhere in the browser. If they clash with another app, press “Change” and type your own combination, e.g. Alt+Shift+Q."
+    "message": "The first two shortcuts work everywhere in the browser. If they clash with another program, click “Change” and press your own combination, e.g. Alt+Shift+Q."
   },
   "shortcuts_filter_placeholder": {
     "message": "Search shortcuts"
@@ -1021,49 +1021,49 @@
     "message": "Bold"
   },
   "shortcuts_formatting_bold_italic": {
-    "message": "→ Bold + Italic"
+    "message": "Bold and italic"
   },
   "shortcuts_formatting_captureOpen": {
-    "message": "Shift+Enter in quick capture → add and open editor"
+    "message": "Shift+Enter in the add field: add and open right away"
   },
   "shortcuts_formatting_code": {
-    "message": "Inline code"
+    "message": "Code in text"
   },
   "shortcuts_formatting_hardBreak": {
-    "message": "→ Line break"
+    "message": "New line without a new paragraph"
   },
   "shortcuts_formatting_indent": {
-    "message": "Indent"
+    "message": "Increase indent"
   },
   "shortcuts_formatting_italic": {
     "message": "Italic"
   },
   "shortcuts_formatting_link": {
-    "message": "→ insert / edit link"
+    "message": "Add or change a link"
   },
   "shortcuts_formatting_clear": {
-    "message": "→ clear formatting"
+    "message": "Clear formatting"
   },
   "shortcuts_formatting_linkOpen": {
-    "message": "→ open link in new tab"
+    "message": "Open link in a new tab"
   },
   "shortcuts_formatting_moveBlock": {
-    "message": "→ move block / list item"
+    "message": "Move the line up or down"
   },
   "shortcuts_formatting_outdent": {
-    "message": "Outdent"
+    "message": "Decrease indent"
   },
   "shortcuts_formatting_pastePlain": {
-    "message": "paste without formatting"
+    "message": "Paste without formatting"
   },
   "shortcuts_formatting_redo": {
     "message": "Redo"
   },
   "shortcuts_formatting_softBreak": {
-    "message": "→ soft line break in editor"
+    "message": "New line without a new paragraph"
   },
   "shortcuts_formatting_strike": {
-    "message": "Strikethrough"
+    "message": "Strike through"
   },
   "shortcuts_formatting_underline": {
     "message": "Underline"
@@ -1081,34 +1081,34 @@
     "message": "Undo"
   },
   "shortcuts_general_capture": {
-    "message": "Focus quick capture"
+    "message": "Go to the quick capture field"
   },
   "shortcuts_general_captureTask": {
-    "message": "Quick capture — task (!)"
+    "message": "Quick capture a task (!)"
   },
   "shortcuts_general_esc": {
-    "message": "Back to list / close"
+    "message": "Back to the list, or close"
   },
   "shortcuts_general_filter": {
-    "message": "Open / close filters (in a note: find in note)"
+    "message": "Show or hide list filters"
   },
   "shortcuts_general_find": {
-    "message": "find in note"
+    "message": "Search in this note"
   },
   "shortcuts_general_list": {
-    "message": "Focus the notes list"
+    "message": "Go to the list"
   },
   "shortcuts_general_panel": {
-    "message": "Open / close panel"
+    "message": "Open or close settings"
   },
   "shortcuts_general_popup": {
-    "message": "Quick add (popup)"
+    "message": "Quick capture window"
   },
   "shortcuts_general_save": {
-    "message": "Save immediately"
+    "message": "Save now (saving is automatic anyway)"
   },
   "shortcuts_general_search": {
-    "message": "Focus search"
+    "message": "Go to search"
   },
   "shortcuts_general_shiftTab": {
     "message": "Previous element"
@@ -1117,34 +1117,34 @@
     "message": "Next element"
   },
   "shortcuts_general_toggle": {
-    "message": "Open / close sidebar"
+    "message": "Open or close the side panel"
   },
   "shortcuts_general_tags": {
-    "message": "note tags"
+    "message": "Note tags"
   },
   "shortcuts_general_toolbar": {
-    "message": "→ show / hide toolbar (also in zen mode)"
+    "message": "Show or hide the toolbar (also in zen mode)"
   },
   "shortcuts_general_zen": {
-    "message": "→ zen mode"
+    "message": "Zen mode: only today's things"
   },
   "shortcuts_list": {
     "message": "Note list"
   },
   "shortcuts_list_arrows": {
-    "message": "Navigate list"
+    "message": "Move around the list"
   },
   "shortcuts_list_ctrlArrows": {
-    "message": "Previous / next note (in the editor)"
+    "message": "Previous or next note (while writing)"
   },
   "shortcuts_list_delete": {
-    "message": "Delete note"
+    "message": "Delete note (goes to the bin)"
   },
   "shortcuts_list_enter": {
     "message": "Open note"
   },
   "shortcuts_list_space": {
-    "message": "Toggle task checkbox"
+    "message": "Mark task as done / not done"
   },
   "shortcuts_list_upToSearch": {
     "message": "From the first item, back to search"
@@ -1165,85 +1165,85 @@
     "message": "Markdown shortcuts"
   },
   "shortcuts_markdown_blocks": {
-    "message": "Markdown — blocks"
+    "message": "Markdown — at the start of a line (then space)"
   },
   "shortcuts_markdown_callout_caution": {
-    "message": ">[!CAUTION] + space → Caution block"
+    "message": "Callout “Caution”"
   },
   "shortcuts_markdown_callout_important": {
-    "message": ">[!IMPORTANT] + space → Important block"
+    "message": "Callout “Important”"
   },
   "shortcuts_markdown_callout_note": {
-    "message": ">[!NOTE] + space → Note block"
+    "message": "Callout “Note”"
   },
   "shortcuts_markdown_callout_tip": {
-    "message": ">[!TIP] + space → Tip block"
+    "message": "Callout “Tip”"
   },
   "shortcuts_markdown_callout_warning": {
-    "message": ">[!WARNING] + space → Warning block"
+    "message": "Callout “Warning”"
   },
   "shortcuts_markdown_checklist": {
-    "message": "Task list (unchecked)"
+    "message": "Task list"
   },
   "shortcuts_markdown_checklist_done": {
-    "message": "Task list (checked)"
+    "message": "Task list (done)"
   },
   "shortcuts_markdown_code": {
-    "message": "Inline code"
+    "message": "Code in text"
   },
   "shortcuts_markdown_codeblock": {
-    "message": "→ Code block"
+    "message": "Code block"
   },
   "shortcuts_markdown_codeblock_lang": {
-    "message": "→ Code block with language"
+    "message": "Code block with highlighting (e.g. js)"
   },
   "shortcuts_markdown_escape": {
-    "message": "→ literal character, no formatting"
+    "message": "Character without formatting (literal)"
   },
   "shortcuts_markdown_h1": {
-    "message": "Heading H1"
+    "message": "Heading 1"
   },
   "shortcuts_markdown_h2": {
-    "message": "Heading H2"
+    "message": "Heading 2"
   },
   "shortcuts_markdown_h3": {
-    "message": "Heading H3"
+    "message": "Heading 3"
   },
   "shortcuts_markdown_hr": {
-    "message": "Separator"
+    "message": "Horizontal line"
   },
   "shortcuts_markdown_inline": {
-    "message": "Markdown — inline"
+    "message": "Markdown — within text"
   },
   "shortcuts_markdown_link": {
     "message": "Link"
   },
   "shortcuts_markdown_list": {
-    "message": "Bullet list"
+    "message": "Bulleted list"
   },
   "shortcuts_markdown_ordered": {
     "message": "Numbered list"
   },
   "shortcuts_markdown_quote": {
-    "message": "Blockquote"
+    "message": "Quote"
   },
   "shortcuts_markdown_toggle": {
-    "message": "→ Toggle list"
+    "message": "Collapsible section"
   },
   "shortcuts_pasteMd": {
-    "message": "→ pasted Markdown becomes formatting"
+    "message": "Pasted Markdown turns into formatting"
   },
   "shortcuts_qc_capture": {
-    "message": "→ add and clear the field"
+    "message": "Add and clear the field"
   },
   "shortcuts_qc_captureOpen": {
-    "message": "→ add and open in the editor"
+    "message": "Add and open right away"
   },
   "shortcuts_qc_date": {
-    "message": "→ specific date, year optional"
+    "message": "A specific day (you can skip the year)"
   },
   "shortcuts_qc_dayKeywords": {
-    "message": "→ due today or tomorrow"
+    "message": "Due today or tomorrow"
   },
   "shortcuts_qc_ex_daily": {
     "message": "daily"
@@ -1270,31 +1270,31 @@
     "message": "weekly"
   },
   "shortcuts_qc_intro": {
-    "message": "The field above the list (Alt+C). The preview under it shows what you’ll get before you press Enter. The same syntax works in the title of an open note: Enter applies what it recognises."
+    "message": "The field above the list (Alt+C). Below it you see what you'll get before you press Enter. You can write the same way in the title of an open note."
   },
   "shortcuts_qc_plain": {
-    "message": "→ a plain note"
+    "message": "A plain note"
   },
   "shortcuts_qc_recurrence": {
-    "message": "→ repeats (also: monthly, yearly, every tuesday)"
+    "message": "Repeats (also: monthly, yearly, every tuesday)"
   },
   "shortcuts_qc_task": {
-    "message": "→ task instead of a note"
+    "message": "A task instead of a note"
   },
   "shortcuts_qc_taskImportant": {
-    "message": "→ important, due today"
+    "message": "Important task for today"
   },
   "shortcuts_qc_taskImportantInProgress": {
-    "message": "→ important and in progress at once"
+    "message": "Important and in progress"
   },
   "shortcuts_qc_taskInProgress": {
-    "message": "→ task in progress, due today"
+    "message": "Task in progress, due today"
   },
   "shortcuts_qc_time": {
-    "message": "→ time, and a reminder then"
+    "message": "Time, and a reminder then"
   },
   "shortcuts_qc_weekdays": {
-    "message": "→ next such day (also: on friday, next friday)"
+    "message": "The next such day (also: on friday, next friday)"
   },
   "shortcuts_quickCapture": {
     "message": "Quick capture"
@@ -1303,7 +1303,7 @@
     "message": "All shortcuts →"
   },
   "shortcuts_sidebar": {
-    "message": "Sidebar"
+    "message": "Side panel"
   },
   "shortcuts_tab_editor": {
     "message": "Editor"
@@ -1321,10 +1321,10 @@
     "message": "Keyboard shortcuts"
   },
   "shortcuts_toolbarToggle": {
-    "message": "→ show/hide toolbar"
+    "message": "Show or hide the toolbar"
   },
   "shortcuts_zenMode": {
-    "message": "→ zen mode"
+    "message": "Zen mode: only today's things"
   },
   "sidebar_title": {
     "message": "AsideNotes"
@@ -1734,7 +1734,7 @@
     "message": "Copied ✓"
   },
   "shortcuts_copyMd": {
-    "message": "→ copy note as Markdown"
+    "message": "Copy note as Markdown"
   },
   "linkTooltip_edit": {
     "message": "Edit link"
@@ -1803,16 +1803,16 @@
     "message": "Move to trash"
   },
   "shortcuts_important": {
-    "message": "→ mark as important"
+    "message": "Mark as important"
   },
   "shortcuts_inProgress": {
-    "message": "→ mark as in progress"
+    "message": "Mark as in progress"
   },
   "shortcuts_titleEnter": {
-    "message": "→ from the title to the content"
+    "message": "Go from the title to the content"
   },
   "shortcuts_complete": {
-    "message": "→ complete the open task"
+    "message": "Complete the open task"
   },
   "panel_noteMenu_title": {
     "message": "Note header"
@@ -1923,13 +1923,13 @@
     "message": "#work"
   },
   "shortcuts_qc_tag": {
-    "message": "→ tag: assigns an existing one or creates it"
+    "message": "Tag — existing or new"
   },
   "shortcuts_qc_ex_quoted": {
     "message": "!\"version 6/15\""
   },
   "shortcuts_qc_quoted": {
-    "message": "→ literal text, no looking for dates or tags"
+    "message": "Literal text — no date or tag recognition"
   },
   "quickCapture_preview_needTitle": {
     "message": "Add a title to create the entry"
@@ -1960,13 +1960,13 @@
     "message": "5pm"
   },
   "shortcuts_qc_hour": {
-    "message": "→ a full hour (also: at 6 at the end)"
+    "message": "A full hour (also: at 6 at the end)"
   },
   "shortcuts_qc_ex_monthName": {
     "message": "Aug 15"
   },
   "shortcuts_qc_monthName": {
-    "message": "→ date with the month name, year optional"
+    "message": "Date with the month name (you can skip the year)"
   },
   "shortcuts_qc_ex_inWeeks": {
     "message": "in 2 weeks"
@@ -1975,7 +1975,7 @@
     "message": "next week"
   },
   "shortcuts_qc_relative": {
-    "message": "→ a date some time ahead (also: in 3 days, in a month)"
+    "message": "Due some time ahead (also: in 3 days, in a month)"
   },
   "toolbar_textStyle_menu": {
     "message": "Text styles"
@@ -2013,13 +2013,13 @@
     "message": "The browser rejected this shortcut. Try another combination, e.g. Alt+Shift+Y."
   },
   "shortcut_err_tooManyModifiers": {
-    "message": "Too many modifiers — a shortcut takes at most two (e.g. Alt+Shift) plus a key."
+    "message": "Too many keys at once — a shortcut is at most two of Ctrl, Alt, Shift plus one key, e.g. Alt+Shift+Q."
   },
   "shortcut_err_unsupportedKey": {
     "message": "This key can't be used in a shortcut. Pick a letter, a digit or F1–F12."
   },
   "shortcut_reset_btn": {
-    "message": "Default"
+    "message": "Restore"
   },
   "shortcut_reset_title": {
     "message": "Restore the default shortcut $1",
@@ -2041,10 +2041,10 @@
     "message": "not set"
   },
   "shortcut_unassigned_hint": {
-    "message": "The browser did not assign this shortcut (another add-on may already use it). Set your own: Shortcuts panel → “Change” button."
+    "message": "The browser didn't set this shortcut (another add-on may use it). Set your own with the “Change” button in the Shortcuts tab."
   },
   "shortcut_unassigned_inline": {
-    "message": "a shortcut you set in about:addons"
+    "message": "set this shortcut on the Add-ons page (about:addons)"
   },
   "panel_tab_appearance": {
     "message": "Appearance"

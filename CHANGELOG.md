@@ -149,9 +149,16 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
   i miękko przechodzi do przycisku, przy którym się zatrzymasz. Z klawiatury
   (Tab) podpowiedź pojawia się od razu.
 
-- **Równe przyciski „Zmień” w skrótach.** W ustawieniach skrótów
-  przyciski stoją jeden pod drugim przy prawej krawędzi, niezależnie od
-  długości opisu.
+- **Przewodnik i skróty bez żargonu programistów.** Zamiast „fokus”,
+  „składnia”, „popup” czy „kod inline” jest „przejdź do”, „okno szybkiego
+  dodawania” i „kod w tekście”. Zostały pojęcia znane z pracy biurowej:
+  formatowanie, wcięcie, Nagłówek 1, Markdown. Każdy krok przewodnika mówi
+  o jednej rzeczy, a każdy skrót jest opisany tak samo: co się stanie.
+  Ostatnia lekcja nazywa się teraz „Skupienie i Twoje dane”.
+
+- **Czytelniejsza lista skrótów.** Opis jest po lewej, a klawisze równo
+  przy prawej krawędzi, więc najpierw widać, co się stanie, a potem, czym
+  to zrobić. Przyciski „Zmień” stoją jeden pod drugim.
 
 - **Pasek z Cofnij nie blokuje pracy.** Zamkniesz go przyciskiem ✕ albo
   po prostu klikając gdzie indziej, np. w zarządzanie tagami: pasek znika,

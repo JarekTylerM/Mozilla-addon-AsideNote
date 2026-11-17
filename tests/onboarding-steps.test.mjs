@@ -302,8 +302,10 @@ test('przykłady składni z tekstów naprawdę się parsują', () => {
   // Przewodnik uczył kiedyś "tomorrow 6pm", którego parser nie przyjmuje:
   // słowo zostawało w tytule, a użytkownik dostawał zadanie bez godziny.
   const locales = { en: 'en-US', pl: 'pl' };
-  /** Tekst po "Wpisz:" / "Type:" aż do "i wciśnij" / "and press". */
-  const typed = (msg) => msg.match(/(?:Wpisz|Type): (.+?) (?:i wciśnij|and press)/)?.[1];
+  /** Tekst po "Wpisz:" / "Type:" aż do "i wciśnij" / "and press" albo do
+   *  końca zdania ("Wpisz: … 9:00. Pod polem…"). */
+  const typed = (msg) =>
+    msg.match(/(?:Wpisz|Type): (.+?)(?: (?:i wciśnij|and press)|\.(?:\s|$))/)?.[1];
   for (const lang of LANGS) {
     const cases = [
       { key: 'list_empty_ex_task', text: MESSAGES[lang].list_empty_ex_task.message, time: '10:00' },

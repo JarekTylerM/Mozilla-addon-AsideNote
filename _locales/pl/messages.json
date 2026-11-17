@@ -486,22 +486,22 @@
     "message": "Pomiń wszystko"
   },
   "ob_done_s1": {
-    "message": "To wystarczy, żeby zacząć notować. W następnej lekcji: szybkie dodawanie — termin, ranga i powtarzanie w jednej linijce tekstu. Wszystkie lekcje znajdziesz w ustawieniach (⚙ na dole) w sekcji Przewodnik."
+    "message": "To wystarczy, żeby zacząć. Następna lekcja: Szybkie dodawanie — termin, ważność i powtarzanie w jednej linii. Wszystkie lekcje są w ustawieniach (⚙ na dole), w sekcji Przewodnik."
   },
   "ob_done_s2": {
-    "message": "Znasz całą składnię szybkiego dodawania. Następna lekcja: notatka — formatowanie, bloki i linki. Znajdziesz ją w ustawieniach (⚙) w sekcji Przewodnik."
+    "message": "Szybkie dodawanie opanowane. Następna lekcja: Notatka — formatowanie, bloki i linki. Znajdziesz ją w ustawieniach (⚙), w sekcji Przewodnik."
   },
   "ob_done_s3": {
-    "message": "Formatowanie opanowane. Została ostatnia lekcja: porządek i dane — tryb zen, skróty w całej przeglądarce i kopia zapasowa."
+    "message": "Formatowanie opanowane. Została ostatnia lekcja: Skupienie i Twoje dane — tryb zen, skróty globalne i kopia zapasowa."
   },
   "ob_done_s4": {
-    "message": "Przewodnik ukończony — znasz już całe AsideNotes. Każdą lekcję możesz powtórzyć w ustawieniach. Dobrego notowania!"
+    "message": "Przewodnik ukończony. Każdą lekcję możesz powtórzyć w ustawieniach. Dobrej pracy!"
   },
   "ob_panel_title": {
     "message": "Przewodnik"
   },
   "ob_s1_1": {
-    "message": "To pole szybkiego dodawania. Wpisz cokolwiek — np. pomysł na weekend. Pod polem od razu widzisz, co powstanie. Enter dodaje wpis."
+    "message": "To pole szybkiego dodawania. Wpisz cokolwiek, np. pomysł na weekend. Pod polem od razu widać, co powstanie. Enter dodaje wpis."
   },
   "ob_s1_2": {
     "message": "Każdy wpis trafia na tę listę. Kliknij swój, żeby go otworzyć."
@@ -510,28 +510,28 @@
     "message": "Lista jest jeszcze pusta. Wróć do poprzedniego kroku (←), wpisz coś w polu u góry i wciśnij Enter."
   },
   "ob_s1_3": {
-    "message": "To edytor — tu rozwijasz myśl, a wyżej zmieniasz tytuł. Wszystko zapisuje się samo w trakcie pisania; nie ma przycisku Zapisz. Pomyłkę cofniesz przez Ctrl+Z."
+    "message": "Tu piszesz treść, a wyżej zmieniasz tytuł. Wszystko zapisuje się automatycznie i lokalnie, na tym komputerze — nie ma przycisku Zapisz. Pomyłkę cofniesz przez Ctrl+Z."
   },
   "ob_s1_4": {
-    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kwadracik do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !kawa ze znajomym. Zadaniu ustawisz też termin z przypomnieniem — o tym w lekcji Szybkie dodawanie."
+    "message": "Wpis może być notatką albo zadaniem. Zadanie ma pole do odhaczenia — tworzysz je, zaczynając wpis od !, np. !spotkanie z klientem."
   },
   "ob_s1_convert": {
-    "message": "Tutaj zamienisz otwartą notatkę w zadanie i z powrotem — nic nie tracisz, odhaczenie wraca po ponownej zmianie. Przydaje się, gdy luźna myśl okazuje się jednak czymś do zrobienia."
+    "message": "Tutaj zamienisz notatkę w zadanie i z powrotem. Nic przy tym nie tracisz."
   },
   "ob_s2_1": {
-    "message": "Cała lekcja dzieje się w tym jednym polu. Wpisz: !!bilety na koncert jutro 9:00 i wciśnij Enter. Zanim to zrobisz, spójrz pod pole — podgląd mówi, co dokładnie powstanie."
+    "message": "Ta lekcja dzieje się w jednym polu. Wpisz: !!bilety na koncert jutro 9:00. Pod polem zobaczysz, co powstanie. Potem wciśnij Enter."
   },
   "ob_s2_dates": {
-    "message": "Termin piszesz zwykłymi słowami: dziś, jutro, za 3 dni, w piątek albo 15.06. Godzina, np. 14:30, od razu ustawia przypomnienie."
+    "message": "Termin piszesz zwykłymi słowami: dziś, jutro, za 3 dni, w piątek albo 15.06. Gdy dopiszesz godzinę, np. 14:30, dostaniesz przypomnienie."
   },
   "ob_s2_priority": {
-    "message": "Znaki na początku ustawiają rangę: ! tworzy zadanie, !! zadanie ważne, !> zadanie w trakcie, a !!> oba naraz. To te same stany, które ustawisz w menu notatki."
+    "message": "Znaki na początku mówią, czym jest wpis: ! to zadanie, !! to ważne zadanie, a !> to zadanie w trakcie, np. !>raport dla klienta. !!> łączy oba."
   },
   "ob_s2_recurrence": {
-    "message": "Powtarzanie też wpisujesz słowami: codziennie, co tydzień, co wtorek. Jeśli w podglądzie widzisz swój tekst zamiast terminu, to znaczy, że nie został rozpoznany i zostanie w tytule."
+    "message": "Powtarzanie też piszesz słowami: codziennie, co tydzień, co wtorek. Gdy pod polem nie widać terminu, napisz go inaczej, np. jutro albo 15.06."
   },
   "ob_s2_shortcuts": {
-    "message": "Do pola trafisz bez myszy: Alt+C stawia w nim kursor, Alt+T od razu z prefiksem zadania. A $POPUP$ otwiera to samo pole w małym okienku nad dowolną stroną — ta sama składnia, a przycisk ? pokazuje ją w całości.",
+    "message": "Do pola przejdziesz bez myszy: Alt+C. $POPUP$ otwiera je w osobnym oknie nad dowolną stroną.",
     "placeholders": {
       "popup": {
         "content": "$2",
@@ -540,52 +540,52 @@
     }
   },
   "ob_s3_1": {
-    "message": "Otwórz dowolną notatkę z listy — na niej poćwiczymy formatowanie."
+    "message": "Otwórz dowolną notatkę z listy — na niej poćwiczysz."
   },
   "ob_s3_1_empty": {
     "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
   },
   "ob_s3_2": {
-    "message": "Pasek narzędzi działa jak w edytorze tekstu: zaznacz fragment i kliknij ikonę — pogrubienie, kursywa, nagłówki, listy, cytaty. W wąskim panelu style tekstu są pod strzałką obok pogrubienia. Alt+E chowa i przywraca pasek."
+    "message": "Ten pasek działa jak w Wordzie: zaznacz tekst i kliknij ikonę, np. pogrubienie albo listę. Alt+E chowa i pokazuje pasek."
   },
   "ob_s3_3": {
-    "message": "Wpisz / w pustej linii edytora — otworzy się menu wszystkich bloków: listy zadań, bloki kodu, kolorowe ramki i inne."
+    "message": "Wpisz / w pustej linii — otworzy się menu bloków: listy zadań, bloki kodu, kolorowe ramki i inne."
   },
   "ob_s3_4": {
-    "message": "Wolisz nie odrywać rąk od klawiatury? Działają skróty tekstowe (Markdown): # i spacja daje nagłówek, - i spacja listę, **tekst** pogrubienie. Nie musisz ich znać — pasek robi to samo."
+    "message": "Wolisz klawiaturę? Działają skróty Markdown: # i spacja dają nagłówek, - i spacja listę, **tekst** pogrubienie. Nie musisz ich znać — pasek robi to samo."
   },
   "ob_s3_5": {
-    "message": "Tutaj skopiujesz też całą notatkę jako tekst Markdown i wkleisz gdziekolwiek — do maila, dokumentu czy czatu. Skrót: Alt+K. Działa to też w drugą stronę: wklejony tutaj Markdown sam zamienia się w formatowanie."
+    "message": "Tutaj skopiujesz całą notatkę jako Markdown i wkleisz ją do maila, dokumentu albo czatu. Skrót: Alt+K."
   },
   "ob_s3_link": {
-    "message": "Zaznacz fragment tekstu i kliknij tę ikonę (albo wciśnij Ctrl+K), żeby wstawić link. Kliknięcie gotowego linku w notatce otwiera go w nowej karcie."
+    "message": "Zaznacz tekst i kliknij tę ikonę (albo Ctrl+K), żeby dodać link. Kliknięty link otworzy się w nowej karcie."
   },
   "ob_s4_1": {
-    "message": "Tryb zen wycisza wszystko poza tym, co ważne dziś. Kliknij tę ikonę albo wciśnij Alt+Z."
+    "message": "Tryb zen chowa wszystko poza sprawami na dziś. Kliknij tę ikonę albo wciśnij Alt+Z."
   },
   "ob_s4_2": {
-    "message": "Interfejs przygasł, a lista pokazuje tylko dzisiejsze sprawy. Ten sam przycisk (albo Alt+Z) wraca do normalnego widoku — wypróbuj."
+    "message": "Reszta przygasła, a na liście są tylko dzisiejsze sprawy. Ten sam przycisk (albo Alt+Z) wraca do zwykłego widoku — spróbuj."
   },
   "ob_s4_3": {
-    "message": "Otwarta notatka zajmuje cały panel — lista chowa się, żeby nic nie rozpraszało. Otwórz dowolną notatkę z listy."
+    "message": "Otwarta notatka zajmuje cały panel, a lista się chowa, żeby nic nie rozpraszało. Otwórz dowolną notatkę z listy."
   },
   "ob_s4_3_empty": {
     "message": "Lista jest pusta. Dodaj notatkę w polu u góry (wpisz coś i wciśnij Enter), a potem kliknij ją na liście."
   },
   "ob_s4_4": {
-    "message": "Do listy wracasz strzałką ← obok tytułu albo klawiszem Esc. Wszystko zapisuje się samo — wypróbuj teraz."
+    "message": "Na listę wrócisz strzałką ← obok tytułu albo klawiszem Esc. Wszystko zapisuje się samo — spróbuj teraz."
   },
   "ob_s4_backup": {
-    "message": "Twoje notatki są tylko na tym komputerze — bez chmury i bez śledzenia. W ustawieniach zrobisz kopię zapasową (Eksportuj dane), a usunięte notatki poczekają w Niedawno usuniętych."
+    "message": "Notatki są tylko na tym komputerze, nigdzie ich nie wysyłamy. W ustawieniach zrobisz kopię zapasową (Eksportuj dane). Usunięte notatki czekają w „Niedawno usuniętych”."
   },
   "ob_s4_privacy": {
-    "message": "Ważne na koniec: notatki nie są szyfrowane — odczyta je każdy, kto ma dostęp do tego profilu przeglądarki. Nie zapisuj w nich haseł ani numerów kart."
+    "message": "Ważne: notatki nie są szyfrowane. Odczyta je każdy, kto ma dostęp do tej przeglądarki na tym komputerze. Nie zapisuj w nich haseł ani numerów kart."
   },
   "ob_s4_settings": {
-    "message": "Pod ikoną ⚙ znajdziesz ustawienia: prywatność i kopię zapasową (zakładka Ogólne), motyw i rozmiar interfejsu (zakładka Wygląd) oraz pełną listę skrótów klawiaturowych (zakładka Skróty)."
+    "message": "Pod ikoną ⚙ są ustawienia. Zmienisz tam wygląd, zrobisz kopię notatek i zobaczysz wszystkie skróty."
   },
   "ob_s4_shortcuts": {
-    "message": "AsideNotes działa z każdej karty przeglądarki: $TOGGLE$ otwiera i zamyka ten panel, a $POPUP$ wywołuje okienko szybkiego dodawania — notujesz bez przerywania pracy.",
+    "message": "AsideNotes działa z każdej karty: $TOGGLE$ otwiera i zamyka ten panel, a $POPUP$ otwiera okno szybkiego dodawania.",
     "placeholders": {
       "toggle": {
         "content": "$1",
@@ -607,7 +607,7 @@
     "message": "Notatka"
   },
   "ob_stage4_label": {
-    "message": "Porządek i dane"
+    "message": "Skupienie i Twoje dane"
   },
   "panelBtn_ariaLabel": {
     "message": "Otwórz ustawienia"
@@ -1006,7 +1006,7 @@
     "message": "Notatki nie są szyfrowane i są widoczne dla każdego z dostępem do profilu Firefox."
   },
   "shortcuts_editable_note": {
-    "message": "Dwa pierwsze skróty działają w całej przeglądarce. Jeśli kolidują z inną aplikacją, naciśnij „Zmień” i wciśnij własną kombinację, np. Alt+Shift+Q."
+    "message": "Dwa pierwsze skróty działają w całej przeglądarce. Jeśli kolidują z innym programem, kliknij „Zmień” i wciśnij własną kombinację, np. Alt+Shift+Q."
   },
   "shortcuts_filter_placeholder": {
     "message": "Szukaj skrótu"
@@ -1021,46 +1021,46 @@
     "message": "Pogrubienie"
   },
   "shortcuts_formatting_bold_italic": {
-    "message": "→ Pogrubienie + kursywa"
+    "message": "Pogrubienie i kursywa"
   },
   "shortcuts_formatting_captureOpen": {
-    "message": "Shift+Enter w polu szybkiego dodawania → dodaj i otwórz edytor"
+    "message": "Shift+Enter w polu dodawania: dodaj i od razu otwórz"
   },
   "shortcuts_formatting_code": {
-    "message": "Kod inline"
+    "message": "Kod w tekście"
   },
   "shortcuts_formatting_hardBreak": {
-    "message": "→ Łamanie linii"
+    "message": "Nowa linia bez nowego akapitu"
   },
   "shortcuts_formatting_indent": {
-    "message": "Wcięcie w prawo"
+    "message": "Zwiększ wcięcie"
   },
   "shortcuts_formatting_italic": {
     "message": "Kursywa"
   },
   "shortcuts_formatting_link": {
-    "message": "→ wstaw / edytuj link"
+    "message": "Dodaj albo zmień link"
   },
   "shortcuts_formatting_clear": {
-    "message": "→ wyczyść formatowanie"
+    "message": "Wyczyść formatowanie"
   },
   "shortcuts_formatting_linkOpen": {
-    "message": "→ otwórz link w nowej karcie"
+    "message": "Otwórz link w nowej karcie"
   },
   "shortcuts_formatting_moveBlock": {
-    "message": "→ przesuń blok / element listy"
+    "message": "Przesuń linię w górę albo w dół"
   },
   "shortcuts_formatting_outdent": {
-    "message": "Cofnij wcięcie"
+    "message": "Zmniejsz wcięcie"
   },
   "shortcuts_formatting_pastePlain": {
-    "message": "wklej bez formatowania"
+    "message": "Wklej bez formatowania"
   },
   "shortcuts_formatting_redo": {
     "message": "Ponów"
   },
   "shortcuts_formatting_softBreak": {
-    "message": "→ miękki enter (br) w edytorze"
+    "message": "Nowa linia bez nowego akapitu"
   },
   "shortcuts_formatting_strike": {
     "message": "Przekreślenie"
@@ -1081,34 +1081,34 @@
     "message": "Cofnij"
   },
   "shortcuts_general_capture": {
-    "message": "Skocz do pola szybkiego dodawania"
+    "message": "Przejdź do pola szybkiego dodawania"
   },
   "shortcuts_general_captureTask": {
-    "message": "Szybkie dodawanie — zadanie (!)"
+    "message": "Szybkie dodawanie zadania (!)"
   },
   "shortcuts_general_esc": {
-    "message": "Wróć na listę / zamknij"
+    "message": "Wróć na listę albo zamknij"
   },
   "shortcuts_general_filter": {
-    "message": "Otwórz / zamknij filtry (w notatce: znajdź w notatce)"
+    "message": "Pokaż lub schowaj filtry listy"
   },
   "shortcuts_general_find": {
-    "message": "znajdź w notatce"
+    "message": "Szukaj w tej notatce"
   },
   "shortcuts_general_list": {
-    "message": "Fokus na listę notatek"
+    "message": "Przejdź do listy"
   },
   "shortcuts_general_panel": {
-    "message": "Otwórz / zamknij panel"
+    "message": "Otwórz lub zamknij ustawienia"
   },
   "shortcuts_general_popup": {
-    "message": "Szybkie dodawanie (popup)"
+    "message": "Okno szybkiego dodawania"
   },
   "shortcuts_general_save": {
-    "message": "Zapisz natychmiast"
+    "message": "Zapisz natychmiast (zapis i tak jest automatyczny)"
   },
   "shortcuts_general_search": {
-    "message": "Skocz do wyszukiwarki"
+    "message": "Przejdź do wyszukiwarki"
   },
   "shortcuts_general_shiftTab": {
     "message": "Poprzedni element"
@@ -1117,34 +1117,34 @@
     "message": "Następny element"
   },
   "shortcuts_general_toggle": {
-    "message": "Otwórz / zamknij sidebar"
+    "message": "Otwórz lub zamknij panel boczny"
   },
   "shortcuts_general_tags": {
-    "message": "tagi notatki"
+    "message": "Tagi notatki"
   },
   "shortcuts_general_toolbar": {
-    "message": "→ pokaż / ukryj pasek narzędzi (też w trybie zen)"
+    "message": "Pokaż lub schowaj pasek narzędzi (też w trybie zen)"
   },
   "shortcuts_general_zen": {
-    "message": "→ tryb zen"
+    "message": "Tryb zen: tylko sprawy na dziś"
   },
   "shortcuts_list": {
     "message": "Lista notatek"
   },
   "shortcuts_list_arrows": {
-    "message": "Nawigacja po liście"
+    "message": "Poruszaj się po liście"
   },
   "shortcuts_list_ctrlArrows": {
-    "message": "Poprzednia / następna notatka (w edytorze)"
+    "message": "Poprzednia lub następna notatka (gdy piszesz)"
   },
   "shortcuts_list_delete": {
-    "message": "Usuń notatkę"
+    "message": "Usuń notatkę (trafi do kosza)"
   },
   "shortcuts_list_enter": {
     "message": "Otwórz notatkę"
   },
   "shortcuts_list_space": {
-    "message": "Zaznacz / odznacz zadanie"
+    "message": "Oznacz zadanie jako ukończone / nieukończone"
   },
   "shortcuts_list_upToSearch": {
     "message": "Z pierwszej pozycji wróć do wyszukiwarki"
@@ -1165,55 +1165,55 @@
     "message": "Skróty Markdown"
   },
   "shortcuts_markdown_blocks": {
-    "message": "Markdown — bloki"
+    "message": "Markdown — na początku linii (potem spacja)"
   },
   "shortcuts_markdown_callout_caution": {
-    "message": ">[!CAUTION] + spacja → blok Uwaga"
+    "message": "Ramka „Uwaga”"
   },
   "shortcuts_markdown_callout_important": {
-    "message": ">[!IMPORTANT] + spacja → blok Ważne"
+    "message": "Ramka „Ważne”"
   },
   "shortcuts_markdown_callout_note": {
-    "message": ">[!NOTE] + spacja → blok Notatka"
+    "message": "Ramka „Notatka”"
   },
   "shortcuts_markdown_callout_tip": {
-    "message": ">[!TIP] + spacja → blok Wskazówka"
+    "message": "Ramka „Wskazówka”"
   },
   "shortcuts_markdown_callout_warning": {
-    "message": ">[!WARNING] + spacja → blok Ostrzeżenie"
+    "message": "Ramka „Ostrzeżenie”"
   },
   "shortcuts_markdown_checklist": {
-    "message": "Lista zadań (odznaczona)"
+    "message": "Lista zadań"
   },
   "shortcuts_markdown_checklist_done": {
-    "message": "Lista zadań (zaznaczona)"
+    "message": "Lista zadań (ukończone)"
   },
   "shortcuts_markdown_code": {
-    "message": "Kod inline"
+    "message": "Kod w tekście"
   },
   "shortcuts_markdown_codeblock": {
-    "message": "→ Blok kodu"
+    "message": "Blok kodu"
   },
   "shortcuts_markdown_codeblock_lang": {
-    "message": "→ Blok kodu z językiem"
+    "message": "Blok kodu z kolorowaniem (np. js)"
   },
   "shortcuts_markdown_escape": {
-    "message": "→ znak dosłowny, bez formatowania"
+    "message": "Znak bez formatowania (dosłownie)"
   },
   "shortcuts_markdown_h1": {
-    "message": "Nagłówek H1"
+    "message": "Nagłówek 1"
   },
   "shortcuts_markdown_h2": {
-    "message": "Nagłówek H2"
+    "message": "Nagłówek 2"
   },
   "shortcuts_markdown_h3": {
-    "message": "Nagłówek H3"
+    "message": "Nagłówek 3"
   },
   "shortcuts_markdown_hr": {
-    "message": "Separator"
+    "message": "Pozioma linia"
   },
   "shortcuts_markdown_inline": {
-    "message": "Markdown — w linii"
+    "message": "Markdown — w tekście"
   },
   "shortcuts_markdown_link": {
     "message": "Link"
@@ -1228,22 +1228,22 @@
     "message": "Cytat"
   },
   "shortcuts_markdown_toggle": {
-    "message": "→ Lista rozwijana"
+    "message": "Sekcja rozwijana"
   },
   "shortcuts_pasteMd": {
-    "message": "→ wklejony Markdown staje się formatowaniem"
+    "message": "Wklejony Markdown zamienia się w formatowanie"
   },
   "shortcuts_qc_capture": {
-    "message": "→ dodaj i wyczyść pole"
+    "message": "Dodaj i wyczyść pole"
   },
   "shortcuts_qc_captureOpen": {
-    "message": "→ dodaj i otwórz w edytorze"
+    "message": "Dodaj i od razu otwórz"
   },
   "shortcuts_qc_date": {
-    "message": "→ konkretna data, rok opcjonalny"
+    "message": "Konkretny dzień (rok możesz pominąć)"
   },
   "shortcuts_qc_dayKeywords": {
-    "message": "→ termin dziś lub jutro"
+    "message": "Termin na dziś albo jutro"
   },
   "shortcuts_qc_ex_daily": {
     "message": "codziennie"
@@ -1270,31 +1270,31 @@
     "message": "co tydzień"
   },
   "shortcuts_qc_intro": {
-    "message": "Pole nad listą (Alt+C). Podgląd pod polem pokazuje, co powstanie, zanim wciśniesz Enter. Ta sama składnia działa w tytule otwartej notatki: Enter zapisze to, co rozpozna."
+    "message": "Pole nad listą (Alt+C). Pod polem widać, co powstanie, zanim wciśniesz Enter. Tak samo możesz pisać w tytule otwartej notatki."
   },
   "shortcuts_qc_plain": {
-    "message": "→ zwykła notatka"
+    "message": "Zwykła notatka"
   },
   "shortcuts_qc_recurrence": {
-    "message": "→ powtarzanie (też: co miesiąc, co rok, co wtorek)"
+    "message": "Powtarza się (też: co miesiąc, co rok, co wtorek)"
   },
   "shortcuts_qc_task": {
-    "message": "→ zadanie zamiast notatki"
+    "message": "Zadanie zamiast notatki"
   },
   "shortcuts_qc_taskImportant": {
-    "message": "→ ważne, termin dziś"
+    "message": "Ważne zadanie na dziś"
   },
   "shortcuts_qc_taskImportantInProgress": {
-    "message": "→ ważne i w trakcie naraz"
+    "message": "Ważne i w trakcie"
   },
   "shortcuts_qc_taskInProgress": {
-    "message": "→ zadanie w trakcie, termin dziś"
+    "message": "Zadanie w trakcie, termin dziś"
   },
   "shortcuts_qc_time": {
-    "message": "→ godzina i przypomnienie o tej porze"
+    "message": "Godzina i przypomnienie o tej porze"
   },
   "shortcuts_qc_weekdays": {
-    "message": "→ najbliższy taki dzień (też: w środę, na piątek)"
+    "message": "Najbliższy taki dzień (też: w środę, na piątek)"
   },
   "shortcuts_quickCapture": {
     "message": "Szybkie dodawanie"
@@ -1303,7 +1303,7 @@
     "message": "Wszystkie skróty →"
   },
   "shortcuts_sidebar": {
-    "message": "Sidebar"
+    "message": "Panel boczny"
   },
   "shortcuts_tab_editor": {
     "message": "Edytor"
@@ -1321,10 +1321,10 @@
     "message": "Skróty klawiszowe"
   },
   "shortcuts_toolbarToggle": {
-    "message": "→ pokaż / ukryj pasek narzędzi"
+    "message": "Pokaż lub schowaj pasek narzędzi"
   },
   "shortcuts_zenMode": {
-    "message": "→ tryb zen"
+    "message": "Tryb zen: tylko sprawy na dziś"
   },
   "sidebar_title": {
     "message": "AsideNotes"
@@ -1734,7 +1734,7 @@
     "message": "Skopiowano ✓"
   },
   "shortcuts_copyMd": {
-    "message": "→ kopiuj notatkę jako Markdown"
+    "message": "Kopiuj notatkę jako Markdown"
   },
   "linkTooltip_edit": {
     "message": "Edytuj link"
@@ -1803,16 +1803,16 @@
     "message": "Przenieś do kosza"
   },
   "shortcuts_important": {
-    "message": "→ oznacz jako ważne"
+    "message": "Oznacz jako ważne"
   },
   "shortcuts_inProgress": {
-    "message": "→ oznacz jako w trakcie"
+    "message": "Oznacz jako w trakcie"
   },
   "shortcuts_titleEnter": {
-    "message": "→ z tytułu do treści"
+    "message": "Przejdź z tytułu do treści"
   },
   "shortcuts_complete": {
-    "message": "→ ukończ otwarte zadanie"
+    "message": "Ukończ otwarte zadanie"
   },
   "panel_noteMenu_title": {
     "message": "Nagłówek notatki"
@@ -1923,13 +1923,13 @@
     "message": "#praca"
   },
   "shortcuts_qc_tag": {
-    "message": "→ tag: przypisze istniejący lub utworzy nowy"
+    "message": "Tag — istniejący albo nowy"
   },
   "shortcuts_qc_ex_quoted": {
     "message": "!\"wersja 1.10\""
   },
   "shortcuts_qc_quoted": {
-    "message": "→ tekst dosłowny, bez szukania dat i tagów"
+    "message": "Tekst dosłowny — bez rozpoznawania dat i tagów"
   },
   "quickCapture_preview_needTitle": {
     "message": "Dopisz tytuł, żeby dodać wpis"
@@ -1960,13 +1960,13 @@
     "message": "o 18"
   },
   "shortcuts_qc_hour": {
-    "message": "→ pełna godzina, gdy stoi na końcu wpisu"
+    "message": "Pełna godzina, gdy stoi na końcu wpisu"
   },
   "shortcuts_qc_ex_monthName": {
     "message": "15 sierpnia"
   },
   "shortcuts_qc_monthName": {
-    "message": "→ data słownie, rok opcjonalny"
+    "message": "Data z nazwą miesiąca (rok możesz pominąć)"
   },
   "shortcuts_qc_ex_inWeeks": {
     "message": "za 2 tygodnie"
@@ -1975,7 +1975,7 @@
     "message": "w przyszłym tygodniu"
   },
   "shortcuts_qc_relative": {
-    "message": "→ termin za jakiś czas (też: za 3 dni, za miesiąc)"
+    "message": "Termin za jakiś czas (też: za 3 dni, za miesiąc)"
   },
   "toolbar_textStyle_menu": {
     "message": "Style tekstu"
@@ -1987,7 +1987,7 @@
     "message": "Anuluj"
   },
   "shortcut_capture_hint": {
-    "message": "Przytrzymaj Ctrl lub Alt (⌘ lub ⌥ na Macu) i naciśnij klawisz, np. Alt+Shift+Q. Esc anuluje."
+    "message": "Przytrzymaj Ctrl albo Alt (na Macu ⌘ albo ⌥) i wciśnij klawisz, np. Alt+Shift+Q. Esc anuluje."
   },
   "shortcut_capture_prompt": {
     "message": "Naciśnij kombinację…"
@@ -2007,19 +2007,19 @@
     }
   },
   "shortcut_err_needsModifier": {
-    "message": "Skrót musi zawierać Ctrl lub Alt, np. Alt+Shift+Q."
+    "message": "Skrót musi mieć Ctrl albo Alt, np. Alt+Shift+Q."
   },
   "shortcut_err_rejected": {
     "message": "Przeglądarka nie przyjęła tego skrótu. Spróbuj innej kombinacji, np. Alt+Shift+Y."
   },
   "shortcut_err_tooManyModifiers": {
-    "message": "Za dużo modyfikatorów — skrót to najwyżej dwa (np. Alt+Shift) plus klawisz."
+    "message": "Za dużo klawiszy naraz — skrót to najwyżej dwa z Ctrl, Alt, Shift plus jeden klawisz, np. Alt+Shift+Q."
   },
   "shortcut_err_unsupportedKey": {
     "message": "Tego klawisza nie da się użyć w skrócie. Wybierz literę, cyfrę albo F1–F12."
   },
   "shortcut_reset_btn": {
-    "message": "Domyślny"
+    "message": "Przywróć"
   },
   "shortcut_reset_title": {
     "message": "Przywróć domyślny skrót $1",
@@ -2041,10 +2041,10 @@
     "message": "nie ustawiony"
   },
   "shortcut_unassigned_hint": {
-    "message": "Przeglądarka nie przypisała tego skrótu (może używa go już inny dodatek). Ustaw własny: panel Skróty → przycisk „Zmień”."
+    "message": "Przeglądarka nie ustawiła tego skrótu (może zajął go inny dodatek). Ustaw własny przyciskiem „Zmień” w zakładce Skróty."
   },
   "shortcut_unassigned_inline": {
-    "message": "skrót ustawiany w about:addons"
+    "message": "skrót ustawisz na stronie Dodatki (about:addons)"
   },
   "panel_tab_appearance": {
     "message": "Wygląd"
