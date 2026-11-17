@@ -174,9 +174,49 @@ renderQuickCaptureHelp(syntaxBody, t);
 input.addEventListener('input', () => {
   _updateTypeIndicator();
   _updatePreview();
+  _saveDraft();
+  // Komunikat błędu stoi do pierwszej zmiany — wtedy jest już nieaktualny
+  if (feedback.classList.contains('popup-feedback--error')) _hideFeedback();
 });
 _updateTypeIndicator();
 _updatePreview();
+
+// ── Szkic ───────────────────────────────────────
+//
+// Popup zamyka się od Esc i od każdego kliknięcia obok — wpisana myśl
+// przepadała bez śladu. Szkic trzymamy w storage.session: przeżywa
+// zamknięcie popupu, znika z zamknięciem przeglądarki i po dodaniu wpisu.
+// Wraca zaznaczony, więc pisanie od nowa po prostu go zastępuje.
+
+const DRAFT_KEY = 'popupDraft';
+const _session = /** @type {any} */ (browser.storage).session;
+
+function _saveDraft() {
+  if (!_session) return;
+  const value = input.value;
+  (value.trim() ? _session.set({ [DRAFT_KEY]: value }) : _session.remove(DRAFT_KEY))
+    ?.catch?.(() => {});
+}
+
+function _clearDraft() {
+  return _session?.remove(DRAFT_KEY)?.catch?.(() => {});
+}
+
+function _restoreDraft() {
+  if (!_session) return;
+  _session
+    .get(DRAFT_KEY)
+    .then((/** @type {Record<string, unknown>} */ res) => {
+      const draft = res?.[DRAFT_KEY];
+      if (typeof draft !== 'string' || !draft || input.value) return;
+      input.value = draft;
+      input.select();
+      _updateTypeIndicator();
+      _updatePreview();
+    })
+    .catch(() => {});
+}
+_restoreDraft();
 
 // Tagi do podglądu: bez nich każdy #tag wyglądałby na nowy. Przy zapisie i tak
 // czytamy je od nowa, bo panel boczny mógł je w tym czasie zmienić.
@@ -212,6 +252,14 @@ function _updatePreview() {
   }
 
   preview.textContent = description.text;
+  // Podpowiedź (np. "25:00 zostaje w tytule") w osobnej linii — textContent,
+  // nie HTML: tekst pochodzi z wpisu użytkownika
+  if (description.hint) {
+    const hint = document.createElement('span');
+    hint.className = 'capture-hint';
+    hint.textContent = description.hint;
+    preview.append(hint);
+  }
   preview.hidden = false;
   preview.dataset.type = description.type;
 }
@@ -300,6 +348,8 @@ input.addEventListener('keydown', async (e) => {
     // Sidebar odświeża się sam przez storage.onChanged (zapisy powyżej
     // pochodzą z innego kontekstu niż sidebar) — osobny komunikat zbędny.
 
+    await _clearDraft();
+
     // Enter: dodaj i zamknij popup. Shift+Enter: dodatkowo otwórz
     // sidebar (już otwierany powyżej) z zaznaczonym wpisem.
     // await na sendMessage — komunikat musi dotrzeć do background
@@ -309,20 +359,41 @@ input.addEventListener('keydown', async (e) => {
         .sendMessage({ action: 'openAndSelect', noteId: item.id })
         .catch(() => {});
       await sidebarOpening;
+      window.close();
+      return;
     }
-    window.close();
+    // Sam Enter: chwila potwierdzenia, zanim popup zniknie. Bez niej nie
+    // było wiadomo, czy wpis się zapisał — kończyło się wpisywaniem drugi raz.
+    const isTask = item.type === 'task';
+    _showFeedback(t(isTask ? 'popup_added_task' : 'popup_added_note'), isTask ? 'task' : 'note');
+    input.value = '';
+    setTimeout(() => window.close(), ADDED_CONFIRM_MS);
   } catch (err) {
-    _showFeedback(t('popup_error'), 'error');
+    // Tekst zostaje w polu, a komunikat do następnej zmiany — 1,5 s to za
+    // mało, żeby go przeczytać i zrozumieć, że nic nie przepadło
+    _showFeedback(t('popup_error'), 'error', 0);
   }
 });
 
+/** Jak długo widać „✓ Dodano”, zanim popup się zamknie. */
+const ADDED_CONFIRM_MS = 700;
+
 // ── Feedback ────────────────────────────────────
 
-/** @param {string} text @param {string} variant */
-function _showFeedback(text, variant) {
+/**
+ * @param {string} text @param {string} variant
+ * @param {number} [hideAfter] ms; 0 = zostaje do _hideFeedback
+ */
+function _showFeedback(text, variant, hideAfter = 1500) {
   feedback.textContent = text;
   feedback.className = 'popup-feedback popup-feedback--visible popup-feedback--' + variant;
-  setTimeout(() => {
-    feedback.className = 'popup-feedback popup-feedback--' + variant;
-  }, 1500);
+  if (hideAfter > 0) {
+    setTimeout(() => {
+      feedback.className = 'popup-feedback popup-feedback--' + variant;
+    }, hideAfter);
+  }
+}
+
+function _hideFeedback() {
+  feedback.className = 'popup-feedback';
 }

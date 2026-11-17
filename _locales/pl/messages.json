@@ -775,7 +775,7 @@
     "message": "Szybkie dodawanie"
   },
   "popup_error": {
-    "message": "Błąd — spróbuj ponownie"
+    "message": "Nie udało się zapisać — tekst został w polu, Enter spróbuje jeszcze raz"
   },
   "popup_esc_hint": {
     "message": "<kbd>Esc</kbd> zamknij"
@@ -1222,7 +1222,7 @@
     "message": "co tydzień"
   },
   "shortcuts_qc_intro": {
-    "message": "Pole nad listą (Alt+C). Podgląd pod polem pokazuje, co powstanie, zanim wciśniesz Enter."
+    "message": "Pole nad listą (Alt+C). Podgląd pod polem pokazuje, co powstanie, zanim wciśniesz Enter. Ta sama składnia działa w tytule otwartej notatki: Enter zapisze to, co rozpozna."
   },
   "shortcuts_qc_plain": {
     "message": "→ zwykła notatka"
@@ -1453,6 +1453,9 @@
   },
   "toast_trashed": {
     "message": "Przeniesiono do kosza"
+  },
+  "toast_titleApplied": {
+    "message": "Zapisano zmiany z tytułu"
   },
   "toast_undo": {
     "message": "Cofnij"
@@ -1686,7 +1689,7 @@
     "message": "Na jutro"
   },
   "notif_digest_overdue": {
-    "message": "Zaległe: $COUNT$",
+    "message": "Do nadrobienia: $COUNT$",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -1695,7 +1698,7 @@
     }
   },
   "notif_digest_overdueOnly": {
-    "message": "AsideNotes: zaległe zadania ($COUNT$)",
+    "message": "AsideNotes: do nadrobienia ($COUNT$)",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -1864,6 +1867,49 @@
   },
   "quickCapture_preview_needTitle": {
     "message": "Dopisz tytuł, żeby dodać wpis"
+  },
+  "quickCapture_hint_rejected": {
+    "message": "$TEXT$ zostaje w tytule — nie pasuje jako data ani godzina",
+    "placeholders": {
+      "text": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickCapture_hint_makeTask": {
+    "message": "Z ! na początku powstanie zadanie z tym terminem"
+  },
+  "titleCapture_preview": {
+    "message": "Enter zapisze: $CHANGES$",
+    "placeholders": {
+      "changes": {
+        "content": "$1"
+      }
+    }
+  },
+  "titleCapture_toTask": {
+    "message": "zmiana na zadanie"
+  },
+  "shortcuts_qc_ex_hour": {
+    "message": "o 18"
+  },
+  "shortcuts_qc_hour": {
+    "message": "→ pełna godzina, gdy stoi na końcu wpisu"
+  },
+  "shortcuts_qc_ex_monthName": {
+    "message": "15 sierpnia"
+  },
+  "shortcuts_qc_monthName": {
+    "message": "→ data słownie, rok opcjonalny"
+  },
+  "shortcuts_qc_ex_inWeeks": {
+    "message": "za 2 tygodnie"
+  },
+  "shortcuts_qc_ex_nextWeek": {
+    "message": "w przyszłym tygodniu"
+  },
+  "shortcuts_qc_relative": {
+    "message": "→ termin za jakiś czas (też: za 3 dni, za miesiąc)"
   },
   "toolbar_textStyle_menu": {
     "message": "Style tekstu"

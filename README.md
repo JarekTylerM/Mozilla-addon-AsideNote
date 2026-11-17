@@ -28,6 +28,8 @@ What changed in each version, in plain words: [CHANGELOG.md](CHANGELOG.md) (Poli
 | `Buy milk` | a note |
 | `!Buy milk` | a task |
 | `!Call Ann tomorrow 15:00` | a task, due tomorrow at 15:00 |
+| `!Concert Aug 15 at 7pm` | a task on August 15th, 19:00 |
+| `!Dentist in 2 weeks` | a task due in two weeks (also `next week`, `in a month`) |
 | `!Standup daily` | a task that repeats daily |
 | `!!Ship the release` | an **important** task — due today, and marked in progress |
 | `!>Refactor parser` | a task marked **in progress**, due today |
@@ -35,7 +37,9 @@ What changed in each version, in plain words: [CHANGELOG.md](CHANGELOG.md) (Poli
 | `Weekend idea #home` | a note with the tag **home** — created if it does not exist yet |
 | `!"version 6/15"` | a task with literal text: quotes switch off date and tag parsing |
 
-Dates are locale-aware: English recognises `tomorrow`, `today`, `in 3 days`, weekday names (`on friday`, `every tuesday`) and `MM/DD`; Polish recognises `jutro`, `dziś`/`dzisiaj`, `pojutrze`, `za 3 dni`, inflected weekday names (`w środę`, `co wtorek`) and `DD.MM`. An invalid date (`30.02`) or time (`25:99`) is deliberately *not* matched — the text stays in the title so you can see it wasn't understood, rather than being silently misread.
+Dates are locale-aware: English recognises `tomorrow`, `today`, `in 3 days`, weekday names (`on friday`, `every tuesday`) and `MM/DD`; Polish recognises `jutro`, `dziś`/`dzisiaj`, `pojutrze`, `za 3 dni`, inflected weekday names (`w środę`, `co wtorek`) and `DD.MM`. Other languages get the English words, with `DD/MM`. An invalid date (`30.02`) or time (`25:99`) is deliberately *not* matched — the text stays in the title and the preview says why, rather than it being silently misread. A note with a date in it (`call Ann tomorrow`) gets a hint that `!` turns it into a task.
+
+The same syntax works in the **title of an open note**: the line under the title shows what Enter will apply (`tomorrow at 18:00 · #home`). Nothing changes until you press Enter, and whatever was already in the title stays literal.
 
 **Tags** with colours, filtering, and search across titles and content.
 
@@ -235,6 +239,8 @@ Co się zmieniło w kolejnych wersjach, zwykłymi słowami: [CHANGELOG.md](CHANG
 | `Kup mleko` | notatkę |
 | `!Kup mleko` | zadanie |
 | `!Zadzwoń do Ani jutro 15:00` | zadanie na jutro, 15:00 |
+| `!Koncert 15 sierpnia o 19` | zadanie na 15 sierpnia, 19:00 |
+| `!Fryzjer za 2 tygodnie o 10.30` | zadanie za dwa tygodnie, 10:30 (też `w przyszłym tygodniu`, `za miesiąc`) |
 | `!Standup codziennie` | zadanie powtarzane codziennie |
 | `!!Wypuść wydanie` | zadanie **ważne** — termin dziś, oznaczone też jako w trakcie |
 | `!>Refaktor parsera` | zadanie **w trakcie**, termin dziś |
@@ -242,7 +248,9 @@ Co się zmieniło w kolejnych wersjach, zwykłymi słowami: [CHANGELOG.md](CHANG
 | `Pomysł na weekend #dom` | notatkę z tagiem **dom** — tag powstanie, jeśli go jeszcze nie ma |
 | `!"wersja 1.10"` | zadanie z dosłownym tekstem: cudzysłów wyłącza szukanie dat i tagów |
 
-Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, `pojutrze`, `za 3 dni`, odmienione nazwy dni (`w środę`, `co wtorek`) i `DD.MM`; angielski — `tomorrow`, `today`, `in 3 days`, nazwy dni (`on friday`, `every tuesday`) i `MM/DD`. Niepoprawna data (`30.02`) lub godzina (`25:99`) **celowo nie jest dopasowywana** — fragment zostaje w tytule, żebyś zobaczył, że nie został zrozumiany. To lepsze niż ciche zrozumienie źle.
+Daty zależą od języka: polski rozpoznaje `jutro`, `dziś`/`dzisiaj`, `pojutrze`, `za 3 dni`, odmienione nazwy dni (`w środę`, `co wtorek`) i `DD.MM`; angielski — `tomorrow`, `today`, `in 3 days`, nazwy dni (`on friday`, `every tuesday`) i `MM/DD`. Niepoprawna data (`30.02`) lub godzina (`25:99`) **celowo nie jest dopasowywana** — fragment zostaje w tytule, żebyś zobaczył, że nie został zrozumiany. Podgląd mówi wtedy, dlaczego. To lepsze niż ciche zrozumienie źle. Notatka z datą w treści (`spacer jutro`) dostaje podpowiedź, że `!` zrobi z niej zadanie.
+
+Ta sama składnia działa w **tytule otwartej notatki**: linia pod tytułem pokazuje, co zapisze Enter (`jutro o 18:00 · #dom`). Nic się nie zmienia, dopóki nie wciśniesz Entera, a to, co już było w tytule, zostaje dosłownie.
 
 **Tagi** z kolorami, filtrowaniem i wyszukiwaniem po tytułach i treści.
 

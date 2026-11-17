@@ -38,6 +38,7 @@ tests/i18n.mjs
 tests/command-shortcuts.mjs
 tests/shortcut-keys.mjs
 tests/shortcut-editor.mjs
+tests/editor-code-detect.mjs
 
 # System
 .DS_Store

@@ -24,6 +24,8 @@
  */
 
 import { DROPPED_TAGS } from './sanitize.js';
+import { looksLikeCode } from './editor-code-detect.js';
+import { restoreExportMarkers } from './editor-copy-export.js';
 import { _normalizeListNesting } from './editor-selection.js';
 
 const ELEMENT = 1;
@@ -89,6 +91,13 @@ export function normalizePastedHTML(html) {
   const root = doc.body;
 
   _removeJunk(root);
+  // Kopia z notatki niesie dodatki dla innych narzędzi (☐/☑, etykiety,
+  // rozwijany blok jako akapity) — wracamy do oryginału, zanim cokolwiek
+  // je przerobi. Rozpoznaje też ☐/☑ w punktach z ClickUp i Outlooka.
+  restoreExportMarkers(root, doc);
+  // Przed stylami: _applyInlineStyles/_simplifyInline zdejmują spany
+  // z font-family, a tylko po kroju widać kod z Outlooka czy VS Code
+  _convertCodeBlocks(root, doc);
   wrapOrphanListItems(root, doc);
   _convertWordLists(root, doc);
   _applyInlineStyles(root, doc);
@@ -97,6 +106,23 @@ export function normalizePastedHTML(html) {
   _blockify(root, doc);
   _normalizeListNesting(root);
   root.querySelectorAll('ul, ol').forEach((l) => _normalizeList(l, doc));
+  // Nagłówek w całości owinięty w <strong> (ClickUp, Google Docs) — nagłówek
+  // i tak jest pogrubiony, a podwójne pogrubienie przeszkadza przy edycji
+  root.querySelectorAll('h1, h2, h3').forEach((h) => {
+    const only = h.children.length === 1 ? h.children[0] : null;
+    if (
+      only &&
+      /^(STRONG|B)$/.test(only.tagName) &&
+      (only.textContent ?? '').trim() === (h.textContent ?? '').trim()
+    ) {
+      _unwrap(only);
+    }
+  });
+  // Outlook zostawia data-list="checklist", ale gubi stan punktów — bez
+  // data-checked punkt nie dostaje pola wyboru. Brak stanu = niezaznaczony.
+  root.querySelectorAll('ul[data-list="checklist"] li:not([data-checked])').forEach((li) => {
+    li.setAttribute('data-checked', 'false');
+  });
   _tidyEmptyParagraphs(root, doc);
   _normalizeWhitespace(root, doc);
 
@@ -123,6 +149,138 @@ function _removeJunk(root) {
       el.remove();
     }
   });
+}
+
+/* ── Bloki kodu ───────────────────────────────────────────────── */
+
+/** Kroje pisma o stałej szerokości — po nich poznać kod w mailu czy z edytora. */
+const MONO_FONT_RX =
+  /consolas|courier|monaco|menlo|monospace|lucida console|source code|fira code|jetbrains mono|cascadia|roboto mono|sf mono/i;
+
+/**
+ * Kod, który w źródle nie był <pre>, zamienia na blok kodu:
+ *   - ClickUp / Quill 2: div.ql-code-block-container > div.ql-code-block (linia),
+ *   - Outlook, Outlook Web, VS Code: kolejne akapity w kroju Consolas/Courier.
+ * Bez tego kod przychodził jako zwykłe akapity, a adresy w nim (np. w CSP)
+ * stawały się klikalnymi linkami. W bloku kodu zostaje sam tekst.
+ * @param {Element} root @param {Document} doc
+ */
+function _convertCodeBlocks(root, doc) {
+  for (const box of Array.from(root.querySelectorAll('.ql-code-block-container'))) {
+    const lines = Array.from(box.querySelectorAll('.ql-code-block'));
+    const lang = lines[0]?.getAttribute('data-language');
+    box.replaceWith(_codePre(doc, lines.map(_codeText), lang));
+  }
+  // Same linie Quilla, bez kontenera (zaznaczenie od środka bloku)
+  _replaceRuns(
+    Array.from(root.querySelectorAll('.ql-code-block')),
+    (run) => _codePre(doc, run.map(_codeText), run[0].getAttribute('data-language')),
+  );
+
+  const leaves = Array.from(root.querySelectorAll('p, div')).filter(
+    (el) => !el.closest('pre, table, li, .ql-code-block') && !_hasBlockInside(el),
+  );
+  const monoLines = leaves.filter((el) => _isMonoBlock(el, root));
+  const monoSet = new Set(monoLines);
+
+  // Bezpiecznik: cały mail pisany Courierem to wciąż mail. Gdy WSZYSTKO jest
+  // w kroju kodu, a tekst nie wygląda na kod, zostawiamy akapity.
+  const withText = leaves.filter((el) => (el.textContent ?? '').trim());
+  const allMono = withText.length > 3 && withText.every((el) => monoSet.has(el));
+  if (allMono && !looksLikeCode(withText.map(_codeText).join('\n'))) return;
+
+  _replaceRuns(monoLines, (run) => {
+    // Pusta linia z Outlooka to akapit z samym &nbsp; — w kodzie pusta linia
+    const lines = run.map(_codeText).map((l) => (l.trim() ? l : ''));
+    // Puste linie na brzegach to odstęp w mailu, nie część kodu
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    return lines.length ? _codePre(doc, lines, null) : null;
+  });
+}
+
+/**
+ * Zastępuje ciągi sąsiednich elementów (rodzeństwo, bez innych elementów
+ * pomiędzy) jednym węzłem z `build`. null z `build` = usuń ciąg.
+ * @param {Element[]} items w kolejności dokumentu
+ * @param {(run: Element[]) => Node|null} build
+ */
+function _replaceRuns(items, build) {
+  const set = new Set(items);
+  /** @type {Element[][]} */
+  const runs = [];
+  for (const el of items) {
+    const prev = el.previousElementSibling;
+    const last = runs[runs.length - 1];
+    if (last && prev && prev === last[last.length - 1] && set.has(prev)) last.push(el);
+    else runs.push([el]);
+  }
+  for (const run of runs) {
+    const node = build(run);
+    if (node) run[0].replaceWith(node);
+    else run[0].remove();
+    run.slice(1).forEach((el) => el.remove());
+  }
+}
+
+/**
+ * Czy cały tekst bloku jest w kroju kodu — przez styl samego bloku, jego
+ * przodka albo spany wewnątrz (Outlook: <p><span style="font-family:Consolas">).
+ * Pusty akapit liczy się, gdy sam niesie taki krój (pusta linia w kodzie).
+ * @param {Element} el @param {Element} root
+ */
+function _isMonoBlock(el, root) {
+  /** @param {Element|null} node @param {Element} stop */
+  const monoUpTo = (node, stop) => {
+    for (let n = node; n && n !== stop; n = n.parentElement) {
+      if (MONO_FONT_RX.test(_css(n.getAttribute('style') ?? '', 'font-family'))) return true;
+    }
+    return false;
+  };
+  if (monoUpTo(el, root)) return true;
+
+  const walker = el.ownerDocument.createTreeWalker(el, 4 /* SHOW_TEXT */);
+  let sawText = false;
+  while (walker.nextNode()) {
+    const text = walker.currentNode;
+    if (!(text.textContent ?? '').trim()) continue;
+    sawText = true;
+    if (!monoUpTo(text.parentElement, el)) return false;
+  }
+  if (sawText) return true;
+  return Array.from(el.querySelectorAll('[style]')).some((n) =>
+    MONO_FONT_RX.test(_css(n.getAttribute('style') ?? '', 'font-family')),
+  );
+}
+
+/**
+ * Tekst linii kodu: <br> → nowa linia, twarde spacje (wcięcia z VS Code) → spacje.
+ * @param {Element} el
+ */
+function _codeText(el) {
+  let out = '';
+  /** @param {Node} node */
+  const walk = (node) => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === TEXT) out += child.textContent ?? '';
+      else if (/** @type {Element} */ (child).tagName === 'BR') out += '\n';
+      else walk(child);
+    }
+  };
+  walk(el);
+  return out.replace(/ /g, ' ').replace(/\n$/, '');
+}
+
+/**
+ * @param {Document} doc @param {string[]} lines @param {string|null|undefined} lang
+ */
+function _codePre(doc, lines, lang) {
+  const pre = doc.createElement('pre');
+  const code = doc.createElement('code');
+  code.textContent = lines.join('\n');
+  if (lang && lang !== 'plain') code.setAttribute('data-language', lang);
+  pre.appendChild(code);
+  return pre;
 }
 
 /* ── Punkty bez listy ─────────────────────────────────────────── */
@@ -597,6 +755,19 @@ function _normalizePre(pre, doc) {
   if (lang && !code.hasAttribute('data-language')) {
     code.setAttribute('data-language', lang[1]);
   }
+  // W bloku kodu sam tekst: link czy pogrubienie ze strony nie ma tu sensu,
+  // a klikalny adres w środku konfiguracji przeszkadza w zaznaczaniu.
+  // Końcowy znak nowej linii (Quill 1: pre.ql-syntax) dawał pustą linię.
+  // Sam <br> to format edytora — zostaje. Każdy inny znacznik (link, <b>,
+  // a z Outlooka <div><code>linia</code><br><code>linia</code></div>)
+  // spłaszczamy do tekstu z \n w miejscu <br>, inaczej linie się zlewały.
+  if (Array.from(code.querySelectorAll('*')).some((el) => el.tagName !== 'BR')) {
+    code.textContent = _codeText(code);
+  }
+  const last = code.lastChild;
+  if (last?.nodeType === TEXT && /\n$/.test(last.textContent ?? '')) {
+    last.textContent = (last.textContent ?? '').replace(/\n$/, '');
+  }
 }
 
 /* ── Listy ────────────────────────────────────────────────────── */
@@ -739,6 +910,17 @@ function _hasBlockChild(el) {
 /** @param {Element} el */
 function _hasBlockDescendant(el) {
   return Array.from(el.querySelectorAll('*')).some(_isBlock);
+}
+
+/**
+ * Jak _hasBlockDescendant, ale kończy na pierwszym bloku — w pętli po
+ * wszystkich akapitach dużej wklejki to różnica między liniowo a kwadratowo.
+ * @param {Element} el
+ */
+function _hasBlockInside(el) {
+  const all = el.getElementsByTagName('*');
+  for (let i = 0; i < all.length; i++) if (BLOCK_TAGS.has(all[i].tagName)) return true;
+  return false;
 }
 
 /** Ani tekstu (poza białymi znakami), ani <br>. @param {Element} el */

@@ -35,6 +35,7 @@ const MIRRORED = [
   'quick-capture-help',
   'utils',
   'editor-url',
+  'editor-code-detect',
   'editor-pattern',
   'editor-find',
   'editor-drag-handle',

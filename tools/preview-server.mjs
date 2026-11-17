@@ -140,6 +140,8 @@ createServer(async (req, res) => {
     res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
     res.end('404 ' + rel);
   }
-}).listen(port, () =>
+  // Tylko ten komputer: bez hosta serwer słuchał na wszystkich interfejsach
+  // i każdy w tej samej sieci mógł czytać pliki repozytorium
+}).listen(port, '127.0.0.1', () =>
   console.log(`preview: http://localhost:${port}/preview-harness.html`),
 );

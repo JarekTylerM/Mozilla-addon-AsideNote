@@ -36,7 +36,7 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
   go w Ustawieniach → Wygląd.
 
 - **Poranne podsumowanie.** Codziennie o 9:00 pojawi się jedno przypomnienie:
-  co masz na dziś (zadania bez konkretnej godziny) i co już się spóźnia.
+  co masz na dziś (zadania bez konkretnej godziny) i co czeka do nadrobienia.
   Można je wyłączyć w Ustawieniach → Ogólne.
 
 - **Przycisk „Na jutro”.** Gdy termin zadania wypada dziś albo już minął,
@@ -55,6 +55,26 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
 - **Kiedy była ostatnia kopia zapasowa.** W Ustawieniach → Ogólne, przy
   przycisku eksportu, widać np. „Ostatni eksport: 12 dni temu”. Łatwiej
   pamiętać, żeby od czasu do czasu zrobić kopię notatek.
+
+- **Daty i godziny tak, jak się mówi.** W szybkim dodawaniu działają teraz
+  także „!kino jutro o 18”, „!fryzjer o 10.30”, „!koncert 15 sierpnia”,
+  „!spacer za 2 tygodnie” i „w przyszłym tygodniu”. Po angielsku: „5pm”,
+  „Aug 15”, „in two weeks”, „next week”.
+
+- **Termin wpisany w tytule.** W otwartym zadaniu dopisz w tytule np.
+  „jutro o 18 #dom” — pod tytułem zobaczysz, co się zmieni, a Enter to
+  zapisze. Wyjście z pola niczego nie zmienia. W notatce tak samo dodasz
+  tag, a „!” na początku tytułu zamieni ją w zadanie.
+
+- **Kod wkleja się jako kod.** Ustawienia, polecenia czy kawałek programu
+  — z czatu, edytora, ClickUp albo maila w Outlooku — trafiają do bloku kodu:
+  linia pod linią, bez klikalnych linków w środku.
+
+- **Kopiowanie do ClickUp i Outlooka.** Skopiowana notatka zachowuje tam
+  pogrubienie, kod linia po linii, kratki listy zadań (☐ ☑), opis wyróżnienia
+  („Notatka:”, „Wskazówka:”) i treść rozwijanego bloku. W ClickUp także
+  nagłówki i przekreślenie. Skopiowana z powrotem do notatki wraca do
+  pierwotnej postaci.
 
 ### Wygodniej
 
@@ -77,6 +97,20 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
 - **Z tytułu prosto do treści.** Enter w polu tytułu przenosi do pisania
   treści notatki.
 
+- **Cofnij po zmianach z tytułu.** Gdy Enter w tytule ustawi termin, tag
+  albo zamieni notatkę w zadanie, na dole pojawi się „Cofnij” — jedno
+  kliknięcie przywraca wszystko, jak było.
+
+- **Okienko szybkiego dodawania pamięta tekst.** Zamknięte przypadkiem
+  (Esc albo kliknięcie obok) okienko przy następnym otwarciu pokaże to, co
+  było wpisane — zaznaczone, więc pisanie od nowa po prostu je zastąpi.
+  Po dodaniu wpisu przez chwilę widać „✓ Zadanie dodane”.
+
+- **Podgląd mówi, czego nie użył.** Gdy w szybkim dodawaniu wpiszesz
+  „25:00” albo „30.02”, pod podglądem pojawi się, że ten fragment zostaje
+  w tytule. A przy notatce z datą („spacer jutro”) — że „!” na początku
+  zrobi z niej zadanie z terminem.
+
 - **Wklejanie bez formatowania.** Ctrl+Shift+V wkleja sam tekst — bez
   kolorów, czcionek i ramek ze strony, z której kopiujesz.
 
@@ -95,3 +129,26 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
 - **Kopiowanie list.** Skopiowana lista numerowana wkleja się jako numerowana
   i liczy dalej od właściwego numeru. Lista zadań z kratkami wkleja się
   z kratkami.
+
+- **Wklejanie z ClickUp.** Punkty nie zamieniają się już w numerację,
+  podpunkty zachowują wcięcie, a rozwijane bloki i cytaty wklejają się bez
+  pustych linii dookoła.
+
+- **Wklejanie z Outlooka.** Linie kodu nie zlewają się w jedną, a lista
+  zadań zachowuje kratki.
+
+- **Szybkie dodawanie w innych językach przeglądarki.** Przy przeglądarce
+  po angielsku (np. Wielka Brytania) albo po niemiecku rozumie „tomorrow”,
+  „friday” i daty zapisane jako dzień/miesiąc.
+
+- **Przewodnik nie przeszkadza w pisaniu.** W czasie lekcji strzałki
+  w polu tekstowym przesuwają kursor, a Esc zamyka menu — zamiast
+  przełączać krok albo wyłączać cały przewodnik.
+
+- **Jasny komunikat, gdy wpis się nie zapisze.** Okienko szybkiego
+  dodawania mówi, że tekst został w polu i Enter spróbuje jeszcze raz —
+  i nie znika po sekundzie.
+
+- **Bezpieczniejsze linki.** Linki w notatkach otwierają tylko strony WWW,
+  adresy e-mail i numery telefonów. Inne, nawet wklejone albo
+  zaimportowane, zostają zwykłym tekstem.

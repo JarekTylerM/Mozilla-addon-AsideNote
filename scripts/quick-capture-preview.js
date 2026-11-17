@@ -48,7 +48,36 @@ const RECURRENCE_KEYS = {
  * @typedef {object} CaptureDescription
  * @property {string} text gotowy tekst podglądu
  * @property {"note"|"task"} type typ elementu, który powstanie
+ * @property {string} [hint] druga linia: czego parser nie użył albo jak dostać
+ *   więcej (`!` przed notatką z datą). Brak pola = nic do dodania.
  */
+
+/**
+ * Podpowiedź pod podglądem. Najpierw to, co zostało w tytule wbrew pozorom
+ * (25:00, 30.02) — inaczej użytkownik widzi zadanie bez godziny i nie wie
+ * czemu. Potem notatka z terminem w treści: bez `!` data nic nie znaczy,
+ * a jedno zdanie uczy składni lepiej niż pomoc, której nikt nie otwiera.
+ *
+ * @param {string} raw
+ * @param {boolean} isTask
+ * @param {string[]} rejected
+ * @param {PreviewEnv} env
+ * @returns {string|null}
+ */
+function _captureHint(raw, isTask, rejected, env) {
+  if (rejected.length) {
+    return env.t('quickCapture_hint_rejected', [
+      rejected.map((text) => `„${text}”`).join(', '),
+    ]);
+  }
+  if (!isTask) {
+    const asTask = parseCapture('!' + raw.trim(), env.locale);
+    if (asTask.dateGiven || asTask.time || asTask.recurrence) {
+      return env.t('quickCapture_hint_makeTask');
+    }
+  }
+  return null;
+}
 
 /**
  * Etykieta dnia dla terminu: "dziś" / "jutro" / "wczoraj", a poza tym
@@ -96,8 +125,9 @@ export function formatCaptureDay(timestamp, env) {
 export function describeCapture(raw, env) {
   if (!raw || !raw.trim()) return null;
 
-  const { isTask, isUrgent, isInProgress, title, due, time, recurrence, tagNames } =
+  const { isTask, isUrgent, isInProgress, title, due, time, recurrence, tagNames, rejected } =
     parseCapture(raw, env.locale);
+  const hint = _captureHint(raw, isTask, rejected, env);
 
   // Sam tag nie daje tytułu, więc Enter niczego nie doda: podgląd mówi, czego
   // brakuje, zamiast obiecywać wpis, który nie powstanie
@@ -105,6 +135,7 @@ export function describeCapture(raw, env) {
     return {
       type: isTask ? 'task' : 'note',
       text: env.t('quickCapture_preview_needTitle'),
+      ...(hint && { hint }),
     };
   }
 
@@ -130,6 +161,7 @@ export function describeCapture(raw, env) {
           : env.t('quickCapture_preview_note_empty'),
         tagFlags,
       ),
+      ...(hint && { hint }),
     };
   }
 
@@ -176,5 +208,58 @@ export function describeCapture(raw, env) {
       : null;
   if (recurrenceKey) flags.push(env.t(recurrenceKey));
 
-  return { type: 'task', text: withFlags(text, [...flags, ...tagFlags]) };
+  return {
+    type: 'task',
+    text: withFlags(text, [...flags, ...tagFlags]),
+    ...(hint && { hint }),
+  };
+}
+
+/**
+ * Opis tego, co Enter w polu tytułu zmieni w otwartym elemencie, np.
+ * "Enter zapisze: jutro o 18:00 · #praca". Pokazywany tylko, gdy parser
+ * coś rozpoznał — zwykły tytuł nie dostaje żadnego komunikatu.
+ *
+ * @param {import('./quick-capture-core.js').TitleEdit|null} edit
+ * @param {PreviewEnv} env
+ * @returns {{ text: string, hint?: string }|null}
+ */
+export function describeTitleEdit(edit, env) {
+  if (!edit) return null;
+
+  const hint = edit.rejected.length
+    ? env.t('quickCapture_hint_rejected', [
+        edit.rejected.map((text) => `„${text}”`).join(', '),
+      ])
+    : null;
+
+  if (!edit.hasChanges) return hint ? { text: '', hint } : null;
+
+  /** @type {string[]} */
+  const parts = [];
+  if (edit.toTask) parts.push(env.t('titleCapture_toTask'));
+  if (edit.due) {
+    const day = formatCaptureDay(edit.due, env);
+    parts.push(edit.time ? env.t('quickCapture_preview_date_time', [day, edit.time]) : day);
+  } else if (edit.time) {
+    parts.push(edit.time);
+  }
+  if (edit.important) parts.push(env.t('quickCapture_preview_flag_important'));
+  if (edit.focus) parts.push(env.t('quickCapture_preview_flag_inProgress'));
+  if (edit.recurrence && edit.recurrence in RECURRENCE_KEYS) {
+    parts.push(env.t(RECURRENCE_KEYS[/** @type {keyof typeof RECURRENCE_KEYS} */ (edit.recurrence)]));
+  }
+  const known = new Set((env.tags ?? []).map((t) => normalizeTagName(t.name)));
+  for (const name of edit.tagNames) {
+    parts.push(
+      known.has(normalizeTagName(name))
+        ? `#${name}`
+        : env.t('quickCapture_preview_tag_new', [name]),
+    );
+  }
+
+  return {
+    text: env.t('titleCapture_preview', [parts.join(FLAG_SEPARATOR)]),
+    ...(hint && { hint }),
+  };
 }

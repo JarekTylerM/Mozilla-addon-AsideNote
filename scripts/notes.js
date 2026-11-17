@@ -334,6 +334,26 @@ export function setRecurrence(value, days = null) {
   updateDeleteState();
 }
 
+/**
+ * Pola terminu w edytorze (data, godzina, picker) według otwartego elementu.
+ * @param {Note} note
+ */
+function _syncDueFields(note) {
+  if (dueInput) dueInput.value = _toDateInputValue(note.due);
+  document.dispatchEvent(
+    new CustomEvent("dueDateChanged", {
+      detail: { dateStr: _toDateInputValue(note.due) || null },
+    }),
+  );
+  updateDueDisplay();
+  // Sync date picker — żeby picker wiedział która data jest wybrana
+  import("./date-picker.js").then(({ syncDatePicker }) => {
+    syncDatePicker(_toDateInputValue(note.due) || null);
+  });
+  const timeInput = /** @type {HTMLInputElement|null} */ (document.getElementById("due-time"));
+  if (timeInput) timeInput.value = note.time ?? "";
+}
+
 /** @param {string} id */
 export function selectNote(id) {
   const note = state.notes.find((n) => n.id === id);
@@ -368,19 +388,7 @@ export function selectNote(id) {
     });
   });
 
-  if (dueInput) dueInput.value = _toDateInputValue(note.due);
-  document.dispatchEvent(
-    new CustomEvent("dueDateChanged", {
-      detail: { dateStr: _toDateInputValue(note.due) || null },
-    }),
-  );
-  updateDueDisplay();
-  // Sync date picker — żeby picker wiedział która data jest wybrana
-  import("./date-picker.js").then(({ syncDatePicker }) => {
-    syncDatePicker(_toDateInputValue(note.due) || null);
-  });
-  const timeInput = /** @type {HTMLInputElement|null} */ (document.getElementById("due-time"));
-  if (timeInput) timeInput.value = note.time ?? "";
+  _syncDueFields(note);
   // stan alarm-btn i recurrence-btn aktualizuje updateDeleteState()
   // const reminderSelect = document.getElementById('due-reminder');
   // if (reminderSelect) reminderSelect.value = note.reminder ?? 0;
@@ -600,6 +608,109 @@ export function convertType(id) {
   renderList();
   updateDeleteState();
   document.dispatchEvent(new CustomEvent("noteSelected"));
+}
+
+/**
+ * Stosuje to, co parser rozpoznał w polu tytułu (Enter). Zmiany wylicza
+ * czysta titleEditChanges (quick-capture-core.js); tu tylko zapis i UI.
+ *
+ * Zasady, żeby nic nie zniknęło po cichu:
+ * - termin zmienia się tylko, gdy padł w tekście; sama godzina zostawia
+ *   istniejący termin, a bez terminu dostaje dziś (jak w szybkim dodawaniu),
+ * - tagi są dopisywane, nigdy zdejmowane,
+ * - ważne / w trakcie są tylko włączane.
+ *
+ * @param {import('./quick-capture-core.js').TitleEdit} edit
+ * @returns {{ note: Note, undo: () => void }|null} zmieniony element i funkcja
+ *   cofająca zmiany (toast „Cofnij”) albo null, gdy nie było czego zmienić
+ */
+export function applyTitleEdit(edit) {
+  if (!edit?.hasChanges) return null;
+  // Nowy, jeszcze niezapisany wpis: najpierw musi powstać
+  if (!state.activeId) saveActiveNote();
+  const note = state.notes.find((n) => n.id === state.activeId);
+  if (!note) return null;
+
+  // Stan sprzed zmian — do cofnięcia. Tag utworzony przez #nazwa zostaje
+  // na liście tagów (pusty tag nikomu nie szkodzi), znika tylko z notatki.
+  const FIELDS = /** @type {const} */ ([
+    "type", "completed", "title", "due", "time", "recurrence", "recurrenceDays", "important", "updated",
+  ]);
+  /** @type {Record<string, unknown>} */
+  const before = {};
+  for (const key of FIELDS) before[key] = /** @type {any} */ (note)[key];
+  const tagsBefore = [...(note.tags ?? [])];
+  const focusedBefore = state.focusIds.includes(note.id);
+
+  if (edit.toTask && note.type !== "task") Object.assign(note, flippedType(note));
+
+  const cleanTitle = validateText(edit.title, MAX_TITLE_LEN).truncated;
+  if (note.title !== cleanTitle) note.updated = Date.now();
+  note.title = cleanTitle;
+  titleInput.value = cleanTitle;
+
+  if (note.type === "task") {
+    if (edit.due) note.due = edit.due;
+    if (edit.time) note.time = edit.time;
+    if (edit.recurrence) {
+      note.recurrence = edit.recurrence;
+      note.recurrenceDays = null;
+    }
+    if (edit.important) note.important = true;
+    if (!note.due && (edit.time || edit.recurrence || edit.important || edit.focus)) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      note.due = today.getTime();
+    }
+    if ((edit.important || edit.focus) && !state.focusIds.includes(note.id)) {
+      state.focusIds.push(note.id);
+      saveFocusId(state.focusIds);
+      document.dispatchEvent(new CustomEvent("focusChanged"));
+    }
+  }
+
+  if (edit.tagNames.length) {
+    const ids = resolveTagNames(edit.tagNames);
+    note.tags = [...new Set([...(note.tags ?? []), ...ids])];
+    // tagsChanged odświeża panel tagów i selektor tagów otwartej notatki
+    document.dispatchEvent(new CustomEvent("tagsChanged"));
+  }
+
+  saveNotes(state.notes);
+  clearAlarm(note.id);
+  if (isAlarmable(note)) scheduleAlarm(note);
+
+  _syncDueFields(note);
+  renderList();
+  updateDeleteState();
+  if (edit.toTask) document.dispatchEvent(new CustomEvent("noteSelected"));
+
+  const undo = () => {
+    const current = state.notes.find((n) => n.id === note.id);
+    if (!current) return; // usunięta w międzyczasie — nie ma czego cofać
+    for (const key of FIELDS) {
+      if (before[key] === undefined) delete (/** @type {any} */ (current))[key];
+      else /** @type {any} */ (current)[key] = before[key];
+    }
+    current.tags = tagsBefore;
+    if (!focusedBefore && state.focusIds.includes(current.id)) {
+      state.focusIds = state.focusIds.filter((id) => id !== current.id);
+      saveFocusId(state.focusIds);
+      document.dispatchEvent(new CustomEvent("focusChanged"));
+    }
+    saveNotes(state.notes);
+    clearAlarm(current.id);
+    if (isAlarmable(current)) scheduleAlarm(current);
+    if (state.activeId === current.id) {
+      titleInput.value = current.title;
+      _syncDueFields(current);
+    }
+    document.dispatchEvent(new CustomEvent("tagsChanged"));
+    renderList();
+    updateDeleteState();
+    if (edit.toTask) document.dispatchEvent(new CustomEvent("noteSelected"));
+  };
+  return { note, undo };
 }
 
 /** @param {string} id */

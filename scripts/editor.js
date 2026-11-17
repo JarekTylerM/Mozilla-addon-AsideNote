@@ -71,6 +71,8 @@ import {
   markdownToHtml,
   looksLikeMarkdown,
 } from './editor-markdown.js';
+import { looksLikeCode } from './editor-code-detect.js';
+import { prepareExportHTML } from './editor-copy-export.js';
 
 // #editor jest zawsze w sidebar.html — rzutujemy z pominięciem null.
 const editor = /** @type {HTMLElement} */ (document.getElementById('editor'));
@@ -2489,13 +2491,27 @@ function _initPaste() {
     // Fallback: plain text (np. z terminala, edytora kodu)
     const text = plain.length > MAX_PASTE ? plain.slice(0, MAX_PASTE) : plain;
 
+    // Kod lub konfiguracja (CSP, .env, JSON) → blok kodu, zanim markdown
+    // zrobi z "# komentarza" nagłówek. Bez tego linie szły jako akapity,
+    // a adresy w nich stawały się linkami. Płotki ``` obsługuje markdown.
+    if (!_caretInCodeBlock() && !/^\s*```/m.test(text) && looksLikeCode(text)) {
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.textContent = text.replace(/\r\n?/g, '\n').replace(/\n+$/, '');
+      pre.appendChild(code);
+      const body = sanitizeHTMLToBody(pre.outerHTML);
+      if (body && _insertRichContent(body)) return;
+    }
+
     // Markdown → tekst formatowany. Tylko gdy tekst NAPRAWDĘ wygląda na
     // markdown (looksLikeMarkdown wymaga sygnału blokowego) i gdy nie
     // wklejamy do bloku kodu — tam składnia ma zostać dosłowna.
     // Wynik i tak przechodzi przez sanitizeHTML; markdownToHtml escapuje
     // tekst u siebie, więc wklejony `<script>` nie stanie się znacznikiem.
     if (!_caretInCodeBlock() && looksLikeMarkdown(text)) {
-      const md = sanitizeHTMLToBody(markdownToHtml(text));
+      // Przez normalizePastedHTML jak każdy HTML: ☐/☑ z tekstu ClickUp tworzą
+      // checklistę, a pusta linia na końcu bloku kodu znika
+      const md = sanitizeHTMLToBody(normalizePastedHTML(markdownToHtml(text)));
       // Ten sam limit co gałąź HTML. Markdown potrafi rozdmuchać wejście:
       // 200 KB linii "> a" daje ~80 000 węzłów. Bez tej zapory gałąź MD
       // była obejściem ochrony, którą gałąź HTML miała od początku.
@@ -2576,10 +2592,14 @@ function _handleCopy(e, isCut) {
 
   const cd = e.clipboardData;
   if (!cd) return;
-  cd.setData('text/html', wrap.innerHTML);
   // text/plain jako Markdown — textContent skleja akapity w jedną linię
-  // i gubi punktory list; markdown zachowuje strukturę w czystym tekście
-  cd.setData('text/plain', htmlToMarkdown(wrap) || (wrap.textContent ?? ''));
+  // i gubi punktory list; markdown zachowuje strukturę w czystym tekście.
+  // Liczony PRZED prepareExportHTML, żeby ☐/☑ i etykiety nie weszły do tekstu.
+  const markdown = htmlToMarkdown(wrap) || (wrap.textContent ?? '');
+  // HTML w formie, którą czytają ClickUp i Outlook (editor-copy-export.js);
+  // wklejony z powrotem do notatki wraca do oryginału
+  cd.setData('text/html', prepareExportHTML(wrap, (type) => t(`callout_${type}`)));
+  cd.setData('text/plain', markdown);
   e.preventDefault();
 
   if (isCut) {

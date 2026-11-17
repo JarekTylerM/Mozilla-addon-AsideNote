@@ -70,6 +70,29 @@ test('deklaracja: rozszerzenie nie zbiera danych', () => {
     .toEqual(['none']);
 });
 
+test('CSP: domyślnie nic, style i krój pisma tylko z paczki', () => {
+  // default-src 'none' zamyka wszystko, czego lista niżej nie wymienia
+  // (manifest-src, prefetch…). Style bez 'unsafe-inline': w HTML nie ma
+  // atrybutów style=""; dynamiczne el.style.x (CSSOM) CSP nie blokuje.
+  expect(csp['default-src']).toBe("'none'");
+  expect(csp['style-src']).toBe("'self'");
+  expect(csp['font-src']).toBe("'self'");
+  // Jedyny wyjątek od zakazu 'unsafe-inline': atrybuty style="" (wklejki
+  // z Outlooka, HTML eksportu do schowka). Bez tego Chromium zgłaszał
+  // naruszenie CSP przy każdym takim atrybucie — także w dokumentach
+  // DOMParsera. Atrybut nie pobierze niczego: img-src/font-src są zamknięte.
+  expect(csp['style-src-attr']).toBe("'unsafe-inline'");
+});
+
+test('HTML stron rozszerzenia bez stylów inline (zablokowałby je style-src)', () => {
+  for (const file of ['sidebar.html', 'popup.html']) {
+    const html = readFileSync(fileURLToPath(new URL(`../${file}`, import.meta.url)), 'utf8');
+    if (/\sstyle\s*=/.test(html) || /<style[\s>]/.test(html)) {
+      throw new Error(`${file} zawiera styl inline`);
+    }
+  }
+});
+
 test('CSP: tylko własne skrypty, bez sieci, ramek, workerów i formularzy', () => {
   expect(csp['script-src']).toBe("'self'");
   expect(csp['object-src']).toBe("'none'");
@@ -79,6 +102,7 @@ test('CSP: tylko własne skrypty, bez sieci, ramek, workerów i formularzy', () 
     expect(csp[d]).toBe("'none'");
   }
   for (const [d, v] of Object.entries(csp)) {
+    if (d === 'style-src-attr' && v === "'unsafe-inline'") continue; // patrz test wyżej
     if (/unsafe-eval|unsafe-inline|https?:|\*/.test(v)) {
       throw new Error(`CSP ${d} poluzowane: ${v}`);
     }

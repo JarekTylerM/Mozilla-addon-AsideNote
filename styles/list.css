@@ -81,6 +81,25 @@
   color: var(--text-2);
 }
 
+/* Co Enter w polu tytułu zmieni — pod nagłówkiem notatki, w tym samym
+   wcięciu co komunikat walidacji (.validation-error) */
+.title-capture-preview {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  padding: 2px 4px;
+  margin-top: 2px;
+  line-height: var(--lh-tight);
+}
+
+/* Druga linia podglądu: co zostało w tytule albo jak dostać więcej.
+   Zawija się, bo bywa dłuższa niż sam podgląd (ten ucina się wielokropkiem). */
+.capture-hint {
+  display: block;
+  white-space: normal;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
 /* ── Search & filter ──────────────────────── */
 
 .search-row {

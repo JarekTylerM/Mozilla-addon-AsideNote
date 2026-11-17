@@ -869,6 +869,15 @@ summary:empty::after {
   mask-repeat: no-repeat;
   mask-position: center;
 }
+/* Ikona-maska w menu formatu i list (dawniej style inline w sidebar.html —
+   CSP style-src 'self' ich nie przepuszcza) */
+.callout-dropdown__icon--glyph {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
 .callout-dropdown__icon--quote {
   background-color: var(--text-3);
 }

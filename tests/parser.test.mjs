@@ -117,7 +117,9 @@ console.log('\n11. Locale');
 test('en → month-first', () => { expect(isUpcoming(parseCapture('!x 6/1','en').due,1,6)).toBe(true); });
 test('en-US → month-first', () => { expect(isUpcoming(parseCapture('!x 6/1','en-US').due,1,6)).toBe(true); });
 test('pl → day-first', () => { expect(isUpcoming(parseCapture('!x 15.06','pl').due,15,6)).toBe(true); });
-test('en-GB → traktowane jak PL', () => { expect(parseCapture('!x 6/1','en-GB').due).toBeNull(); });
+test('en-GB → angielskie słowa, DD/MM', () => { expect(daysFromToday(parseCapture('!x tomorrow','en-GB').due)).toBe(1); expect(isUpcoming(parseCapture('!x 6/1','en-GB').due,6,1)).toBe(true); });
+test('en-GB: zapis US 06/15 też przejdzie (jako DD/MM nie istnieje)', () => { expect(isUpcoming(parseCapture('!x 06/15','en-GB').due,15,6)).toBe(true); });
+test('inny język (de) → angielskie słowa, nie polskie', () => { expect(daysFromToday(parseCapture('!x tomorrow','de').due)).toBe(1); expect(parseCapture('!x jutro','de').due).toBeNull(); expect(isUpcoming(parseCapture('!x 15.06','de').due,15,6)).toBe(true); });
 
 // ── 12. Cykliczność ───────────────────────────────────────────────
 console.log('\n12. Cykliczność');
@@ -229,6 +231,55 @@ test('jutrzejsza data bez roku zostaje w tym terminie', () => { expect(daysFromT
 test('jawny rok w przeszłości jest brany dosłownie', () => { expect(isDate(parseCapture('!x 15.06.2020',PL).due,15,6,2020)).toBe(true); });
 test('EN: minione MM/DD → przyszły rok', () => { const d=dayOffset(-1); const r=parseCapture(`!x ${d.getMonth()+1}/${d.getDate()}`,EN); expect(new Date(r.due).getFullYear()).toBe(d.getFullYear()+1); });
 test('termin nigdy nie wypada w przeszłości bez jawnego roku', () => { for (let m=1;m<=12;m++) { const r=parseCapture(`!x 15.${m}`,PL); if (daysFromToday(r.due)<0) throw new Error(`15.${m} w przeszłości`); } });
+
+
+// ── 23. Godzina bez minut i inne zapisy godziny ───────────────────
+console.log('\n23. Godzina: o 18, o 10.30, 9am');
+test('"o 18" na końcu → 18:00', () => { const r=parseCapture('!kawa ze znajomą o 18',PL); expect(r.time).toBe('18:00'); expect(r.title).toBe('kawa ze znajomą'); });
+test('"o 18 jutro" i "jutro o 18" → to samo', () => { for (const s of ['!kino o 18 jutro','!kino jutro o 18']) { const r=parseCapture(s,PL); expect(r.time).toBe('18:00'); expect(daysFromToday(r.due)).toBe(1); expect(r.title).toBe('kino'); } });
+test('"o 5" w środku zdania to nie godzina', () => { const r=parseCapture('!pomyśl o 5 pomysłach',PL); expect(r.time).toBeNull(); expect(r.title).toBe('pomyśl o 5 pomysłach'); });
+test('"o 18 z Kasią" zostaje (za mało pewne)', () => { expect(parseCapture('!kawa o 18 z Kasią',PL).time).toBeNull(); });
+test('"o 10.30" → godzina, nie 10 października', () => { const r=parseCapture('!fryzjer o 10.30',PL); expect(r.time).toBe('10:30'); expect(r.dateGiven).toBe(false); expect(r.title).toBe('fryzjer'); });
+test('"do 10.05" zostaje datą', () => { const r=parseCapture('!x do 10.05',PL); expect(r.time).toBeNull(); expect(isUpcoming(r.due,10,5)).toBe(true); });
+test('"o godzinie 9", "godz. 9"', () => { expect(parseCapture('!x o godzinie 9',PL).time).toBe('09:00'); expect(parseCapture('!x godz. 9',PL).time).toBe('09:00'); });
+test('EN 9am, 5 pm, 5:30pm, 12am', () => { expect(parseCapture('!x 9am',EN).time).toBe('09:00'); expect(parseCapture('!x 5 pm',EN).time).toBe('17:00'); expect(parseCapture('!x at 5:30pm',EN).title).toBe('x'); expect(parseCapture('!x 5:30pm',EN).time).toBe('17:30'); expect(parseCapture('!x 12am',EN).time).toBe('00:00'); });
+test('EN "at 7" na końcu, "tonight"', () => { expect(parseCapture('!dinner tonight at 7',EN).time).toBe('07:00'); expect(daysFromToday(parseCapture('!dinner tonight',EN).due)).toBe(0); });
+
+// ── 24. Nazwy miesięcy ────────────────────────────────────────────
+console.log('\n24. Nazwy miesięcy');
+test('"15 sierpnia"', () => { const r=parseCapture('!koncert 15 sierpnia',PL); expect(isUpcoming(r.due,15,8)).toBe(true); expect(r.title).toBe('koncert'); });
+test('"1 maja 2030 r."', () => { const r=parseCapture('!piknik 1 maja 2030 r.',PL); expect(isDate(r.due,1,5,2030)).toBe(true); expect(r.title).toBe('piknik'); });
+test('"3 pazdziernika" bez polskich znaków', () => { expect(isUpcoming(parseCapture('!x 3 pazdziernika',PL).due,3,10)).toBe(true); });
+test('EN "Aug 15", "15th of August", "on 15 Aug 2030"', () => { expect(isUpcoming(parseCapture('!x Aug 15',EN).due,15,8)).toBe(true); expect(isUpcoming(parseCapture('!x 15th of August',EN).due,15,8)).toBe(true); expect(isDate(parseCapture('!x on 15 Aug 2030',EN).due,15,8,2030)).toBe(true); });
+test('"I may 2 go" to nie maj', () => { expect(parseCapture('!I may 2 go',EN).due).toBeNull(); });
+test('"May 2" z wielkiej litery to maj', () => { expect(isUpcoming(parseCapture('!x May 2',EN).due,2,5)).toBe(true); });
+
+// ── 25. Odstępy: tygodnie, miesiące, przyszły tydzień ─────────────
+console.log('\n25. Odstępy');
+test('za 2 tygodnie / za dwa tygodnie → +14', () => { expect(daysFromToday(parseCapture('!x za 2 tygodnie',PL).due)).toBe(14); expect(daysFromToday(parseCapture('!x za dwa tygodnie',PL).due)).toBe(14); });
+test('za pięć dni / in two weeks', () => { expect(daysFromToday(parseCapture('!x za pięć dni',PL).due)).toBe(5); expect(daysFromToday(parseCapture('!x in two weeks',EN).due)).toBe(14); });
+test('za miesiąc → ten sam dzień za miesiąc (lub koniec miesiąca)', () => { const r=parseCapture('!x za miesiąc',PL); const d=new Date(r.due); const t=new Date(); expect((d.getMonth()-t.getMonth()+12)%12).toBe(1); expect(d.getDate()<=t.getDate()).toBe(true); expect(r.title).toBe('x'); });
+test('w przyszłym tygodniu / next week → najbliższy poniedziałek', () => { expect(daysFromToday(parseCapture('!x w przyszłym tygodniu',PL).due)).toBe(nextWeekday(1)); expect(daysFromToday(parseCapture('!x next week',EN).due)).toBe(nextWeekday(1)); });
+
+// ── 26. Co parser zrozumiał, a czego nie ──────────────────────────
+console.log('\n26. tokens / rejected / dateGiven');
+test('tokens: rozpoznane fragmenty w formie wpisanej', () => { const r=parseCapture('!kino jutro o 18 #wolne',PL); expect(r.tokens.map(t=>t.text)).toEqual(['#wolne','jutro','o 18']); expect(r.tokens.map(t=>t.kind)).toEqual(['tag','date','time']); });
+test('rejected: 25:00 i 30.02 zostają w tytule z powodem', () => { const r=parseCapture('!x 25:00 30.02',PL); expect(r.rejected).toEqual(['25:00','30.02']); expect(r.title).toBe('x 25:00 30.02'); });
+test('rejected: "31 lutego", "13pm"', () => { expect(parseCapture('!x 31 lutego',PL).rejected).toEqual(['31 lutego']); expect(parseCapture('!x 13pm',EN).rejected).toEqual(['13pm']); });
+test('kwota to nie data ani próba daty', () => { const r=parseCapture('!chleb 3.50 zł',PL); expect(r.due).toBeNull(); expect(r.rejected).toEqual([]); });
+test('dateGiven: sama godzina → false, termin w tekście → true', () => { expect(parseCapture('!x o 18',PL).dateGiven).toBe(false); expect(parseCapture('!x jutro',PL).dateGiven).toBe(true); expect(parseCapture('!x co wtorek',PL).dateGiven).toBe(true); });
+test('notatka zwraca tylko tokeny tagów', () => { const r=parseCapture('spacer jutro #dom',PL); expect(r.tokens).toEqual([{kind:'tag',text:'#dom'}]); expect(r.rejected).toEqual([]); });
+
+// ── 27. Czytelny tytuł po wycięciu ────────────────────────────────
+console.log('\n27. Czysty tytuł');
+test('wycina dopasowane miejsce, nie pierwsze takie samo słowo', () => { expect(parseCapture('!jutro jutrzenka jutro',PL).title).toBe('jutrzenka jutro'); });
+test('przecinek i myślnik przed terminem znikają', () => { expect(parseCapture('!kawa, jutro',PL).title).toBe('kawa'); expect(parseCapture('!kawa – jutro o 18',PL).title).toBe('kawa'); });
+test('sam tag nie przycina interpunkcji', () => { expect(parseCapture('!plan: #dom',PL).title).toBe('plan:'); });
+
+// ── 28. keep: fragmenty zostawione dosłownie ──────────────────────
+console.log('\n28. keep');
+test('keep chroni stary fragment, nowy działa', () => { const r=parseCapture('!Plan na jutro o 18',PL,{keep:['na jutro']}); expect(r.title).toBe('Plan na jutro'); expect(r.dateGiven).toBe(false); expect(r.time).toBe('18:00'); });
+test('keep bez trafienia nic nie zmienia', () => { expect(daysFromToday(parseCapture('!x jutro',PL,{keep:['pojutrze']}).due)).toBe(1); });
 
 // ── WYNIKI ────────────────────────────────────────────────────────
 await results();

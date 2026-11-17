@@ -191,7 +191,11 @@
             <label for="title" class="sr-only" data-i18n="title_label"
               >Tytuł</label
             >
-            <input id="title" data-i18n-attr="placeholder:title_placeholder" />
+            <input
+              id="title"
+              data-i18n-attr="placeholder:title_placeholder"
+              aria-describedby="title-capture-preview"
+            />
             <!-- Symbole są przyciskami obok pola, a nie częścią jego wartości:
                  widać je tylko przy aktywnym stanie, a klik zdejmuje oznaczenie. -->
             <button
@@ -333,6 +337,13 @@
         </div>
 
         <div id="title-error" class="validation-error" hidden></div>
+        <!-- Co Enter w tytule zmieni (parser, app.js). Widoczne tylko, gdy coś rozpoznano. -->
+        <div
+          id="title-capture-preview"
+          class="title-capture-preview"
+          aria-live="polite"
+          hidden
+        ></div>
         <div class="due-wrapper" id="due-wrapper" hidden>
           <input id="due-date" type="date" hidden />
           <input id="due-time" type="time" hidden />
@@ -418,19 +429,7 @@
                   role="menuitem"
                 >
                   <span
-                    class="callout-dropdown__icon icon--paragraph"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--paragraph"
                   ></span>
                   <span data-i18n="toolbar_format_paragraph">Paragraf</span>
                   <kbd class="callout-dropdown__kbd"></kbd>
@@ -441,19 +440,7 @@
                   role="menuitem"
                 >
                   <span
-                    class="callout-dropdown__icon icon--h1"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--h1"
                   ></span>
                   <span data-i18n="toolbar_format_h1">Nagłówek 1</span>
                   <kbd class="callout-dropdown__kbd"># spacja</kbd>
@@ -464,19 +451,7 @@
                   role="menuitem"
                 >
                   <span
-                    class="callout-dropdown__icon icon--h2"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--h2"
                   ></span>
                   <span data-i18n="toolbar_format_h2">Nagłówek 2</span>
                   <kbd class="callout-dropdown__kbd">## spacja</kbd>
@@ -487,19 +462,7 @@
                   role="menuitem"
                 >
                   <span
-                    class="callout-dropdown__icon icon--h3"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--h3"
                   ></span>
                   <span data-i18n="toolbar_format_h3">Nagłówek 3</span>
                   <kbd class="callout-dropdown__kbd">### spacja</kbd>
@@ -600,19 +563,7 @@
                   data-i18n-attr="aria-label:toolbar_bulletList"
                 >
                   <span
-                    class="callout-dropdown__icon icon--list-bullet"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--list-bullet"
                   ></span>
                   <span data-i18n="toolbar_bulletList">Lista punktowana</span>
                   <kbd class="callout-dropdown__kbd">- spacja</kbd>
@@ -624,19 +575,7 @@
                   data-i18n-attr="aria-label:toolbar_orderedList"
                 >
                   <span
-                    class="callout-dropdown__icon icon--list-number"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--list-number"
                   ></span>
                   <span data-i18n="toolbar_orderedList">Lista numerowana</span>
                   <kbd class="callout-dropdown__kbd">1. spacja</kbd>
@@ -649,19 +588,7 @@
                   data-i18n-attr="aria-label:toolbar_checklist"
                 >
                   <span
-                    class="callout-dropdown__icon icon--checklist"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--checklist"
                   ></span>
                   <span data-i18n="toolbar_checklistList">Lista zadań</span>
                   <kbd class="callout-dropdown__kbd">-[ ] spacja</kbd>
@@ -674,19 +601,7 @@
                   data-i18n-attr="aria-label:toolbar_toggleList"
                 >
                   <span
-                    class="callout-dropdown__icon icon--toggle-list"
-                    style="
-                      -webkit-mask-size: contain;
-                      mask-size: contain;
-                      width: 16px;
-                      height: 16px;
-                      display: inline-block;
-                      background-color: currentColor;
-                      -webkit-mask-repeat: no-repeat;
-                      mask-repeat: no-repeat;
-                      -webkit-mask-position: center;
-                      mask-position: center;
-                    "
+                    class="callout-dropdown__icon callout-dropdown__icon--glyph icon--toggle-list"
                   ></span>
                   <span data-i18n="toolbar_toggleList">Lista rozwijana</span>
                   <kbd class="callout-dropdown__kbd">&gt;- spacja</kbd>

@@ -74,8 +74,23 @@ export const QUICK_CAPTURE_HELP = [
     desc: 'shortcuts_qc_date',
   },
   {
+    tokens: [{ key: 'shortcuts_qc_ex_monthName' }],
+    desc: 'shortcuts_qc_monthName',
+  },
+  {
+    tokens: [
+      { key: 'shortcuts_qc_ex_inWeeks' },
+      { key: 'shortcuts_qc_ex_nextWeek' },
+    ],
+    desc: 'shortcuts_qc_relative',
+  },
+  {
     tokens: [{ text: '14:30' }],
     desc: 'shortcuts_qc_time',
+  },
+  {
+    tokens: [{ key: 'shortcuts_qc_ex_hour' }],
+    desc: 'shortcuts_qc_hour',
   },
   {
     tokens: [

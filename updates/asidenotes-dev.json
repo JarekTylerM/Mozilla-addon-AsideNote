@@ -25,6 +25,10 @@
         {
           "version": "1.0.1.5",
           "update_link": "https://github.com/JarekTylerM/Mozilla-addon-AsideNote/releases/download/dev-v1.0.1.5/asidenotes-dev-1.0.1.5.xpi"
+        },
+        {
+          "version": "1.0.1.6",
+          "update_link": "https://github.com/JarekTylerM/Mozilla-addon-AsideNote/releases/download/dev-v1.0.1.6/asidenotes-dev-1.0.1.6.xpi"
         }
       ]
     }

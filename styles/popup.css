@@ -260,3 +260,10 @@ body {
 .popup-preview[data-type='task'] {
   color: var(--text-2);
 }
+/* Druga linia podglądu: co zostało w tytule albo jak dostać więcej */
+.popup-preview .capture-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-3);
+  font-style: normal;
+}

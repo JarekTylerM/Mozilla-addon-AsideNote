@@ -775,7 +775,7 @@
     "message": "Quick add"
   },
   "popup_error": {
-    "message": "Error — please try again"
+    "message": "Couldn’t save — your text is still here, press Enter to try again"
   },
   "popup_esc_hint": {
     "message": "<kbd>Esc</kbd> close"
@@ -1222,7 +1222,7 @@
     "message": "weekly"
   },
   "shortcuts_qc_intro": {
-    "message": "The field above the list (Alt+C). The preview under it shows what you'll get before you press Enter."
+    "message": "The field above the list (Alt+C). The preview under it shows what you’ll get before you press Enter. The same syntax works in the title of an open note: Enter applies what it recognises."
   },
   "shortcuts_qc_plain": {
     "message": "→ a plain note"
@@ -1453,6 +1453,9 @@
   },
   "toast_trashed": {
     "message": "Moved to Trash"
+  },
+  "toast_titleApplied": {
+    "message": "Changes from the title applied"
   },
   "toast_undo": {
     "message": "Undo"
@@ -1686,7 +1689,7 @@
     "message": "Tomorrow"
   },
   "notif_digest_overdue": {
-    "message": "Overdue: $COUNT$",
+    "message": "To catch up: $COUNT$",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -1695,7 +1698,7 @@
     }
   },
   "notif_digest_overdueOnly": {
-    "message": "AsideNotes: overdue tasks ($COUNT$)",
+    "message": "AsideNotes: to catch up ($COUNT$)",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -1864,6 +1867,49 @@
   },
   "quickCapture_preview_needTitle": {
     "message": "Add a title to create the entry"
+  },
+  "quickCapture_hint_rejected": {
+    "message": "$TEXT$ stays in the title — it isn’t a valid date or time",
+    "placeholders": {
+      "text": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickCapture_hint_makeTask": {
+    "message": "Start with ! to make it a task with this date"
+  },
+  "titleCapture_preview": {
+    "message": "Enter applies: $CHANGES$",
+    "placeholders": {
+      "changes": {
+        "content": "$1"
+      }
+    }
+  },
+  "titleCapture_toTask": {
+    "message": "becomes a task"
+  },
+  "shortcuts_qc_ex_hour": {
+    "message": "5pm"
+  },
+  "shortcuts_qc_hour": {
+    "message": "→ a full hour (also: at 6 at the end)"
+  },
+  "shortcuts_qc_ex_monthName": {
+    "message": "Aug 15"
+  },
+  "shortcuts_qc_monthName": {
+    "message": "→ date with the month name, year optional"
+  },
+  "shortcuts_qc_ex_inWeeks": {
+    "message": "in 2 weeks"
+  },
+  "shortcuts_qc_ex_nextWeek": {
+    "message": "next week"
+  },
+  "shortcuts_qc_relative": {
+    "message": "→ a date some time ahead (also: in 3 days, in a month)"
   },
   "toolbar_textStyle_menu": {
     "message": "Text styles"

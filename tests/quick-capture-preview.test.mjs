@@ -32,6 +32,8 @@ const MESSAGES = {
   quickCapture_preview_flags: '$1 · $2',
   quickCapture_preview_tag_new: '#$1 (new tag)',
   quickCapture_preview_needTitle: 'Add a title',
+  quickCapture_hint_rejected: '$1 stays in the title',
+  quickCapture_hint_makeTask: 'Start with ! to make it a task',
   recurrence_daily: 'Daily',
   recurrence_weekly: 'Weekly',
   recurrence_monthly: 'Monthly',

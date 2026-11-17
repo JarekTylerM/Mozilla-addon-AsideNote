@@ -73,6 +73,81 @@ export function wantsFocusSeed(item) {
 }
 
 /**
+ * Zmiany, które Enter w polu tytułu zastosuje do otwartego elementu.
+ * @typedef {object} TitleEdit
+ * @property {boolean} hasChanges czy Enter coś zmieni (inaczej tylko przejdzie do treści)
+ * @property {string} title tytuł po wycięciu rozpoznanych fragmentów
+ * @property {boolean} toTask notatka zaczęta od `!` staje się zadaniem
+ * @property {number|null} due termin tylko wtedy, gdy padł w tekście — sama
+ *   godzina nie przestawia istniejącego terminu zadania
+ * @property {string|null} time
+ * @property {string|null} recurrence
+ * @property {boolean} important `!!`
+ * @property {boolean} focus `!>` (oraz `!!`, jak w szybkim dodawaniu)
+ * @property {string[]} tagNames
+ * @property {string[]} rejected fragmenty, które wyglądają na datę/godzinę, ale nie istnieją
+ */
+
+/**
+ * Parser w polu tytułu otwartej notatki lub zadania.
+ *
+ * Ta sama składnia co w szybkim dodawaniu, z dwiema różnicami:
+ * - w zadaniu `!` na początku nie jest potrzebny — to już jest zadanie,
+ *   więc "Kino jutro o 18" od razu daje termin i godzinę; w notatce
+ *   rozpoznawane są tylko tagi, chyba że tytuł zaczyna się od `!`
+ *   (wtedy notatka staje się zadaniem),
+ * - fragmenty, które parser rozpoznałby już w tytule sprzed edycji,
+ *   zostają dosłownie (`baseline`). Inaczej zadanie "Plan na jutro"
+ *   dostałoby termin przy każdym Enterze, choć nikt go nie wpisywał.
+ *
+ * Czysta funkcja: zastosowaniem zmian zajmuje się notes.js::applyTitleEdit.
+ *
+ * @param {string} raw obecna wartość pola tytułu
+ * @param {{ type?: string }} note otwarty element (typ decyduje o składni)
+ * @param {{ baseline?: string, locale?: string|null }} [options]
+ * @returns {TitleEdit|null} null, gdy nie ma nic do powiedzenia ani zmiany
+ */
+export function titleEditChanges(raw, note, { baseline = '', locale = null } = {}) {
+  const text = (raw ?? '').trim();
+  if (!text) return null;
+
+  const isTask = note.type === 'task';
+  const toTask = !isTask && text.startsWith('!');
+  const asTask = isTask || toTask;
+
+  /** @param {string} value */
+  const prepare = (value) => {
+    const trimmed = value.trim();
+    return asTask && !trimmed.startsWith('!') ? '!' + trimmed : trimmed;
+  };
+
+  const before = baseline.trim() ? parseCapture(prepare(baseline), locale) : null;
+  const parsed = parseCapture(prepare(text), locale, {
+    keep: before?.tokens.map((tok) => tok.text) ?? [],
+  });
+
+  // Flaga z prefiksu liczy się tylko, gdy prefiks jest nowy
+  const important = parsed.isUrgent && !before?.isUrgent;
+  const focus = (parsed.isInProgress || parsed.isUrgent) && !(before?.isInProgress || before?.isUrgent);
+
+  const hasChanges = toTask || important || focus || parsed.tokens.length > 0;
+  if (!hasChanges && !parsed.rejected.length) return null;
+
+  return {
+    hasChanges,
+    title: hasChanges ? parsed.title : text,
+    toTask,
+    due: parsed.dateGiven ? parsed.due : null,
+    time: parsed.time,
+    recurrence: parsed.recurrence,
+    important,
+    focus,
+    tagNames: parsed.tagNames,
+    rejected: parsed.rejected,
+  };
+}
+
+/**
  * Buduje obiekt notatki/zadania z surowego inputu quick capture.
  * @param {string} raw — tekst z pola capture
  * @param {string|null} [locale] przekazywany do parseCapture (testy)

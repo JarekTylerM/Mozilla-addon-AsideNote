@@ -40,10 +40,13 @@ Co z tego wynika:
 - W kodzie nie ma `fetch`, `XMLHttpRequest`, `WebSocket`, `sendBeacon`,
   `EventSource` ani WebRTC.
 - Niezależnie od kodu blokuje to przeglądarka: polityka CSP rozszerzenia
-  zawiera `connect-src 'none'`, a obrazy są ograniczone do
-  `img-src 'self' data:` (żadnych „pikseli śledzących”). Nawet gdyby ktoś
-  znalazł sposób na wstrzyknięcie skryptu, Firefox nie pozwoli mu wysłać
-  danych na zewnątrz.
+  zaczyna od `default-src 'none'` i zawiera `connect-src 'none'`, a obrazy,
+  style i krój pisma mogą pochodzić tylko z paczki (`img-src 'self' data:`,
+  `style-src 'self'`, `font-src 'self'` — żadnych „pikseli śledzących” ani
+  zdalnych arkuszy). Zapytania sieciowe z kodu (fetch, obrazki, style) są
+  więc zablokowane. Uczciwie: CSP nie obejmuje przejścia na inną stronę
+  (otwarcia karty czy zmiany adresu), dlatego pierwszą linią obrony jest
+  to, żeby obcy skrypt w ogóle się nie uruchomił — patrz punkty 3 i 4.
 - Krój pisma Lexend jest w paczce — nic nie jest pobierane z CDN.
 - Manifest deklaruje `data_collection_permissions: ["none"]`; brak telemetrii.
 
@@ -57,7 +60,11 @@ pracy `about:debugging` → AsideNotes → Zbadaj → zakładka Sieć (pusta).
 
 ## 3. Brak zdalnego i dynamicznego kodu
 
-- CSP: `script-src 'self'` (bez `unsafe-eval`, bez `unsafe-inline`),
+- CSP: `default-src 'none'`, `script-src 'self'` (bez `unsafe-eval`, bez
+  `unsafe-inline`), `style-src 'self'` (arkusze tylko z paczki, bez
+  elementów `<style>`; atrybuty `style=""` dopuszcza `style-src-attr` —
+  niosą je wklejki z Outlooka i HTML kopiowany do schowka, a pobrać nic
+  nie mogą, bo obrazy i krój pisma są ograniczone do paczki),
   `object-src 'none'`, `base-uri 'none'`, `frame-src 'none'`,
   `worker-src 'none'`, `form-action 'none'`.
 - Brak `eval`, `new Function`, `setTimeout` z tekstem; wszystkie importy

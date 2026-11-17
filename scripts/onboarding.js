@@ -400,6 +400,20 @@ export function initOnboarding(uiSettings) {
   }
 }
 
+/**
+ * Czy klawisz trafia do miejsca, w którym się pisze.
+ * @param {EventTarget|null} target
+ */
+function _isTypingTarget(target) {
+  const el = /** @type {HTMLElement|null} */ (target instanceof Element ? target : null);
+  if (!el) return false;
+  return (
+    /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) ||
+    el.isContentEditable ||
+    !!el.closest('[contenteditable="true"]')
+  );
+}
+
 /* Użytkownik odrzucił przewodnik. Sam _close() nic nie zapisywał, więc pierwsza
    lekcja wracała przy każdym otwarciu panelu. Lekcje dalej są w ustawieniach. */
 function _dismiss() {
@@ -441,6 +455,10 @@ function _buildOverlay() {
 
   document.addEventListener('keydown', (e) => {
     if (_overlay.hidden) return;
+    // Lekcje każą pisać w polu (szybkie dodawanie, edytor). Tam strzałki
+    // przesuwają kursor, a Esc zamyka menu „/” — wcześniej przełączały krok
+    // i na stałe wyłączały przewodnik w środku pisania.
+    if (e.defaultPrevented || e.isComposing || _isTypingTarget(e.target)) return;
     if (e.key === 'Escape')     _dismiss();
     if (e.key === 'ArrowRight') _advance(1);
     if (e.key === 'ArrowLeft')  _advance(-1);

@@ -271,6 +271,7 @@ body:has(#main-view.zen-mode) #panel-btn:hover {
 
 #main-view.list-expanded .note-header,
 #main-view.list-expanded #title-error,
+#main-view.list-expanded #title-capture-preview,
 #main-view.list-expanded #due-wrapper,
 #main-view.list-expanded #editor-container,
 #main-view.list-expanded #tag-selector {

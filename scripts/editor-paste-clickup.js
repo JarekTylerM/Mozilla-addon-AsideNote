@@ -71,6 +71,81 @@ function _moveContent(target, source, brIfEmpty = true) {
 }
 
 /**
+ * Poziom wcięcia punktu w płaskiej liście Quilla: class="ql-indent-2"
+ * albo data-indent="2". 0 = punkt główny.
+ * @param {Element} li
+ */
+function _indentLevel(li) {
+  const m = /(?:^|\s)ql-indent-(\d+)/.exec(li.className);
+  if (m) return Number(m[1]);
+  return parseInt(li.getAttribute("data-indent") ?? "0", 10) || 0;
+}
+
+/**
+ * Quill trzyma podpunkty płasko — jeden <ol>, poziom w klasie punktu.
+ * Przebudowuje to w zagnieżdżone listy (podpunkt w liście wewnątrz
+ * punktu wyżej), bo bez tego podpunkt po wklejeniu tracił wcięcie.
+ * @param {Element} list
+ * @param {Document} doc
+ */
+function _nestFlatIndents(list, doc) {
+  const items = [...list.children].filter((el) => el.tagName === "LI");
+  if (!items.some((li) => _indentLevel(li) > 0)) return;
+  /** @type {Element[]} ostatni punkt na danym poziomie */
+  const lastAt = [];
+  for (const li of items) {
+    const level = _indentLevel(li);
+    let parentLi = null;
+    for (let l = Math.min(level, lastAt.length) - 1; l >= 0 && !parentLi; l--) {
+      parentLi = lastAt[l] ?? null;
+    }
+    if (parentLi) {
+      let sub = parentLi.querySelector(":scope > ul, :scope > ol");
+      if (!sub) {
+        sub = doc.createElement(list.tagName.toLowerCase());
+        parentLi.appendChild(sub);
+      }
+      sub.appendChild(li);
+    }
+    lastAt[level] = li;
+    lastAt.length = level + 1;
+  }
+}
+
+/**
+ * Rodzaj punktu dla podziału listy. checked/unchecked to jedna checklista,
+ * toggled to rozwijane bloki (ich dzieci "none" siedzą już w podliście).
+ * @param {Element} li
+ */
+function _kindOf(li) {
+  const type = li.getAttribute("data-list") ?? "";
+  return type === "checked" ? "unchecked" : type;
+}
+
+/**
+ * Dzieli listę na ciągi punktów jednego rodzaju (nowe listy w `doc`).
+ * Lista jednorodna zwraca się sama, w jednoelementowej tablicy.
+ * @param {Element} list
+ * @param {Document} doc
+ * @returns {Element[]}
+ */
+function _splitByKind(list, doc) {
+  const items = [...list.children].filter((el) => el.tagName === "LI");
+  if (new Set(items.map(_kindOf)).size < 2) return [list];
+  /** @type {Element[]} */
+  const runs = [];
+  let kind = null;
+  for (const li of items) {
+    if (_kindOf(li) !== kind || !runs.length) {
+      runs.push(doc.createElement(list.tagName.toLowerCase()));
+      kind = _kindOf(li);
+    }
+    runs[runs.length - 1].appendChild(li);
+  }
+  return runs;
+}
+
+/**
  * Rekurencyjnie konwertuje listę ClickUp na format AsideNote.
  * data-list="unchecked/checked" → ul[data-list="checklist"] li[data-checked]
  * data-list="toggled" + data-list="none" → details/summary
@@ -79,6 +154,17 @@ function _moveContent(target, source, brIfEmpty = true) {
  * @returns {Node}
  */
 function _convertList(listNode, doc) {
+  _nestFlatIndents(listNode, doc);
+
+  // Quill trzyma w jednym <ol> kolejne listy różnych rodzajów (punktory,
+  // zaraz po nich numeracja). Każdy ciąg punktów jednego rodzaju to osobna lista.
+  const runs = _splitByKind(listNode, doc);
+  if (runs.length > 1) {
+    const frag = doc.createDocumentFragment();
+    runs.forEach((run) => frag.appendChild(_convertList(run, doc)));
+    return frag;
+  }
+
   const items = /** @type {HTMLElement[]} */ ([...listNode.children]);
 
   // Sprawdź czy to checklist (pierwszy li ma data-list="unchecked/checked")
@@ -150,8 +236,16 @@ function _convertList(listNode, doc) {
     return ul;
   }
 
-  // Zwykła lista — bullet lub ordered
-  const newList = doc.createElement(listNode.tagName.toLowerCase());
+  // Zwykła lista — bullet lub ordered. Quill 2 trzyma OBA rodzaje w <ol>
+  // i rozróżnia je atrybutem data-list punktu; sam tag dawał numerację
+  // tam, gdzie w ClickUp były punktory.
+  const kind =
+    firstType === "bullet"
+      ? "ul"
+      : firstType === "ordered"
+        ? "ol"
+        : listNode.tagName.toLowerCase();
+  const newList = doc.createElement(kind);
   items.forEach((li) => {
     if (li.tagName !== "LI") return;
     const newLi = doc.createElement("li");
@@ -194,6 +288,29 @@ export function preprocessClickUp(html) {
       const h = doc.createElement(tag.toLowerCase());
       _moveContent(h, _cleanNode(el), false);
       result.appendChild(h);
+      continue;
+    }
+
+    // Blok kodu — bez zmian; w blok kodu zamienia go normalizePastedHTML.
+    // Potraktowany jak akapit rozpadał się na linie z klikalnymi linkami.
+    if (
+      el.classList.contains("ql-code-block-container") ||
+      el.classList.contains("ql-code-block")
+    ) {
+      result.appendChild(el.cloneNode(true));
+      continue;
+    }
+
+    // Cytaty: ClickUp opakowuje je w div.ql-blockquote-container. Jako akapit
+    // dawał <p> z cytatem w środku i puste linie wokół.
+    if (el.classList.contains("ql-blockquote-container")) {
+      for (const bq of el.querySelectorAll(":scope > blockquote")) {
+        const quote = doc.createElement("blockquote");
+        const p = doc.createElement("p");
+        _moveContent(p, _cleanNode(bq));
+        quote.appendChild(p);
+        result.appendChild(quote);
+      }
       continue;
     }
 

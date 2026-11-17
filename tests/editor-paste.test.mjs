@@ -25,6 +25,7 @@ global.Node = _dom.window.Node;
 global.NodeFilter = _dom.window.NodeFilter;
 global.DOMParser = _dom.window.DOMParser;
 
+import { readFileSync } from 'fs';
 import { test, expect, results } from './_runner.mjs';
 import {
   normalizePastedHTML,
@@ -582,6 +583,106 @@ test('ClickUp: wynik budowany poza dokumentem strony, struktura zachowana', () =
   const clean = sanitizeHTML(out);
   expect(clean.includes('onerror')).toBe(false);
   expect(clean.includes('<img')).toBe(false);
+});
+
+/* ── Kod: ClickUp, Outlook, VS Code ───────────────────────────── */
+
+console.log('\n9. Bloki kodu z innych narzędzi');
+
+/** Pełna ścieżka jak w editor.js: ClickUp → normalizacja → sanityzacja. */
+const fromClickUp = (html) => clean(preprocessClickUp(html) ?? html);
+
+test('ClickUp: blok kodu → pre>code, link w środku jako tekst', () => {
+  const out = fromClickUp(
+    '<div class="ql-block">CSP:</div><div class="ql-code-block-container" spellcheck="false">' +
+      '<div class="ql-code-block" data-language="plain">default-src \'none\';</div>' +
+      '<div class="ql-code-block" data-language="plain">img-src \'self\' <a href="https://cdn.example.com">https://cdn.example.com</a>;</div></div>' +
+      '<div class="ql-block">Koniec</div>',
+  );
+  expect(out).toBe(
+    "<p>CSP:</p><pre><code>default-src 'none';\nimg-src 'self' https://cdn.example.com;</code></pre><p>Koniec</p>",
+  );
+});
+
+test('ClickUp: sam blok kodu (bez akapitów) też zostaje blokiem', () => {
+  expect(clean('<div class="ql-code-block-container"><div class="ql-code-block" data-language="javascript">a();</div></div>')).toBe(
+    '<pre><code data-language="javascript">a();</code></pre>',
+  );
+});
+
+test('Quill 1: pre.ql-syntax bez pustej linii na końcu', () => {
+  expect(clean('<pre class="ql-syntax">a;\nb;\n</pre>')).toBe('<pre><code>a;\nb;</code></pre>');
+});
+
+test('ClickUp/Quill 2: punktory w <ol data-list="bullet"> zostają punktorami', () => {
+  const out = fromClickUp(
+    '<div class="ql-block">Lista:</div><ol><li data-list="bullet" class="ql-list-item"><span class="ql-ui"></span>A</li>' +
+      '<li data-list="bullet" class="ql-list-item"><span class="ql-ui"></span>B</li></ol>' +
+      '<ol><li data-list="ordered" class="ql-list-item"><span class="ql-ui"></span>krok</li></ol>',
+  );
+  expect(out).toBe('<p>Lista:</p><ul><li>A</li><li>B</li></ul><ol><li>krok</li></ol>');
+});
+
+test('ClickUp/Quill 2: ql-indent-N → podlista', () => {
+  const out = fromClickUp(
+    '<div class="ql-block">x</div><ol><li data-list="bullet" class="ql-list-item">A</li>' +
+      '<li data-list="bullet" class="ql-list-item ql-indent-1">A.1</li>' +
+      '<li data-list="bullet" class="ql-list-item ql-indent-2">A.1.a</li>' +
+      '<li data-list="bullet" class="ql-list-item">B</li></ol>',
+  );
+  expect(out).toBe('<p>x</p><ul><li>A<ul><li>A.1<ul><li>A.1.a</li></ul></li></ul></li><li>B</li></ul>');
+});
+
+test('Outlook: akapity w Consolas → jeden blok kodu, pusta linia w środku zostaje', () => {
+  const out = clean(
+    "<p class=MsoNormal>Ustawienia:</p>" +
+      "<p class=MsoNormal><span style='font-family:Consolas'>a = 1;<o:p></o:p></span></p>" +
+      "<p class=MsoNormal><span style='font-family:Consolas'><o:p>&nbsp;</o:p></span></p>" +
+      "<p class=MsoNormal><span style='font-family:\"Courier New\"'>b = 2;<o:p></o:p></span></p>" +
+      '<p class=MsoNormal>Pozdrawiam</p>',
+  );
+  expect(out).toBe('<p>Ustawienia:</p><pre><code>a = 1;\n\nb = 2;</code></pre><p>Pozdrawiam</p>');
+});
+
+test('VS Code: linie w kontenerze z monospace, wcięcia z &nbsp; zostają', () => {
+  const out = clean(
+    '<div style="font-family: Consolas, \'Courier New\', monospace;white-space: pre;">' +
+      '<div><span style="color:#569cd6;">if</span> (a) {</div><div>&nbsp; &nbsp; go();</div><div>}</div></div>',
+  );
+  expect(out).toBe('<pre><code>if (a) {\n    go();\n}</code></pre>');
+});
+
+test('kod w linii (<code> w zdaniu) zostaje w zdaniu', () => {
+  expect(clean('<p>Uruchom <code>npm test</code> i gotowe.</p>')).toBe('<p>Uruchom <code>npm test</code> i gotowe.</p>');
+});
+
+test('mail w całości pisany Courierem zostaje akapitami', () => {
+  const line = (t) => `<div style="font-family:'Courier New'">${t}</div>`;
+  const out = clean(line('Cześć,') + line('w piątek koncert.') + line('Bilety mam ja.') + line('Do zobaczenia!'));
+  expect(out).toBe('<p>Cześć,</p><p>w piątek koncert.</p><p>Bilety mam ja.</p><p>Do zobaczenia!</p>');
+});
+
+test('<pre> ze strony: link i pogrubienie w środku → sam tekst', () => {
+  expect(clean('<pre><code>curl <a href="https://x.pl">https://x.pl</a> <b>-v</b></code></pre>')).toBe(
+    '<pre><code>curl https://x.pl -v</code></pre>',
+  );
+});
+
+test('próbka formatowania (tests/fixtures) przechodzi wklejanie bez strat', () => {
+  const sample = readFileSync(new URL('./fixtures/format-sample.html', import.meta.url), 'utf8').trim();
+  const strip = (h) => h.replace(/ (?:target|rel)="[^"]*"/g, '');
+  expect(strip(clean(sample))).toBe(sample);
+});
+
+test('Outlook w przeglądarce (prawdziwy DOM): linie kodu, listy i checklista wracają', () => {
+  const owa = readFileSync(new URL('./fixtures/clipboard/outlook-web-dom.html', import.meta.url), 'utf8');
+  const out = clean(owa);
+  expect(out).toContain(
+    "<pre><code>default-src 'none';\nscript-src 'self';\nimg-src 'self' data: https://cdn.example.com;</code></pre>",
+  );
+  expect(out).toContain('<ul><li>spacer<ul><li>park<ul><li>ławka przy stawie</li></ul></li><li>las</li></ul></li><li>kawa ze znajomą</li></ul>');
+  expect(out).toContain('<ul data-list="checklist"><li data-checked="false">kupić kwiaty<ul><li data-checked="false">wybrać kwiaciarnię</li>');
+  expect(out).toContain('<ol start="5"><li>piąty punkt</li>');
 });
 
 await results();

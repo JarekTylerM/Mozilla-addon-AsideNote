@@ -46,7 +46,9 @@ import {
   restoreDeletedNote,
   isNoteEmpty,
   listRowIds,
+  applyTitleEdit,
 } from "./notes.js";
+import { titleEditChanges } from "./quick-capture-core.js";
 import { nextFocusId } from "./list-focus.js";
 
 import { tagState } from "./tags.js";
@@ -72,7 +74,7 @@ import {
 } from "./panel.js";
 import { scheduleAlarm, clearAlarm, rescheduleAll } from "./alarms.js";
 import { applyStaticTranslations, t, getUILocale } from "./i18n.js";
-import { describeCapture } from "./quick-capture-preview.js";
+import { describeCapture, describeTitleEdit } from "./quick-capture-preview.js";
 import { renderQuickCaptureHelp } from "./quick-capture-help.js";
 import { initTooltips } from "./tooltip.js";
 import {
@@ -470,11 +472,64 @@ titleInput.addEventListener("input", () => {
   }
 
   debouncedSave();
+  _updateTitlePreview();
 });
 
-// Enter w tytule → początek treści (tytuł ma jedną linię, więc Enter nie ma
-// tu innej roboty). Tylko goły Enter: Ctrl+Enter to "ukończ zadanie", a
-// Enter zatwierdzający kompozycję IME nie może przeskakiwać.
+/* ── Edytor: tytuł — parser (ta sama składnia co szybkie dodawanie) ──
+   Pod polem podgląd "Enter zapisze: jutro o 18:00 · #praca", gdy parser
+   coś rozpozna. Zmiany wchodzą dopiero po Enterze — wyjście z pola nie
+   zmienia niczego, więc tytuł "Spotkanie we wtorek" zostaje taki, jak jest,
+   dopóki użytkownik świadomie nie potwierdzi. */
+
+const titlePreview = /** @type {HTMLElement} */ (document.getElementById("title-capture-preview"));
+
+/**
+ * Tytuł otwartego elementu sprzed edycji. To, co parser rozpoznałby już
+ * w nim, zostaje dosłownie — Enter w "Plan na jutro" nie doda terminu,
+ * o który nikt nie prosił. Inne id = nowy wpis, więc punkt wyjścia pusty.
+ */
+let _titleBaseline = { id: /** @type {string|null} */ (null), text: "" };
+
+document.addEventListener("noteSelected", () => {
+  _titleBaseline = { id: state.activeId, text: titleInput.value };
+  _hideTitlePreview();
+});
+
+function _currentTitleEdit() {
+  const note = state.activeId
+    ? state.notes.find((n) => n.id === state.activeId)
+    : null;
+  const type = note?.type ?? state.pendingType ?? "note";
+  const baseline = _titleBaseline.id === state.activeId ? _titleBaseline.text : "";
+  return titleEditChanges(titleInput.value, { type }, { baseline, locale: getUILocale() });
+}
+
+function _updateTitlePreview() {
+  const description = describeTitleEdit(_currentTitleEdit(), {
+    t,
+    locale: getUILocale(),
+    tags: tagState.tags,
+  });
+  if (!description) {
+    _hideTitlePreview();
+    return;
+  }
+  _renderPreview(titlePreview, description);
+}
+
+// Jak przy podglądzie capture: czyścimy tekst, bo kontener jest aria-live
+function _hideTitlePreview() {
+  titlePreview.hidden = true;
+  titlePreview.textContent = "";
+}
+
+titleInput.addEventListener("focus", _updateTitlePreview);
+titleInput.addEventListener("blur", _hideTitlePreview);
+
+// Enter w tytule → najpierw to, co rozpoznał parser, potem początek treści
+// (tytuł ma jedną linię, więc Enter nie ma tu innej roboty). Tylko goły
+// Enter: Ctrl+Enter to "ukończ zadanie", a Enter zatwierdzający kompozycję
+// IME nie może przeskakiwać.
 titleInput.addEventListener("keydown", (e) => {
   if (
     e.key !== "Enter" ||
@@ -487,6 +542,24 @@ titleInput.addEventListener("keydown", (e) => {
     return;
   }
   e.preventDefault();
+  const edit = _currentTitleEdit();
+  if (edit?.hasChanges) {
+    // Zapis synchroniczny przed zmianą: oczekujący autozapis treści nie
+    // może przepaść, a nowy wpis musi już istnieć
+    saveActiveNote();
+    debouncedSave.cancel?.();
+    const applied = applyTitleEdit(edit);
+    _titleBaseline = { id: state.activeId, text: titleInput.value };
+    // Enter zmienia termin, tagi czy typ jednym ruchem — Ctrl+Z w treści
+    // tego nie cofa, więc odwrót daje toast
+    if (applied) {
+      _showUndoToast(t("toast_titleApplied"), () => {
+        applied.undo();
+        _titleBaseline = { id: state.activeId, text: titleInput.value };
+      });
+    }
+  }
+  _hideTitlePreview();
   editor.focus();
   setCursorOffset(editor, 0);
 });
@@ -854,9 +927,25 @@ function _updateQcPreview(raw) {
     return;
   }
 
-  _qcPreview.textContent = description.text;
-  _qcPreview.hidden = false;
+  _renderPreview(_qcPreview, description);
   _qcPreview.dataset.type = description.type;
+}
+
+/**
+ * Tekst podglądu + opcjonalna podpowiedź w drugiej linii. textContent, nie
+ * HTML: oba teksty zawierają fragmenty wpisu użytkownika.
+ * @param {HTMLElement} el
+ * @param {{ text: string, hint?: string }} description
+ */
+function _renderPreview(el, { text, hint }) {
+  el.textContent = text;
+  if (hint) {
+    const line = document.createElement("span");
+    line.className = "capture-hint";
+    line.textContent = hint;
+    el.append(line);
+  }
+  el.hidden = false;
 }
 
 // Czyścimy tekst, nie tylko chowamy — kontener jest aria-live, a sam
@@ -1048,14 +1137,28 @@ const _undoToast = /** @type {HTMLElement} */ (document.getElementById("undo-toa
 const _undoToastText = _undoToast?.querySelector(".undo-toast__text");
 /** @type {ReturnType<typeof setTimeout>|null} */
 let _undoToastTimer = null;
-/** @type {string|null} */
-let _undoToastNoteId = null;
+/** Co zrobi „Cofnij” — przywrócenie z kosza albo odwrócenie zmian z tytułu. */
+/** @type {(() => void)|null} */
+let _undoToastAction = null;
 
 function _hideUndoToast() {
   clearTimeout(_undoToastTimer ?? undefined);
   _undoToastTimer = null;
-  _undoToastNoteId = null;
+  _undoToastAction = null;
   if (_undoToast) _undoToast.hidden = true;
+}
+
+/**
+ * Pokazuje toast z przyciskiem Cofnij.
+ * @param {string} text
+ * @param {() => void} action
+ */
+function _showUndoToast(text, action) {
+  if (!_undoToast || !_undoToastText) return;
+  _undoToastAction = action;
+  _undoToastText.textContent = text;
+  _undoToast.hidden = false;
+  _armUndoToastTimer(5000);
 }
 
 /** @param {number} ms */
@@ -1065,15 +1168,18 @@ function _armUndoToastTimer(ms) {
 }
 
 document.addEventListener("noteTrashed", (e) => {
-  if (!_undoToast || !_undoToastText) return;
-  _undoToastNoteId = _detail(e).id;
+  const id = _detail(e).id;
   const title = (_detail(e).title || "").trim();
   const short = title.length > 24 ? title.slice(0, 24) + "…" : title;
-  _undoToastText.textContent = short
-    ? `${t("toast_trashed")} «${short}»`
-    : t("toast_trashed");
-  _undoToast.hidden = false;
-  _armUndoToastTimer(5000);
+  _showUndoToast(short ? `${t("toast_trashed")} «${short}»` : t("toast_trashed"), () => {
+    const note = /** @type {Note|null} */ (restoreDeletedNote(id));
+    // Fokus na przywrócony element — kontynuacja nawigacji z miejsca akcji
+    if (note) {
+      /** @type {HTMLElement|null} */ (
+        document.querySelector(`#notesList .note-item[data-id="${note.id}"]`)
+      )?.focus();
+    }
+  });
 });
 
 // Hover/fokus wstrzymuje auto-hide — użytkownik klawiatury potrzebuje
@@ -1084,16 +1190,9 @@ _undoToast?.addEventListener("mouseleave", () => _armUndoToastTimer(2500));
 _undoToast?.addEventListener("focusout", () => _armUndoToastTimer(2500));
 
 document.getElementById("undo-toast-btn")?.addEventListener("click", () => {
-  const id = _undoToastNoteId;
+  const action = _undoToastAction;
   _hideUndoToast();
-  if (!id) return;
-  const note = /** @type {Note|null} */ (restoreDeletedNote(id));
-  // Fokus na przywrócony element — kontynuacja nawigacji z miejsca akcji
-  if (note) {
-    /** @type {HTMLElement|null} */ (
-      document.querySelector(`#notesList .note-item[data-id="${note.id}"]`)
-    )?.focus();
-  }
+  action?.();
 });
 
 /* ── Globalne skróty klawiszowe ────────────────── */
