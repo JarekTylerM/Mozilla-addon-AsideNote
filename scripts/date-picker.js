@@ -56,7 +56,9 @@ export function initDatePicker() {
     displayBtn.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        _popover.hidden ? _open() : _close();
+        // Z klawiatury fokus wchodzi do kalendarza: popover stoi na końcu
+        // dokumentu, więc Tab z przycisku nigdy by do niego nie trafił
+        _popover.hidden ? _open({ focusInside: true }) : _close();
       }
       if (e.key === "Escape") _close();
     });
@@ -202,6 +204,22 @@ export function initDatePicker() {
       _close();
     }
   });
+
+  // Fokus wyszedł z kalendarza (Tab za ostatni element, klik gdzie indziej):
+  // zamknij, żeby otwarty popover nie wisiał nad treścią bez fokusu
+  // relatedTarget bywa pusty (Tab przez koniec dokumentu, przebudowa siatki
+  // dni po kliknięciu), więc decyduje to, gdzie fokus jest chwilę później.
+  _popover.addEventListener("focusout", () => {
+    setTimeout(() => {
+      if (_popover.hidden) return;
+      const active = document.activeElement;
+      // Fokus nigdzie (body): siatka dni przebudowana po wyborze — zostaw
+      if (!active || active === document.body || _popover.contains(active)) return;
+      // Tylko zamknij: fokus zostaje tam, dokąd użytkownik przeszedł
+      // (Tab dalej albo klik w edytor), bez przeskakiwania
+      _close();
+    }, 0);
+  });
 }
 
 /** @param {string|null} dateStr */
@@ -257,7 +275,8 @@ export function updateDueDisplay() {
 
 /* ── Prywatne ──────────────────────────────────── */
 
-function _open() {
+/** @param {{ focusInside?: boolean }} [opts] */
+function _open({ focusInside = false } = {}) {
   const now = new Date();
   _viewYear = now.getFullYear();
   _viewMonth = now.getMonth();
@@ -281,6 +300,15 @@ function _open() {
   _popover.style.top = "-9999px";
   _popover.style.left = "-9999px";
   _popover.hidden = false;
+  document.getElementById("due-display-btn")?.setAttribute("aria-expanded", "true");
+  if (focusInside) {
+    const day = /** @type {HTMLElement|null} */ (
+      _popover.querySelector('#date-picker-grid [aria-pressed="true"]') ||
+        _popover.querySelector('#date-picker-grid [aria-current="date"]') ||
+        _popover.querySelector("button")
+    );
+    day?.focus();
+  }
 
   requestAnimationFrame(() => {
     const anchor =
@@ -304,7 +332,13 @@ function _open() {
 }
 
 function _close() {
+  // Fokus w kalendarzu (np. pole godziny po wyborze dnia) po schowaniu
+  // spadłby na <body>. Wraca na przycisk terminu, skąd kalendarz otwarto.
+  const hadFocus = !!_popover && _popover.contains(document.activeElement);
   if (_popover) _popover.hidden = true;
+  const trigger = document.getElementById("due-display-btn");
+  trigger?.setAttribute("aria-expanded", "false");
+  if (hadFocus) trigger?.focus();
   const hint = document.getElementById("date-picker-reminder-hint");
   if (hint) hint.hidden = true;
 }
@@ -431,6 +465,12 @@ function _renderCalendar() {
   const weekdaysMon = [...weekdays.slice(1), weekdays[0]];
 
   const todayStr = _toDateStr(_today());
+  const dayLabelFormat = new Intl.DateTimeFormat(getUILocale(), {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const firstDay = new Date(_viewYear, _viewMonth, 1);
   const lastDate = new Date(_viewYear, _viewMonth + 1, 0).getDate();
 
@@ -445,6 +485,8 @@ function _renderCalendar() {
     // Najwyżej 3 litery, bez kropki skrótu: "niedz." nie mieściło się w
     // kolumnie przy szerszym kroju (Lexend) i było ucinane.
     th.textContent = wd.replace(/\.$/, "").slice(0, 3);
+    // Dzień tygodnia jest już w etykiecie każdego dnia
+    th.setAttribute("aria-hidden", "true");
     grid.appendChild(th);
   });
 
@@ -462,8 +504,17 @@ function _renderCalendar() {
     btn.className = "date-picker-calendar__day";
     btn.textContent = String(d);
     btn.dataset.date = dateStr;
-    if (dateStr === todayStr)
+    // Sam numer dnia nic nie mówi czytnikowi ekranu: pełna data z dniem
+    // tygodnia, a stan (dzisiaj, wybrany) przez atrybuty, nie tylko kolor
+    btn.setAttribute(
+      "aria-label",
+      dayLabelFormat.format(new Date(_viewYear, _viewMonth, d)),
+    );
+    btn.setAttribute("aria-pressed", String(dateStr === _selected));
+    if (dateStr === todayStr) {
       btn.classList.add("date-picker-calendar__day--today");
+      btn.setAttribute("aria-current", "date");
+    }
     if (dateStr === _selected)
       btn.classList.add("date-picker-calendar__day--selected");
     grid.appendChild(btn);
@@ -473,12 +524,15 @@ function _renderCalendar() {
 function _renderFooter() {
   _popover.querySelectorAll("[data-preset]").forEach((btn) => {
     const date = _presetDate(/** @type {HTMLElement} */ (btn).dataset.preset);
-    btn.classList.toggle("is-active", !!date && date === _selected);
+    const on = !!date && date === _selected;
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-pressed", String(on));
   });
 
   _popover.querySelectorAll("[data-recurrence]").forEach((btn) => {
     const val = /** @type {HTMLElement} */ (btn).dataset.recurrence || null;
     btn.classList.toggle("is-active", val === _recurrence);
+    btn.setAttribute("aria-pressed", String(val === _recurrence));
   });
 
   _renderDaysRow();
@@ -492,5 +546,6 @@ function _renderDaysRow() {
   row.querySelectorAll("[data-day]").forEach((btn) => {
     const day = Number(/** @type {HTMLElement} */ (btn).dataset.day);
     btn.classList.toggle("is-active", _recurrenceDays.includes(day));
+    btn.setAttribute("aria-pressed", String(_recurrenceDays.includes(day)));
   });
 }

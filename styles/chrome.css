@@ -172,7 +172,7 @@
 .quick-settings .icon-btn {
   background-color: var(--text-2);
   border-color: transparent;
-  opacity: 0.6;
+  opacity: var(--icon-rest-opacity);
 }
 .quick-settings .icon-btn:hover {
   opacity: 1;
@@ -217,7 +217,7 @@
 #toggle-shortcuts,
 #panel-btn {
   background-color: var(--text-2);
-  opacity: 0.5;
+  opacity: var(--icon-rest-opacity);
 }
 #toggle-shortcuts:hover,
 #panel-btn:hover {
@@ -236,13 +236,17 @@
   position: relative;
 }
 #security-btn {
-  background-color: var(--danger-border);
-  opacity: 0.7;
+  /* W spoczynku szara jak sąsiednie ikony paska (3,2:1+). Czerwień, która
+     spełnia 3:1, stale ściągała wzrok; --danger-border z opacity 0,7 dawał
+     z kolei 1,4–2:1 i ikony prawie nie było widać. Czerwień tylko po
+     najechaniu. */
+  background-color: var(--text-2);
+  opacity: var(--icon-rest-opacity);
   transition:
     opacity var(--transition),
     background-color var(--transition);
 }
-#security-btn:hover {
+#security-btn:is(:hover, :focus-visible) {
   background-color: var(--danger-soft);
   opacity: 1;
 }

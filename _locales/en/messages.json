@@ -41,8 +41,14 @@
   "convertType_toTask_title": {
     "message": "Convert to task"
   },
+  "datePicker_nextMonth": {
+    "message": "Next month"
+  },
   "datePicker_nextWeek": {
     "message": "Next week"
+  },
+  "datePicker_prevMonth": {
+    "message": "Previous month"
   },
   "datePicker_rec_custom": {
     "message": "Days"
@@ -61,6 +67,9 @@
   },
   "datePicker_rec_yearly": {
     "message": "Yearly"
+  },
+  "datePicker_reminderLabel": {
+    "message": "Reminder"
   },
   "datePicker_reminderNoTime": {
     "message": "Set a time for the reminder to work."
@@ -165,15 +174,6 @@
   },
   "dueTime_title": {
     "message": "Time"
-  },
-  "due_daysAgo": {
-    "message": "$DAYS$ days ago",
-    "placeholders": {
-      "days": {
-        "content": "$1",
-        "example": "3"
-      }
-    }
   },
   "due_today": {
     "message": "today"
@@ -476,6 +476,9 @@
   "ob_btn_prev": {
     "message": "←"
   },
+  "ob_btn_prev_label": {
+    "message": "Previous step"
+  },
   "ob_btn_settings": {
     "message": "Settings"
   },
@@ -501,7 +504,7 @@
     "message": "This is the quick capture field. Type anything — say a weekend idea. Right below the field you can see what you are about to create. Enter adds it."
   },
   "ob_s1_2": {
-    "message": "Every entry lands on this list. Click yours to open it. For next time: Shift+Enter in the capture field opens the new entry right away — no clicking needed."
+    "message": "Every entry lands on this list. Click yours to open it."
   },
   "ob_s1_2_empty": {
     "message": "The list is still empty. Go back one step (←), type something in the field above and press Enter."
@@ -510,7 +513,7 @@
     "message": "This is the editor — where you expand the thought; the title is above. Everything saves itself as you type; there is no Save button. Undo a slip with Ctrl+Z."
   },
   "ob_s1_4": {
-    "message": "AsideNotes has two kinds of entries. A note is a loose piece of information. A task has a circle to check off — create one by starting with !, e.g. !coffee with a friend. A task can also get a due date with a reminder — the Quick capture lesson covers that."
+    "message": "AsideNotes has two kinds of entries. A note is a loose piece of information. A task has a box to check off — create one by starting with !, e.g. !coffee with a friend. A task can also get a due date with a reminder — the Quick capture lesson covers that."
   },
   "ob_s1_convert": {
     "message": "Here you can turn the open note into a task and back — nothing is lost, the checkbox state returns if you switch again. Handy when a loose thought turns out to be something to do."
@@ -519,13 +522,13 @@
     "message": "This whole lesson happens in one field. Type: !!concert tickets tomorrow 9:00 and press Enter. Before you do, look below the field — the preview tells you exactly what you are about to get."
   },
   "ob_s2_dates": {
-    "message": "You write the due date in plain words: today, tomorrow, in 3 days, on friday (it takes the next one), or a date like 06/15 — with a year if you want: 06/15/2030. A time is 14:30 or at 14:30 and sets a reminder right away."
+    "message": "You write the due date in plain words: today, tomorrow, in 3 days, on friday or 06/15. A time like 14:30 sets a reminder right away."
   },
   "ob_s2_priority": {
-    "message": "Marks at the start set the rank: ! makes a task, !! an important task that is also in progress, !> a task in progress. These are the same states you can set from the note menu, where each one is separate."
+    "message": "Marks at the start set the rank: ! makes a task, !! an important task, !> a task in progress, and !!> both at once. These are the same states you can set from the note menu."
   },
   "ob_s2_recurrence": {
-    "message": "Repetition works as text too: daily, weekly, monthly, yearly, every tuesday. Whatever the parser does not understand it leaves in the title — so if you see your text in the preview instead of a due date, it was not recognised. And text in quotes always stays literal."
+    "message": "Repetition works as words too: daily, weekly, every tuesday. If the preview shows your text instead of a due date, it was not recognised and stays in the title."
   },
   "ob_s2_shortcuts": {
     "message": "You can reach the field without the mouse: Alt+C puts the cursor in it, Alt+T does it with the task prefix. And $POPUP$ opens the same field in a small window over any page — same syntax, and the ? button shows all of it.",
@@ -620,6 +623,18 @@
   },
   "panel_appearance_light": {
     "message": "Light"
+  },
+  "panel_density_label": {
+    "message": "Layout"
+  },
+  "panel_density_comfortable": {
+    "message": "Comfortable"
+  },
+  "panel_density_compact": {
+    "message": "Compact"
+  },
+  "panel_density_info": {
+    "message": "Comfortable gives the note toolbar buttons bigger click areas, so they are easier to hit. Compact is tighter and fits more into a narrow panel, for example when the browser takes half the screen."
   },
   "panel_font_info": {
     "message": "Lexend is a typeface designed for reading fluency. Wider letter spacing and more distinct letter shapes make similar characters harder to confuse. It can help with dyslexia, low vision, and eye strain during longer reading. The change applies to the whole interface — the panel and the quick add window."
@@ -792,6 +807,24 @@
   "popup_title": {
     "message": "Quick add"
   },
+  "quickCapture_addedTo_note": {
+    "message": "✓ Note added — it’s in “$SECTION$”",
+    "placeholders": {
+      "section": {
+        "content": "$1",
+        "example": "Tomorrow"
+      }
+    }
+  },
+  "quickCapture_addedTo_task": {
+    "message": "✓ Task added — it’s in “$SECTION$”",
+    "placeholders": {
+      "section": {
+        "content": "$1",
+        "example": "Tomorrow"
+      }
+    }
+  },
   "quickCapture_hint_title": {
     "message": "Enter add · Shift+Enter open · ! task · !! important · !> in progress"
   },
@@ -897,6 +930,21 @@
   "saveError_text": {
     "message": "Couldn't save your changes"
   },
+  "row_task": {
+    "message": "task"
+  },
+  "row_note": {
+    "message": "note"
+  },
+  "row_completed": {
+    "message": "done"
+  },
+  "row_important": {
+    "message": "important"
+  },
+  "row_inProgress": {
+    "message": "in progress"
+  },
   "search_ariaLabel": {
     "message": "Search notes and tasks"
   },
@@ -976,7 +1024,7 @@
     "message": "→ Bold + Italic"
   },
   "shortcuts_formatting_captureOpen": {
-    "message": "Shift+Enter in capture → add and open editor"
+    "message": "Shift+Enter in quick capture → add and open editor"
   },
   "shortcuts_formatting_code": {
     "message": "Inline code"
@@ -1234,10 +1282,10 @@
     "message": "→ task instead of a note"
   },
   "shortcuts_qc_taskImportant": {
-    "message": "→ important: due today, also in progress"
+    "message": "→ important, due today"
   },
   "shortcuts_qc_taskImportantInProgress": {
-    "message": "→ same as !! — important is already in progress"
+    "message": "→ important and in progress at once"
   },
   "shortcuts_qc_taskInProgress": {
     "message": "→ task in progress, due today"
@@ -1427,6 +1475,9 @@
   "tag_delete_unused": {
     "message": "Tag \"$1\" is not assigned to any item."
   },
+  "task_completed_label": {
+    "message": "Done"
+  },
   "task_markComplete": {
     "message": "Mark as complete"
   },
@@ -1451,6 +1502,18 @@
   "title_placeholder": {
     "message": "Title (defaults to the first line)"
   },
+  "toast_completed": {
+    "message": "✓ Done"
+  },
+  "toast_completedNext": {
+    "message": "✓ Done · next: $NEXT$",
+    "placeholders": {
+      "next": {
+        "content": "$1",
+        "example": "Thu, Nov 20"
+      }
+    }
+  },
   "toast_trashed": {
     "message": "Moved to Trash"
   },
@@ -1459,6 +1522,9 @@
   },
   "toast_undo": {
     "message": "Undo"
+  },
+  "toast_undo_title": {
+    "message": "Undo (Ctrl+Z)"
   },
   "toolbar_ariaLabel": {
     "message": "Text formatting"
@@ -1716,7 +1782,7 @@
     }
   },
   "panel_reminders_digest": {
-    "message": "Morning summary at 9:00 — today's tasks without a time, plus overdue"
+    "message": "Morning summary at 9:00 — today's tasks without a time, plus ones to catch up"
   },
   "panel_reminders_title": {
     "message": "Reminders"
@@ -1828,10 +1894,10 @@
     "message": "New to AsideNotes?"
   },
   "list_empty_tutorial_desc": {
-    "message": "A short tutorial shows the main features. You can find it later in settings (⚙), in the Guide section."
+    "message": "A short guide shows how it works, step by step, at your own pace. You can come back to it in settings (⚙)."
   },
   "list_empty_tutorial_btn": {
-    "message": "Start the tutorial"
+    "message": "Show the guide"
   },
   "list_empty_newNote": {
     "message": "New note"

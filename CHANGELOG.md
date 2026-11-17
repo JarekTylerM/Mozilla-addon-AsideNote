@@ -121,6 +121,86 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
   stonowane i pojawiają się tylko wtedy, gdy są potrzebne — nic nie mruga
   ani nie skacze przy zwykłym pisaniu.
 
+- **Tryb zen zaczyna od dzisiaj.** Najpierw widać to, co jest na dziś,
+  a rzeczy do nadrobienia są pod spodem.
+
+- **Wiadomo, dokąd trafił nowy wpis.** Gdy dodasz „!basen jutro”, a sekcja
+  „Jutro” jest zwinięta, pod polem pojawi się na chwilę „✓ Zadanie dodane —
+  jest w sekcji „Jutro””, a nagłówek sekcji mignie.
+
+- **Kalendarz czytelny dla czytnika ekranu.** Każdy dzień ma pełną datę,
+  np. „wtorek, 17 listopada 2026”, a strzałki mają podpisy „Poprzedni
+  miesiąc” i „Następny miesiąc”.
+
+- **Prostsze słowa w skrótach klawiszowych:** „pasek narzędzi” zamiast
+  „toolbar” i „pole szybkiego dodawania” zamiast „capture”.
+
+- **Spokojne potwierdzenie po odhaczeniu zadania.** Na dole na chwilę
+  pojawi się „✓ Ukończone” z przyciskiem Cofnij. Przy zadaniu, które się
+  powtarza, od razu widać, kiedy wróci, np. „następne: wt., 24 lis”.
+
+- **Więcej czasu na Cofnij i skrót Ctrl+Z.** Pasek z Cofnij zostaje na
+  8 sekund. Na liście wystarczy Ctrl+Z, żeby cofnąć usunięcie, odhaczenie
+  albo zmiany z tytułu. W tekście Ctrl+Z dalej cofa pisanie.
+
+- **Pole do odhaczenia łatwiej zobaczyć i trafić.** Kwadracik jest trochę
+  większy, ma wyraźniejszą ramkę, a kliknąć można też tuż obok niego.
+
+- **Termin z przeszłości to zwykła data.** Zamiast „12 dni temu” widać
+  np. „3 lis”, bez liczenia, ile dni minęło.
+
+- **Spokojniejszy pierwszy ekran.** Przy pustej liście widać tylko pole
+  do dodawania i zaproszenie z przykładami. Szukanie, filtry i przełącznik
+  „Wszystko / Notatki / Zadania” pojawią się po pierwszym wpisie.
+
+- **Przewodnik startuje, kiedy chcesz.** Nie wyskakuje już sam przy
+  pierwszym otwarciu. Na pustej liście jest przycisk „Pokaż przewodnik”,
+  a wszystkie lekcje są w ustawieniach (⚙).
+
+- **Przewodnik nie zasłania podglądu.** Dymek stoi niżej, więc widać,
+  co powstanie z wpisanego tekstu. Teksty lekcji są krótsze: jeden krok
+  to jedna rzecz.
+
+- **`!!` oznacza tylko „ważne”.** Wcześniej od razu dokładało też
+  „w trakcie”. Teraz każdy znak robi jedną rzecz: `!!` to ważne, `!>` to
+  w trakcie, a `!!>` oba naraz, np. „!!>raport”.
+
+- **Lista dla czytnika ekranu.** Każdy wpis jest odczytywany jednym
+  zdaniem, np. „kino, zadanie, jutro, ważne, #dom”, a pole do odhaczenia
+  mówi, czy jest zaznaczone.
+
+- **Dostępność na poziomie WCAG A.** Dodatek da się obsłużyć samą
+  klawiaturą i czytnikiem ekranu:
+  - kalendarz otwiera się Enterem z fokusem na wybranym dniu, Esc
+    zamyka go i wraca na przycisk terminu, a po wyborze dnia fokus
+    też tam wraca,
+  - menu „/” w notatce mówi, która pozycja jest podświetlona,
+  - nagłówki sekcji listy („Dzisiaj”, „Jutro”…) są prawdziwymi
+    nagłówkami, więc można po nich skakać,
+  - pole szybkiego dodawania, przypomnienie, zmiana nazwy tagu,
+    przyciski „✕”, „—” i „wstecz” w przewodniku mają czytelne nazwy,
+  - błędy w polach (np. pusty tytuł) czytnik odczytuje od razu.
+
+- **Dostępność na poziomie WCAG AA.** Bez nowych kolorów i bez dodatkowego
+  „szumu”, tylko tam, gdzie coś było za blade albo za małe:
+  - szare podpowiedzi, daty i ikony są o ton ciemniejsze, żeby dało się
+    je przeczytać także na jaśniejszym tle,
+  - obwódka pokazująca, gdzie jesteś klawiaturą, i ramka klikniętego pola
+    są wyraźniejsze,
+  - dymek z podpowiedzią nie znika, gdy najedziesz na niego kursorem, więc
+    dłuższy tekst da się spokojnie doczytać,
+  - przyciski w pasku notatki mają większe pole kliknięcia, a sam rysunek
+    ikon się nie zmienił,
+  - pasek z „Cofnij” przesuwa się wyżej, jeśli zasłaniałby miejsce, do
+    którego przechodzisz klawiszem Tab,
+  - tarcza bezpieczeństwa w spoczynku jest szara jak sąsiednie ikony,
+    czerwień pojawia się dopiero po najechaniu.
+
+- **Nowe ustawienie: Układ (Ustawienia → Wygląd).** „Wygodny” (domyślny)
+  ma większe przyciski w pasku notatki. „Kompaktowy” wraca do dawnych,
+  mniejszych rozmiarów i mieści więcej, gdy panel jest wąski, np. przy
+  przeglądarce na pół ekranu.
+
 ### Naprawione
 
 - **Wklejanie do cytatu.** Tekst wklejony do cytatu zostaje w cytacie,

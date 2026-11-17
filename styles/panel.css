@@ -353,7 +353,7 @@
 }
 
 .add-tag-form:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 
 .add-tag-form #new-tag-input {
@@ -405,7 +405,7 @@
   transition: border-color var(--transition);
 }
 #new-tag-input:focus {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 #new-tag-input::placeholder {
   color: var(--text-3);
@@ -441,7 +441,7 @@
   line-height: var(--lh-tight);
 }
 .storage-usage__label--warn {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .storage-usage__label--danger {
   color: var(--danger);
@@ -662,7 +662,7 @@
   color: var(--danger);
 }
 .panel-shortcuts__section .shortcut-row__status--ok {
-  color: var(--success);
+  color: var(--success-text);
 }
 .shortcut-row__status[hidden] {
   display: none;
@@ -899,5 +899,5 @@
 }
 
 .panel-zoom-row__select:focus {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }

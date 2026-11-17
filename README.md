@@ -31,9 +31,9 @@ What changed in each version, in plain words: [CHANGELOG.md](CHANGELOG.md) (Poli
 | `!Concert Aug 15 at 7pm` | a task on August 15th, 19:00 |
 | `!Dentist in 2 weeks` | a task due in two weeks (also `next week`, `in a month`) |
 | `!Standup daily` | a task that repeats daily |
-| `!!Ship the release` | an **important** task — due today, and marked in progress |
+| `!!Ship the release` | an **important** task, due today |
 | `!>Refactor parser` | a task marked **in progress**, due today |
-| `!!>Hotfix` | the same as `!!` — important already implies in progress |
+| `!!>Hotfix` | important **and** in progress at once |
 | `Weekend idea #home` | a note with the tag **home** — created if it does not exist yet |
 | `!"version 6/15"` | a task with literal text: quotes switch off date and tag parsing |
 
@@ -242,9 +242,9 @@ Co się zmieniło w kolejnych wersjach, zwykłymi słowami: [CHANGELOG.md](CHANG
 | `!Koncert 15 sierpnia o 19` | zadanie na 15 sierpnia, 19:00 |
 | `!Fryzjer za 2 tygodnie o 10.30` | zadanie za dwa tygodnie, 10:30 (też `w przyszłym tygodniu`, `za miesiąc`) |
 | `!Standup codziennie` | zadanie powtarzane codziennie |
-| `!!Wypuść wydanie` | zadanie **ważne** — termin dziś, oznaczone też jako w trakcie |
+| `!!Wypuść wydanie` | zadanie **ważne**, termin dziś |
 | `!>Refaktor parsera` | zadanie **w trakcie**, termin dziś |
-| `!!>Hotfix` | to samo co `!!` — ważne już oznacza w trakcie |
+| `!!>Hotfix` | zadanie ważne **i** w trakcie naraz |
 | `Pomysł na weekend #dom` | notatkę z tagiem **dom** — tag powstanie, jeśli go jeszcze nie ma |
 | `!"wersja 1.10"` | zadanie z dosłownym tekstem: cudzysłów wyłącza szukanie dat i tagów |
 

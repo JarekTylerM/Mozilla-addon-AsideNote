@@ -24,7 +24,7 @@
 
 .icon-btn--ghost {
   background-color: var(--text-2);
-  opacity: .6;
+  opacity: var(--icon-rest-opacity);
   border-color: transparent;
 }
 .icon-btn--ghost:not(:disabled):hover {
@@ -71,7 +71,7 @@
   transition: border-color var(--transition);
 }
 
-.input:focus { border-color: var(--border-strong); }
+.input:focus { border-color: var(--accent-border); }
 .input::placeholder { color: var(--text-3); }
 
 .input--sm    { padding: 4px 6px; font-size: var(--text-sm); }

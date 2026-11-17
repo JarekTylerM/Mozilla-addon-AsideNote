@@ -131,6 +131,7 @@ function _renderTagRow(tag) {
 
   const editInput = document.createElement("input");
   editInput.className = "tag-manage-input";
+  editInput.setAttribute("aria-label", t("panel_tags_edit"));
   editInput.value = tag.name;
   editInput.hidden = true;
 
@@ -148,6 +149,8 @@ function _renderTagRow(tag) {
   // Inline error pod editInput — pokazywany gdy walidacja zwróci błąd
   const editError = document.createElement("div");
   editError.className = "validation-error";
+  // Czytnik ekranu ogłasza błąd od razu, bez szukania go pod polem
+  editError.setAttribute("role", "alert");
   editError.hidden = true;
 
   let editing = false;
@@ -1348,6 +1351,24 @@ export function initUiSettings(settings) {
     sectionAddSelect.onchange = () => {
       apply(sectionAddSelect.value);
       saveUiSettings({ sectionAdd: sectionAddSelect.value });
+    };
+  }
+
+  // Układ: wygodny (domyślnie, pola kliknięcia 24px) albo kompaktowy
+  // (dawne 20px). Rozmiary robi CSS po atrybucie na <html> (tokens.css).
+  const densitySelect = _byInput("ui-density-select");
+  if (densitySelect) {
+    /** @param {string} value */
+    const apply = (value) => {
+      if (value === "compact") document.documentElement.dataset.density = "compact";
+      else delete document.documentElement.dataset.density;
+    };
+    const saved = settings.density === "compact" ? "compact" : "comfortable";
+    densitySelect.value = saved;
+    apply(saved);
+    densitySelect.onchange = () => {
+      apply(densitySelect.value);
+      saveUiSettings({ density: densitySelect.value });
     };
   }
 

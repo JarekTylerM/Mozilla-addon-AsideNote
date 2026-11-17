@@ -196,10 +196,8 @@ export function describeCapture(raw, env) {
   // × cykliczność × (data, tytuł). Sufiks skaluje się liniowo.
   const flags = [];
   if (isUrgent) flags.push(env.t('quickCapture_preview_flag_important'));
-  // "w trakcie" także dla `!!` — ważne zasiewa focusIds tak samo jak `!>`
-  // (wantsFocusSeed w quick-capture-core.js). Bez tego `!!` obiecywałby
-  // element bez oznaczenia, a lista pokazywałaby go jako w trakcie.
-  if (isInProgress || isUrgent) {
+  // Tylko `!>` i `!!>` — `!!` to samo "ważne" (wantsFocusSeed)
+  if (isInProgress) {
     flags.push(env.t('quickCapture_preview_flag_inProgress'));
   }
   const recurrenceKey =

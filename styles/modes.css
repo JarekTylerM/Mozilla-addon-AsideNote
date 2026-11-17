@@ -80,7 +80,7 @@
 
 /* Fokus w wyszukiwarce dodatkowo wzmacnia ramkę */
 .zen-mode .search-wrapper:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 
 /* Ikony filter/type-toggle na hover barwią się na zen */
@@ -304,6 +304,16 @@ body.is-editing #filter-bar,
 body.is-editing #type-toggle,
 body.is-editing .notes-list-wrapper {
   display: none !important;
+}
+
+/* Pusta lista: szukanie, filtry i przełącznik typów nie mają na czym
+   działać. Pierwszy ekran to pole dodawania i zaproszenie poniżej.
+   Wyjątek: pasek wraca tylko wtedy, gdy krok przewodnika wskazuje przycisk
+   w nim (np. zen, onboarding.js) — inaczej start przewodnika przesuwałby
+   cały układ. */
+body.list-is-empty :is(#active-filters, #filter-bar, #type-toggle),
+body.list-is-empty:not(.onboarding-reveals-search) .search-row {
+  display: none;
 }
 
 body.is-editing .note-header {

@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <title>AsideNotes</title>
     <link rel="stylesheet" href="./styles/styles.css" />
   </head>
 
@@ -36,13 +37,18 @@
       </div>
       <div class="main-view-padded main-view-padded--list">
         <div class="quick-capture">
+          <!-- Nazwa pola to „Szybkie dodawanie”, a nie dymek ze składnią,
+               który czytnik ekranu odczytywał zamiast nazwy. Podgląd pod
+               polem jest jego opisem. -->
           <input
             id="quick-capture"
-            data-i18n-attr="placeholder:quickCapture_placeholder;title:quickCapture_hint_title"
+            data-i18n-attr="placeholder:quickCapture_placeholder;title:quickCapture_hint_title;aria-label:popup_title"
+            aria-describedby="quick-capture-preview"
             autocomplete="off"
           />
           <span
             class="quick-capture__hint"
+            aria-hidden="true"
             data-i18n-attr="title:quickCapture_hint_title"
             >↵</span
           >
@@ -336,7 +342,7 @@
           </div>
         </div>
 
-        <div id="title-error" class="validation-error" hidden></div>
+        <div id="title-error" class="validation-error" role="alert" hidden></div>
         <!-- Co Enter w tytule zmieni (parser, app.js). Widoczne tylko, gdy coś rozpoznano. -->
         <div
           id="title-capture-preview"
@@ -355,6 +361,8 @@
               class="due-bar__trigger"
               data-i18n-attr="aria-label:dueDate_ariaLabel"
               aria-label="Data terminu"
+              aria-haspopup="dialog"
+              aria-expanded="false"
             >
               <span class="due-bar__cal-icon icon--calendar-clock"></span>
               <span id="due-display-text" class="due-bar__text">
@@ -1143,6 +1151,32 @@
                 <option value="lexend">Lexend</option>
               </select>
             </div>
+            <!-- Układ: rozmiar pól kliknięcia małych przycisków (tokens.css:
+                 --target). Wygodny = WCAG 2.5.8, kompaktowy = dawne 20px. -->
+            <div class="panel-zoom-row">
+              <label
+                for="ui-density-select"
+                class="panel-zoom-row__label"
+                data-i18n="panel_density_label"
+                >Układ</label
+              >
+              <span
+                class="panel-info-icon"
+                tabindex="0"
+                role="note"
+                data-tooltip-variant="info"
+                data-i18n-attr="data-tooltip-content:panel_density_info;aria-label:panel_density_info"
+                >?</span
+              >
+              <select id="ui-density-select" class="panel-zoom-row__select">
+                <option value="comfortable" selected data-i18n="panel_density_comfortable">
+                  Wygodny
+                </option>
+                <option value="compact" data-i18n="panel_density_compact">
+                  Kompaktowy
+                </option>
+              </select>
+            </div>
           </section>
 
           <section class="panel-section">
@@ -1299,7 +1333,7 @@
                 aria-label="Dodaj tag"
               ></button>
             </div>
-            <div id="new-tag-error" class="validation-error" hidden></div>
+            <div id="new-tag-error" class="validation-error" role="alert" hidden></div>
           </section>
         </div>
       </div>
@@ -1921,13 +1955,14 @@
         </div>
       </div>
     </div>
-    <!-- Toast po przeniesieniu do kosza — akcja Cofnij, auto-hide (app.js) -->
+    <!-- Toast z akcją Cofnij (kosz, ukończenie, zmiany z tytułu), auto-hide (app.js) -->
     <div id="undo-toast" class="undo-toast" role="status" hidden>
       <span class="undo-toast__text"></span>
       <button
         id="undo-toast-btn"
         class="undo-toast__btn"
         data-i18n="toast_undo"
+        data-i18n-attr="title:toast_undo_title"
       >
         Cofnij
       </button>
@@ -2182,7 +2217,13 @@
     </div>
 
     <!-- Date picker popover -->
-    <div id="date-picker-popover" class="date-picker-popover" hidden>
+    <div
+      id="date-picker-popover"
+      class="date-picker-popover"
+      role="dialog"
+      data-i18n-attr="aria-label:dueDate_ariaLabel"
+      hidden
+    >
       <div class="date-picker-shortcuts">
         <button
           type="button"
@@ -2212,17 +2253,20 @@
           type="button"
           id="date-picker-prev"
           class="date-picker-calendar__nav-btn"
+          data-i18n-attr="aria-label:datePicker_prevMonth;title:datePicker_prevMonth"
         >
           ‹
         </button>
         <span
           id="date-picker-month-label"
           class="date-picker-calendar__month"
+          aria-live="polite"
         ></span>
         <button
           type="button"
           id="date-picker-next"
           class="date-picker-calendar__nav-btn"
+          data-i18n-attr="aria-label:datePicker_nextMonth;title:datePicker_nextMonth"
         >
           ›
         </button>
@@ -2234,12 +2278,13 @@
             type="time"
             id="date-picker-time-input"
             class="date-picker-time__input"
-            data-i18n-attr="placeholder:dueTime_placeholder"
+            data-i18n-attr="placeholder:dueTime_placeholder;aria-label:dueTime_placeholder"
           />
-          <span class="date-picker-time__alarm-icon"></span>
+          <span class="date-picker-time__alarm-icon" aria-hidden="true"></span>
           <select
             id="date-picker-reminder-select"
             class="date-picker-reminder-select"
+            data-i18n-attr="aria-label:datePicker_reminderLabel"
           >
             <option value="0" data-i18n="dueReminder_onTime">W terminie</option>
             <option value="5" data-i18n="dueReminder_5min">5 min przed</option>
@@ -2263,7 +2308,7 @@
             class="date-picker-rec-btn"
             data-recurrence=""
             data-i18n="datePicker_rec_none"
-            data-i18n-attr="title:recurrence_none"
+            data-i18n-attr="title:recurrence_none;aria-label:recurrence_none"
           >
             —
           </button>
@@ -2412,7 +2457,13 @@
       >
         <div class="link-modal__header">
           <h3 id="tag-delete-title" data-i18n="tag_delete_title">Usuń tag</h3>
-          <button class="link-modal__close" id="tag-delete-close">✕</button>
+          <button
+            class="link-modal__close"
+            id="tag-delete-close"
+            data-i18n-attr="aria-label:linkModal_close"
+          >
+            ✕
+          </button>
         </div>
         <div class="link-modal__body">
           <p id="tag-delete-desc" class="tag-delete-desc"></p>
@@ -2445,21 +2496,38 @@
             id="slash-menu-input"
             type="text"
             autocomplete="off"
-            data-i18n-attr="placeholder:slash_search_placeholder"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="slash-menu-list"
+            data-i18n-attr="placeholder:slash_search_placeholder;aria-label:slash_search_placeholder"
           />
         </div>
-        <div id="slash-menu-list" class="slash-menu__list"></div>
+        <div
+          id="slash-menu-list"
+          class="slash-menu__list"
+          role="listbox"
+          data-i18n-attr="aria-label:slash_search_placeholder"
+        ></div>
       </div>
     </div>
     <!-- Onboarding overlay -->
     <div id="onboarding-overlay" hidden>
       <div id="onboarding-backdrop"></div>
-      <div id="onboarding-tooltip" role="dialog" aria-modal="true">
+      <!-- Bez aria-modal: kroki „spróbuj” każą pisać w polu poza dymkiem,
+           a aria-modal ukrywał resztę panelu przed czytnikiem ekranu.
+           Tekst kroku jest aria-live, bo fokus zostaje na „Dalej”. -->
+      <div
+        id="onboarding-tooltip"
+        role="dialog"
+        aria-labelledby="onboarding-stage-label"
+        aria-describedby="onboarding-text"
+      >
         <div class="onboarding-tooltip__header">
           <span id="onboarding-stage-label"></span>
           <span id="onboarding-progress"></span>
         </div>
-        <p id="onboarding-text"></p>
+        <p id="onboarding-text" aria-live="polite"></p>
         <div class="onboarding-tooltip__actions">
           <button type="button" id="onboarding-skip" data-i18n="ob_btn_skip">
             Pomiń wszystko
@@ -2472,7 +2540,12 @@
             data-i18n-attr="title:ob_btn_settings;aria-label:ob_btn_settings"
           ></button>
           <div class="onboarding-tooltip__nav">
-            <button type="button" id="onboarding-prev" data-i18n="ob_btn_prev">
+            <button
+              type="button"
+              id="onboarding-prev"
+              data-i18n="ob_btn_prev"
+              data-i18n-attr="aria-label:ob_btn_prev_label;title:ob_btn_prev_label"
+            >
               ←
             </button>
             <button type="button" id="onboarding-next" data-i18n="ob_btn_next">

@@ -30,7 +30,10 @@ const TOOLTIP_SELECTOR = 'button[title], a[title], select[title], input[title], 
 const TOOLTIP_VARIANTS = ['preview', 'info'];
 
 const SHOW_DELAY = 380; // ms — eliminuje flash przy szybkim przejeździe
-const HIDE_DELAY = 80;
+// Tyle czasu kursor ma na przejechanie szczeliny (7px) między przyciskiem
+// a dymkiem — dymek musi dać się najechać (WCAG 1.4.13), żeby dłuższy tekst
+// dało się doczytać bez pośpiechu.
+const HIDE_DELAY = 120;
 
 /** @type {HTMLElement | null} */
 let _el        = null; // #app-tooltip element
@@ -162,6 +165,11 @@ export function setTooltipsEnabled(enabled) {
 function _onEnter(e) {
   const src = /** @type {Element|null} */ (e.target);
   if (!src?.closest) return; // focus/mouseenter może odpalić na document/window
+  // Kursor wjechał na sam dymek — zostaje, dopóki z niego nie zjedzie
+  if (_el?.contains(src)) {
+    _cancelHide();
+    return;
+  }
   const target = /** @type {HTMLElement|null} */ (src.closest(TOOLTIP_SELECTOR));
   if (!target || target === _anchor) return;
 
@@ -177,8 +185,14 @@ function _onEnter(e) {
 /** @param {MouseEvent} e */
 function _onLeave(e) {
   // Sprawdź czy mysz nie przechodzi na sam tooltip
-  const to = e.relatedTarget;
-  if (to && _el?.contains(/** @type {Node} */ (to))) return;
+  const to = /** @type {Node|null} */ (e.relatedTarget);
+  if (to && _el?.contains(to)) return;
+  // Z dymku z powrotem na ten sam przycisk — nic się nie zmienia
+  if (to && _anchor?.contains(to)) return;
+  // mouseleave odpala się dla każdego elementu (capture). Liczy się tylko
+  // wyjście z przycisku albo z dymku — nie z dzieci przycisku.
+  const from = /** @type {Node|null} */ (e.target);
+  if (from && _anchor && from !== _anchor && from !== _el && _anchor.contains(from)) return;
 
   _cancelShow();
   _anchor = null;

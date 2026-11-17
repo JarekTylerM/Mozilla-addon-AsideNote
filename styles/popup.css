@@ -84,7 +84,7 @@ body {
 
 .popup-capture__input:focus {
   background: var(--bg);
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 
 .popup-capture__input::placeholder {

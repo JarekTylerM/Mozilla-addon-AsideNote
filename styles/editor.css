@@ -47,7 +47,7 @@
   mask-repeat: no-repeat;
 }
 .find-bar__field:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 /* Wpisane, ale nic nie znaleziono — ramka mówi to bez czytania licznika */
 .find-bar__field:has(#find-input.is-empty) {
@@ -120,7 +120,7 @@
   transition: border-color var(--transition);
 }
 .due-bar:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 
 .due-bar__trigger {
@@ -254,8 +254,8 @@
   content: '';
   width: 12px;
   height: 12px;
-  background-color: var(--text-3);
-  opacity: 0.6;
+  background-color: var(--text-2);
+  opacity: var(--icon-rest-opacity);
   transition:
     background-color var(--transition),
     opacity var(--transition);
@@ -441,28 +441,55 @@ html:not([data-toolbar-full]) #toolbar :is(
 }
 
 /* Style tekstu, układ szeroki: cztery przyciski wprost w pasku. display: contents
-   włącza je w siatkę grupy bez zmiany DOM. Progi zmierzone: pasek podstawowy
-   potrzebuje 334px, pełny (bez Cofnij/Ponów) 357px, a zwinięcie stylów oszczędza
-   53px. Zmieniasz zestaw przycisków? Zmierz ponownie. */
+   włącza je w siatkę grupy bez zmiany DOM. Progi zmierzone (szerokość paska
+   w jednym rzędzie, bez Cofnij/Ponów):
+                     podstawowy  pełny
+     Kompaktowy        334px     357px   (przyciski 20px, strzałki 16px)
+     Wygodny           402px     429px   (przyciski i strzałki 24px)
+   Zmieniasz zestaw albo rozmiar przycisków? Zmierz ponownie (oba układy). */
 @media (min-width: 334px) {
-  html:not([data-toolbar-full]) #text-style-split {
+  html[data-density='compact']:not([data-toolbar-full]) #text-style-split {
     display: contents;
   }
-  html:not([data-toolbar-full]) :is(#text-style-main, #text-style-arrow) {
+  html[data-density='compact']:not([data-toolbar-full])
+    :is(#text-style-main, #text-style-arrow) {
     display: none;
   }
-  html:not([data-toolbar-full]) .toolbar-styles {
+  html[data-density='compact']:not([data-toolbar-full]) .toolbar-styles {
     display: contents;
   }
 }
 @media (min-width: 357px) {
-  #text-style-split {
+  html[data-density='compact'] #text-style-split {
     display: contents;
   }
-  :is(#text-style-main, #text-style-arrow) {
+  html[data-density='compact'] :is(#text-style-main, #text-style-arrow) {
     display: none;
   }
-  .toolbar-styles {
+  html[data-density='compact'] .toolbar-styles {
+    display: contents;
+  }
+}
+@media (min-width: 402px) {
+  html:not([data-density='compact'], [data-toolbar-full]) #text-style-split {
+    display: contents;
+  }
+  html:not([data-density='compact'], [data-toolbar-full])
+    :is(#text-style-main, #text-style-arrow) {
+    display: none;
+  }
+  html:not([data-density='compact'], [data-toolbar-full]) .toolbar-styles {
+    display: contents;
+  }
+}
+@media (min-width: 429px) {
+  html:not([data-density='compact']) #text-style-split {
+    display: contents;
+  }
+  html:not([data-density='compact']) :is(#text-style-main, #text-style-arrow) {
+    display: none;
+  }
+  html:not([data-density='compact']) .toolbar-styles {
     display: contents;
   }
 }
@@ -470,6 +497,8 @@ html:not([data-toolbar-full]) #toolbar :is(
 /* Rysunek ikony 16px w polu klikania 20px — przy kresce 2px pełne 20px
    wyglądało ciężej niż tekst obok. Pole klikania się nie zmienia. */
 #toolbar .panel-icon {
+  width: var(--target);
+  height: var(--target);
   mask-size: 16px;
 }
 /* Ikony paska w spoczynku: 0,7 zamiast ogólnego 0,5 z .panel-icon. Przy 0,5
@@ -480,12 +509,17 @@ html:not([data-toolbar-full]) #toolbar :is(
   opacity: 0.7;
 }
 
-/* Pełny pasek przy szerokości poniżej 421px (zmierzone: potrzebuje 413px)
-   nie mieści się w jednym rzędzie. Cofnij/Ponów mają uniwersalne skróty
-   (Ctrl+Z / Ctrl+Y), więc w wąskim panelu chowamy właśnie je. W pasku
-   podstawowym są schowane zawsze (reguła wyżej). */
+/* Pełny pasek z Cofnij/Ponów potrzebuje 413px (Kompaktowy) albo 493px
+   (Wygodny) i poniżej tego nie mieści się w jednym rzędzie. Cofnij/Ponów
+   mają uniwersalne skróty (Ctrl+Z / Ctrl+Y), więc w wąskim panelu chowamy
+   właśnie je. W pasku podstawowym są schowane zawsze (reguła wyżej). */
 @media (max-width: 420.98px) {
-  #toolbar-history {
+  html[data-density='compact'] #toolbar-history {
+    display: none;
+  }
+}
+@media (max-width: 500.98px) {
+  html:not([data-density='compact']) #toolbar-history {
     display: none;
   }
 }
@@ -496,19 +530,34 @@ html:not([data-toolbar-full]) #toolbar :is(
    pełnej szerokości wymusza złamanie po 2. grupie (order), a 3. grupa, jako
    pierwsza w rzędzie, traci kreskę. Pseudo-element tworzy własny pusty
    rząd, więc row-gap liczy się dwa razy — stąd połowa (2×3px).
-   Progi po zwinięciu stylów: pasek podstawowy potrzebuje 281px, pełny (bez
-   Cofnij/Ponów) 304px. Zmieniasz zestaw przycisków? Zmierz ponownie. */
+   Progi po zwinięciu stylów (bez Cofnij/Ponów):
+                     podstawowy  pełny
+     Kompaktowy        281px     304px
+     Wygodny           345px     372px
+   Zmieniasz zestaw albo rozmiar przycisków? Zmierz ponownie. */
 @media (max-width: 280.98px) {
-  #toolbar { row-gap: 3px; }
-  #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
-  .toolbar-group:nth-child(n + 3) { order: 3; }
-  .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
+  html[data-density='compact'] #toolbar { row-gap: 3px; }
+  html[data-density='compact'] #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  html[data-density='compact'] .toolbar-group:nth-child(n + 3) { order: 3; }
+  html[data-density='compact'] .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
 }
 @media (min-width: 281px) and (max-width: 303.98px) {
-  html[data-toolbar-full] #toolbar { row-gap: 3px; }
-  html[data-toolbar-full] #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
-  html[data-toolbar-full] .toolbar-group:nth-child(n + 3) { order: 3; }
-  html[data-toolbar-full] .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
+  html[data-density='compact'][data-toolbar-full] #toolbar { row-gap: 3px; }
+  html[data-density='compact'][data-toolbar-full] #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  html[data-density='compact'][data-toolbar-full] .toolbar-group:nth-child(n + 3) { order: 3; }
+  html[data-density='compact'][data-toolbar-full] .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
+}
+@media (max-width: 344.98px) {
+  html:not([data-density='compact']) #toolbar { row-gap: 3px; }
+  html:not([data-density='compact']) #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  html:not([data-density='compact']) .toolbar-group:nth-child(n + 3) { order: 3; }
+  html:not([data-density='compact']) .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
+}
+@media (min-width: 345px) and (max-width: 371.98px) {
+  html:not([data-density='compact'])[data-toolbar-full] #toolbar { row-gap: 3px; }
+  html:not([data-density='compact'])[data-toolbar-full] #toolbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  html:not([data-density='compact'])[data-toolbar-full] .toolbar-group:nth-child(n + 3) { order: 3; }
+  html:not([data-density='compact'])[data-toolbar-full] .toolbar-group:nth-child(3) { border-left: none; padding-left: 0; }
 }
 
 #toolbar select {
@@ -528,6 +577,10 @@ html:not([data-toolbar-full]) #toolbar :is(
   align-self: center;
   -webkit-appearance: auto;
   appearance: auto;
+}
+#toolbar select:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 1px;
 }
 #toolbar select:hover {
   background: var(--surface-hover);
@@ -597,7 +650,8 @@ ul[data-list='checklist'] li::before {
   top: 4px;
   width: 13px;
   height: 13px;
-  border: 1.5px solid var(--border-strong);
+  /* Pole do odhaczenia w notatce — jak na liście, min. 3:1 (WCAG 1.4.11) */
+  border: 1.5px solid var(--checkbox-border);
   border-radius: var(--radius-xs);
   cursor: pointer;
   pointer-events: auto;
@@ -774,7 +828,7 @@ summary:empty::after {
 
 /* Strzałka — wąski przycisk z chevronem */
 .toolbar-split__arrow {
-  width: 16px;
+  width: var(--split-arrow-w);
   height: 24px;
   flex-shrink: 0;
   padding: 0;
@@ -854,6 +908,12 @@ summary:empty::after {
 .callout-dropdown__item:focus {
   background: var(--surface-hover);
   outline: none;
+}
+/* Z klawiatury samo tło --surface-hover (ok. 1,1:1) nie pokazuje, gdzie
+   jest fokus (WCAG 2.4.7) — obwódka do środka, żeby nie wychodziła poza menu */
+.callout-dropdown__item:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: -2px;
 }
 .callout-dropdown__item.is-active {
   background: var(--accent-bg);

@@ -74,9 +74,12 @@ test('sama godzina nie podaje terminu (istniejący zostaje)', () => {
   expect(e.time).toBe('18:00');
   expect(e.due).toBeNull();
 });
-test('!! i !> włączają ważne / w trakcie', () => {
+test('!! włącza ważne, !> w trakcie, !!> oba', () => {
   expect(pl('!!Kino', TASK).important).toBe(true);
-  expect(pl('!!Kino', TASK).focus).toBe(true);
+  expect(pl('!!Kino', TASK).focus).toBe(false);
+  const both = pl('!!>Kino', TASK);
+  expect(both.important).toBe(true);
+  expect(both.focus).toBe(true);
   const f = pl('!>Kino', TASK);
   expect(f.important).toBe(false);
   expect(f.focus).toBe(true);
@@ -152,7 +155,7 @@ test('termin, godzina, tag znany i nowy', () => {
 });
 test('sama godzina, ważne, cykl', () => {
   expect(describeTitleEdit(pl('!!Joga o 7:30 codziennie', TASK), ENV).text).toBe(
-    'Enter applies: 07:30 · Important · In progress · Daily',
+    'Enter applies: 07:30 · Important · Daily',
   );
 });
 test('zmiana na zadanie jest nazwana', () => {

@@ -174,8 +174,11 @@ function _formatDueRelative(timestamp) {
   if (diffDays === 0) return t("due_today");
   if (diffDays === 1) return t("due_tomorrow");
   if (diffDays === -1) return t("due_yesterday");
-  if (diffDays < -1) return t("due_daysAgo", [String(Math.abs(diffDays))]);
-  if (diffDays < 7) return getShortWeekdays()[new Date(timestamp).getDay()];
+  // Starszy termin to sama data („3 lis”), nie licznik „12 dni temu”:
+  // rosnąca liczba dni zawstydza, a sekcja „Do nadrobienia” i tak mówi,
+  // że termin minął.
+  if (diffDays > 1 && diffDays < 7)
+    return getShortWeekdays()[new Date(timestamp).getDay()];
 
   return new Intl.DateTimeFormat(getUILocale(), {
     day: "numeric",
@@ -662,7 +665,7 @@ export function applyTitleEdit(edit) {
       today.setHours(0, 0, 0, 0);
       note.due = today.getTime();
     }
-    if ((edit.important || edit.focus) && !state.focusIds.includes(note.id)) {
+    if (edit.focus && !state.focusIds.includes(note.id)) {
       state.focusIds.push(note.id);
       saveFocusId(state.focusIds);
       document.dispatchEvent(new CustomEvent("focusChanged"));
@@ -777,6 +780,19 @@ export function toggleCompleted(id) {
   // Checkbox stoi też w nagłówku otwartego zadania, a ukończenie zdejmuje
   // "w trakcie" — nagłówek musi to pokazać od razu.
   updateDeleteState();
+
+  // Ukończone zadanie znika z sekcji, a cykliczne po cichu wraca z nowym
+  // terminem. Spokojny toast (app.js) mówi, co się stało, i daje Cofnij.
+  if (note.completed) {
+    const next = note.spawnedNextId
+      ? state.notes.find((n) => n.id === note.spawnedNextId)
+      : null;
+    document.dispatchEvent(
+      new CustomEvent("taskCompleted", {
+        detail: { id, nextDue: next?.due ?? null },
+      }),
+    );
+  }
 }
 
 /** @param {string} id */
@@ -869,7 +885,9 @@ function _syncEditorActionButtons(note) {
     completeBtn.classList.toggle("note-checkbox--on", header.completed);
     completeBtn.textContent = header.completed ? "✓" : "";
     const label = t(header.completed ? "task_markIncomplete" : "task_markComplete");
-    completeBtn.setAttribute("aria-label", label);
+    completeBtn.setAttribute("role", "checkbox");
+    completeBtn.setAttribute("aria-checked", String(header.completed));
+    completeBtn.setAttribute("aria-label", t("task_completed_label"));
     completeBtn.title = label;
   }
 
@@ -1168,6 +1186,9 @@ function _renderListBody() {
 
   // Klasy zen / main-view — ustawiaj zawsze, niezależnie od zawartości listy
   notesList.classList.toggle("zen-active", state.zenMode);
+  // Bez żadnego wpisu szukanie, filtry i przełącznik typów nie mają na czym
+  // działać — chowamy je, żeby pierwszy ekran miał jedno pole i jedną drogę
+  document.body.classList.toggle("list-is-empty", state.notes.length === 0);
   document
     .getElementById("main-view")
     ?.classList.toggle("zen-mode", state.zenMode);
@@ -1347,7 +1368,9 @@ function _renderListBody() {
       return;
     }
 
-    ["overdue", "today"].forEach((key) => {
+    // Zen zaczyna od dzisiaj: najpierw to, co da się zrobić teraz, a
+    // zaległości dopiero pod spodem, żeby nie witały listy.
+    ["today", "overdue"].forEach((key) => {
       const items = buckets[key];
       if (items?.length) _renderSection(key, items);
     });
@@ -1561,7 +1584,13 @@ function _renderSection(key, items) {
   // w przycisku to niepoprawny HTML. Pozycję w wierszu ustawia CSS.
   const row = document.createElement("div");
   row.className = "section-row" + (isEmpty ? " section-row--empty" : "");
-  row.appendChild(header);
+  // Nagłówek sekcji jest też nagłówkiem dla czytnika ekranu (skok po
+  // nagłówkach, WCAG 1.3.1). <h2> ma display: contents, więc układ wiersza
+  // się nie zmienia, a przycisk zwijania zostaje w środku nagłówka.
+  const heading = document.createElement("h2");
+  heading.className = "section-heading";
+  heading.appendChild(header);
+  row.appendChild(heading);
   if (newItemForSection(key)) {
     const addBtn = document.createElement("button");
     addBtn.type = "button";
@@ -1599,6 +1628,8 @@ function _applyItemLabel(item, note) {
   const parts = _previewParts(note);
 
   titleEl.textContent = titleText || parts.short || t("note_untitled");
+  item.setAttribute("role", "group");
+  item.setAttribute("aria-label", _rowAriaLabel(note, titleEl.textContent));
 
   // Tytuł nie ma własnego tooltipa — od pokazywania treści jest ikona 👁
   // obok. Wcześniej tooltip pojawiał się tylko dla notatek bez tytułu,
@@ -1614,6 +1645,33 @@ function _applyItemLabel(item, note) {
     // Natywny title pokazałby się obok naszego tooltipa
     previewBtn.removeAttribute("title");
   }
+}
+
+/**
+ * Jedno zdanie o wierszu dla czytnika ekranu: wiersz jest fokusowalny, a bez
+ * etykiety czytnik odczytywał po kolei wszystkie przyciski w środku
+ * („podgląd, przenieś do kosza…”), zanim padło, czym jest wpis.
+ * Kolejność: tytuł, rodzaj, stan, termin, oznaczenia, tagi.
+ * @param {Note} note
+ * @param {string} title
+ */
+function _rowAriaLabel(note, title) {
+  const parts = [title, t(note.type === "task" ? "row_task" : "row_note")];
+  if (note.type === "task") {
+    if (note.completed) parts.push(t("row_completed"));
+    else if (note.due) {
+      parts.push(_formatDueRelative(note.due) + (note.time ? ` ${note.time}` : ""));
+    }
+    if (note.recurrence) parts.push(_recurrenceLabel(note) || t("recurrence_ariaLabel"));
+  }
+  if (note.important) parts.push(t("row_important"));
+  if (state.focusIds.includes(note.id)) parts.push(t("row_inProgress"));
+  const tagNames = (note.tags ?? [])
+    .map((id) => getTag(id)?.name)
+    .filter(Boolean)
+    .map((name) => `#${name}`);
+  if (tagNames.length) parts.push(tagNames.join(" "));
+  return parts.join(", ");
 }
 
 /* Aktualizacja etykiety aktywnej notatki w miejscu (bez renderList).
@@ -1644,10 +1702,12 @@ function _renderNoteItem(note) {
     cb.className =
       "note-checkbox" + (note.completed ? " note-checkbox--on" : "");
     cb.textContent = note.completed ? "✓" : "";
-    cb.setAttribute(
-      "aria-label",
-      t(note.completed ? "task_markIncomplete" : "task_markComplete"),
-    );
+    // Czytnik ekranu słyszy „pole wyboru, Ukończone, zaznaczone/niezaznaczone”
+    // zamiast samej komendy, z której nie wynika obecny stan
+    cb.setAttribute("role", "checkbox");
+    cb.setAttribute("aria-checked", String(!!note.completed));
+    // Bez title: dymek przy każdym przejechaniu myszą po liście to szum
+    cb.setAttribute("aria-label", t("task_completed_label"));
     div.appendChild(cb);
   }
 
@@ -1925,9 +1985,16 @@ export function quickCapture(raw) {
     const el = document.querySelector(
       `#notesList .note-item[data-id="${item.id}"]`,
     );
-    if (el) {
-      el.classList.add("note-item--flash");
-      setTimeout(() => el.classList.remove("note-item--flash"), 800);
+    // Wiersza nie ma, gdy sekcja jest zwinięta: wtedy błyska jej nagłówek,
+    // żeby było widać, dokąd trafił wpis (komunikat tekstowy daje app.js)
+    const target =
+      el ??
+      document.querySelector(
+        `#notesList .section-header[data-section="${bucketFor(item)}"]`,
+      );
+    if (target) {
+      target.classList.add("note-item--flash");
+      setTimeout(() => target.classList.remove("note-item--flash"), 800);
     }
   }, 30);
   return item;

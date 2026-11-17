@@ -164,11 +164,18 @@ function _render() {
   if (!list) return;
   list.innerHTML = "";
 
+  // Pole wyszukiwania to combobox, lista to listbox. Fokus zostaje w polu,
+  // więc czytnik ekranu dowiaduje się o podświetlonej pozycji tylko przez
+  // aria-activedescendant (patrz _syncActiveDescendant).
+  const input = _getInput();
   if (_filtered.length === 0) {
     const empty = document.createElement("div");
     empty.className = "slash-menu__empty";
+    empty.setAttribute("role", "option");
+    empty.setAttribute("aria-disabled", "true");
     empty.textContent = t("slash_no_results");
     list.appendChild(empty);
+    input?.removeAttribute("aria-activedescendant");
     return;
   }
 
@@ -178,17 +185,28 @@ function _render() {
 
   let itemIndex = 0;
   Object.entries(groups).forEach(([groupId, cmds]) => {
+    const groupLabel = t(GROUP_LABELS[groupId] ?? groupId);
+    const groupWrap = document.createElement("div");
+    groupWrap.setAttribute("role", "group");
+    groupWrap.setAttribute("aria-label", groupLabel);
     const groupEl = document.createElement("div");
     groupEl.className = "slash-menu__group-label";
-    groupEl.textContent = t(GROUP_LABELS[groupId] ?? groupId);
-    list.appendChild(groupEl);
+    groupEl.setAttribute("aria-hidden", "true");
+    groupEl.textContent = groupLabel;
+    groupWrap.appendChild(groupEl);
+    list.appendChild(groupWrap);
 
     cmds.forEach((cmd) => {
       const item = document.createElement("button");
       item.type = "button";
       item.className = "slash-menu__item";
       item.dataset.id = cmd.id;
-      if (itemIndex === _activeIdx) item.classList.add("is-active");
+      item.id = `slash-option-${cmd.id}`;
+      item.setAttribute("role", "option");
+      item.tabIndex = -1;
+      const isActive = itemIndex === _activeIdx;
+      item.setAttribute("aria-selected", String(isActive));
+      if (isActive) item.classList.add("is-active");
 
       const isCallout = cmd.icon.startsWith("callout-dropdown__icon");
       const icon = document.createElement("span");
@@ -214,10 +232,17 @@ function _render() {
         _execute(cmd.id);
       });
 
-      list.appendChild(item);
+      groupWrap.appendChild(item);
       itemIndex++;
     });
   });
+  _syncActiveDescendant();
+}
+
+function _syncActiveDescendant() {
+  const input = _getInput();
+  const active = _getList()?.querySelector(".slash-menu__item.is-active");
+  if (input && active) input.setAttribute("aria-activedescendant", active.id);
 }
 
 /* ── Nawigacja ───────────────────────────────── */
@@ -252,6 +277,7 @@ export function openSlashMenu(block) {
   if (!menu) return;
 
   _open = true;
+  _getInput()?.setAttribute("aria-expanded", "true");
   _filtered = [...COMMANDS];
   _activeIdx = 0;
 
@@ -308,6 +334,9 @@ export function closeSlashMenu(restoreFocus = true) {
 
   const menu = _getMenu();
   if (menu) menu.hidden = true;
+  const input = _getInput();
+  input?.setAttribute("aria-expanded", "false");
+  input?.removeAttribute("aria-activedescendant");
 
   if (_savedBlock) {
     delete _savedBlock.dataset.slashPlaceholder;

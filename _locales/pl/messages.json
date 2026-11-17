@@ -41,8 +41,14 @@
   "convertType_toTask_title": {
     "message": "Zamień na zadanie"
   },
+  "datePicker_nextMonth": {
+    "message": "Następny miesiąc"
+  },
   "datePicker_nextWeek": {
     "message": "W przyszłym tygodniu"
+  },
+  "datePicker_prevMonth": {
+    "message": "Poprzedni miesiąc"
   },
   "datePicker_rec_custom": {
     "message": "Dni"
@@ -61,6 +67,9 @@
   },
   "datePicker_rec_yearly": {
     "message": "Rok"
+  },
+  "datePicker_reminderLabel": {
+    "message": "Przypomnienie"
   },
   "datePicker_reminderNoTime": {
     "message": "Ustaw godzinę żeby przypomnienie zadziałało."
@@ -165,15 +174,6 @@
   },
   "dueTime_title": {
     "message": "Godzina"
-  },
-  "due_daysAgo": {
-    "message": "$DAYS$ dni temu",
-    "placeholders": {
-      "days": {
-        "content": "$1",
-        "example": "3"
-      }
-    }
   },
   "due_today": {
     "message": "dziś"
@@ -476,6 +476,9 @@
   "ob_btn_prev": {
     "message": "←"
   },
+  "ob_btn_prev_label": {
+    "message": "Poprzedni krok"
+  },
   "ob_btn_settings": {
     "message": "⚙ Ustawienia"
   },
@@ -501,7 +504,7 @@
     "message": "To pole szybkiego dodawania. Wpisz cokolwiek — np. pomysł na weekend. Pod polem od razu widzisz, co powstanie. Enter dodaje wpis."
   },
   "ob_s1_2": {
-    "message": "Każdy wpis trafia na tę listę. Kliknij swój, żeby go otworzyć. Na przyszłość: Shift+Enter w polu dodawania od razu otwiera nowy wpis — bez tego klikania."
+    "message": "Każdy wpis trafia na tę listę. Kliknij swój, żeby go otworzyć."
   },
   "ob_s1_2_empty": {
     "message": "Lista jest jeszcze pusta. Wróć do poprzedniego kroku (←), wpisz coś w polu u góry i wciśnij Enter."
@@ -510,7 +513,7 @@
     "message": "To edytor — tu rozwijasz myśl, a wyżej zmieniasz tytuł. Wszystko zapisuje się samo w trakcie pisania; nie ma przycisku Zapisz. Pomyłkę cofniesz przez Ctrl+Z."
   },
   "ob_s1_4": {
-    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kółko do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !kawa ze znajomym. Zadaniu ustawisz też termin z przypomnieniem — o tym w lekcji Szybkie dodawanie."
+    "message": "AsideNotes rozróżnia dwa rodzaje wpisów. Notatka to luźna informacja. Zadanie ma kwadracik do odhaczenia — tworzysz je, zaczynając wpis od znaku !, np. !kawa ze znajomym. Zadaniu ustawisz też termin z przypomnieniem — o tym w lekcji Szybkie dodawanie."
   },
   "ob_s1_convert": {
     "message": "Tutaj zamienisz otwartą notatkę w zadanie i z powrotem — nic nie tracisz, odhaczenie wraca po ponownej zmianie. Przydaje się, gdy luźna myśl okazuje się jednak czymś do zrobienia."
@@ -519,13 +522,13 @@
     "message": "Cała lekcja dzieje się w tym jednym polu. Wpisz: !!bilety na koncert jutro 9:00 i wciśnij Enter. Zanim to zrobisz, spójrz pod pole — podgląd mówi, co dokładnie powstanie."
   },
   "ob_s2_dates": {
-    "message": "Termin wpisujesz zwykłymi słowami: dziś, jutro, pojutrze, za 3 dni, w środę, na piątek (bierze najbliższy taki dzień) albo data 15.06 — z rokiem, jeśli chcesz: 15.06.2030. Godzina to 14:30 lub o 14:30 i od razu ustawia przypomnienie."
+    "message": "Termin piszesz zwykłymi słowami: dziś, jutro, za 3 dni, w piątek albo 15.06. Godzina, np. 14:30, od razu ustawia przypomnienie."
   },
   "ob_s2_priority": {
-    "message": "Znaki na początku ustawiają rangę: ! tworzy zadanie, !! zadanie ważne i od razu w trakcie, !> zadanie w trakcie. To te same stany, które ustawisz w menu notatki, tyle że tam każdy osobno."
+    "message": "Znaki na początku ustawiają rangę: ! tworzy zadanie, !! zadanie ważne, !> zadanie w trakcie, a !!> oba naraz. To te same stany, które ustawisz w menu notatki."
   },
   "ob_s2_recurrence": {
-    "message": "Powtarzanie też działa tekstem: codziennie, co tydzień, co miesiąc, co rok, co wtorek. Czego parser nie zrozumie, zostawia w tytule — jeśli więc widzisz swój tekst w podglądzie zamiast terminu, znaczy że nie został rozpoznany. A tekst w cudzysłowie zawsze zostaje dosłowny."
+    "message": "Powtarzanie też wpisujesz słowami: codziennie, co tydzień, co wtorek. Jeśli w podglądzie widzisz swój tekst zamiast terminu, to znaczy, że nie został rozpoznany i zostanie w tytule."
   },
   "ob_s2_shortcuts": {
     "message": "Do pola trafisz bez myszy: Alt+C stawia w nim kursor, Alt+T od razu z prefiksem zadania. A $POPUP$ otwiera to samo pole w małym okienku nad dowolną stroną — ta sama składnia, a przycisk ? pokazuje ją w całości.",
@@ -620,6 +623,18 @@
   },
   "panel_appearance_light": {
     "message": "Jasny"
+  },
+  "panel_density_label": {
+    "message": "Układ"
+  },
+  "panel_density_comfortable": {
+    "message": "Wygodny"
+  },
+  "panel_density_compact": {
+    "message": "Kompaktowy"
+  },
+  "panel_density_info": {
+    "message": "Wygodny ma większe pola przycisków w pasku notatki, więc łatwiej w nie trafić. Kompaktowy jest ciaśniejszy i mieści więcej w wąskim panelu, np. gdy przeglądarka zajmuje pół ekranu."
   },
   "panel_font_info": {
     "message": "Lexend to krój zaprojektowany pod płynność czytania. Ma szersze odstępy między literami i wyraźniej różniące się kształty znaków, dzięki czemu rzadziej mylą się podobne litery. Bywa pomocny przy dysleksji, osłabionym wzroku i zmęczeniu oczu przy dłuższym czytaniu. Zmiana dotyczy całego interfejsu — panelu i okienka szybkiego dodawania."
@@ -792,6 +807,24 @@
   "popup_title": {
     "message": "Szybkie dodawanie"
   },
+  "quickCapture_addedTo_note": {
+    "message": "✓ Notatka dodana — jest w sekcji „$SECTION$”",
+    "placeholders": {
+      "section": {
+        "content": "$1",
+        "example": "Jutro"
+      }
+    }
+  },
+  "quickCapture_addedTo_task": {
+    "message": "✓ Zadanie dodane — jest w sekcji „$SECTION$”",
+    "placeholders": {
+      "section": {
+        "content": "$1",
+        "example": "Jutro"
+      }
+    }
+  },
   "quickCapture_hint_title": {
     "message": "Enter dodaj · Shift+Enter otwórz · ! zadanie · !! ważne · !> w trakcie"
   },
@@ -897,6 +930,21 @@
   "saveError_text": {
     "message": "Nie udało się zapisać zmian"
   },
+  "row_task": {
+    "message": "zadanie"
+  },
+  "row_note": {
+    "message": "notatka"
+  },
+  "row_completed": {
+    "message": "ukończone"
+  },
+  "row_important": {
+    "message": "ważne"
+  },
+  "row_inProgress": {
+    "message": "w trakcie"
+  },
   "search_ariaLabel": {
     "message": "Wyszukaj notatki i zadania"
   },
@@ -976,7 +1024,7 @@
     "message": "→ Pogrubienie + kursywa"
   },
   "shortcuts_formatting_captureOpen": {
-    "message": "Shift+Enter w capture → dodaj i otwórz edytor"
+    "message": "Shift+Enter w polu szybkiego dodawania → dodaj i otwórz edytor"
   },
   "shortcuts_formatting_code": {
     "message": "Kod inline"
@@ -1075,7 +1123,7 @@
     "message": "tagi notatki"
   },
   "shortcuts_general_toolbar": {
-    "message": "→ pokaż / ukryj toolbar (też w trybie zen)"
+    "message": "→ pokaż / ukryj pasek narzędzi (też w trybie zen)"
   },
   "shortcuts_general_zen": {
     "message": "→ tryb zen"
@@ -1234,10 +1282,10 @@
     "message": "→ zadanie zamiast notatki"
   },
   "shortcuts_qc_taskImportant": {
-    "message": "→ ważne: termin dziś, też w trakcie"
+    "message": "→ ważne, termin dziś"
   },
   "shortcuts_qc_taskImportantInProgress": {
-    "message": "→ to samo co !! — ważne już jest w trakcie"
+    "message": "→ ważne i w trakcie naraz"
   },
   "shortcuts_qc_taskInProgress": {
     "message": "→ zadanie w trakcie, termin dziś"
@@ -1273,7 +1321,7 @@
     "message": "Skróty klawiszowe"
   },
   "shortcuts_toolbarToggle": {
-    "message": "→ pokaż/ukryj toolbar"
+    "message": "→ pokaż / ukryj pasek narzędzi"
   },
   "shortcuts_zenMode": {
     "message": "→ tryb zen"
@@ -1427,6 +1475,9 @@
   "tag_delete_unused": {
     "message": "Tag \"$1\" nie jest przypisany do żadnego elementu."
   },
+  "task_completed_label": {
+    "message": "Ukończone"
+  },
   "task_markComplete": {
     "message": "Oznacz jako ukończone"
   },
@@ -1451,6 +1502,18 @@
   "title_placeholder": {
     "message": "Tytuł (domyślnie pierwsza linia treści)"
   },
+  "toast_completed": {
+    "message": "✓ Ukończone"
+  },
+  "toast_completedNext": {
+    "message": "✓ Ukończone · następne: $NEXT$",
+    "placeholders": {
+      "next": {
+        "content": "$1",
+        "example": "czw., 20 lis"
+      }
+    }
+  },
   "toast_trashed": {
     "message": "Przeniesiono do kosza"
   },
@@ -1459,6 +1522,9 @@
   },
   "toast_undo": {
     "message": "Cofnij"
+  },
+  "toast_undo_title": {
+    "message": "Cofnij (Ctrl+Z)"
   },
   "toolbar_ariaLabel": {
     "message": "Formatowanie tekstu"
@@ -1716,7 +1782,7 @@
     }
   },
   "panel_reminders_digest": {
-    "message": "Poranne podsumowanie o 9:00 — zadania na dziś bez godziny i zaległe"
+    "message": "Poranne podsumowanie o 9:00 — zadania na dziś bez godziny i te do nadrobienia"
   },
   "panel_reminders_title": {
     "message": "Przypomnienia"
@@ -1828,10 +1894,10 @@
     "message": "Pierwszy raz w AsideNotes?"
   },
   "list_empty_tutorial_desc": {
-    "message": "Krótki samouczek pokaże najważniejsze funkcje. Później znajdziesz go w ustawieniach (⚙), w sekcji Przewodnik."
+    "message": "Krótki przewodnik pokaże, jak to działa, krok po kroku i w Twoim tempie. Wrócisz do niego w ustawieniach (⚙)."
   },
   "list_empty_tutorial_btn": {
-    "message": "Uruchom samouczek"
+    "message": "Pokaż przewodnik"
   },
   "list_empty_newNote": {
     "message": "Nowa notatka"

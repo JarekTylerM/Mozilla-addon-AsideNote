@@ -392,12 +392,10 @@ export function initOnboarding(uiSettings) {
   }
   _buildOverlay();
 
-  // Pierwsze uruchomienie — etap 1 auto-start po krótkim delay. Osobny znacznik
-  // zamiast _stagesDone: odrzucenie przewodnika nie oznacza ukończenia lekcji,
-  // więc panel nie pokaże przy niej ptaszka.
-  if (!_stagesDone[1] && !uiSettings.onboardingDismissed) {
-    setTimeout(() => startStage(1), 600);
-  }
+  // Przewodnik nie startuje sam. Wcześniej po 600 ms wyskakiwał dymek, zanim
+  // ktokolwiek zdążył się rozejrzeć, a pusta lista i tak proponowała
+  // „Pokaż, jak to działa”, więc były dwa zaproszenia naraz. Teraz jest jedno,
+  // na pustej liście, i to użytkownik decyduje, kiedy z niego skorzystać.
 }
 
 /**
@@ -495,6 +493,16 @@ function _show(stepIdx) {
     const revealEl = /** @type {HTMLElement|null} */ (document.querySelector(step.revealHidden));
     if (revealEl) revealEl.hidden = false;
   }
+
+  // Przy pustej liście pasek szukania jest schowany (modes.css). Krok, który
+  // wskazuje przycisk w nim (zen), odsłania go na swój czas — przed
+  // sprawdzeniem wymiarów celu niżej.
+  const stringTarget =
+    typeof step.target === 'string' ? document.querySelector(step.target) : null;
+  document.body.classList.toggle(
+    'onboarding-reveals-search',
+    !!stringTarget?.closest('.search-row'),
+  );
 
   // Resolve target — po revealHidden, żeby odkryty element miał już wymiary
   const resolved =
@@ -606,6 +614,7 @@ function _close() {
   _cleanupAwait = null;
   _unhighlight();
   if (_overlay) _overlay.hidden = true;
+  document.body.classList.remove('onboarding-reveals-search');
   _currentStep = null;
 }
 
@@ -626,6 +635,9 @@ function _unhighlight() {
 
 /* ── Pozycjonowanie tooltipa ─────────────────────────────────── */
 
+/** Miejsce na podgląd pod polem szybkiego dodawania (2 linie tekstu) */
+const CAPTURE_PREVIEW_SPACE = 40;
+
 /** @param {Element} targetEl @param {string} [side] */
 function _positionTooltip(targetEl, side = 'bottom') {
   _tooltip.style.transform = '';
@@ -639,7 +651,11 @@ function _positionTooltip(targetEl, side = 'bottom') {
     return;
   }
 
-  const gap = 10;
+  // Pod polem szybkiego dodawania pojawia się podgląd („Dodasz notatkę…”,
+  // czasem z drugą linią podpowiedzi). Dymek stawał zaraz pod polem i go
+  // zasłaniał, choć sam tekst kroku każe na ten podgląd patrzeć. Rezerwa
+  // jest stała, żeby dymek nie skakał przy każdym wpisanym znaku.
+  const gap = 10 + (targetEl.id === 'quick-capture' ? CAPTURE_PREVIEW_SPACE : 0);
   const vw  = window.innerWidth;
   const vh  = window.innerHeight;
   let top, left;

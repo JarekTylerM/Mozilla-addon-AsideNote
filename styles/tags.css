@@ -325,7 +325,7 @@ button.tag-pill {
   mask-position: center;
   cursor: pointer;
   flex-shrink: 0;
-  opacity: 0.5;
+  opacity: var(--icon-rest-opacity);
   transition:
     opacity var(--transition),
     background-color var(--transition);

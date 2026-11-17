@@ -332,6 +332,7 @@ export async function loadUiSettings() {
     pinnedNoteActions: [],
     previewIcon: "hover",
     sectionAdd: "always",
+    density: "comfortable",
     uiZoom: 100,
     zenMode: false,
     morningDigest: true,

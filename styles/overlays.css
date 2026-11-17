@@ -149,6 +149,9 @@
 #app-tooltip.visible {
   opacity: 1;
   transform: translateY(0);
+  /* Widoczny dymek da się najechać kursorem i doczytać (WCAG 1.4.13).
+     Schowany dalej przepuszcza kliknięcia (pointer-events: none wyżej). */
+  pointer-events: auto;
 }
 /* Strzałka w górę (tooltip poniżej elementu) */
 #app-tooltip::before {
@@ -175,9 +178,8 @@
    w jednej linii i white-space: nowrap. Podgląd treści to proza, więc
    przy 120 znakach rozciągał się w belkę na całą szerokość okna.
 
-   Bez scrolla świadomie: tooltip ma pointer-events: none i chowa się na
-   mouseleave kotwicy, więc do paska przewijania nie dałoby się dojechać
-   kursorem. Zamiast tego blok o stałej szerokości z klamrą na 6 linii —
+   Bez scrolla świadomie: przewijany dymek to dodatkowa rzecz do
+   obsłużenia w miejscu, które ma tylko podpowiadać. Zamiast tego blok o stałej szerokości z klamrą na 6 linii —
    treść i tak jest przycięta do 120 znaków w _previewParts. */
 #app-tooltip.app-tooltip--preview {
   display: block;
@@ -200,8 +202,7 @@
   font-weight: 400;
   /* Długi URL bez spacji nie ma gdzie się złamać i rozpycha blok */
   overflow-wrap: anywhere;
-  /* Klamra na 6 linii zamiast scrolla — do tooltipa i tak nie da się
-     wjechać kursorem (pointer-events: none). Dotyczy WYŁĄCZNIE podglądu
+  /* Klamra na 6 linii zamiast scrolla (patrz wyżej). Dotyczy WYŁĄCZNIE podglądu
      treści notatki: tam tekst jest dowolny i trzeba go ograniczyć. */
   display: -webkit-box;
   -webkit-line-clamp: 6;
@@ -677,7 +678,7 @@
 
 .date-picker-day-btn:not(.is-active):hover {
   border-color: var(--zen);
-  color: var(--zen);
+  color: var(--zen-text);
 }
 
 /* Time section — kapsułka: [czas][reminder buttons] */
@@ -692,7 +693,7 @@
   transition: border-color var(--transition);
 }
 .date-picker-time:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 
 .date-picker-time__input {
@@ -710,7 +711,7 @@
 }
 .date-picker-time__input:focus,
 .date-picker-time__input:focus-visible {
-  border-right-color: var(--border-strong);
+  border-right-color: var(--accent-border);
   outline: none;
 }
 
@@ -730,7 +731,7 @@
 /* Reminder hint */
 .date-picker-reminder-hint {
   font-size: var(--text-xs);
-  color: var(--gold);
+  color: var(--gold-text);
   padding: 3px 2px 0;
   margin: 0;
 }

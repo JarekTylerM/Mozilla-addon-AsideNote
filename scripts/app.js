@@ -50,6 +50,7 @@ import {
 } from "./notes.js";
 import { titleEditChanges } from "./quick-capture-core.js";
 import { nextFocusId } from "./list-focus.js";
+import { bucketFor } from "./note-sections.js";
 
 import { tagState } from "./tags.js";
 import {
@@ -984,8 +985,37 @@ quickCaptureInput.addEventListener("keydown", (e) => {
   if (e.shiftKey) {
     selectNote(item.id);
     titleInput.focus();
+    return;
   }
+  _confirmHiddenCapture(item);
 });
+
+/** @type {ReturnType<typeof setTimeout>|null} */
+let _qcAddedTimer = null;
+
+/**
+ * Wpis dodany do zwiniętej sekcji (albo ukryty przez filtr lub zen) nie
+ * pojawia się na liście, więc bez słowa wyglądałoby to, jakby przepadł.
+ * Krótki komunikat w miejscu podglądu mówi, dokąd trafił. Widoczny wiersz
+ * sam błyska (notes.js: quickCapture), wtedy komunikat jest zbędny.
+ * @param {Note} item
+ */
+function _confirmHiddenCapture(item) {
+  const visible = document.querySelector(
+    `#notesList .note-item[data-id="${CSS.escape(item.id)}"]`,
+  );
+  if (visible) return;
+  _renderPreview(_qcPreview, {
+    text: t(item.type === "task" ? "quickCapture_addedTo_task" : "quickCapture_addedTo_note", [
+      t(`section_${bucketFor(item)}`),
+    ]),
+  });
+  _qcPreview.dataset.type = "added";
+  clearTimeout(_qcAddedTimer ?? undefined);
+  _qcAddedTimer = setTimeout(() => {
+    if (_qcPreview.dataset.type === "added") _hideQcPreview();
+  }, 2500);
+}
 
 /* ── Panel personalizacji ──────────────────────── */
 
@@ -1145,8 +1175,27 @@ function _hideUndoToast() {
   clearTimeout(_undoToastTimer ?? undefined);
   _undoToastTimer = null;
   _undoToastAction = null;
-  if (_undoToast) _undoToast.hidden = true;
+  if (_undoToast) {
+    _undoToast.hidden = true;
+    _undoToast.style.bottom = "";
+  }
 }
+
+// Toast stoi nad dolnym paskiem, czyli na wysokości wiersza tagów. Gdy fokus
+// z klawiatury trafi pod niego, toast przesuwa się nad ten element (WCAG
+// 2.4.11: fokus nie może być zasłonięty) i zostaje tam do zniknięcia —
+// bez skakania w tę i z powrotem.
+document.addEventListener("focusin", (e) => {
+  if (!_undoToast || _undoToast.hidden) return;
+  const target = /** @type {Element|null} */ (e.target);
+  if (!(target instanceof HTMLElement) || _undoToast.contains(target)) return;
+  const r = target.getBoundingClientRect();
+  const toast = _undoToast.getBoundingClientRect();
+  const overlaps =
+    r.bottom > toast.top && r.top < toast.bottom && r.right > toast.left && r.left < toast.right;
+  if (!overlaps) return;
+  _undoToast.style.bottom = `${Math.max(0, window.innerHeight - r.top + 4)}px`;
+});
 
 /**
  * Pokazuje toast z przyciskiem Cofnij.
@@ -1158,7 +1207,31 @@ function _showUndoToast(text, action) {
   _undoToastAction = action;
   _undoToastText.textContent = text;
   _undoToast.hidden = false;
-  _armUndoToastTimer(5000);
+  // 8 s: dość, żeby zauważyć i zdecydować bez pośpiechu. Najechanie albo
+  // fokus i tak zatrzymują odliczanie, a Ctrl+Z działa bez szukania przycisku.
+  _armUndoToastTimer(8000);
+}
+
+/** Ctrl+Z poza polami tekstowymi = „Cofnij” z toastu, póki toast jest widoczny. */
+function _undoToastShortcut() {
+  if (!_undoToast || _undoToast.hidden || !_undoToastAction) return false;
+  const action = _undoToastAction;
+  _hideUndoToast();
+  action();
+  return true;
+}
+
+/** @param {Element|null} el */
+function _isTextField(el) {
+  if (!(el instanceof HTMLElement)) return false;
+  return (
+    el.isContentEditable ||
+    el.tagName === "TEXTAREA" ||
+    (el.tagName === "INPUT" &&
+      !["checkbox", "radio", "button", "submit", "range", "color"].includes(
+        /** @type {HTMLInputElement} */ (el).type,
+      ))
+  );
 }
 
 /** @param {number} ms */
@@ -1179,6 +1252,26 @@ document.addEventListener("noteTrashed", (e) => {
         document.querySelector(`#notesList .note-item[data-id="${note.id}"]`)
       )?.focus();
     }
+  });
+});
+
+// Bez tytułu i bez fajerwerków: krótka, wyciszona informacja w tym samym
+// miejscu co inne toasty. Przy zadaniu cyklicznym od razu widać, kiedy
+// wróci, więc nowa kopia na liście nie jest niespodzianką.
+document.addEventListener("taskCompleted", (e) => {
+  const { id, nextDue } = _detail(e);
+  const text = nextDue
+    ? t("toast_completedNext", [
+        new Intl.DateTimeFormat(getUILocale(), {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        }).format(new Date(nextDue)),
+      ])
+    : t("toast_completed");
+  _showUndoToast(text, () => {
+    const note = state.notes.find((n) => n.id === id);
+    if (note?.completed) toggleCompleted(id);
   });
 });
 
@@ -1220,6 +1313,20 @@ document.addEventListener("keydown", (e) => {
     !e.metaKey &&
     !e.getModifierState?.("AltGraph");
   const altKey = plainAlt ? e.key?.toLowerCase() : null;
+
+  // Ctrl+Z na liście cofa ostatnią akcję z toastu (kosz, ukończenie, zmiany
+  // z tytułu). W polach tekstowych i w edytorze Ctrl+Z zostaje dla tekstu.
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    !e.shiftKey &&
+    !e.altKey &&
+    e.key?.toLowerCase() === "z" &&
+    !_isTextField(active) &&
+    _undoToastShortcut()
+  ) {
+    e.preventDefault();
+    return;
+  }
 
   // Skróty prowadzące do elementów ekranu listy działają też z ekranu
   // notatki — najpierw zamykają notatkę (autosave), inaczej fokus trafiałby

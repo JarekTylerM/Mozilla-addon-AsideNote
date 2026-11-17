@@ -53,9 +53,10 @@ export function captureDue({ isUrgent, isInProgress, due }, now = Date.now()) {
 /**
  * Czy element z capture ma zostać zasiany do focusIds ("w trakcie").
  *
- * Reguła: ważne LUB w trakcie. `!!` celowo oznacza też "w trakcie" —
- * priorytet bez miejsca na liście byłby bezużyteczny. Konsekwencja:
- * `!!>` daje dokładnie to samo, co `!!`, bo `>` nie dokłada już nic.
+ * Reguła: tylko `!>` i `!!>`. `!!` znaczy wyłącznie "ważne": wcześniej
+ * dokładało też "w trakcie", przez co jeden znak więcej zmieniał dwa stany
+ * naraz i lista robiła się głośniejsza, niż użytkownik zamierzał. Każdy
+ * stan ma teraz jeden zapis, a oba naraz daje `!!>`.
  *
  * Wydzielone z notes.js::quickCapture i popup.js, gdzie warunek istniał
  * w dwóch kopiach o odwróconej kolejności składników. Podgląd
@@ -69,7 +70,7 @@ export function captureDue({ isUrgent, isInProgress, due }, now = Date.now()) {
  * @returns {boolean}
  */
 export function wantsFocusSeed(item) {
-  return item.type === 'task' && !!(item.important || item.focus);
+  return item.type === 'task' && !!item.focus;
 }
 
 /**
@@ -128,7 +129,7 @@ export function titleEditChanges(raw, note, { baseline = '', locale = null } = {
 
   // Flaga z prefiksu liczy się tylko, gdy prefiks jest nowy
   const important = parsed.isUrgent && !before?.isUrgent;
-  const focus = (parsed.isInProgress || parsed.isUrgent) && !(before?.isInProgress || before?.isUrgent);
+  const focus = parsed.isInProgress && !before?.isInProgress;
 
   const hasChanges = toTask || important || focus || parsed.tokens.length > 0;
   if (!hasChanges && !parsed.rejected.length) return null;

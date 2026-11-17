@@ -77,7 +77,8 @@
 }
 /* Typ elementu w preview komunikuje tekst ("Zadanie: …"), nie kolor —
    złoto zarezerwowane dla "wymaga uwagi" (patrz tokens.css --gold) */
-.quick-capture-preview[data-type="task"] {
+.quick-capture-preview[data-type="task"],
+.quick-capture-preview[data-type="added"] {
   color: var(--text-2);
 }
 
@@ -120,7 +121,7 @@
 }
 .search-wrapper:focus-within {
   background: var(--bg);
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 .search-wrapper::before {
   content: "";
@@ -230,7 +231,7 @@
   transition: border-color var(--transition);
 }
 .filter-date-wrapper:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 
 .filter-date-input {
@@ -328,7 +329,7 @@
   border: none;
   cursor: pointer;
   color: inherit;
-  opacity: 0.6;
+  opacity: var(--icon-rest-opacity);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -587,6 +588,13 @@
 .section-row {
   position: relative;
 }
+/* <h2> tylko dla semantyki (notes.js: _renderSection) — bez własnego pudełka */
+.section-heading {
+  display: contents;
+  /* display: contents nie wyłącza dziedziczenia — bez tego domyślny
+     rozmiar i grubość <h2> przeszłyby na przycisk */
+  font: inherit;
+}
 .section-row .section-header {
   padding-right: 32px;
 }
@@ -601,16 +609,17 @@
   position: absolute;
   top: 50%;
   right: 6px;
-  width: 20px;
-  height: 20px;
+  width: var(--target);
+  height: var(--target);
   padding: 0;
   border: none;
   background-color: var(--text-2);
-  mask-size: 75%;
+  /* 15px = dawne 75% z 20px — rysunek ten sam w obu układach */
+  mask-size: 15px;
   mask-repeat: no-repeat;
   mask-position: center;
   cursor: pointer;
-  opacity: 0.45;
+  opacity: var(--icon-rest-opacity);
   transform: translateY(-50%);
   transition:
     opacity var(--transition),
@@ -704,7 +713,7 @@ html[data-section-add="hover"]
 
 /* Elementy obok tytułu — wyrównanie do pierwszej linii (patrz --row-line) */
 .note-item > .note-checkbox {
-  margin-top: calc((var(--row-line) - 14px) / 2);
+  margin-top: calc((var(--row-line) - 16px) / 2);
 }
 .note-item > :is(.note-item__due, .note-item__star, .note-item__recurrence) {
   line-height: var(--row-line);
@@ -776,7 +785,7 @@ html[data-section-add="hover"]
   border: none;
   background: #fff0;
   cursor: pointer;
-  color: var(--border-strong);
+  color: var(--text-3);
   position: absolute;
   top: 50%;
   right: 6px;
@@ -828,7 +837,7 @@ html[data-section-add="hover"]
 html[data-preview-icon="always"]
   .note-item:not(:hover, :focus, .is-active)
   .note-item__preview {
-  opacity: 0.4;
+  opacity: var(--icon-rest-opacity);
 }
 html[data-preview-icon="off"] .note-item__title-wrap .note-item__preview {
   display: none;
@@ -851,7 +860,6 @@ html[data-preview-icon="off"] .note-item__title-wrap .note-item__preview {
   color: var(--text-3);
   flex-shrink: 0;
   line-height: 1;
-  opacity: 0.7;
 }
 
 /* Celowo BEZ animacji wejścia elementów: renderList() przebudowuje listę
@@ -859,10 +867,14 @@ html[data-preview-icon="off"] .note-item__title-wrap .note-item__preview {
    każdym kliknięciu to szum wizualny. Feedback nowego elementu daje
    punktowo .note-item--flash. */
 
+/* 16 px i ramka o kontraście ok. 3:1, żeby kwadracik było widać bez
+   wpatrywania się. Pole klikania (::after) jest większe niż sam kwadracik,
+   więc trafienie nie wymaga precyzji, a wiersz nie robi się wyższy. */
 .note-checkbox {
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid var(--border-strong);
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--checkbox-border);
   border-radius: var(--radius-xs);
   background: #fff0;
   display: flex;
@@ -876,6 +888,11 @@ html[data-preview-icon="off"] .note-item__title-wrap .note-item__preview {
   transition:
     background var(--transition),
     border-color var(--transition);
+}
+.note-checkbox::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
 }
 .note-checkbox:hover {
   border-color: var(--text-2);
@@ -993,7 +1010,7 @@ html[data-preview-icon="off"] .note-item__title-wrap .note-item__preview {
   transition: border-color var(--transition);
 }
 .title-field:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
 }
 .note-header #title {
   flex: 1;

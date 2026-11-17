@@ -156,10 +156,10 @@ test('data bez tytułu → wariant "dated" bez dwukropka', () => {
 
 console.log('\n5. Flagi');
 
-test('!! → flagi Important ORAZ In progress', () => {
-  // `!!` zasiewa focusIds tak samo jak `!>` — podgląd musi to powiedzieć
+test('!! → sama flaga Important, bez In progress', () => {
+  // `!!` znaczy tylko „ważne”; „w trakcie” daje `!>` albo `!!>`
   const d = describeCapture('!!Hotfix', { ...EN, now: Date.now() });
-  expect(d.text).toBe('Adding task today: Hotfix · Important · In progress');
+  expect(d.text).toBe('Adding task today: Hotfix · Important');
 });
 
 test('!> → flaga In progress, bez Important', () => {
@@ -167,12 +167,9 @@ test('!> → flaga In progress, bez Important', () => {
   expect(d.text).toBe('Adding task today: Refactor parser · In progress');
 });
 
-test('!!> → to samo co !!, bo > nie dokłada już nic', () => {
-  const now = Date.now();
-  const a = describeCapture('!!Deadline', { ...EN, now });
-  const b = describeCapture('!!>Deadline', { ...EN, now });
-  expect(b.text).toBe(a.text);
-  expect(b.text).toBe('Adding task today: Deadline · Important · In progress');
+test('!!> → ważne i w trakcie naraz', () => {
+  const d = describeCapture('!!>Deadline', { ...EN, now: Date.now() });
+  expect(d.text).toBe('Adding task today: Deadline · Important · In progress');
 });
 
 test('zwykłe zadanie nie dostaje żadnej z tych flag', () => {
