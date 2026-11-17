@@ -31,7 +31,8 @@ import {
   restoreCopiedListContext,
 } from '../scripts/editor-paste-normalize.js';
 import { insertPastedHTML } from '../scripts/editor-paste-insert.js';
-import { sanitizeHTML } from '../scripts/sanitize.js';
+import { sanitizeHTML, sanitizeHTMLToBody } from '../scripts/sanitize.js';
+import { preprocessClickUp } from '../scripts/editor-paste-clickup.js';
 
 /** Pełna ścieżka wklejki HTML: normalizacja → sanityzacja. */
 const clean = (html) => sanitizeHTML(normalizePastedHTML(html));
@@ -501,6 +502,86 @@ test('kursor po wklejce stoi na końcu wklejonej treści', () => {
   const sel = window.getSelection();
   expect(sel.anchorNode.textContent).toBe('Y');
   expect(sel.anchorOffset).toBe(1);
+});
+
+/* ── Bezpieczeństwo wklejki ───────────────────────────────────── */
+
+console.log('\nBezpieczeństwo wklejki');
+
+/** Kursor na końcu pustego akapitu edytora. */
+function caretInEmpty() {
+  const ed = editor();
+  ed.innerHTML = '<p>start </p>';
+  const r = document.createRange();
+  r.selectNodeContents(ed.firstChild);
+  r.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(r);
+  return ed;
+}
+
+const PAYLOAD = '<a href="<!---->javascript:alert(1)">klik</a>';
+
+test('regresja mXSS: drzewo z sanitizeHTMLToBody nie daje linku javascript:', () => {
+  const ed = caretInEmpty();
+  insertPastedHTML(ed, sanitizeHTMLToBody(PAYLOAD));
+  expect(ed.innerHTML.includes('javascript')).toBe(false);
+  expect(ed.querySelector('a')).toBeNull();
+  expect(ed.textContent).toContain('klik');
+});
+
+test('regresja mXSS: string z nieescapowanym "<" w atrybucie nie zostaje sklejony', () => {
+  // Tak serializowały atrybut Firefox <140 / Chrome <138. Dawny regex na
+  // komentarzach zamieniał to w href="javascript:alert(1)".
+  const ed = caretInEmpty();
+  insertPastedHTML(ed, '<a href="<!---->javascript:alert(1)">klik</a><!--x-->');
+  for (const a of ed.querySelectorAll('a')) {
+    expect(/^\s*javascript:/i.test(a.getAttribute('href') ?? '')).toBe(false);
+  }
+  // Węzły komentarzy usunięte w DOM (tekst "<!---->" w atrybucie zostaje
+  // tekstem — jsdom, jak stare przeglądarki, nie escapuje "<" w atrybutach)
+  const walker = document.createTreeWalker(ed, 128 /* SHOW_COMMENT */);
+  expect(walker.nextNode()).toBeNull();
+});
+
+test('komentarze schowka (<!--StartFragment-->) nie trafiają do edytora', () => {
+  const ed = caretInEmpty();
+  insertPastedHTML(
+    ed,
+    sanitizeHTMLToBody('<!--StartFragment--><b>tekst</b><!--EndFragment-->'),
+  );
+  expect(ed.innerHTML).toBe('<p>start <b>tekst</b></p>');
+});
+
+test('link search-ms: z wklejki → sam tekst', () => {
+  const ed = caretInEmpty();
+  insertPastedHTML(ed, sanitizeHTMLToBody('<a href="search-ms:query=x.exe">plik</a>'));
+  expect(ed.querySelector('a')).toBeNull();
+  expect(ed.textContent).toContain('plik');
+});
+
+test('pusta wklejka (same komentarze) → nic nie wstawia', () => {
+  const ed = caretInEmpty();
+  expect(insertPastedHTML(ed, sanitizeHTMLToBody('<!--a--> <!--b-->'))).toBe(false);
+  expect(ed.innerHTML).toBe('<p>start </p>');
+});
+
+test('ClickUp: wynik budowany poza dokumentem strony, struktura zachowana', () => {
+  const before = document.body.innerHTML;
+  const out = preprocessClickUp(
+    '<div class="ql-editor"><div class="ql-block"> Akapit <b>gruby</b> </div>' +
+      '<ol><li data-list="unchecked"><span class="ql-ui"></span>zadanie</li>' +
+      '<li data-list="checked">zrobione<img src="x" onerror="alert(1)"></li></ol></div>',
+  );
+  expect(document.body.innerHTML).toBe(before);
+  expect(out).toContain('<p>Akapit <b>gruby</b></p>');
+  expect(out).toContain('<ul data-list="checklist">');
+  expect(out).toContain('<li data-checked="false">zadanie</li>');
+  expect(out).toContain('data-checked="true"');
+  const clean = sanitizeHTML(out);
+  expect(clean.includes('onerror')).toBe(false);
+  expect(clean.includes('<img')).toBe(false);
 });
 
 await results();

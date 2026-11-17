@@ -395,8 +395,15 @@ test("wielkość liter nie omija filtru schematu", () => {
 });
 
 test("bezpieczne URL-e nadal działają", () => {
-  for (const url of ["https://ok.pl", "http://ok.pl", "/wzgledny", "mailto:a@b.pl"]) {
+  for (const url of ["https://ok.pl", "http://ok.pl", "mailto:a@b.pl", "tel:+48123"]) {
     if (!mdh(`[k](${url})`).includes("<a ")) throw new Error("zablokowany: " + url);
+  }
+});
+
+test("adresy względne i schematy spoza allowlisty → zwykły tekst", () => {
+  // Względny adres w stronie rozszerzenia wskazałby moz-extension://
+  for (const url of ["/wzgledny", "search-ms:query=x", "ms-msdt:/id", "chrome://settings"]) {
+    if (mdh(`[k](${url})`).includes("<a ")) throw new Error("przepuszczony: " + url);
   }
 });
 

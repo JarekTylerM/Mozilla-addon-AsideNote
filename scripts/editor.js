@@ -7,8 +7,8 @@ import { debouncedSave, state } from './notes.js';
 import { debounce } from './utils.js';
 import * as undo from './undo.js';
 import { t } from './i18n.js';
-import { sanitizeHTML, MAX_PASTE_LEN } from './sanitize.js';
-import { looksLikeUrl, normalizeUrl, BLOCKED_SCHEMES } from './editor-url.js';
+import { sanitizeHTMLToBody, MAX_PASTE_LEN } from './sanitize.js';
+import { looksLikeUrl, normalizeUrl } from './editor-url.js';
 import { initToolbar } from './editor-toolbar.js';
 import {
   initLinkClick,
@@ -1453,7 +1453,7 @@ function _tryAutolinkWord(e) {
   document.dispatchEvent(new Event('forceSave'));
   return true;
 }
-// BLOCKED_SCHEMES, looksLikeUrl → editor-url.js
+// looksLikeUrl, normalizeUrl → editor-url.js (schematy: ALLOWED_LINK_SCHEMES w sanitize.js)
 
 /**
  * Zdejmuje z bloku znacznik markdown stojący przed kursorem ("-", "1.", "#").
@@ -2469,20 +2469,20 @@ function _initPaste() {
       const clipped = raw.length > MAX_PASTE ? raw.slice(0, MAX_PASTE) : raw;
       // normalizePastedHTML: listy Outlooka, style → <strong>/<em>, tabele,
       // opakowania stron — póki widać jeszcze style="", które sanityzacja wytnie
-      const trimmed = sanitizeHTML(normalizePastedHTML(clipped));
+      // Sanityzowane DRZEWO, nie string: węzły przenosimy prosto do
+      // edytora, bez ponownego parsowania (patrz editor-paste-insert.js)
+      const body = sanitizeHTMLToBody(normalizePastedHTML(clipped));
       // Limit węzłów DOM — zapobiega paste bomb z zagnieżdżonych tagów
-      if (trimmed) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = trimmed;
-        if (_exceedsNodeBudget(trimmed)) {
+      if (body && body.childNodes.length) {
+        if (_exceedsNodeBudget(body)) {
           document.execCommand(
             'insertText',
             false,
-            tmp.textContent.slice(0, MAX_PASTE),
+            (body.textContent ?? '').slice(0, MAX_PASTE),
           );
           return;
         }
-        if (_insertRichContent(trimmed)) return;
+        if (_insertRichContent(body)) return;
       }
     }
 
@@ -2495,7 +2495,7 @@ function _initPaste() {
     // Wynik i tak przechodzi przez sanitizeHTML; markdownToHtml escapuje
     // tekst u siebie, więc wklejony `<script>` nie stanie się znacznikiem.
     if (!_caretInCodeBlock() && looksLikeMarkdown(text)) {
-      const md = sanitizeHTML(markdownToHtml(text));
+      const md = sanitizeHTMLToBody(markdownToHtml(text));
       // Ten sam limit co gałąź HTML. Markdown potrafi rozdmuchać wejście:
       // 200 KB linii "> a" daje ~80 000 węzłów. Bez tej zapory gałąź MD
       // była obejściem ochrony, którą gałąź HTML miała od początku.
@@ -2513,15 +2513,14 @@ function _initPaste() {
 const MAX_PASTE_NODES = 5000;
 
 /**
- * Czy HTML przekracza budżet węzłów. Parsujemy w odłączonym <div>, więc
- * nic z tego nie trafia do dokumentu, jeśli odpowiedź brzmi "tak".
- * @param {string} html
+ * Czy sanityzowane drzewo przekracza budżet węzłów. Drzewo leży w
+ * odłączonym dokumencie DOMParsera, więc nic nie trafia do edytora,
+ * jeśli odpowiedź brzmi "tak".
+ * @param {Element} root
  * @returns {boolean}
  */
-function _exceedsNodeBudget(html) {
-  const probe = document.createElement('div');
-  probe.innerHTML = html;
-  return probe.querySelectorAll('*').length > MAX_PASTE_NODES;
+function _exceedsNodeBudget(root) {
+  return root.querySelectorAll('*').length > MAX_PASTE_NODES;
 }
 
 /**
@@ -2535,12 +2534,12 @@ function _caretInCodeBlock() {
 }
 
 /**
- * Wstawia sanityzowany HTML w miejsce kursora (logika → editor-paste-insert.js).
- * @param {string} html
+ * Wstawia sanityzowane drzewo w miejsce kursora (logika → editor-paste-insert.js).
+ * @param {Element} body wynik sanitizeHTMLToBody — węzły są przenoszone
  * @returns {boolean} true gdy wstawiono
  */
-function _insertRichContent(html) {
-  if (!insertPastedHTML(editor, html)) return false;
+function _insertRichContent(body) {
+  if (!insertPastedHTML(editor, body)) return false;
   editor.focus();
   undo.checkpoint(); // stan po wklejeniu — Ctrl+Z cofa całą wklejkę naraz
   debouncedSave();

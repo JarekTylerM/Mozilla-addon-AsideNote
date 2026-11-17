@@ -6,6 +6,11 @@
  * którą AsideNote rozumie — przed sanitizeHTML.
  *
  * Czysta funkcja — zero DOM side effects, zero imports.
+ *
+ * Całe drzewo wynikowe powstaje w ODŁĄCZONYM dokumencie DOMParsera
+ * (bezwładnym: bez skryptów, bez ładowania obrazków). Surowy HTML ze
+ * schowka nigdy nie trafia do innerHTML elementu dokumentu strony —
+ * węzły są przenoszone, nie re-parsowane ze stringa.
  */
 
 /**
@@ -38,13 +43,42 @@ function _cleanNode(node) {
 }
 
 /**
+ * Przenosi treść `source` do `target`, bez białych znaków na brzegach
+ * (odpowiednik dawnego innerHTML.trim()). Pusty wynik dostaje <br>,
+ * żeby blok dało się kliknąć.
+ * @param {Element} target
+ * @param {Element} source
+ * @param {boolean} [brIfEmpty]
+ */
+function _moveContent(target, source, brIfEmpty = true) {
+  const first = source.firstChild;
+  if (first?.nodeType === 3) {
+    first.textContent = (first.textContent ?? "").replace(/^[\t\n\f\r ]+/, "");
+  }
+  const last = source.lastChild;
+  if (last?.nodeType === 3) {
+    last.textContent = (last.textContent ?? "").replace(/[\t\n\f\r ]+$/, "");
+  }
+  for (const n of Array.from(source.childNodes)) {
+    if (n.nodeType === 3 && !n.textContent) continue;
+    target.appendChild(n);
+  }
+  if (brIfEmpty && !target.firstChild) {
+    target.appendChild(
+      /** @type {Document} */ (target.ownerDocument).createElement("br"),
+    );
+  }
+}
+
+/**
  * Rekurencyjnie konwertuje listę ClickUp na format AsideNote.
  * data-list="unchecked/checked" → ul[data-list="checklist"] li[data-checked]
  * data-list="toggled" + data-list="none" → details/summary
  * @param {Element} listNode
+ * @param {Document} doc dokument DOMParsera, w którym budujemy wynik
  * @returns {Node}
  */
-function _convertList(listNode) {
+function _convertList(listNode, doc) {
   const items = /** @type {HTMLElement[]} */ ([...listNode.children]);
 
   // Sprawdź czy to checklist (pierwszy li ma data-list="unchecked/checked")
@@ -53,20 +87,20 @@ function _convertList(listNode) {
 
   // Toggle list — data-list="toggled"
   if (firstType === "toggled") {
-    const frag = document.createDocumentFragment();
+    const frag = doc.createDocumentFragment();
     items.forEach((li) => {
       if (li.tagName !== "LI") return;
       const listType = li.dataset.list;
 
       if (listType === "toggled") {
-        const details = document.createElement("details");
+        const details = doc.createElement("details");
         details.open = true;
-        const summary = document.createElement("summary");
+        const summary = doc.createElement("summary");
 
         // Tekst summary — bez zagnieżdżonych list
         const summaryClone = /** @type {HTMLElement} */ (li.cloneNode(true));
         summaryClone.querySelectorAll("ul, ol").forEach((n) => n.remove());
-        summary.innerHTML = _cleanNode(summaryClone).innerHTML.trim() || "<br>";
+        _moveContent(summary, _cleanNode(summaryClone));
         details.appendChild(summary);
 
         // Dzieci toggle (data-list="none")
@@ -74,12 +108,12 @@ function _convertList(listNode) {
         if (nestedList) {
           [...nestedList.children].forEach((child) => {
             if (child.tagName !== "LI") return;
-            const p = document.createElement("p");
+            const p = doc.createElement("p");
             const childClone = /** @type {HTMLElement} */ (
               child.cloneNode(true)
             );
             childClone.querySelectorAll("ul, ol").forEach((n) => n.remove());
-            p.innerHTML = _cleanNode(childClone).innerHTML.trim() || "<br>";
+            _moveContent(p, _cleanNode(childClone));
             details.appendChild(p);
           });
         }
@@ -91,12 +125,12 @@ function _convertList(listNode) {
 
   // Checklist — data-list="unchecked" lub "checked"
   if (firstType === "unchecked" || firstType === "checked") {
-    const ul = document.createElement("ul");
+    const ul = doc.createElement("ul");
     ul.setAttribute("data-list", "checklist");
     items.forEach((li) => {
       if (li.tagName !== "LI") return;
       const listType = li.dataset.list;
-      const newLi = document.createElement("li");
+      const newLi = doc.createElement("li");
       newLi.setAttribute(
         "data-checked",
         listType === "checked" ? "true" : "false",
@@ -106,10 +140,10 @@ function _convertList(listNode) {
       const nested = liClone.querySelector("ul, ol");
       if (nested) {
         liClone.removeChild(nested);
-        newLi.innerHTML = _cleanNode(liClone).innerHTML.trim() || "<br>";
-        newLi.appendChild(_convertList(nested));
+        _moveContent(newLi, _cleanNode(liClone));
+        newLi.appendChild(_convertList(nested, doc));
       } else {
-        newLi.innerHTML = _cleanNode(liClone).innerHTML.trim() || "<br>";
+        _moveContent(newLi, _cleanNode(liClone));
       }
       ul.appendChild(newLi);
     });
@@ -117,18 +151,18 @@ function _convertList(listNode) {
   }
 
   // Zwykła lista — bullet lub ordered
-  const newList = document.createElement(listNode.tagName.toLowerCase());
+  const newList = doc.createElement(listNode.tagName.toLowerCase());
   items.forEach((li) => {
     if (li.tagName !== "LI") return;
-    const newLi = document.createElement("li");
+    const newLi = doc.createElement("li");
     const liClone = /** @type {HTMLElement} */ (li.cloneNode(true));
     const nested = liClone.querySelector("ul, ol");
     if (nested) {
       liClone.removeChild(nested);
-      newLi.innerHTML = _cleanNode(liClone).innerHTML.trim() || "<br>";
-      newLi.appendChild(_convertList(nested));
+      _moveContent(newLi, _cleanNode(liClone));
+      newLi.appendChild(_convertList(nested, doc));
     } else {
-      newLi.innerHTML = _cleanNode(liClone).innerHTML.trim() || "<br>";
+      _moveContent(newLi, _cleanNode(liClone));
     }
     newList.appendChild(newLi);
   });
@@ -144,7 +178,7 @@ export function preprocessClickUp(html) {
   if (!isClickUpHTML(html)) return null;
 
   const doc = new DOMParser().parseFromString(html, "text/html");
-  const result = document.createElement("div");
+  const result = doc.createElement("div");
 
   // Znajdź root — może być .ql-editor lub body
   const root = doc.querySelector(".ql-editor") ?? doc.body;
@@ -157,8 +191,8 @@ export function preprocessClickUp(html) {
 
     // Nagłówki
     if (tag === "H1" || tag === "H2" || tag === "H3") {
-      const h = document.createElement(tag.toLowerCase());
-      h.innerHTML = _cleanNode(el).innerHTML.trim();
+      const h = doc.createElement(tag.toLowerCase());
+      _moveContent(h, _cleanNode(el), false);
       result.appendChild(h);
       continue;
     }
@@ -169,20 +203,20 @@ export function preprocessClickUp(html) {
       const content = clean.innerHTML.trim();
       // Pomiń puste paragrafy z &nbsp; (ClickUp spacery)
       if (!content || content === "<br>" || content === "&nbsp;") continue;
-      const p = document.createElement("p");
-      p.innerHTML = content;
+      const p = doc.createElement("p");
+      _moveContent(p, clean);
       result.appendChild(p);
       continue;
     }
 
     // Listy — konwertuj data-list na format AsideNote
     if (tag === "OL" || tag === "UL") {
-      result.appendChild(_convertList(el));
+      result.appendChild(_convertList(el, doc));
       continue;
     }
 
     // Reszta — kopiuj jak jest
-    result.appendChild(document.importNode(el, true));
+    result.appendChild(el.cloneNode(true));
   }
 
   return result.innerHTML;

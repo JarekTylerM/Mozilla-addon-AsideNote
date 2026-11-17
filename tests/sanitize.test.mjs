@@ -14,6 +14,8 @@ import {
   sanitizeImportedNote,
   sanitizeImportedTag,
   sanitizeHTML,
+  sanitizeHTMLToBody,
+  ALLOWED_LINK_SCHEMES,
   MAX_TITLE_LEN,
   MAX_TAG_NAME_LEN,
   MAX_CONTENT_LEN,
@@ -199,8 +201,8 @@ test('null → null', () => {
   expect(safeHref(null)).toBeNull();
 });
 
-test('relative URL → ok', () => {
-  expect(safeHref('/relative/path')).toBeTruthy();
+test('relative URL → null (w stronie rozszerzenia wskazałby moz-extension://)', () => {
+  expect(safeHref('/relative/path')).toBeNull();
 });
 
 test('blob: → null', () => {
@@ -487,6 +489,79 @@ test('link javascript: → zamieniony na tekst', () => {
   const out = sanitizeHTML('<p><a href="javascript:alert(1)">klik</a></p>');
   expect(out.includes('<a')).toBe(false);
   expect(out).toContain('klik');
+});
+
+// ── Allowlista schematów linków ──────────────────────────────────
+// Blocklista przepuszczała schematy obsługi protokołów w systemie.
+
+for (const href of [
+  'ms-msdt:/id PCWDiagnostic',
+  'search-ms:query=x.exe&crumb=location:\\\\evil\\share',
+  'ms-officecmd:{"id":1}',
+  'intent://scan/#Intent;scheme=zxing;end',
+  'chrome://settings',
+  'resource://gre/modules',
+  'ftp://files.example.com',
+  '//evil.example.com/x',
+  'plik.html',
+  '#kotwica',
+  'java\nscript:alert(1)',
+  'java\tscript:alert(1)',
+  '\u0000javascript:alert(1)',
+]) {
+  test(`safeHref odrzuca ${JSON.stringify(href)}`, () => {
+    expect(safeHref(href)).toBeNull();
+  });
+}
+
+test('safeHref przepuszcza tel:', () => {
+  expect(safeHref('tel:+48123456789')).toBe('tel:+48123456789');
+});
+
+test('safeHref: wielkie litery w dozwolonym schemacie → ok', () => {
+  expect(safeHref('HTTPS://example.com')).toBe('HTTPS://example.com');
+});
+
+test('ALLOWED_LINK_SCHEMES to dokładnie http/https/mailto/tel', () => {
+  expect([...ALLOWED_LINK_SCHEMES].sort().join(',')).toBe('http,https,mailto,tel');
+});
+
+test('link search-ms: z importu → sam tekst', () => {
+  const out = sanitizeHTML('<p><a href="search-ms:query=x.exe">klik</a></p>');
+  expect(out.includes('<a')).toBe(false);
+  expect(out).toContain('klik');
+});
+
+// ── Komentarze i inne węzły nie-treściowe ────────────────────────
+// Regresja: komentarze wycinał regex na stringu PO sanityzacji, co w
+// przeglądarkach nieescapujących "<" w atrybutach (Firefox <140, Chrome <138)
+// sklejało href="<!---->javascript:…" w działający link.
+
+test('komentarze usuwane w DOM (także <!--StartFragment-->)', () => {
+  const out = sanitizeHTML(
+    '<!--StartFragment--><p>a<!-- x -->b<span><!--y-->c</span></p><!--EndFragment-->',
+  );
+  expect(out.includes('<!--')).toBe(false);
+  expect(out).toContain('ab');
+  expect(out).toContain('c');
+});
+
+test('href="<!---->javascript:…" → bez linku (względny adres odrzucony)', () => {
+  const out = sanitizeHTML('<a href="<!---->javascript:alert(1)">x</a>');
+  expect(out.includes('<a')).toBe(false);
+  expect(out.includes('javascript')).toBe(false);
+  expect(out).toContain('x');
+});
+
+test('sanitizeHTMLToBody zwraca drzewo bez komentarzy', () => {
+  const body = sanitizeHTMLToBody('<p>a<!--c--></p><!--d-->');
+  const walker = body.ownerDocument.createTreeWalker(body, 128 /* SHOW_COMMENT */);
+  expect(walker.nextNode()).toBeNull();
+  expect(body.innerHTML).toBe('<p>a</p>');
+});
+
+test('sanitizeHTMLToBody: puste wejście → null', () => {
+  expect(sanitizeHTMLToBody('')).toBeNull();
 });
 
 test('link https → zachowany z wymuszonym target/rel', () => {

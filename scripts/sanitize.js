@@ -371,49 +371,49 @@ export const ALLOWED_ATTRS = {
 };
 
 /**
- * Walidacja schematu URL.
- * Używa URL API zamiast regexu — odporna na:
- *   - whitespace przed schemą (\tjavascript:...)
- *   - newline w środku schematu (java\nscript:...)
- * URL-encoded colon (javascript%3A...) NIE jest zagrożeniem —
- * przeglądarka traktuje to jako ścieżkę, nie schemat.
+ * Schematy, które może mieć link w notatce. ALLOWLIST, nie blocklista:
+ * blocklista przepuszczała każdy nieznany schemat — ms-msdt:, search-ms:,
+ * ms-officecmd:, intent:, chrome:// — a klik w taki link uruchamia obsługę
+ * protokołu w systemie. Notatce wystarczą strony WWW, mail i telefon.
+ */
+export const ALLOWED_LINK_SCHEMES = new Set(['http', 'https', 'mailto', 'tel']);
+
+/** Jawny schemat na początku adresu ("https:", "mailto:"). */
+const SCHEME_RX = /^([a-z][a-z0-9+.-]*):/i;
+
+/**
+ * Walidacja adresu linku.
  *
- * Blokowane schematy: javascript, data, vbscript, file, blob,
- * *-extension (moz-extension:, chrome-extension:).
+ * Przechodzi tylko adres z JAWNYM schematem z ALLOWED_LINK_SCHEMES.
+ * Adres względny ("/x", "plik.html", "//host") jest odrzucany — w stronie
+ * rozszerzenia rozwiązałby się do moz-extension:// / chrome-extension://.
  *
- * @param {string|null} href
- * @returns {string|null} href do użycia albo null jeśli niebezpieczny
+ * Odporna na:
+ *   - whitespace przed schemą (\tjavascript:...) — trim, potem regex wymaga litery
+ *   - znaki sterujące w schemacie (java\nscript:...) — regex ich nie dopuszcza
+ *   - wielkość liter (JAVASCRIPT:) — porównanie po lowercase
+ *
+ * @param {string|null|undefined} href
+ * @returns {string|null} href do użycia albo null, jeśli niedozwolony
  */
 export function safeHref(href) {
-  if (!href) return null;
+  if (typeof href !== 'string') return null;
   const trimmed = href.trim();
   if (!trimmed) return null;
 
-  const BLOCKED = new Set([
-    'javascript',
-    'data',
-    'vbscript',
-    'file',
-    'blob',
-    'about',
-    'resource',
-  ]);
+  const m = SCHEME_RX.exec(trimmed);
+  if (!m) return null;
+  const scheme = m[1].toLowerCase();
+  if (!ALLOWED_LINK_SCHEMES.has(scheme)) return null;
 
+  // Drugi bezpiecznik: parser URL musi zobaczyć ten sam schemat
   try {
-    const url = new URL(trimmed, 'https://x.invalid');
-    const scheme = url.protocol.slice(0, -1).toLowerCase();
-    if (BLOCKED.has(scheme) || scheme.endsWith('-extension')) return null;
-    return trimmed;
+    const url = new URL(trimmed);
+    if (url.protocol.slice(0, -1).toLowerCase() !== scheme) return null;
   } catch {
-    // Fallback dla URL których URL API nie parsuje (np. mailto:, relative)
-    if (
-      /^[\s\0]*(?:javascript|data|vbscript|file|blob|about|resource)[\s\0]*:/i.test(
-        trimmed,
-      )
-    )
-      return null;
-    return trimmed;
+    return null;
   }
+  return trimmed;
 }
 
 /**
@@ -471,20 +471,42 @@ const MAX_SANITIZE_DEPTH = 60;
 
 /** @param {string} html @returns {string} */
 export function sanitizeHTML(html) {
-  if (!html || typeof html !== 'string') return '';
+  return sanitizeHTMLToBody(html)?.innerHTML ?? '';
+}
+
+/**
+ * Jak sanitizeHTML, ale zwraca oczyszczone DRZEWO (body odłączonego
+ * dokumentu z DOMParsera), nie string. Wklejka przenosi te węzły prosto
+ * do edytora — bez serializacji do stringa i ponownego parsowania.
+ *
+ * @param {string} html
+ * @returns {HTMLElement|null} null dla pustego/nie-stringowego wejścia
+ */
+export function sanitizeHTMLToBody(html) {
+  if (!html || typeof html !== 'string') return null;
 
   // DOMParser w detached document — <img onerror=...> nie strzeli przy parse
   const doc = new DOMParser().parseFromString(html, 'text/html');
   _cleanNode(doc.body, doc, 0);
-  return doc.body.innerHTML;
+  return doc.body;
 }
 
 /** @param {Element} node @param {Document} doc @param {number} depth */
 function _cleanNode(node, doc, depth) {
-  // Iteruj od końca — modyfikujemy drzewo w trakcie
-  const children = Array.from(node.children);
-  for (let i = children.length - 1; i >= 0; i--) {
-    const child = children[i];
+  // Iteruj od końca — modyfikujemy drzewo w trakcie. childNodes, nie
+  // children: komentarze (<!--StartFragment-->, <!---->) muszą zniknąć tu,
+  // w DOM. Wcześniej wycinał je regex na stringu PO sanityzacji, a to
+  // potrafiło skleić href="<!---->javascript:…" w działający link.
+  const nodes = Array.from(node.childNodes);
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const raw = nodes[i];
+    if (raw.nodeType === 3 /* TEXT_NODE */) continue;
+    if (raw.nodeType !== 1 /* ELEMENT_NODE */) {
+      // komentarz, CDATA, processing instruction — nie są treścią notatki
+      raw.parentNode?.removeChild(raw);
+      continue;
+    }
+    const child = /** @type {Element} */ (raw);
 
     if (DROPPED_TAGS.has(child.tagName.toUpperCase())) {
       child.remove();

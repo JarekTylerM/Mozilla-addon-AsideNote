@@ -42,27 +42,79 @@ const _isBlock = (n) => _isEl(n) && BLOCK.has(n.tagName);
 /** @param {Node} n @returns {Element|null} */
 const _elOf = (n) => (_isEl(n) ? n : n.parentElement);
 
+/** Białe znaki HTML (bez &nbsp; — ten jest treścią). */
+const WS_START = /^[\t\n\f\r ]+/;
+const WS_END = /[\t\n\f\r ]+$/;
+
+/**
+ * Wyjmuje węzły do wstawienia i przenosi je do dokumentu edytora.
+ *
+ * Wklejka przychodzi jako DRZEWO (body z sanitizeHTMLToBody) i jest
+ * przenoszona węzeł po węźle. Wcześniej szła jako string, z którego regex
+ * wycinał komentarze, a wynik trafiał do innerHTML — w starszych
+ * przeglądarkach to sklejało href="<!---->javascript:…" w działający link.
+ * String nadal jest przyjmowany (testy, wywołania pomocnicze): parsujemy go
+ * w bezwładnym <template>, a komentarze usuwamy w DOM, nie regexem.
+ *
+ * @param {string|Element|DocumentFragment} content
+ * @returns {Node[]}
+ */
+function _takeNodes(content) {
+  /** @type {Node} */
+  let root;
+  if (typeof content === 'string') {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = content;
+    root = tpl.content;
+  } else {
+    root = content;
+  }
+  _dropNonContent(root);
+
+  const nodes = Array.from(root.childNodes);
+  // Odpowiednik dawnego .trim() na stringu — formatowanie źródła na brzegach
+  const first = nodes[0];
+  if (first?.nodeType === 3) {
+    first.textContent = (first.textContent ?? '').replace(WS_START, '');
+  }
+  const last = nodes[nodes.length - 1];
+  if (last?.nodeType === 3) {
+    last.textContent = (last.textContent ?? '').replace(WS_END, '');
+  }
+  return nodes
+    .filter((n) => n.nodeType !== 3 || n.textContent)
+    .map((n) => document.adoptNode(n));
+}
+
+/**
+ * Usuwa wszystko, co nie jest elementem ani tekstem (komentarze
+ * <!--StartFragment-->, processing instructions).
+ * @param {Node} node
+ */
+function _dropNonContent(node) {
+  for (const child of Array.from(node.childNodes)) {
+    if (child.nodeType === 1) _dropNonContent(child);
+    else if (child.nodeType !== 3) node.removeChild(child);
+  }
+}
+
 /**
  * @param {HTMLElement} editor
- * @param {string} html sanityzowany HTML
+ * @param {string|Element|DocumentFragment} content sanityzowana treść —
+ *   najlepiej drzewo z sanitizeHTMLToBody (węzły są PRZENOSZONE, nie kopiowane)
  * @returns {boolean} true, gdy coś wstawiono
  */
-export function insertPastedHTML(editor, html) {
+export function insertPastedHTML(editor, content) {
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return false;
 
-  // Metadane schowka (<!--StartFragment--> itp.)
-  const stripped = html.replace(/<!--[\s\S]*?-->/g, '').trim();
-  if (!stripped) return false;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = stripped;
-  if (!tmp.childNodes.length) return false;
+  /** @type {Node[]} */
+  let nodes = _takeNodes(content);
+  if (!nodes.length) return false;
 
   const range = sel.getRangeAt(0);
   range.deleteContents();
 
-  /** @type {Node[]} */
-  let nodes = Array.from(tmp.childNodes);
   let hasBlock = nodes.some(_isBlock);
   if (hasBlock) {
     // Białe znaki między blokami (formatowanie źródła) — nie są treścią

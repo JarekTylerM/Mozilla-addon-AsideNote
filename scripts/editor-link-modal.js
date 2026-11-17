@@ -18,6 +18,7 @@
 import { t } from './i18n.js';
 import * as undo from './undo.js';
 import { looksLikeUrl, normalizeUrl } from './editor-url.js';
+import { safeHref } from './sanitize.js';
 import { debouncedSave } from './notes.js';
 import { createFocusTrap } from './focus-trap.js';
 
@@ -40,7 +41,10 @@ export function initLinkClick() {
     // atomową, nie miejscem do stawiania kursora. Edycja: hover tooltip
     // (Edytuj) albo Ctrl+K; kursor można wprowadzić strzałkami.
     e.preventDefault();
-    const href = link.getAttribute('href');
+    // Ponowna walidacja przy KLIKU, nie tylko przy zapisie/wklejeniu —
+    // w DOM edytora mógł trafić link spoza sanitizera (np. starsza notatka).
+    // Niedozwolony schemat (search-ms:, ms-msdt:…) po prostu się nie otwiera.
+    const href = safeHref(link.getAttribute('href'));
     if (href) window.open(href, '_blank', 'noopener,noreferrer');
   });
 }
@@ -207,7 +211,14 @@ function _saveLinkModal() {
     return;
   }
 
-  const finalUrl = normalizeUrl(rawUrl);
+  const finalUrl = safeHref(normalizeUrl(rawUrl));
+  if (!finalUrl) {
+    if (errorEl) {
+      errorEl.textContent = t('linkModal_error_invalidUrl');
+      errorEl.hidden = false;
+    }
+    return;
+  }
 
   undo.checkpoint();
 
