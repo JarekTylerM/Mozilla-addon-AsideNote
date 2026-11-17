@@ -632,6 +632,23 @@
 .shortcut-row__btn[hidden] {
   display: none;
 }
+/* Przyciski w jednej kolumnie przy prawej krawędzi: opis zajmuje wolne
+   miejsce i w razie potrzeby zawija się we własnym polu, zamiast spychać
+   „Zmień” w inne miejsce w każdym wierszu. „Zmień” zawsze skrajnie po
+   prawej, „Przywróć” (gdy się pojawi) przed nim — nic nie przeskakuje. */
+.shortcut-row > span {
+  flex: 1 1 8em;
+  min-width: 0;
+}
+.shortcut-row__btn[data-shortcut-reset] {
+  order: 1;
+}
+.shortcut-row__btn[data-shortcut-edit] {
+  order: 2;
+}
+.panel-shortcuts__section .shortcut-row__status {
+  order: 3;
+}
 
 /* Nagrywanie: pole skrótu miga obwódką, żeby było widać, że czeka
    na kombinację klawiszy. */

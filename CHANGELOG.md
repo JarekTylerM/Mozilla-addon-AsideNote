@@ -143,6 +143,20 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
   8 sekund. Na liście wystarczy Ctrl+Z, żeby cofnąć usunięcie, odhaczenie
   albo zmiany z tytułu. W tekście Ctrl+Z dalej cofa pisanie.
 
+- **Spokojniejsze dymki z podpowiedzią.** Dymek pojawia się, gdy
+  zatrzymasz kursor na przycisku, a nie gdy tylko przez niego przejeżdżasz.
+  Jeśli już jest widoczny, przy szybkim przesuwaniu po pasku stoi w miejscu
+  i miękko przechodzi do przycisku, przy którym się zatrzymasz. Z klawiatury
+  (Tab) podpowiedź pojawia się od razu.
+
+- **Równe przyciski „Zmień” w skrótach.** W ustawieniach skrótów
+  przyciski stoją jeden pod drugim przy prawej krawędzi, niezależnie od
+  długości opisu.
+
+- **Pasek z Cofnij nie blokuje pracy.** Zamkniesz go przyciskiem ✕ albo
+  po prostu klikając gdzie indziej, np. w zarządzanie tagami: pasek znika,
+  a kliknięcie od razu działa.
+
 - **Pole do odhaczenia łatwiej zobaczyć i trafić.** Kwadracik jest trochę
   większy, ma wyraźniejszą ramkę, a kliknąć można też tuż obok niego.
 

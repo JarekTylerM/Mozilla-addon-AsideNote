@@ -1288,6 +1288,26 @@ document.getElementById("undo-toast-btn")?.addEventListener("click", () => {
   action?.();
 });
 
+// Toast nie może blokować dalszej pracy: ✕ zamyka go od razu, a kliknięcie
+// gdziekolwiek indziej znaczy „idę dalej” — toast znika, a kliknięcie
+// normalnie działa (np. otwiera zarządzanie tagami).
+document.getElementById("undo-toast-close")?.addEventListener("click", _hideUndoToast);
+document.addEventListener(
+  "pointerdown",
+  (e) => {
+    if (!_undoToast || _undoToast.hidden) return;
+    if (_undoToast.contains(/** @type {Node|null} */ (e.target))) return;
+    _hideUndoToast();
+  },
+  true,
+);
+// Esc z fokusem w toaście zamyka tylko toast, nie notatkę pod spodem
+_undoToast?.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  e.stopPropagation();
+  _hideUndoToast();
+});
+
 /* ── Globalne skróty klawiszowe ────────────────── */
 
 document.addEventListener("keydown", (e) => {

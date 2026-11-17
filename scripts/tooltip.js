@@ -29,11 +29,23 @@ const TOOLTIP_SELECTOR = 'button[title], a[title], select[title], input[title], 
 /** Dozwolone wartości data-tooltip-variant → klasa app-tooltip--<v>. */
 const TOOLTIP_VARIANTS = ['preview', 'info'];
 
-const SHOW_DELAY = 380; // ms — eliminuje flash przy szybkim przejeździe
+// Dymek ma przyjść, gdy ktoś się zatrzymał, a nie gdy przejeżdża kursorem.
+// 500 ms to „szukam czegoś tu”; krócej dymki odzywały się przy zwykłym
+// przesuwaniu myszy przez pasek. Fokus z klawiatury pokazuje od razu.
+const SHOW_DELAY = 500;
 // Tyle czasu kursor ma na przejechanie szczeliny (7px) między przyciskiem
 // a dymkiem — dymek musi dać się najechać (WCAG 1.4.13), żeby dłuższy tekst
 // dało się doczytać bez pośpiechu.
 const HIDE_DELAY = 120;
+// "Rozgrzany" dymek: gdy jeden jest widoczny albo zniknął przed chwilą,
+// następny nie czeka pełnego SHOW_DELAY (rytm znika–pustka–wyskakuje), tylko
+// REST_DELAY. Okno jest krótkie — obejmuje szczelinę między przyciskami,
+// nie dłuższe przesunięcie kursora (wtedy dymek znów czeka spokojnie).
+const WARM_WINDOW = 250;
+// Ile kursor musi postać na kolejnym przycisku, zanim widoczny dymek się
+// do niego przesunie. Przy przejeździe przez kilka ikon dymek stoi, a nie
+// goni kursor po każdej z nich.
+const REST_DELAY = 150;
 
 /** @type {HTMLElement | null} */
 let _el        = null; // #app-tooltip element
@@ -47,6 +59,10 @@ let _showTimer = null;
 let _hideTimer = null;
 /** @type {HTMLElement | null} */
 let _anchor    = null; // aktualnie hoverowany element
+/** Dymek jest widoczny (albo właśnie się pojawia) */
+let _isShown   = false;
+/** performance.now() ostatniego schowania — do WARM_WINDOW */
+let _hiddenAt  = -Infinity;
 
 /* ── Init ──────────────────────────────────────── */
 
@@ -175,11 +191,25 @@ function _onEnter(e) {
 
   _anchor = target;
   _cancelHide();
+  _cancelShow();
+
+  // Dymek już jest (albo był przed chwilą) — przejdzie do nowego przycisku,
+  // gdy kursor się na nim zatrzyma (REST_DELAY), a do tego czasu zostaje
+  // tam, gdzie był. Przycisk bez podpowiedzi chowa dymek od razu.
+  const warm = _isWarm();
+  if (warm && !_getText(target)) {
+    if (_isShown) _hide();
+    return;
+  }
 
   _showTimer = setTimeout(() => {
     const text = _getText(target);
     if (text) _show(target, text);
-  }, SHOW_DELAY);
+  }, warm ? REST_DELAY : SHOW_DELAY);
+}
+
+function _isWarm() {
+  return _isShown || performance.now() - _hiddenAt < WARM_WINDOW;
 }
 
 /** @param {MouseEvent} e */
@@ -221,6 +251,9 @@ function _onBlur() {
 function _onHide() {
   _cancelShow();
   _hide();
+  // Klik albo klawisz to świadome zamknięcie — następny dymek znów czeka
+  // SHOW_DELAY, zamiast od razu wyskoczyć pod kursorem
+  _hiddenAt = -Infinity;
   _anchor = null;
 }
 
@@ -262,15 +295,31 @@ function _show(anchor, text) {
     _hintEl.hidden       = true;
   }
 
-  // Wstępne pozycjonowanie (bez wymiarów — nie są znane przed reveal)
-  _el.classList.remove('visible', 'arrow-down');
-  _el.style.left = '-9999px';
-  _el.style.top  = '-9999px';
   _el.setAttribute('aria-hidden', 'false');
 
-  // Reveal po microtasku — teraz znamy offsetWidth/offsetHeight
+  // Dymek już widać: zostaje na ekranie i płynnie przesuwa się do nowego
+  // przycisku (is-moving włącza przejście left/top), a tekst lekko się
+  // przenika (is-swapping). Oko śledzi jeden dymek zamiast łapać nowy.
+  if (_isShown && _el.classList.contains('visible')) {
+    _el.classList.add('is-moving');
+    _el.classList.remove('is-swapping');
+    void _el.offsetWidth; // restart animacji tekstu
+    _el.classList.add('is-swapping');
+    _position(anchor);
+    return;
+  }
+
+  // Pierwsze pojawienie: wstępne pozycjonowanie poza ekranem (wymiary nie
+  // są znane przed reveal), bez przejścia left/top — inaczej dymek
+  // przyjechałby z -9999px
+  _isShown = true;
+  _el.classList.remove('visible', 'arrow-down', 'is-moving', 'is-swapping');
+  _el.style.left = '-9999px';
+  _el.style.top  = '-9999px';
+
+  // Reveal po klatce — teraz znamy offsetWidth/offsetHeight
   requestAnimationFrame(() => {
-    if (!_el) return;
+    if (!_el || !_isShown) return;
     _position(anchor);
     _el.classList.add('visible');
   });
@@ -278,7 +327,11 @@ function _show(anchor, text) {
 
 function _hide() {
   if (!_el) return;
-  _el.classList.remove('visible');
+  if (_isShown) _hiddenAt = performance.now();
+  _isShown = false;
+  // is-moving zostaje do końca wygaszania — zdjęcie go nic nie przesuwa,
+  // ale pierwsze pojawienie i tak czyści klasy na starcie
+  _el.classList.remove('visible', 'is-swapping');
   _el.setAttribute('aria-hidden', 'true');
 }
 

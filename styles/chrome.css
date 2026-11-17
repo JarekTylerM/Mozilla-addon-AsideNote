@@ -85,6 +85,33 @@
   background: var(--surface-hover);
 }
 
+/* Zamknięcie toastu — cichy ✕, ale pole 24px, żeby trafić bez celowania.
+   Toast stoi nad wierszem tagów i zasłaniał np. zarządzanie tagami. */
+.undo-toast__close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px -8px -4px -6px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-3);
+  font-size: var(--text-sm);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+.undo-toast__close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
 @keyframes undo-toast-in {
   from {
     opacity: 0;

@@ -141,14 +141,45 @@
   opacity: 0;
   /* Bez translateX: tooltip.js ustawia LEWĄ krawędź (patrz _position) —
      przy środkowaniu przeglądarka ściskała tooltip przy prawej krawędzi okna. */
-  transform: translateY(3px);
+  transform: translateY(2px);
+  /* Pojawianie łagodne (ease-out), znikanie krótsze i bez ruchu */
   transition:
-    opacity 0.12s ease,
-    transform 0.12s ease;
+    opacity 0.14s ease-out,
+    transform 0.16s ease-out;
+}
+/* Przejście z przycisku na przycisk: dymek nie znika, tylko miękko jedzie
+   w nowe miejsce razem ze strzałką (0,2 s, łagodny start i hamowanie).
+   Tylko w tym stanie — przy pierwszym pojawieniu przyjechałby spoza ekranu. Ograniczony ruch wyłącza to
+   globalnie (resets.css: prefers-reduced-motion). */
+#app-tooltip.visible.is-moving {
+  transition:
+    opacity 0.14s ease-out,
+    transform 0.16s ease-out,
+    left 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    top 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#app-tooltip.visible.is-moving::before {
+  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Nowy tekst wchodzi miękko zamiast podmienić się w jednej klatce */
+#app-tooltip.is-swapping :is(.app-tooltip__label, .app-tooltip__hint) {
+  animation: app-tooltip-text-in 0.2s ease-in-out;
+}
+@keyframes app-tooltip-text-in {
+  /* Nie od zera: głębsze przygaszenie wyglądało jak mrugnięcie */
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
 }
 #app-tooltip.visible {
   opacity: 1;
   transform: translateY(0);
+  transition:
+    opacity 0.16s ease-out,
+    transform 0.18s ease-out;
   /* Widoczny dymek da się najechać kursorem i doczytać (WCAG 1.4.13).
      Schowany dalej przepuszcza kliknięcia (pointer-events: none wyżej). */
   pointer-events: auto;
