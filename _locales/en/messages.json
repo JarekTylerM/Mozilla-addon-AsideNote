@@ -1240,10 +1240,10 @@
     "message": "Add and open right away"
   },
   "shortcuts_qc_date": {
-    "message": "A specific day (you can skip the year)"
+    "message": "Specific date, year optional"
   },
   "shortcuts_qc_dayKeywords": {
-    "message": "Due today or tomorrow"
+    "message": "Today or tomorrow"
   },
   "shortcuts_qc_ex_daily": {
     "message": "daily"
@@ -1269,20 +1269,62 @@
   "shortcuts_qc_ex_weekly": {
     "message": "weekly"
   },
+  "shortcuts_qc_group_type": {
+    "message": "Entry type"
+  },
+  "shortcuts_qc_group_date": {
+    "message": "Due date"
+  },
+  "shortcuts_qc_group_time": {
+    "message": "Time and repeating"
+  },
+  "shortcuts_qc_group_other": {
+    "message": "Tags and literal text"
+  },
+  "shortcuts_qc_how_title": {
+    "message": "How it works"
+  },
+  "shortcuts_qc_how_text": {
+    "message": "You type everything in one line. Without any marks you get a note. Start a task with ! — then add the due date, time and repeating in plain words, anywhere in the line."
+  },
+  "shortcuts_qc_how_text2": {
+    "message": "The rest becomes the title. The preview under the field shows what was recognised; anything AsideNotes doesn't recognise stays in the title. Example:"
+  },
+  "shortcuts_qc_how_example": {
+    "message": "!!client report tomorrow 9:00 #work"
+  },
+  "shortcuts_qc_how_ex_title": {
+    "message": "client report"
+  },
+  "shortcuts_qc_how_ex_when": {
+    "message": "tomorrow 9:00"
+  },
+  "shortcuts_qc_how_part_marker": {
+    "message": "Important task"
+  },
+  "shortcuts_qc_how_part_title": {
+    "message": "Title"
+  },
+  "shortcuts_qc_how_part_when": {
+    "message": "Due date with a reminder"
+  },
+  "shortcuts_qc_how_part_tag": {
+    "message": "Tag"
+  },
   "shortcuts_qc_intro": {
-    "message": "The field above the list (Alt+C). Below it you see what you'll get before you press Enter. You can write the same way in the title of an open note."
+    "message": "Works in the field above the list (Alt+C), in the quick capture window and in the title of an open note."
   },
   "shortcuts_qc_plain": {
-    "message": "A plain note"
+    "message": "Note"
   },
   "shortcuts_qc_recurrence": {
-    "message": "Repeats (also: monthly, yearly, every tuesday)"
+    "message": "Repeating (also: monthly, yearly, every tuesday)"
   },
   "shortcuts_qc_task": {
-    "message": "A task instead of a note"
+    "message": "Task"
   },
   "shortcuts_qc_taskImportant": {
-    "message": "Important task for today"
+    "message": "Important task, due today"
   },
   "shortcuts_qc_taskImportantInProgress": {
     "message": "Important and in progress"
@@ -1291,7 +1333,7 @@
     "message": "Task in progress, due today"
   },
   "shortcuts_qc_time": {
-    "message": "Time, and a reminder then"
+    "message": "Time and a reminder"
   },
   "shortcuts_qc_weekdays": {
     "message": "The next such day (also: on friday, next friday)"
@@ -1929,7 +1971,7 @@
     "message": "!\"version 6/15\""
   },
   "shortcuts_qc_quoted": {
-    "message": "Literal text — no date or tag recognition"
+    "message": "No date or tag recognition"
   },
   "quickCapture_preview_needTitle": {
     "message": "Add a title to create the entry"
@@ -1966,7 +2008,7 @@
     "message": "Aug 15"
   },
   "shortcuts_qc_monthName": {
-    "message": "Date with the month name (you can skip the year)"
+    "message": "Date with the month name, year optional"
   },
   "shortcuts_qc_ex_inWeeks": {
     "message": "in 2 weeks"
@@ -1975,7 +2017,7 @@
     "message": "next week"
   },
   "shortcuts_qc_relative": {
-    "message": "Due some time ahead (also: in 3 days, in a month)"
+    "message": "Some time ahead (also: in 3 days, in a month)"
   },
   "toolbar_textStyle_menu": {
     "message": "Text styles"

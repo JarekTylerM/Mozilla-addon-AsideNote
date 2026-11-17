@@ -596,6 +596,38 @@
 .panel-shortcuts__section li > code {
   order: 1;
 }
+/* „Jak to działa” nad ściągą (quick-capture-help.js): zasada zwykłym
+   tekstem, pełny przykład, pod nim jego części jak zwykłe wiersze.
+   Ściągę od wprowadzenia oddziela cienka linia. */
+.panel-shortcuts__section li.qc-help__text > span {
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.panel-shortcuts__section li.qc-help__example {
+  justify-content: flex-start;
+  margin: 2px 0 4px;
+}
+.panel-shortcuts__section li.qc-help__example > code {
+  font-size: var(--text-sm);
+  padding: 3px 8px;
+}
+.panel-shortcuts__section li.qc-help__part + li.qc-help__heading {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+/* Nagłówki grup w legendzie szybkiego dodawania (quick-capture-help.js) */
+.panel-shortcuts__section li.qc-help__heading {
+  margin-top: 8px;
+}
+.panel-shortcuts__section li.qc-help__heading:first-child {
+  margin-top: 0;
+}
+.panel-shortcuts__section li.qc-help__heading > span {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-3);
+}
 .panel-shortcuts__section code {
   font-size: var(--text-xs);
   font-family: var(--font-mono);

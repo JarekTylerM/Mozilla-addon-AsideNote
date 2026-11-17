@@ -14,7 +14,7 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { test, expect, results } from './_runner.mjs';
-import { QUICK_CAPTURE_HELP } from './quick-capture-help.mjs';
+import { QUICK_CAPTURE_HELP, QUICK_CAPTURE_INTRO } from './quick-capture-help.mjs';
 import { parseCapture } from './parser.mjs';
 
 const localePath = (lang) =>
@@ -67,6 +67,17 @@ test('klucze opisów są unikalne — jeden wiersz na regułę', () => {
   expect(new Set(descs).size).toBe(descs.length);
 });
 
+test('wiersze jednej grupy stoją obok siebie (jeden nagłówek na grupę)', () => {
+  /** @type {string[]} */
+  const seen = [];
+  for (const r of QUICK_CAPTURE_HELP) {
+    if (!r.group) throw new Error(`${r.desc}: brak grupy`);
+    if (seen.at(-1) === r.group) continue;
+    if (seen.includes(r.group)) throw new Error(`grupa ${r.group} rozbita — ${r.desc} stoi osobno`);
+    seen.push(r.group);
+  }
+});
+
 // ── Locale ────────────────────────────────────────────────────────
 
 console.log('\n2. Locale');
@@ -75,6 +86,14 @@ test('każdy klucz opisu istnieje w EN i PL', () => {
   for (const r of QUICK_CAPTURE_HELP) {
     for (const lang of LANGS) {
       if (!msg(lang, r.desc)) throw new Error(`brak ${r.desc} w ${lang}`);
+    }
+  }
+});
+
+test('każdy nagłówek grupy istnieje w EN i PL', () => {
+  for (const g of new Set(QUICK_CAPTURE_HELP.map((r) => r.group))) {
+    for (const lang of LANGS) {
+      if (!msg(lang, g)) throw new Error(`brak ${g} w ${lang}`);
     }
   }
 });
@@ -198,6 +217,38 @@ test('żaden przykład nie zostawia po sobie śmieci w tytule', () => {
         }
       }
     }
+  }
+});
+
+test('„Jak to działa”: pełny przykład daje dokładnie to, co opisują jego części', () => {
+  for (const lang of LANGS) {
+    const full = msg(lang, QUICK_CAPTURE_INTRO.example);
+    const [marker, title, when, tag] = QUICK_CAPTURE_INTRO.parts.map((p) =>
+      example(lang, p.tokens[0]),
+    );
+    // Każda część naprawdę występuje w przykładzie
+    for (const part of [marker, title, when, tag]) {
+      if (!full.includes(part)) throw new Error(`${lang}: "${part}" nie ma w "${full}"`);
+    }
+    const out = parseCapture(full, PARSER_LOCALE[lang]);
+    expect(out.isTask).toBe(true);
+    expect(out.isUrgent).toBe(true);
+    expect(out.title).toBe(title);
+    expect(out.time).toBe('09:00');
+    if (!out.due) throw new Error(`${lang}: "${full}" nie ma terminu`);
+    expect(out.tagNames).toEqual([tag.slice(1)]);
+  }
+});
+
+test('„Jak to działa”: wszystkie teksty istnieją w EN i PL', () => {
+  const keys = [
+    QUICK_CAPTURE_INTRO.heading,
+    ...QUICK_CAPTURE_INTRO.texts,
+    QUICK_CAPTURE_INTRO.example,
+    ...QUICK_CAPTURE_INTRO.parts.flatMap((p) => [p.desc, ...p.tokens.map((x) => x.key).filter(Boolean)]),
+  ];
+  for (const lang of LANGS) {
+    for (const k of keys) if (!msg(lang, k)) throw new Error(`brak ${k} w ${lang}`);
   }
 });
 

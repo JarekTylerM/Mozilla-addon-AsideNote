@@ -1240,10 +1240,10 @@
     "message": "Dodaj i od razu otwórz"
   },
   "shortcuts_qc_date": {
-    "message": "Konkretny dzień (rok możesz pominąć)"
+    "message": "Konkretna data, rok opcjonalny"
   },
   "shortcuts_qc_dayKeywords": {
-    "message": "Termin na dziś albo jutro"
+    "message": "Dziś albo jutro"
   },
   "shortcuts_qc_ex_daily": {
     "message": "codziennie"
@@ -1269,20 +1269,62 @@
   "shortcuts_qc_ex_weekly": {
     "message": "co tydzień"
   },
+  "shortcuts_qc_group_type": {
+    "message": "Rodzaj wpisu"
+  },
+  "shortcuts_qc_group_date": {
+    "message": "Termin"
+  },
+  "shortcuts_qc_group_time": {
+    "message": "Godzina i powtarzanie"
+  },
+  "shortcuts_qc_group_other": {
+    "message": "Tagi i tekst dosłowny"
+  },
+  "shortcuts_qc_how_title": {
+    "message": "Jak to działa"
+  },
+  "shortcuts_qc_how_text": {
+    "message": "Wszystko wpisujesz w jednej linii. Bez znaków powstaje notatka. Zadanie zaczynasz od ! — wtedy termin, godzinę i powtarzanie dopisujesz zwykłymi słowami, w dowolnym miejscu."
+  },
+  "shortcuts_qc_how_text2": {
+    "message": "Reszta zostaje tytułem. Pod polem od razu widać, co zostało rozpoznane; czego AsideNotes nie rozpozna, zostaje w tytule. Przykład:"
+  },
+  "shortcuts_qc_how_example": {
+    "message": "!!raport dla klienta jutro 9:00 #praca"
+  },
+  "shortcuts_qc_how_ex_title": {
+    "message": "raport dla klienta"
+  },
+  "shortcuts_qc_how_ex_when": {
+    "message": "jutro 9:00"
+  },
+  "shortcuts_qc_how_part_marker": {
+    "message": "Ważne zadanie"
+  },
+  "shortcuts_qc_how_part_title": {
+    "message": "Tytuł"
+  },
+  "shortcuts_qc_how_part_when": {
+    "message": "Termin z przypomnieniem"
+  },
+  "shortcuts_qc_how_part_tag": {
+    "message": "Tag"
+  },
   "shortcuts_qc_intro": {
-    "message": "Pole nad listą (Alt+C). Pod polem widać, co powstanie, zanim wciśniesz Enter. Tak samo możesz pisać w tytule otwartej notatki."
+    "message": "Działa w polu nad listą (Alt+C), w oknie szybkiego dodawania i w tytule otwartej notatki."
   },
   "shortcuts_qc_plain": {
-    "message": "Zwykła notatka"
+    "message": "Notatka"
   },
   "shortcuts_qc_recurrence": {
-    "message": "Powtarza się (też: co miesiąc, co rok, co wtorek)"
+    "message": "Powtarzanie (też: co miesiąc, co rok, co wtorek)"
   },
   "shortcuts_qc_task": {
-    "message": "Zadanie zamiast notatki"
+    "message": "Zadanie"
   },
   "shortcuts_qc_taskImportant": {
-    "message": "Ważne zadanie na dziś"
+    "message": "Ważne zadanie, termin dziś"
   },
   "shortcuts_qc_taskImportantInProgress": {
     "message": "Ważne i w trakcie"
@@ -1291,7 +1333,7 @@
     "message": "Zadanie w trakcie, termin dziś"
   },
   "shortcuts_qc_time": {
-    "message": "Godzina i przypomnienie o tej porze"
+    "message": "Godzina i przypomnienie"
   },
   "shortcuts_qc_weekdays": {
     "message": "Najbliższy taki dzień (też: w środę, na piątek)"
@@ -1929,7 +1971,7 @@
     "message": "!\"wersja 1.10\""
   },
   "shortcuts_qc_quoted": {
-    "message": "Tekst dosłowny — bez rozpoznawania dat i tagów"
+    "message": "Bez rozpoznawania dat i tagów"
   },
   "quickCapture_preview_needTitle": {
     "message": "Dopisz tytuł, żeby dodać wpis"
@@ -1960,13 +2002,13 @@
     "message": "o 18"
   },
   "shortcuts_qc_hour": {
-    "message": "Pełna godzina, gdy stoi na końcu wpisu"
+    "message": "Pełna godzina, na końcu wpisu"
   },
   "shortcuts_qc_ex_monthName": {
     "message": "15 sierpnia"
   },
   "shortcuts_qc_monthName": {
-    "message": "Data z nazwą miesiąca (rok możesz pominąć)"
+    "message": "Data z nazwą miesiąca, rok opcjonalny"
   },
   "shortcuts_qc_ex_inWeeks": {
     "message": "za 2 tygodnie"
@@ -1975,7 +2017,7 @@
     "message": "w przyszłym tygodniu"
   },
   "shortcuts_qc_relative": {
-    "message": "Termin za jakiś czas (też: za 3 dni, za miesiąc)"
+    "message": "Za jakiś czas (też: za 3 dni, za miesiąc)"
   },
   "toolbar_textStyle_menu": {
     "message": "Style tekstu"

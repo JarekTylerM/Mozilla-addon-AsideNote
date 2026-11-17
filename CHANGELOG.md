@@ -160,6 +160,14 @@ Tu po kolei zapisujemy, co się zmienia w dodatku. Zwykłymi słowami — tak,
   przy prawej krawędzi, więc najpierw widać, co się stanie, a potem, czym
   to zrobić. Przyciski „Zmień” stoją jeden pod drugim.
 
+- **Pomoc szybkiego dodawania zaczyna się od „Jak to działa”.** Pod „?”
+  w oknie szybkiego dodawania i w ustawieniach najpierw widać zasadę:
+  wszystko w jednej linii, zadanie zaczyna się od !, termin i godzinę
+  dopisujesz słowami w dowolnym miejscu, a reszta zostaje tytułem. Potem
+  jeden pełny przykład, „!!raport dla klienta jutro 9:00 #praca”,
+  rozłożony na części. Niżej jest ściąga w grupach: Rodzaj wpisu, Termin,
+  Godzina i powtarzanie, Tagi i tekst dosłowny.
+
 - **Pasek z Cofnij nie blokuje pracy.** Zamkniesz go przyciskiem ✕ albo
   po prostu klikając gdzie indziej, np. w zarządzanie tagami: pasek znika,
   a kliknięcie od razu działa.
